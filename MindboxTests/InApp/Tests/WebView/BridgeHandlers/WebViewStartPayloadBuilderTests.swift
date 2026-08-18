@@ -97,6 +97,56 @@ struct WebViewStartPayloadBuilderTests {
         #expect(payload["operationName"] == .string("Real.Operation"))
     }
 
+    // MARK: - Who wins a collision
+
+    /// Deliberate: a direct call names what this show must carry, so its params outrank the fields
+    /// the SDK fills in. Pinned so the day someone protects these keys is a decision, not a slip.
+    @Test("A param can displace a field the SDK fills in", arguments: [
+        "deviceUUID", "endpointId", "inAppId", "sdkVersion", "userVisitCount", "localStateVersion"
+    ])
+    func customParamsDisplaceSdkFields(key: String) throws {
+        let untouched = try build()
+        #expect(untouched[key] != nil, "the field has to be there for the override to mean anything")
+
+        let payload = try build(customParams: [key: .string("from-the-page")])
+
+        #expect(payload[key] == .string("from-the-page"))
+    }
+
+    @Test("A param cannot displace the track-visit fields")
+    func trackVisitWinsOverCustomParams() throws {
+        let previous = SessionTemporaryStorage.shared.lastTrackVisit
+        defer { SessionTemporaryStorage.shared.lastTrackVisit = previous }
+        SessionTemporaryStorage.shared.lastTrackVisit = (source: .push, requestUrl: "https://real.visit")
+
+        let payload = try build(customParams: [
+            "trackVisitSource": .string("from-config"),
+            "trackVisitRequestUrl": .string("https://from-config")
+        ])
+
+        #expect(payload["trackVisitSource"] == .string(TrackVisitSource.push.rawValue))
+        #expect(payload["trackVisitRequestUrl"] == .string("https://real.visit"))
+    }
+
+    @Test("On a collision the caller's params beat the configuration's")
+    func callerParamsBeatTheConfiguration() {
+        let merged = WebViewStartPayloadBuilder.mergedParams(
+            config: ["shared": .string("from-config"), "onlyInConfig": .string("kept")],
+            fromCaller: ["shared": .string("from-the-page"), "onlyFromCaller": .string("added")]
+        )
+
+        #expect(merged["shared"] == .string("from-the-page"))
+        #expect(merged["onlyInConfig"] == .string("kept"))
+        #expect(merged["onlyFromCaller"] == .string("added"))
+    }
+
+    @Test("A show with no params of its own carries the configuration's untouched")
+    func noCallerParamsKeepsTheConfiguration() {
+        let config: [String: JSONValue] = ["catalogEntry": .string("stories-feed")]
+
+        #expect(WebViewStartPayloadBuilder.mergedParams(config: config, fromCaller: nil) == config)
+    }
+
     /// A page that receives `{}` reports its own failure; a page that receives nothing waits on
     /// an id that will never be closed.
     @Test("An unencodable payload degrades to an empty object rather than to silence")

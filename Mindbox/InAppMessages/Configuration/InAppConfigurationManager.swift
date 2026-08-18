@@ -18,6 +18,10 @@ protocol InAppConfigurationManagerProtocol: AnyObject {
 
     func prepareConfiguration()
     func handleInapps(event: ApplicationEvent?, _ completion: @escaping (InAppFormData?) -> Void)
+    func selectInappForPlace(_ place: String, trigger: ApplicationEvent?, _ completion: @escaping (InAppTransitionData?) -> Void)
+    func getRenderableInappIds(_ ids: [String], _ completion: @escaping (FeedAnswer) -> Void)
+    func getInAppToShowById(_ id: String, params: [String: JSONValue], _ completion: @escaping (InAppFormData?) -> Void)
+    func getEmbeddedPlaces(_ completion: @escaping ([String: Set<String>]?) -> Void)
     func resetInappManager()
 }
 
@@ -28,12 +32,26 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     private let jsonDecoder = JSONDecoder()
     private let queue = DispatchQueue(label: "com.Mindbox.configurationManager")
     private var configResponse: ConfigResponse?
+
+    /// Confined to `queue`, like `configResponse`.
+    private var configCandidates: ConfigCandidates?
+
+    private static let defaultConfigWaitBudget: TimeInterval = 30
+
+    private let configWaitBudget: TimeInterval
+
+    /// Confined to `queue`, like `configResponse`.
+    private var configWaiters: [(ConfigCandidates?) -> Void] = []
     private let inAppConfigRepository: InAppConfigurationRepository
+
+    /// Confined to `queue`, like `configResponse`: swapped on session expiry while the previous
+    /// session's answers may still be in flight.
     private var inappMapper: InappMapperProtocol?
     private let inAppConfigAPI: InAppConfigurationAPI
     private let persistenceStorage: PersistenceStorage
     private let featureToggleManager: FeatureToggleManager
     private let webViewPrewarmService: InAppWebViewPrewarmServiceProtocol
+    private let inappFilterService: InappFilterProtocol
 
     init(
         inAppConfigAPI: InAppConfigurationAPI,
@@ -41,7 +59,9 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         inappMapper: InappMapperProtocol?,
         persistenceStorage: PersistenceStorage,
         featureToggleManager: FeatureToggleManager,
-        webViewPrewarmService: InAppWebViewPrewarmServiceProtocol
+        webViewPrewarmService: InAppWebViewPrewarmServiceProtocol,
+        inappFilterService: InappFilterProtocol,
+        configWaitBudget: TimeInterval = InAppConfigurationManager.defaultConfigWaitBudget
     ) {
         self.inAppConfigRepository = inAppConfigRepository
         self.inappMapper = inappMapper
@@ -49,6 +69,8 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         self.persistenceStorage = persistenceStorage
         self.featureToggleManager = featureToggleManager
         self.webViewPrewarmService = webViewPrewarmService
+        self.inappFilterService = inappFilterService
+        self.configWaitBudget = configWaitBudget
     }
 
     weak var delegate: InAppConfigurationDelegate?
@@ -60,20 +82,140 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     }
     
     func handleInapps(event: ApplicationEvent? = nil, _ completion: @escaping (InAppFormData?) -> Void) {
-        guard let inappMapper = inappMapper, let config = configResponse else {
-            completion(nil)
-            return
-        }
-        
-        inappMapper.handleInapps(event, config) { inapp in
-            completion(inapp)
+        queue.async {
+            guard let inappMapper = self.inappMapper, let candidates = self.configCandidates else {
+                completion(nil)
+                return
+            }
+
+            inappMapper.handleInapps(event, candidates) { inapp in
+                completion(inapp)
+            }
         }
     }
     
+    /// Waits for the first config rather than answering nil early: an early "nothing to show"
+    /// collapses the block for the screen's whole life — nothing retries.
+    func selectInappForPlace(_ place: String, trigger: ApplicationEvent?, _ completion: @escaping (InAppTransitionData?) -> Void) {
+        awaitConfig("place '\(place)'") { [weak self] candidates in
+            guard let self = self, let inappMapper = self.inappMapper, let candidates = candidates else {
+                completion(nil)
+                return
+            }
+
+            inappMapper.selectInappForPlace(place, trigger: trigger, candidates, completion)
+        }
+    }
+
+    func getRenderableInappIds(_ ids: [String], _ completion: @escaping (FeedAnswer) -> Void) {
+        awaitConfig("a feed asking about \(ids.count) in-app(s)") { [weak self] candidates in
+            guard let self = self, let inappMapper = self.inappMapper, let candidates = candidates else {
+                completion(.nothing)
+                return
+            }
+
+            inappMapper.getRenderableInappIds(ids, candidates, completion)
+        }
+    }
+
+    func getInAppToShowById(_ id: String, params: [String: JSONValue], _ completion: @escaping (InAppFormData?) -> Void) {
+        awaitConfig("showing in-app \(id)") { [weak self] candidates in
+            guard let self = self, let inappMapper = self.inappMapper, let candidates = candidates else {
+                completion(nil)
+                return
+            }
+
+            inappMapper.getInAppToShowById(id, params: params, candidates, completion)
+        }
+    }
+
+    /// A raw scan, not the selection: unvalidated variants count in on purpose — the resolve applies
+    /// the real filters.
+    func getEmbeddedPlaces(_ completion: @escaping ([String: Set<String>]?) -> Void) {
+        queue.async {
+            guard let config = self.configResponse else {
+                completion(nil)
+                return
+            }
+
+            var places: [String: Set<String>] = [:]
+            for inapp in config.inapps?.elements ?? [] {
+                let inappPlaces = (inapp.form.variants ?? []).compactMap { variant -> String? in
+                    guard case .embedded(let embedded) = variant else { return nil }
+                    // Must trim the way the selection trims, or the gate would close on a place
+                    // the resolve behind it would serve.
+                    let place = embedded.placeSystemName?.trimmingCharacters(in: .whitespacesAndNewlines)
+                    return place?.isEmpty == false ? place : nil
+                }
+
+                guard !inappPlaces.isEmpty else { continue }
+
+                let operations = Self.operationNames(in: inapp.targeting)
+                for place in inappPlaces {
+                    places[place, default: []].formUnion(operations)
+                }
+            }
+            completion(places)
+        }
+    }
+
+    /// Must mirror the names the checkers file under `operationInapps`: custom operations by their own
+    /// system name, product/category nodes by the system operation the config settings declare.
+    private static func operationNames(in targeting: Targeting) -> Set<String> {
+        switch targeting {
+        case .apiMethodCall(let operation):
+            return [operation.systemName.lowercased()]
+        case .and(let node):
+            return node.nodes.reduce(into: Set()) { $0.formUnion(operationNames(in: $1)) }
+        case .or(let node):
+            return node.nodes.reduce(into: Set()) { $0.formUnion(operationNames(in: $1)) }
+        case .viewProductId, .viewProductSegment:
+            return Set([SessionTemporaryStorage.shared.viewProductOperation?.lowercased()].compactMap { $0 })
+        case .viewProductCategoryId, .viewProductCategoryIdIn:
+            return Set([SessionTemporaryStorage.shared.viewCategoryOperation?.lowercased()].compactMap { $0 })
+        default:
+            return []
+        }
+    }
+
+    private func awaitConfig(_ what: String, _ completion: @escaping (ConfigCandidates?) -> Void) {
+        queue.async {
+            if let candidates = self.configCandidates {
+                completion(candidates)
+                return
+            }
+
+            Logger.common(message: "[InAppConfigurationManager] No config yet, \(what) waits for it",
+                          level: .debug, category: .inAppMessages)
+
+            var hasAnswered = false
+            let answer: (ConfigCandidates?) -> Void = { candidates in
+                guard !hasAnswered else { return }
+
+                hasAnswered = true
+                completion(candidates)
+            }
+
+            self.configWaiters.append(answer)
+
+            self.queue.asyncAfter(deadline: .now() + self.configWaitBudget) {
+                guard !hasAnswered else { return }
+
+                Logger.common(message: "[InAppConfigurationManager] Gave up waiting \(self.configWaitBudget)s for a config, \(what) gets nothing",
+                              level: .error, category: .inAppMessages)
+                answer(nil)
+            }
+        }
+    }
+
+    /// The new session's config download is enqueued after this from the same flow, so the swap
+    /// always lands on `queue` before that download completes.
     func resetInappManager() {
-        Logger.common(message: "[InAppConfigurationManager] Reset inappMapper.")
-        inappMapper = nil
-        inappMapper = DI.inject(InappMapperProtocol.self)
+        queue.async {
+            Logger.common(message: "[InAppConfigurationManager] Reset inappMapper.")
+            self.inappMapper = nil
+            self.inappMapper = DI.inject(InappMapperProtocol.self)
+        }
     }
 
     // MARK: - Private
@@ -103,6 +245,12 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             applyConfigFromCache()
             Logger.common(message: "Failed to download InApp configuration. Error: \(error.localizedDescription)", level: .error, category: .inAppMessages)
         }
+
+        configCandidates = configResponse.map { inappFilterService.candidates(from: $0) }
+
+        let waiters = configWaiters
+        configWaiters = []
+        waiters.forEach { $0(configCandidates) }
 
         // Prewarm stage 2: warm what the config's webview in-apps need (or release the
         // warm instance when the config proves there are none).

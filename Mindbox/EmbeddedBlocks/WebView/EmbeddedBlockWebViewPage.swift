@@ -10,52 +10,64 @@ import UIKit
 import WebKit
 import MindboxLogger
 
-/// The embedded block page in a WKWebView.
-///
-/// Speaks the same bridge as an in-app: same envelope, same handler name, same handler set. The
-/// page therefore gets everything an in-app page has — logging, local state, links, operations —
-/// without a line of block-specific code, and a page can be written once for both.
-///
-/// The web view comes from `InAppWebViewFactory` — the same place in-app web views are
-/// configured — so the block shares their user agent, their `WKWebsiteDataStore` and therefore
-/// their HTTP cache.
+/// The web view, the bridge, the markup fetch and the start payload all come from the shared
+/// facade: a block and an overlay must agree on the bridge protocol down to the envelope.
 final class EmbeddedBlockWebViewPage: NSObject, EmbeddedBlockPageHosting {
 
-    let webView: WKWebView
-
-    var view: UIView { webView }
+    var view: UIView { pageView }
 
     var onContentRendered: ((Int) -> Void)?
 
-    var onLoadFailure: (() -> Void)?
+    var onUnreadableContentReport: (() -> Void)?
 
-    var onLoadFinish: (() -> Void)?
+    var onFeedQuestion: (([String], @escaping ([String]) -> Void) -> Void)?
+
+    var onShowInAppRequest: ((String, [String: JSONValue]) -> Void)?
+
+    var onDataPushConfirmed: (() -> Void)?
+
+    var onLoadFailure: (() -> Void)?
 
     /// Set by the provider. A block that left the window keeps its page alive, and that page can
     /// still deliver whatever its `setTimeout` scheduled — nothing the user did stands behind
     /// such a message.
     var isUserPresent = true
 
-    private let id: String
     private let content: EmbeddedBlockWebContent
-    private let bridge: MindboxWebBridge
+    private let facade: InappWebViewFacadeProtocol
+    private let registry: MindboxWebPageRegistry
     private let actionRegistry: WebBridgeActionRegistry
+    private let pageView: UIView
 
-    init(id: String,
-         content: EmbeddedBlockWebContent,
-         webView: WKWebView = InAppWebViewFactory.make(),
+    /// A page joins the broadcast set once it has proven it can receive, that is, on its first `ready`:
+    /// registering earlier would aim `localState.changed` at a document that has no bridge yet.
+    private var isRegistered = false
+
+    private let noCacheRetryPolicy: WebViewNoCacheRetryPolicy
+
+    init(content: EmbeddedBlockWebContent,
+         facade: InappWebViewFacadeProtocol? = nil,
+         registry: MindboxWebPageRegistry = .shared,
          actionRegistry: WebBridgeActionRegistry
-         = WebBridgeActionRegistry(handlers: WebBridgeActionHandlerFactory.makeHandlers())) {
-        self.id = id
+         = WebBridgeActionRegistry(handlers: WebBridgeActionHandlerFactory.makeHandlers()),
+         noCacheRetryPolicy: WebViewNoCacheRetryPolicy
+         = WebViewNoCacheRetryPolicy { InAppWebViewDataStore.isCacheFeatureEnabled }) {
         self.content = content
-        self.webView = webView
-        self.bridge = MindboxWebBridge(webView: webView)
+        self.noCacheRetryPolicy = noCacheRetryPolicy
+        // The block does not borrow the prewarmed instance: it would hold it for as long as its
+        // screen lives and leave the next in-app to start cold.
+        self.facade = facade ?? MindboxWebViewFacade(params: content.params,
+                                                     userAgent: SDKUserAgent.build(),
+                                                     inAppId: content.inAppId,
+                                                     mayBorrowWarmWebView: false)
+        self.registry = registry
         self.actionRegistry = actionRegistry
+        self.pageView = self.facade.makeView()
         super.init()
 
-        setUpWebView()
-        bridge.messageDelegate = self
-        bridge.navigationDelegate = self
+        self.facade.setBridgeMessageDelegate(self)
+        self.facade.setNavigationDelegate(self)
+        applyViewSettings()
     }
 
     deinit {
@@ -63,40 +75,34 @@ final class EmbeddedBlockWebViewPage: NSObject, EmbeddedBlockPageHosting {
     }
 
     func load() {
-        switch content.source {
-        case .url(let url):
-            bridge.updateContentURL(url)
-            // The navigation has to be handed to the bridge: until this exact document commits,
-            // every script message is treated as a leftover from a previous owner of the web
-            // view. Without this the page's messages are dropped in silence and the block waits
-            // out its whole budget with no error anywhere.
-            bridge.expectContentNavigation(webView.load(URLRequest(url: url)))
-        case .html(let html):
-            bridge.updateContentURL(nil)
-            // Markup has an about:blank origin, so no localStorage and no requests to its own
-            // domain. Debug scenarios only.
-            bridge.expectContentNavigation(webView.loadHTMLString(html, baseURL: nil))
+        facade.loadHTML(baseUrl: content.baseUrl, contentUrl: content.contentUrl) { [weak self] in
+            Logger.common(message: "[EmbeddedBlock] Failed to load page markup from '\(self?.content.contentUrl ?? "")'",
+                          level: .error, category: .embeddedBlocks)
+            self?.onLoadFailure?()
         }
     }
 
-    func reload() {
-        bridge.expectContentNavigation(webView.reload())
-    }
-
     func cancel() {
-        webView.stopLoading()
+        facade.cleanWebView()
     }
 
-    private func setUpWebView() {
-        // The background is transparent: the app background, not a white sheet, should show
-        // through the gaps in the content.
+    func sendInitData(params: [String: JSONValue]) {
+        facade.sendInitDataUpdated(params: params)
+    }
+
+    private func applyViewSettings() {
+        // The background is transparent: the app background, not a white sheet, should show through
+        // the gaps in the content.
+        pageView.backgroundColor = .clear
+
+        guard let webView = pageView as? WKWebView else { return }
+
         webView.isOpaque = false
-        webView.backgroundColor = .clear
         webView.scrollView.backgroundColor = .clear
 
-        // The container height equals the content height, so there is nothing to scroll
-        // vertically — otherwise the block would bounce under the finger on every horizontal
-        // swipe.
+        // The container height equals the content height, so there is nothing to scroll vertically —
+        // otherwise the block would bounce under the finger on every horizontal swipe. Horizontal
+        // scrolling stays on, unlike an overlay's: a feed is a row the user swipes through.
         webView.scrollView.bounces = false
         webView.scrollView.alwaysBounceVertical = false
         webView.scrollView.showsVerticalScrollIndicator = false
@@ -108,12 +114,11 @@ final class EmbeddedBlockWebViewPage: NSObject, EmbeddedBlockPageHosting {
 
 extension EmbeddedBlockWebViewPage: WebBridgeHost {
 
-    var contentId: String { id }
+    var contentId: String { content.inAppId }
 
     var logCategory: LogCategory { .embeddedBlocks }
 
-    /// A block has none: tags belong to an in-app show.
-    var tags: [String: String]? { nil }
+    var tags: [String: String]? { content.tags }
 
     /// The block draws inside the host's own hierarchy and owns no controller, so the search starts
     /// at the window's root — and does not stop there. Whatever is on top is what can present: a
@@ -131,21 +136,11 @@ extension EmbeddedBlockWebViewPage: WebBridgeHost {
     }
 
     func send(_ message: BridgeMessage) {
-        bridge.send(message)
+        facade.sendToJS(message)
     }
 
     func makeStartPayload() -> JSONValue {
-        WebViewStartPayloadBuilder(contentId: id,
-                                   operation: nil,
-                                   // The configuration entry goes here once the resolver reads
-                                   // one; today the block address is still hardcoded.
-                                   customParams: nil,
-                                   insetsSource: view,
-                                   logError: { [id] message in
-                                       Logger.common(message: "[EmbeddedBlock] Block '\(id)': \(message)",
-                                                     level: .error,
-                                                     category: .embeddedBlocks)
-                                   }).build()
+        facade.makeStartPayload()
     }
 }
 
@@ -156,26 +151,67 @@ extension EmbeddedBlockWebViewPage: WebBridgeContentHosting {
     func bridgeDidRenderContent(count: Int) {
         onContentRendered?(count)
     }
+
+    func bridgeDidReportUnreadableContent() {
+        onUnreadableContentReport?()
+    }
 }
 
-// MARK: - WebBridgeMessageDelegate
+// MARK: - WebBridgeFeedHosting
+
+extension EmbeddedBlockWebViewPage: WebBridgeFeedHosting {
+
+    func bridgeDidAskRenderableInapps(_ ids: [String], completion: @escaping ([String]) -> Void) {
+        onFeedQuestion?(ids, completion)
+    }
+
+    func bridgeDidRequestShowInApp(id: String, params: [String: JSONValue]) {
+        onShowInAppRequest?(id, params)
+    }
+}
+
+// MARK: - MindboxWebPage
+
+extension EmbeddedBlockWebViewPage: MindboxWebPage {
+
+    func push(_ action: BridgeMessage.Action, payload: JSONValue) {
+        facade.sendToJS(BridgeMessage(type: .request, action: action, payload: payload))
+    }
+}
+
+// MARK: - Bridge messages
 
 extension EmbeddedBlockWebViewPage: WebBridgeMessageDelegate {
 
     func webBridge(_ bridge: MindboxWebBridge, didReceiveBridgeMessage message: BridgeMessage) {
-        guard message.type == .request else { return }
+        if message.type == .response, message.parsedAction == .initDataUpdated {
+            onDataPushConfirmed?()
+            return
+        }
+
+        if message.type == .request, message.parsedAction == .ready {
+            registerForBroadcasts()
+        }
 
         // An action nobody owns is not an error: the web vocabulary is allowed to be newer than
-        // the SDK.
+        // the SDK. Messages that are not requests are the registry's to swallow — both hosts hand
+        // it everything the dispatcher matched.
         guard actionRegistry.handle(message, host: self) else {
-            Logger.common(message: "[EmbeddedBlock] Block '\(id)': unknown action '\(message.action)'",
+            Logger.common(message: "[EmbeddedBlock] Unknown bridge action '\(message.action)'",
                           category: .embeddedBlocks)
             return
         }
     }
+
+    private func registerForBroadcasts() {
+        guard !isRegistered else { return }
+
+        isRegistered = true
+        registry.register(self)
+    }
 }
 
-// MARK: - WebBridgeNavigationDelegate
+// MARK: - Navigation
 
 /// Navigation only judges its own business: the load failed or the document arrived. Block
 /// readiness does not follow from that — the page declares it by reporting the content it
@@ -183,32 +219,28 @@ extension EmbeddedBlockWebViewPage: WebBridgeMessageDelegate {
 extension EmbeddedBlockWebViewPage: WebBridgeNavigationDelegate {
 
     func webBridge(_ bridge: MindboxWebBridge, didStartProvisionalNavigation url: URL?) {
-        Logger.common(message: "[EmbeddedBlock] Block '\(id)': loading \(url?.absoluteString ?? "unknown")",
+        Logger.common(message: "[EmbeddedBlock] Page started loading \(url?.absoluteString ?? "unknown")",
                       category: .embeddedBlocks)
     }
 
     func webBridge(_ bridge: MindboxWebBridge, didFinishNavigation url: URL?) {
-        onLoadFinish?()
+        Logger.common(message: "[EmbeddedBlock] Page of in-app \(content.inAppId) loaded its document, waiting for it to report itself",
+                      category: .embeddedBlocks)
     }
 
-    /// A cancelled navigation is not a load failure, and passing it off as one is not allowed:
-    /// the block would collapse out of nowhere and stay a zero-height hole until the end of the
-    /// screen's life. WebKit returns `NSURLErrorCancelled` in two perfectly ordinary cases: the
-    /// navigation was superseded by the next one — a client-side redirect, the page will load on
-    /// its own — and the navigation was stopped by us, by calling `cancel()` on a block that went
-    /// off screen. The second case also arrives after the block is back in the window, so the
-    /// provider will not filter it out with its own state.
+    /// Not a load failure: WebKit returns `NSURLErrorCancelled` for a navigation superseded by a
+    /// client-side redirect and for our own `cancel()` on a block that went off screen.
     func webBridge(_ bridge: MindboxWebBridge, didFailProvisionalNavigation url: URL?, error: Error) {
         let error = error as NSError
 
         guard !(error.domain == NSURLErrorDomain && error.code == NSURLErrorCancelled) else {
-            Logger.common(message: "[EmbeddedBlock] Block '\(id)': navigation was cancelled, not a load failure",
+            Logger.common(message: "[EmbeddedBlock] Page navigation was cancelled, not a load failure",
                           category: .embeddedBlocks)
             return
         }
 
-        Logger.common(message: "[EmbeddedBlock] Block '\(id)': navigation failed: \(error.localizedDescription)",
-                      category: .embeddedBlocks)
+        Logger.common(message: "[EmbeddedBlock] Page navigation failed: \(error.localizedDescription)",
+                      level: .error, category: .embeddedBlocks)
         onLoadFailure?()
     }
 
@@ -216,25 +248,33 @@ extension EmbeddedBlockWebViewPage: WebBridgeNavigationDelegate {
                    decidePolicyFor url: URL?,
                    navigationType: WKNavigationType,
                    decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
-        switch navigationType {
-        case .other, .reload, .backForward, .formSubmitted, .formResubmitted:
+        let decision = WebViewNavigationPolicy.decision(for: navigationType, url: url)
+        WebViewNavigationPolicy.log(decision, navigationType: navigationType, url: url, category: .embeddedBlocks)
+
+        switch decision {
+        case .allow:
             decisionHandler(.allow)
-        case .linkActivated:
-            // A block is a piece of the host's own layout: letting a tap replace the feed with
-            // the destination page in place would be a dead end with no way back. Links belong
-            // in `openLink`, which opens them where a link should open.
-            Logger.common(message: "[EmbeddedBlock] Block '\(id)': blocked in-place navigation to \(url?.absoluteString ?? "unknown")",
-                          category: .embeddedBlocks)
+
+        case .handInBack(let url):
             decisionHandler(.cancel)
-        @unknown default:
-            decisionHandler(.allow)
+
+            guard let url else { return }
+
+            push(.navigationIntercepted, payload: .object(["url": .string(url.absoluteString)]))
         }
     }
 
     func webBridge(_ bridge: MindboxWebBridge, didReceiveHTTPError url: String?) {
-        // Reported only. Healing a poisoned cache entry is the in-app path's job today; giving
-        // the block the same treatment is its own change.
-        Logger.common(message: "[EmbeddedBlock] Block '\(id)': subresource error for \(url ?? "nil")",
-                      category: .embeddedBlocks)
+        guard noCacheRetryPolicy.onHTTPError(url: url, hasReceivedInit: isRegistered) else {
+            Logger.common(message: "[EmbeddedBlock] Subresource error for \(url ?? "nil"), not healing",
+                          level: .debug, category: .embeddedBlocks)
+            return
+        }
+
+        Logger.common(message: "[EmbeddedBlock] Retrying the page's content with the cache bypassed (\(noCacheRetryPolicy.lastHTTPErrorDetail ?? "unknown"))",
+                      level: .info, category: .embeddedBlocks)
+        facade.retryContentLoadBypassingCache(failedURL: url) { [weak self] didRemoveAnything in
+            self?.noCacheRetryPolicy.notePurgeOutcome(didRemoveAnything: didRemoveAnything)
+        }
     }
 }

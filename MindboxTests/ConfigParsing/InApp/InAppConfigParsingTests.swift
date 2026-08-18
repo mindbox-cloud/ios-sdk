@@ -142,6 +142,38 @@ final class InAppConfigParsingTests: XCTestCase {
                        "Frequency must default to once/lifetime when frequency is absent")
     }
 
+    // MARK: frequency wire values
+
+    private struct FrequencyHolder: Decodable {
+        let frequency: InappFrequency
+    }
+
+    private func decodeFrequency(_ value: String) throws -> InappFrequency {
+        let json = "{\"frequency\": \(value)}"
+        return try JSONDecoder().decode(FrequencyHolder.self, from: Data(json.utf8)).frequency
+    }
+
+    func test_Frequency_unlimited_shouldDecodeAsUnlimited() throws {
+        XCTAssertEqual(try decodeFrequency(#"{"$type": "unlimited"}"#), .unlimited)
+    }
+
+    func test_Frequency_withMiscasedKind_shouldDecodeAsUnknown() throws {
+        XCTAssertEqual(try decodeFrequency(#"{"$type": "Unlimited"}"#), .unknown,
+                       "The kind string is a wire contract shared with the backend and Android: a case change is a different kind")
+    }
+
+    func test_Frequency_withUnrecognizedKind_shouldDecodeAsUnknown() throws {
+        XCTAssertEqual(try decodeFrequency(#"{"$type": "everySecondTuesday"}"#), .unknown)
+    }
+
+    func test_Frequency_withoutType_shouldThrow() {
+        XCTAssertThrowsError(try decodeFrequency("{}"))
+    }
+
+    func test_Frequency_withNonStringType_shouldThrow() {
+        XCTAssertThrowsError(try decodeFrequency(#"{"$type": 42}"#))
+    }
+
     // MARK: targeting
 
     func test_InApp_withTargetingError_shouldSkipInApp() {

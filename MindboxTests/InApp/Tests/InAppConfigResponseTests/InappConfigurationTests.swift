@@ -562,7 +562,7 @@ final class InappConfigurationTests {
 
     private func handleInapps(event: ApplicationEvent?, response: ConfigResponse) async -> InAppFormData? {
         await withCheckedContinuation { continuation in
-            mapper.handleInapps(event, response) { formData in
+            mapper.handleInapps(event, response.candidates) { formData in
                 continuation.resume(returning: formData)
             }
         }

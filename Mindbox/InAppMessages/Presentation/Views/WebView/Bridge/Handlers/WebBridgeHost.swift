@@ -28,7 +28,7 @@ protocol WebBridgeHost: AnyObject {
     var tags: [String: String]? { get }
 
     /// What a handler presents from when it needs a controller of its own (`SFSafariViewController`).
-    /// `nil` means the handler falls back to the key window.
+    /// `nil` refuses such actions: the handler answers the page with an error and presents nothing.
     var presentingViewController: UIViewController? { get }
 
     /// Whether a user is looking at this page right now.
@@ -131,4 +131,19 @@ protocol WebBridgeContentHosting: AnyObject {
     /// - Parameter count: `0` means the page is alive and correct and has nothing to show.
     ///   That is an outcome, not a failure.
     func bridgeDidRenderContent(count: Int)
+
+    /// The page was already refused over an unusable content report; the host hears it too
+    /// because it now holds a show nobody can vouch for.
+    func bridgeDidReportUnreadableContent()
+}
+
+protocol WebBridgeFeedHosting: AnyObject {
+
+    /// Which of `ids` may be rendered. Answered asynchronously and possibly never: a host that
+    /// stopped listening drops the question, and what a missing answer means is the page's call.
+    func bridgeDidAskRenderableInapps(_ ids: [String], completion: @escaping ([String]) -> Void)
+
+    /// `params` travel into the shown in-app's start payload untouched: for the SDK they are an
+    /// opaque dictionary.
+    func bridgeDidRequestShowInApp(id: String, params: [String: JSONValue])
 }

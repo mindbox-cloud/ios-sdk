@@ -451,6 +451,10 @@ class InAppPresentationValidatorWrapper: InAppPresentationValidatorProtocol {
         validationChecks.removeAll()
         return trackValidationOrder(isPriority: isPriority, frequency: frequency, id: id)
     }
+
+    func isWithinShowBudgets(isPriority: Bool, frequency: InappFrequency?, id: String) -> Bool {
+        validator.isWithinShowBudgets(isPriority: isPriority, frequency: frequency, id: id)
+    }
     
     private func trackValidationOrder(isPriority: Bool, frequency: InappFrequency?, id: String) -> Bool {
         let isNotPresenting = validator.isNotPresentingAnotherInApp()
@@ -468,7 +472,7 @@ class InAppPresentationValidatorWrapper: InAppPresentationValidatorProtocol {
         if isPriority {
             return true
         }
-        
+
         let isUnderSessionLimit = validator.isUnderSessionLimit()
         validationChecks.append(.isUnderSessionLimit)
         if !isUnderSessionLimit {

@@ -8,6 +8,7 @@
 
 import Testing
 import Foundation
+import UIKit
 @_spi(Internal) @testable import Mindbox
 
 @Suite("OpenLinkActionHandler", .tags(.webView))
@@ -167,6 +168,72 @@ struct OpenLinkActionHandlerTests {
         #expect(host.sent.count == 1, "the universal-link attempt and the fallback answer once between them")
     }
 
+    // MARK: - Finding something that can present
+
+    /// UIKit skips `present` without a word — and without the completion the answer is sent from —
+    /// when the presenter is already presenting. A second link tapped while Safari is up would
+    /// leave the page waiting on a promise nothing settles, so the sheet goes on top of the chain
+    /// rather than to the controller the host named.
+    @Test("Safari is presented from the topmost controller, not from a busy presenter")
+    func safariIsPresentedFromTheTopmostController() async throws {
+        let opener = URLOpenerSpy()
+        opener.result = false
+        let host = HostSpy()
+        let named = PresentationSpy()
+        let onTop = PresentationSpy()
+        named.stubbedPresented = onTop
+        host.presentingViewController = named
+
+        let handler = OpenLinkActionHandler(urlOpener: opener)
+
+        handler.handle(.request(.openLink, payload: .object(["url": .string("https://example.com")])), host: host)
+        await drainMainQueue(until: { !host.sent.isEmpty })
+
+        #expect(named.presented.isEmpty, "the named controller is already presenting and would refuse")
+        #expect(onTop.presented.count == 1)
+        #expect(host.sent.first?.type == .response, "the page is answered from the presentation that happened")
+    }
+
+    /// One level is not the contract: a block inside a modal that itself put up a sheet is the same
+    /// question, one deeper.
+    @Test("The walk goes through the whole presentation chain")
+    func safariIsPresentedThroughTheChain() async {
+        let opener = URLOpenerSpy()
+        opener.result = false
+        let host = HostSpy()
+        let root = PresentationSpy()
+        let modal = PresentationSpy()
+        let sheet = PresentationSpy()
+        root.stubbedPresented = modal
+        modal.stubbedPresented = sheet
+        host.presentingViewController = root
+
+        let handler = OpenLinkActionHandler(urlOpener: opener)
+
+        handler.handle(.request(.openLink, payload: .object(["url": .string("https://example.com")])), host: host)
+        await drainMainQueue(until: { !host.sent.isEmpty })
+
+        #expect(sheet.presented.count == 1)
+        #expect(root.presented.isEmpty)
+        #expect(modal.presented.isEmpty)
+    }
+
+    @Test("A presenter with nothing on top of it presents the sheet itself")
+    func idlePresenterIsUsedAsIs() async {
+        let opener = URLOpenerSpy()
+        opener.result = false
+        let host = HostSpy()
+        let presenter = PresentationSpy()
+        host.presentingViewController = presenter
+
+        let handler = OpenLinkActionHandler(urlOpener: opener)
+
+        handler.handle(.request(.openLink, payload: .object(["url": .string("https://example.com")])), host: host)
+        await drainMainQueue(until: { !host.sent.isEmpty })
+
+        #expect(presenter.presented.count == 1)
+    }
+
     /// The system takes its own time, and the show may end first. Waiting on it must not be what
     /// keeps the page alive.
     @Test("A page released while the system is deciding is not held by the request")
@@ -216,6 +283,28 @@ struct OpenLinkActionHandlerTests {
 }
 
 // MARK: - Doubles
+
+/// Stands in for a controller in a presentation chain, and records what was presented from it.
+///
+/// Both sides are stubbed on purpose: `presentedViewController` is set by an actual presentation,
+/// and presenting for real drags a visible window and a transition into a unit test. What is
+/// checked here is which controller the sheet was offered to.
+@MainActor
+private final class PresentationSpy: UIViewController {
+
+    var stubbedPresented: UIViewController?
+
+    private(set) var presented: [UIViewController] = []
+
+    override var presentedViewController: UIViewController? { stubbedPresented }
+
+    override func present(_ viewControllerToPresent: UIViewController,
+                          animated: Bool,
+                          completion: (() -> Void)? = nil) {
+        presented.append(viewControllerToPresent)
+        completion?()
+    }
+}
 
 final class URLOpenerSpy: BridgeURLOpening {
 

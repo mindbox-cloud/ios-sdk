@@ -21,6 +21,10 @@ struct InAppFormData {
     let tags: [String: String]?
     var operation: (name: String, body: String)?
 
+    /// Direct-call params, merged flat into the page's start payload on top of the config's — whatever
+    /// is sent wins, service keys included. Opaque to the SDK: neither validated nor limited.
+    let extraParams: [String: JSONValue]?
+
     init(
         inAppId: String,
         isPriority: Bool,
@@ -30,7 +34,8 @@ struct InAppFormData {
         content: MindboxFormVariant,
         frequency: InappFrequency?,
         tags: [String: String]? = nil,
-        operation: (name: String, body: String)? = nil
+        operation: (name: String, body: String)? = nil,
+        extraParams: [String: JSONValue]? = nil
     ) {
         self.inAppId = inAppId
         self.isPriority = isPriority
@@ -41,6 +46,7 @@ struct InAppFormData {
         self.frequency = frequency
         self.tags = tags
         self.operation = operation
+        self.extraParams = extraParams
     }
 }
 

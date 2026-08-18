@@ -25,10 +25,9 @@ final class TrackVisitManager: TrackVisitManagerProtocol {
     private let databaseRepository: DatabaseRepositoryProtocol
     private let inappSessionManager: InappSessionManagerProtocol
 
-    /// When `true`, the next `trackDirect()` call will be skipped.
-    /// Set by `handlePush` / `handleUniversalLink` to prevent a duplicate
-    /// track-visit that would otherwise fire from the session handler.
-    private var skipNextDirectTrackVisit = false
+    /// Set by `handlePush` / `handleUniversalLink` so the session handler's next `trackDirect()`
+    /// does not duplicate the visit they already sent.
+    @Locked private var skipNextDirectTrackVisit = false
 
     init(
         databaseRepository: DatabaseRepositoryProtocol,
@@ -69,8 +68,7 @@ final class TrackVisitManager: TrackVisitManagerProtocol {
     }
 
     func trackDirect() throws {
-        if skipNextDirectTrackVisit {
-            skipNextDirectTrackVisit = false
+        if $skipNextDirectTrackVisit.exchange(false) {
             Logger.common(message: "Skipping trackDirect because push or universal link track visit already sent", level: .info, category: .visit)
             inappSessionManager.checkInappSession()
             return

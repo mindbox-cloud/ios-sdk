@@ -163,6 +163,20 @@ struct InAppWebViewPrewarmServiceTests {
         #expect(suite.service.borrowWarmWebView() === suite.spy)
     }
 
+    @Test("Our own blank page in flight does not refuse the next borrow")
+    func borrowAcceptsAnInstanceSettlingToOurOwnBlankPage() async throws {
+        let suite = try Self.init(cachedConfig: loadPrewarmTestConfig("InAppWebviewValid"))
+        suite.service.prewarmProcess()
+        try await suite.waitUntil(suite.spy.loadedHTMLCount == 2)
+
+        _ = suite.service.borrowWarmWebView()
+        suite.service.parkWarmWebView()
+        await suite.drainMainQueue()
+        suite.spy.stubbedIsLoading = true
+
+        #expect(suite.service.borrowWarmWebView() === suite.spy)
+    }
+
     @Test("Resource prewarm never navigates a borrowed instance")
     func resourcePrewarmSkippedAfterBorrow() async throws {
         let suite = try Self.init(cachedConfig: loadPrewarmTestConfig("InAppWebviewValid"))

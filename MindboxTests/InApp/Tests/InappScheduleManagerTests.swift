@@ -7,6 +7,7 @@
 //
 
 import Testing
+import MindboxLogger
 import QuartzCore
 import UIKit
 @testable import Mindbox
@@ -427,13 +428,153 @@ struct InappScheduleManagerTests {
         #expect(failureManagerMock.addFailureCalls.first?.details == "first-error")
     }
 
+    // MARK: - A show on request
+
+    private func makeSpiedManager(tracker: InAppMessagesTrackerSpyMock) -> InappScheduleManager {
+        InappScheduleManager(
+            presentationManager: presentationManagerMock,
+            presentationValidator: DI.injectOrFail(InAppPresentationValidatorProtocol.self),
+            trackingService: trackingServiceMock,
+            tracker: tracker,
+            failureManager: failureManagerMock
+        )
+    }
+
+    private func showNowAndAwaitMainQueue(_ manager: InappScheduleManager, _ inapp: InAppFormData) async {
+        manager.showInAppNow(inapp)
+        // showInAppNow takes two main-queue turns: close the active overlay, then present.
+        for _ in 0..<2 {
+            await withCheckedContinuation { continuation in
+                DispatchQueue.main.async { continuation.resume() }
+            }
+        }
+    }
+
+    @Test("An unlimited show on request sends the event but records nothing", .tags(.inAppSchedule))
+    func showInAppNow_unlimitedRecordsNothing() async {
+        let trackerSpy = InAppMessagesTrackerSpyMock()
+        let manager = makeSpiedManager(tracker: trackerSpy)
+        let inapp = createInAppFormData(id: "direct-1", isPriority: false, delayTime: nil, frequency: .unlimited)
+
+        await showNowAndAwaitMainQueue(manager, inapp)
+
+        #expect(presentationManagerMock.presentCallsCount == 1)
+        #expect(SessionTemporaryStorage.shared.isPresentingInAppMessage)
+
+        presentationManagerMock.receivedOnPresent?()
+        presentationManagerMock.receivedOnPresentationCompleted?()
+
+        #expect(trackerSpy.trackViewCallCount == 1)
+        #expect(trackerSpy.lastTrackedId == "direct-1")
+        #expect(trackingServiceMock.trackInAppShownCallCount == 0)
+        #expect(trackingServiceMock.saveInappStateChangeCallCount == 0)
+        #expect(!SessionTemporaryStorage.shared.isPresentingInAppMessage)
+    }
+
+    @Test("A non-unlimited show on request records like a trigger show", .tags(.inAppSchedule))
+    func showInAppNow_nonUnlimitedRecords() async {
+        let trackerSpy = InAppMessagesTrackerSpyMock()
+        let manager = makeSpiedManager(tracker: trackerSpy)
+        let inapp = createInAppFormData(id: "direct-once", isPriority: false, delayTime: nil)
+
+        await showNowAndAwaitMainQueue(manager, inapp)
+        presentationManagerMock.receivedOnPresent?()
+
+        #expect(trackingServiceMock.trackInAppShownCallCount == 1)
+        #expect(trackingServiceMock.saveInappStateChangeCallCount == 1)
+
+        presentationManagerMock.receivedOnPresentationCompleted?()
+        #expect(trackingServiceMock.saveInappStateChangeCallCount == 2)
+    }
+
+    @Test("An unlimited trigger show records nothing", .tags(.inAppSchedule))
+    func presentInapp_unlimitedRecordsNothing() {
+        let trackerSpy = InAppMessagesTrackerSpyMock()
+        let manager = makeSpiedManager(tracker: trackerSpy)
+        let inapp = createInAppFormData(id: "trigger-unlimited", isPriority: false, delayTime: nil, frequency: .unlimited)
+
+        manager.presentInapp(inapp, stopwatch: ForegroundStopwatch())
+        presentationManagerMock.receivedOnPresent?()
+        presentationManagerMock.receivedOnPresentationCompleted?()
+
+        #expect(trackerSpy.trackViewCallCount == 1)
+        #expect(trackingServiceMock.trackInAppShownCallCount == 0)
+        #expect(trackingServiceMock.saveInappStateChangeCallCount == 0)
+    }
+
+    @Test("A show on request sends the show and no targeting", .tags(.inAppSchedule))
+    func showInAppNow_sendsOnlyTheShow() async {
+        let trackerSpy = InAppMessagesTrackerSpyMock()
+        let manager = makeSpiedManager(tracker: trackerSpy)
+        let inapp = createInAppFormData(id: "direct-2", isPriority: false, delayTime: nil)
+
+        await showNowAndAwaitMainQueue(manager, inapp)
+
+        presentationManagerMock.receivedOnPresent?()
+
+        #expect(trackerSpy.trackViewCallCount == 1)
+        #expect(trackerSpy.trackTargetingCallCount == 0)
+    }
+
+    @Test("A show on request closes the overlay already on screen", .tags(.inAppSchedule))
+    func showInAppNow_closesTheActiveOverlay() async {
+        let trackerSpy = InAppMessagesTrackerSpyMock()
+        let manager = makeSpiedManager(tracker: trackerSpy)
+        let active = createInAppFormData(id: "snackbar-on-screen", isPriority: false, delayTime: nil)
+        let story = createInAppFormData(id: "tapped-story", isPriority: false, delayTime: nil)
+
+        manager.presentInapp(active, stopwatch: ForegroundStopwatch())
+        #expect(SessionTemporaryStorage.shared.isPresentingInAppMessage)
+
+        await showNowAndAwaitMainQueue(manager, story)
+
+        #expect(presentationManagerMock.dismissActiveCallsCount == 1)
+        #expect(presentationManagerMock.presentCallsCount == 2)
+        #expect(presentationManagerMock.receivedInAppUIModel?.inAppId == "tapped-story")
+        #expect(SessionTemporaryStorage.shared.isPresentingInAppMessage)
+    }
+
+    @Test("A trigger show still records the show, the event and the cooldown", .tags(.inAppSchedule))
+    func presentInapp_stillRecordsEverything() {
+        let trackerSpy = InAppMessagesTrackerSpyMock()
+        let manager = makeSpiedManager(tracker: trackerSpy)
+        let inapp = createInAppFormData(id: "trigger-1", isPriority: false, delayTime: nil)
+
+        manager.presentInapp(inapp, stopwatch: ForegroundStopwatch())
+        presentationManagerMock.receivedOnPresent?()
+
+        #expect(trackerSpy.trackViewCallCount == 1)
+        #expect(trackerSpy.trackTargetingCallCount == 0)
+        #expect(trackingServiceMock.trackInAppShownCallCount == 1)
+        #expect(trackingServiceMock.saveInappStateChangeCallCount == 1)
+
+        presentationManagerMock.receivedOnPresentationCompleted?()
+        #expect(trackingServiceMock.saveInappStateChangeCallCount == 2)
+    }
+
+    @Test("A show on request reports a presentation error", .tags(.inAppSchedule))
+    func showInAppNow_reportsAnError() async {
+        let trackerSpy = InAppMessagesTrackerSpyMock()
+        let manager = makeSpiedManager(tracker: trackerSpy)
+        let inapp = createInAppFormData(id: "direct-err", isPriority: false, delayTime: nil)
+
+        await showNowAndAwaitMainQueue(manager, inapp)
+        presentationManagerMock.receivedOnError?(.failed("no window"))
+
+        #expect(failureManagerMock.addFailureCallCount == 1)
+        #expect(failureManagerMock.sendFailuresCallCount == 1)
+        #expect(!SessionTemporaryStorage.shared.isPresentingInAppMessage)
+    }
+
     // MARK: - Helpers
 
-    private func createInAppFormData(id: String, isPriority: Bool, delayTime: String?, tags: [String: String]? = nil) -> InAppFormData {
+    private func createInAppFormData(id: String,
+                                     isPriority: Bool,
+                                     delayTime: String?,
+                                     frequency: InappFrequency = .once(OnceFrequency(kind: .session)),
+                                     tags: [String: String]? = nil) -> InAppFormData {
         let modalVariant = ModalFormVariant(content: createMockContent())
         let content: MindboxFormVariant = .modal(modalVariant)
-        let onceFrequency = OnceFrequency(kind: .session)
-        let frequency: InappFrequency = .once(onceFrequency)
 
         return InAppFormData(
             inAppId: id,
@@ -476,14 +617,20 @@ final class InappShowFailureManagerMock: InappShowFailureManagerProtocol {
         let tags: [String: String]?
     }
 
-    private(set) var addFailureCallCount = 0
-    private(set) var clearFailuresCallCount = 0
-    private(set) var sendFailuresCallCount = 0
-    private(set) var addFailureCalls: [AddFailureCall] = []
+    // @Locked: production calls these from its queues while the test reads from its own context.
+    @Locked private(set) var addFailureCallCount = 0
+    @Locked private(set) var clearFailuresCallCount = 0
+    @Locked private(set) var sendFailuresCallCount = 0
+    @Locked private(set) var addFailureCalls: [AddFailureCall] = []
+    @Locked private(set) var sentAtOnce: [AddFailureCall] = []
 
     func addFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?) {
         addFailureCallCount += 1
         addFailureCalls.append(AddFailureCall(inappId: inappId, reason: reason, details: details, tags: tags))
+    }
+
+    func sendFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?) {
+        sentAtOnce.append(AddFailureCall(inappId: inappId, reason: reason, details: details, tags: tags))
     }
 
     func clearFailures() {

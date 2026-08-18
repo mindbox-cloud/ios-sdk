@@ -12,9 +12,13 @@ import Foundation
 class InAppPresentationManagerMock: InAppPresentationManagerProtocol {
     var receivedInAppUIModel: InAppFormData?
     var presentCallsCount = 0
+    var dismissActiveCallsCount = 0
     var receivedOnPresent: (() -> Void)?
     var receivedOnPresentationCompleted: (() -> Void)?
     var receivedOnError: ((InAppPresentationError) -> Void)?
+
+    /// Like the real manager, `dismissActiveInApp` routes an outside dismissal through the show's own completion.
+    var hasActivePresentation = false
 
     func present(inAppFormData: InAppFormData,
                  onPresented: @escaping () -> Void,
@@ -26,5 +30,15 @@ class InAppPresentationManagerMock: InAppPresentationManagerProtocol {
         receivedOnPresent = onPresented
         receivedOnPresentationCompleted = onPresentationCompleted
         receivedOnError = onError
+        hasActivePresentation = true
+    }
+
+    func dismissActiveInApp() {
+        dismissActiveCallsCount += 1
+
+        guard hasActivePresentation else { return }
+
+        hasActivePresentation = false
+        receivedOnPresentationCompleted?()
     }
 }

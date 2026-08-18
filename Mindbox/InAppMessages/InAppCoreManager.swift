@@ -109,11 +109,15 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
         }
     }
     
+    /// `serialQueue` owns this state, and the caller sends the new session's `start` through the
+    /// same queue right after — the discard always lands first.
     func discardEvents() {
-        Logger.common(message: "[InappCoreManager] Discard expired events.")
-        isConfigurationReady = false
-        configManager.resetInappManager()
-        unhandledEvents = []
+        serialQueue.async {
+            Logger.common(message: "[InappCoreManager] Discard expired events.")
+            self.isConfigurationReady = false
+            self.configManager.resetInappManager()
+            self.unhandledEvents = []
+        }
     }
 
     // MARK: - Private
@@ -136,7 +140,13 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
             completion()
             return
         }
-        
+
+        // Push side of embedded blocks: the place registry re-resolves affected places with the
+        // operation. Posted after the gate above so an operation the config never mentions wakes nobody.
+        if let applicationEvent = event.applicationEvent {
+            NotificationCenter.default.post(name: .inAppOperationOccurred, object: applicationEvent)
+        }
+
         let triggerTimestamp = CACurrentMediaTime()
         
         self.configManager.handleInapps(event: event.applicationEvent) { inapp in
@@ -171,11 +181,15 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
         processNextEvent()
     }
     
+    /// `handleEvent` answers on the main thread, and the next iteration mutates `unhandledEvents`,
+    /// which `serialQueue` owns — hence the hop back.
     private func processNextEvent() {
         guard !unhandledEvents.isEmpty else { return }
         let event = unhandledEvents.removeFirst()
         handleEvent(event) {
-            self.processNextEvent()
+            self.serialQueue.async {
+                self.processNextEvent()
+            }
         }
     }
 }

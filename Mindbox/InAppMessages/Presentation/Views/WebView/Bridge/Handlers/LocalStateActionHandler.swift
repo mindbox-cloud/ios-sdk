@@ -22,10 +22,13 @@ final class LocalStateActionHandler: WebBridgeActionHandler {
     private lazy var storage: WebViewLocalStateStorageProtocol = makeStorage()
 
     private let makeStorage: () -> WebViewLocalStateStorageProtocol
+    private let webPageRegistry: MindboxWebPageRegistry
 
     init(makeStorage: @escaping () -> WebViewLocalStateStorageProtocol
-         = { DI.injectOrFail(WebViewLocalStateStorageProtocol.self) }) {
+         = { DI.injectOrFail(WebViewLocalStateStorageProtocol.self) },
+         webPageRegistry: MindboxWebPageRegistry = .shared) {
         self.makeStorage = makeStorage
+        self.webPageRegistry = webPageRegistry
     }
 
     func handle(_ message: BridgeMessage, host: WebBridgeHost) {
@@ -103,7 +106,10 @@ private extension LocalStateActionHandler {
             category: host.logCategory
         )
 
-        host.respond(to: message, payload: Self.payload(for: data, version: state.version))
+        let answer = Self.payload(for: data, version: state.version)
+        host.respond(to: message, payload: answer)
+
+        webPageRegistry.broadcast(.localStateChanged, payload: answer, excluding: host)
     }
 
     func initialize(_ message: BridgeMessage, host: WebBridgeHost) {

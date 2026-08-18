@@ -217,6 +217,7 @@ struct MindboxEmbeddedBlockTests {
                                    hasErrorView: Bool = false) -> EmbeddedBlockRepresentable {
         return EmbeddedBlockRepresentable(placeSystemName: "stories",
                                           height: 104,
+                                          timeout: nil,
                                           appearance: .constant(.placeholder),
                                           onLoad: nil,
                                           onFail: nil,

@@ -58,6 +58,9 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
     // True between borrow and park: `superview` alone can't tell (there is a window
     // between borrow and addSubview).
     private var isLentToShow = false
+    // True while the only navigation in flight is our own blank page — without telling it apart,
+    // every show after the first is refused: parking itself starts a navigation.
+    private var isSettlingToBlank = false
     private var memoryWarningObserver: NSObjectProtocol?
     // Retained here because navigationDelegate is weak; armed until the first borrow.
     private let prewarmNavigationPolicy = InAppWebViewPrewarmNavigationPolicy()
@@ -183,9 +186,9 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
         // half-committed document and its didFinish can fire before the page's module
         // scripts evaluate. Park it instead; the show creates a fresh WKWebView on the
         // same shared store (pays process spin-up, keeps the HTTP cache).
-        guard !webView.isLoading else {
+        guard !webView.isLoading || isSettlingToBlank else {
             webView.stopLoading()
-            webView.loadHTMLString(Self.blankPage, baseURL: nil)
+            loadBlank(on: webView)
             Logger.common(message: "[WebView] Prewarm: instance is mid-navigation at borrow — parking it, the show gets a fresh WebView",
                           level: .info, category: .webViewInAppMessages)
             return nil
@@ -194,7 +197,7 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
         // prewarm page so its JS can't compete with the show for bandwidth. The bridge's
         // staleness filter ignores both leftovers' callbacks.
         webView.stopLoading()
-        webView.loadHTMLString(Self.blankPage, baseURL: nil)
+        loadBlank(on: webView)
         webView.removeFromSuperview()
         isLentToShow = true
         return webView
@@ -219,7 +222,7 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
                 webView.configuration.userContentController.removeScriptMessageHandler(forName: Constants.WebViewBridgeJS.handlerName)
                 webView.configuration.userContentController.removeScriptMessageHandler(forName: Constants.WebViewHTTPErrorJS.handlerName)
             }
-            webView.loadHTMLString(Self.blankPage, baseURL: nil)
+            self.loadBlank(on: webView)
         }
     }
 
@@ -257,6 +260,7 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
             }
             if !hosts.isEmpty {
                 self.prewarmNavigationPolicy.allow(baseURL)
+                self.isSettlingToBlank = false
                 self.warmWebView?.loadHTMLString(InAppWebViewPrewarmPlanner.preconnectHTML(hosts: hosts), baseURL: baseURL)
                 Logger.common(message: "[WebView] Prewarm: preconnect to \(hosts.joined(separator: ",")) under \(baseURL.absoluteString)",
                               level: .info, category: .webViewInAppMessages)
@@ -288,9 +292,40 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
         healAttemptsUsed = 0
         healPurgeRemovedEntry = false
         isHealPurgeInFlight = false
-        warmWebView.loadHTMLString(html, baseURL: prewarmBaseURL)
+        loadContentPage(html, baseURL: prewarmBaseURL, on: warmWebView)
         Logger.common(message: "[WebView] Prewarm: content page under \(prewarmBaseURL.absoluteString), endpoint \(endpoint)",
                       level: .info, category: .webViewInAppMessages)
+    }
+
+    /// Every content-page load goes through here so the settle budget cannot be forgotten.
+    private func loadContentPage(_ html: String, baseURL: URL, on webView: WKWebView) {
+        isSettlingToBlank = false
+        webView.loadHTMLString(html, baseURL: baseURL)
+        settleContentPage(after: Self.contentPageSettleBudget)
+    }
+
+    /// A borrow refuses a mid-navigation instance, so a navigation nothing ever ends would leave
+    /// the warm instance unusable for the rest of the launch.
+    private func settleContentPage(after budget: TimeInterval) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + budget) { [weak self] in
+            guard let self, !self.hasBeenBorrowed, let warmWebView = self.warmWebView else { return }
+            guard warmWebView.isLoading else { return }
+
+            warmWebView.stopLoading()
+            self.loadBlank(on: warmWebView)
+            Logger.common(message: "[WebView] Prewarm: content page still loading after \(budget)s — settling the instance so a show can reuse it",
+                          level: .info, category: .webViewInAppMessages)
+        }
+    }
+
+    /// Long enough for a real page on a slow network, short enough that the instance is idle before a
+    /// first show can plausibly ask for it.
+    private static let contentPageSettleBudget: TimeInterval = 5
+
+    /// Every blank load goes through here so the "this navigation is ours" flag is never forgotten.
+    private func loadBlank(on webView: WKWebView) {
+        isSettlingToBlank = true
+        webView.loadHTMLString(Self.blankPage, baseURL: nil)
     }
 
     private func installHTTPErrorMonitor(on webView: WKWebView?) {
@@ -325,7 +360,7 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
             // release dropped it) while the purge was in flight — the prewarm must never
             // navigate a webview it no longer owns.
             guard !self.hasBeenBorrowed, let warmWebView = self.warmWebView else { return }
-            warmWebView.loadHTMLString(page.html, baseURL: page.baseURL)
+            self.loadContentPage(page.html, baseURL: page.baseURL, on: warmWebView)
         }
     }
 

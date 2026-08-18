@@ -634,6 +634,9 @@ public class Mindbox: NSObject {
         inappMessageEventSender.sendEventIfEnabled(operationSystemName, jsonString: jsonString)
     }
 
+    // Not dead: the internal test apps invoke both via `NSSelectorFromString` — `@objc` keeps them
+    // reachable while `private` keeps them out of the public API. A caller search will not find them.
+
     @objc
     private func resetShownInApps() {
         persistenceStorage?.shownDatesByInApp = [:]

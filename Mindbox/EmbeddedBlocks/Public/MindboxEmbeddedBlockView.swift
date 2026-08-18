@@ -24,11 +24,6 @@ import MindboxLogger
 /// block flow belongs to the SDK too: the container starts its content when it enters a window
 /// and stops it when it leaves. The host app observes the outcome through `delegate` and nothing
 /// else.
-///
-/// The container itself is a machine of four content states and one visible layer for each of
-/// them. Everything that could be moved out of it wholesale has been: showing the layers went to
-/// `EmbeddedBlockLayerHost`, the waiting budget together with its background pause to
-/// `EmbeddedBlockReadyTimeout`.
 public final class MindboxEmbeddedBlockView: UIView {
 
     // MARK: - Host API
@@ -41,9 +36,8 @@ public final class MindboxEmbeddedBlockView: UIView {
     /// delivers that outcome, so subscribing late cannot lose it.
     public weak var delegate: MindboxEmbeddedBlockViewDelegate? {
         didSet {
-            // The same delegate is not a new subscriber. The host routinely reassigns it on every
-            // reused cell, and answering that with an already heard outcome is not allowed: the
-            // host rebuilds its layout on the outcome, and the rebuild reassigns the delegate again.
+            // The same delegate is not a new subscriber: the host rebuilds its layout on the
+            // outcome, and the rebuild reassigns the delegate again — answering that would loop.
             guard delegate !== oldValue else { return }
 
             deliveredEvent = nil
@@ -137,11 +131,9 @@ public final class MindboxEmbeddedBlockView: UIView {
 
     private let contentProvider: EmbeddedBlockWebViewProvider
 
-    /// The height the host reserved for the block at creation. The container holds it while the
-    /// content is loading and shown, and drops to 0 when there is nothing to show.
     private let preferredHeight: CGFloat
 
-    private let timeout: EmbeddedBlockReadyTimeout
+    private let waitBudget: EmbeddedBlockWaitBudget
 
     private lazy var layers = EmbeddedBlockLayerHost(container: self)
 
@@ -186,15 +178,11 @@ public final class MindboxEmbeddedBlockView: UIView {
     /// switch needs to know its own position.
     private var isContentRunning = false
 
-    /// There are two public outcomes: shown or not shown. To the host "empty" is the same non-show
-    /// as a failure; the difference lives only in the container (an empty block shows no `errorView`).
     private enum BlockEvent {
         case loaded
         case failed
     }
 
-    /// The last event handed to the current delegate — keeps the same outcome from being reported
-    /// twice, for instance when restarted content fails again.
     private var deliveredEvent: BlockEvent?
 
     private var isDeliveryScheduled = false
@@ -202,57 +190,77 @@ public final class MindboxEmbeddedBlockView: UIView {
     // MARK: - Life cycle
 
     /// - Parameters:
-    ///   - placeSystemName: The system name of the place from the admin panel.
+    ///   - placeSystemName: The place system name from the admin panel.
     ///   - height: The height the block occupies while loading and shown. Reserving it is the
     ///     host's job and there is no default: a height of 0 or less leaves the block invisible
     ///     whatever its content turns out to be, so the SDK reports it as an integration error.
-    public convenience init(placeSystemName: String, height: CGFloat) {
+    ///   - timeout: How long the block waits to learn what it shows — the config has to
+    ///     arrive and the selection has to run — before collapsing as empty, in seconds. `nil`
+    ///     means the SDK default of 30. A late answer still expands the block. The separate budget
+    ///     a loaded page gets to render itself is not affected.
+    public convenience init(placeSystemName: String, height: CGFloat, timeout: TimeInterval? = nil) {
         self.init(placeSystemName: placeSystemName,
                   height: height,
-                  contentProvider: DI.injectOrFail(EmbeddedBlockContentProviderMaking.self).makeProvider(id: placeSystemName))
+                  contentProvider: DI.injectOrFail(EmbeddedBlockContentProviderMaking.self).makeProvider(placeSystemName: placeSystemName),
+                  timeout: timeout)
     }
 
     /// Blocks are not created from storyboards: the place system name and the height are required
-    /// and have no sensible defaults. Create the view in code with `init(placeSystemName:height:)`.
+    /// and have no sensible defaults.
     @available(*, unavailable, message: "Use init(placeSystemName:height:) instead")
     public required init?(coder: NSCoder) {
         return nil
     }
 
-    /// - Parameter timeout: The waiting budget as a whole, not just its duration: the clock, the
-    ///   scheduler, and the background subscription all live inside it, and swapping them one by
-    ///   one through the container would mean threading three parameters through it just for tests.
     init(placeSystemName: String,
          height: CGFloat,
          contentProvider: EmbeddedBlockWebViewProvider,
-         timeout: EmbeddedBlockReadyTimeout? = nil) {
+         timeout: TimeInterval? = nil,
+         waitBudget: EmbeddedBlockWaitBudget? = nil) {
         self.placeSystemName = placeSystemName
         self.preferredHeight = height
         self.contentProvider = contentProvider
-        self.timeout = timeout ?? EmbeddedBlockReadyTimeout(
-            blockId: placeSystemName,
-            duration: TimeInterval(Constants.EmbeddedBlock.readyTimeoutSeconds)
+        let answerTimeout = Self.sanitizedTimeout(timeout, placeSystemName: placeSystemName)
+        self.waitBudget = waitBudget ?? EmbeddedBlockWaitBudget(
+            placeSystemName: placeSystemName,
+            duration: { [weak contentProvider] in
+                contentProvider?.isAwaitingAnswer == false
+                    ? TimeInterval(Constants.EmbeddedBlock.readyTimeoutSeconds)
+                    : answerTimeout
+            }
         )
         super.init(frame: .zero)
         warnIfHeightReservesNothing()
         setUpContainer()
     }
 
-    /// The host sets the block height, and zero means not "the block collapsed" but "no space was
-    /// reserved for it": the block runs its whole cycle, hands the host its events and stays
-    /// invisible. There are no symptoms at all — the block is simply not visible — and the cause is
-    /// the most common one possible, so the SDK says it out loud.
+    /// A non-positive timeout would collapse every block before the config had a chance, so it is
+    /// reported and replaced with the default rather than obeyed.
+    static func sanitizedTimeout(_ timeout: TimeInterval?, placeSystemName: String) -> TimeInterval {
+        guard let timeout else {
+            return TimeInterval(Constants.EmbeddedBlock.answerTimeoutSeconds)
+        }
+
+        guard timeout > 0 else {
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' was given timeout \(timeout): it must be positive, using the default \(Constants.EmbeddedBlock.answerTimeoutSeconds) s",
+                          level: .error, category: .embeddedBlocks)
+            return TimeInterval(Constants.EmbeddedBlock.answerTimeoutSeconds)
+        }
+
+        return timeout
+    }
+
+    /// Zero height is not a collapse: the block runs its whole cycle, it is simply never visible.
     private func warnIfHeightReservesNothing() {
         guard preferredHeight <= 0 else { return }
 
-        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' was created with height \(preferredHeight): it reserves no space and stays invisible even when its content loads. "
-                      + "Pass the height the block should occupy.",
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' was created with height \(preferredHeight): it reserves no space and stays invisible whatever loads. Pass the height it should occupy.",
                       level: .error,
                       category: .embeddedBlocks)
     }
 
     deinit {
-        timeout.pause()
+        waitBudget.pause()
         contentProvider.stop()
     }
 
@@ -264,11 +272,20 @@ public final class MindboxEmbeddedBlockView: UIView {
             self?.state = state
         }
 
-        timeout.isNeeded = { [weak self] in
+        // The wait changes its nature once content arrives: the budget starts over with the page's
+        // own — shorter — patience.
+        contentProvider.onContentArrived = { [weak self] in
+            guard let self else { return }
+
+            self.waitBudget.reset()
+            self.waitBudget.armIfNeeded()
+        }
+
+        waitBudget.isNeeded = { [weak self] in
             guard let self else { return false }
             return self.isEffectivelyVisible && self.state == .loading
         }
-        timeout.onExpire = { [weak self] in
+        waitBudget.onExpire = { [weak self] in
             self?.handleTimeout()
         }
 
@@ -322,23 +339,19 @@ public final class MindboxEmbeddedBlockView: UIView {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' \(reason), starting content",
                           category: .embeddedBlocks)
             contentProvider.start()
-            timeout.armIfNeeded()
+            waitBudget.armIfNeeded()
         } else {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' \(reason), stopping content",
                           category: .embeddedBlocks)
             // A pause, not a reset: nobody waits for a block that is not on screen, but that does
             // not cancel an attempt already started — once back, it counts down its remainder.
-            timeout.pause()
+            waitBudget.pause()
             contentProvider.stop()
         }
     }
 
-    /// Reloads the block: the content starts loading from scratch, the address is requested anew
-    /// bypassing the cache, the block returns to loading with its placeholder and a fresh timeout.
-    ///
     /// Internal and without a public wrapper: automatic reloads — on failure, on returning to the
-    /// app — will be built on this method, and there is no reason yet for the host to decide when
-    /// to refresh the block.
+    /// app — will be built on this method.
     func reload() {
         guard isEffectivelyVisible else {
             // Content lives only while somebody is looking at the block; reloading an invisible
@@ -349,33 +362,35 @@ public final class MindboxEmbeddedBlockView: UIView {
         }
 
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' reload requested", category: .embeddedBlocks)
-        timeout.reset()
-        // A new attempt means a new outcome: the host must hear it in full, even if it matches
-        // the previous one.
+        waitBudget.reset()
+        // A new attempt means a new outcome: the host must hear it even if it matches the previous one.
         deliveredEvent = nil
         // And a new attempt is entitled to the full cycle again: a reload is the host's explicit
         // consent to it, placeholder included, unlike the block's silent return to a window.
         hasSettled = false
         contentProvider.reload()
-        timeout.armIfNeeded()
+        waitBudget.armIfNeeded()
     }
 
+    /// Running out of patience is a failure only for a page that was built and stayed silent; a
+    /// block that never learned what to show has nothing to show — an outcome, not a breakage.
     private func handleTimeout() {
-        // Stop first: the provider must not resurrect content the container already gave up on.
+        let hadContentToLoad = !contentProvider.isAwaitingAnswer
+
+        contentProvider.reportPageTimedOut()
+        // The provider must not resurrect content the container has already given up on.
         contentProvider.stop()
-        state = .failed
+        state = hadContentToLoad ? .failed : .empty
     }
 
     // MARK: - Layers
 
-    /// The waiting budget lives per attempt, not per state: an ongoing load counts down its
-    /// remainder, while everything else — a known outcome or a load started anew — resets the count.
-    /// Arming it again is up to whoever knows whether the block is awaited: entering a window and
-    /// returning from the background.
+    /// The budget lives per attempt: an ongoing load counts down its remainder, anything else
+    /// resets the count. Arming again is up to whoever knows the block is awaited.
     private func updateTimeout(from previous: EmbeddedBlockState) {
         guard state != .loading || previous != .loading else { return }
 
-        timeout.reset()
+        waitBudget.reset()
     }
 
     private func apply(_ state: EmbeddedBlockState) {
@@ -413,17 +428,11 @@ public final class MindboxEmbeddedBlockView: UIView {
         }
     }
 
-    /// A placeholder swap takes effect immediately, but only while the placeholder is what the
-    /// container shows — in any other state the new view is simply remembered for the next load.
     private func refreshPlaceholder() {
         guard shownAppearance == .placeholder else { return }
         layers.show(view(for: .placeholder))
     }
 
-    /// Swapping a shown error screen takes effect immediately, but a collapsed block is not
-    /// reopened retroactively: the host layout already reclaimed the space, and expanding it out
-    /// of nowhere would make the layout jump. The new view is remembered for the next load. In
-    /// any other state the view is simply remembered too.
     private func refreshErrorView() {
         guard state == .failed, shownAppearance == .error else { return }
         apply(state)
@@ -431,8 +440,8 @@ public final class MindboxEmbeddedBlockView: UIView {
 
     // MARK: - Host events
 
-    /// Events are handed over on the next main-queue turn: the state can flip in the middle of a
-    /// layout pass, and re-entering host code from there is a good way to break the host's layout.
+    /// Next main-queue turn: the state can flip mid-layout-pass, and re-entering host code from
+    /// there breaks the host's layout.
     private func scheduleDelivery() {
         guard !isDeliveryScheduled else { return }
 

@@ -14,12 +14,13 @@ import MindboxLogger
 ///
 /// Everything a handler could want from a real page is inert here: these suites are about what
 /// a handler does with a message, not about any particular surface.
-final class HostSpy: WebBridgeHost {
+class HostSpy: WebBridgeHost {
 
     var contentId = "test-content-id"
     var logCategory: LogCategory = .webViewInAppMessages
     var tags: [String: String]?
-    var presentingViewController: UIViewController? { nil }
+    /// A page that owns no controller unless a test hands it one.
+    var presentingViewController: UIViewController?
     var isUserPresent = true
 
     /// What this page answers `ready` with. A plain stand-in: composing the real payload is

@@ -7,64 +7,274 @@
 //
 
 import UIKit
+import WebKit
 @_spi(Internal) @testable import Mindbox
 
 extension EmbeddedBlockWebContent {
 
-    static let stub = EmbeddedBlockWebContent(url: URL(string: "https://mindbox.ru/block.html")!)
+    /// `unlimited`, the frequency blocks arrive with by contract — so the default block writes no show.
+    static let stub = EmbeddedBlockWebContent(inAppId: "block-inapp-id",
+                                              baseUrl: "https://inapp.local/stories",
+                                              contentUrl: "https://mindbox.ru/block.html",
+                                              frequency: .unlimited,
+                                              tags: ["templateType": "Embedded"],
+                                              params: [:])
 
-    static let other = EmbeddedBlockWebContent(url: URL(string: "https://mindbox.ru/another-block.html")!)
+    static let other = EmbeddedBlockWebContent(inAppId: "other-inapp-id",
+                                               baseUrl: "https://inapp.local/stories",
+                                               contentUrl: "https://mindbox.ru/another-block.html",
+                                               frequency: .unlimited,
+                                               tags: nil,
+                                               params: [:])
+
+    static func counted(_ frequency: InappFrequency = .once(OnceFrequency(kind: .lifetime))) -> EmbeddedBlockWebContent {
+        EmbeddedBlockWebContent(inAppId: stub.inAppId,
+                                baseUrl: stub.baseUrl,
+                                contentUrl: stub.contentUrl,
+                                frequency: frequency,
+                                tags: stub.tags,
+                                params: [:])
+    }
+}
+
+final class EmbeddedBlockShowRecorderMock {
+
+    private(set) var recorded: [String] = []
+
+    func record(_ inAppId: String) {
+        recorded.append(inAppId)
+    }
+}
+
+/// Unlike the recorder above: the backend hears every show, the history only the frequencies that count them.
+final class EmbeddedBlockShowReporterMock {
+
+    private(set) var reported: [(inAppId: String, timeToDisplay: String, tags: [String: String]?)] = []
+
+    var inAppIds: [String] { reported.map(\.inAppId) }
+
+    func report(_ content: EmbeddedBlockWebContent, _ timeToDisplay: String) {
+        reported.append((content.inAppId, timeToDisplay, content.tags))
+    }
+}
+
+final class EmbeddedBlockFailureReporterMock {
+
+    private(set) var reported: [(inAppId: String, reason: InAppShowFailureReason, details: String, tags: [String: String]?)] = []
+
+    var reasons: [InAppShowFailureReason] { reported.map(\.reason) }
+
+    func report(_ content: EmbeddedBlockWebContent, _ reason: InAppShowFailureReason, _ details: String) {
+        reported.append((content.inAppId, reason, details, content.tags))
+    }
+}
+
+extension BridgeMessage {
+
+    /// The envelope carries the payload as a JSON string — objects built here would skip the parsing the real path does.
+    static func pageRequest(_ action: Action, _ payload: [String: JSONValue] = [:]) -> BridgeMessage {
+        let json = (try? JSONEncoder().encode(payload)).flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
+        return BridgeMessage(type: .request, action: action, payload: .string(json))
+    }
 }
 
 /// A page without WebKit: tests decide what it tells the native side and when.
+/// The envelopes a test sends go through the real action handlers — only WebKit is taken out.
 final class EmbeddedBlockPageMock: EmbeddedBlockPageHosting {
 
     let view = UIView()
 
     var onContentRendered: ((Int) -> Void)?
 
-    var onLoadFailure: (() -> Void)?
+    var onUnreadableContentReport: (() -> Void)?
 
-    var onLoadFinish: (() -> Void)?
+    var onFeedQuestion: (([String], @escaping ([String]) -> Void) -> Void)?
+
+    var onShowInAppRequest: ((String, [String: JSONValue]) -> Void)?
+
+    var onDataPushConfirmed: (() -> Void)?
+
+    var onLoadFailure: (() -> Void)?
 
     var isUserPresent = true
 
     var loadCount = 0
-    var reloadCount = 0
     var cancelCount = 0
+
+    /// `cancel()` closes the real web layer for good; modelled, or a test about a stopped page would pass either way.
+    private(set) var isClosed = false
+
+    fileprivate(set) var responses: [(action: String, payload: JSONValue)] = []
+    fileprivate(set) var refusals: [(action: String, error: String)] = []
+    private(set) var initDataPushes: [[String: JSONValue]] = []
+
+    private lazy var host = EmbeddedBlockPageMockHost(page: self)
+    private lazy var registry = WebBridgeActionRegistry(handlers: [
+        ContentRenderedActionHandler(),
+        CheckInappsTargetingActionHandler(),
+        ShowInAppActionHandler()
+    ])
 
     func load() {
         loadCount += 1
     }
 
-    func reload() {
-        reloadCount += 1
-    }
-
     func cancel() {
         cancelCount += 1
+        isClosed = true
     }
 
-    /// The page reporting what it rendered — the one thing the provider listens for.
-    func renderContent(count: Int) {
-        onContentRendered?(count)
+    func sendInitData(params: [String: JSONValue]) {
+        guard !isClosed else { return }
+
+        initDataPushes.append(params)
+    }
+
+    func send(_ action: BridgeMessage.Action, _ payload: [String: JSONValue] = [:]) {
+        registry.handle(.pageRequest(action, payload), host: host)
     }
 
     func failLoad() {
         onLoadFailure?()
     }
 
-    func finishLoad() {
-        onLoadFinish?()
+    func reportRendered(_ count: Int) {
+        send(.contentRendered, ["count": .int(count)])
+    }
+
+    func reportRenderedWithoutCount() {
+        send(.contentRendered)
+    }
+
+    /// On the real page the `initDataUpdated` response is caught before the registry; here that seam is the closure itself.
+    func confirmInitData() {
+        onDataPushConfirmed?()
     }
 }
 
-final class EmbeddedBlockReadinessOverridesMock: EmbeddedBlockReadinessOverriding {
+private final class EmbeddedBlockPageMockHost: WebBridgeHost, WebBridgeContentHosting, WebBridgeFeedHosting {
 
-    var treatsLoadedPageAsReady: Bool
+    unowned let page: EmbeddedBlockPageMock
 
-    init(treatsLoadedPageAsReady: Bool = false) {
-        self.treatsLoadedPageAsReady = treatsLoadedPageAsReady
+    init(page: EmbeddedBlockPageMock) {
+        self.page = page
+    }
+
+    var contentId: String { "mock-page" }
+
+    var logCategory: LogCategory { .embeddedBlocks }
+
+    var tags: [String: String]? { nil }
+
+    var presentingViewController: UIViewController? { nil }
+
+    var isUserPresent: Bool { page.isUserPresent }
+
+    func send(_ message: BridgeMessage) {
+        switch message.type {
+        case .response:
+            page.responses.append((message.action, message.payload ?? .null))
+        case .error:
+            let reason: String
+            if case .object(let object)? = message.payload, case .string(let text)? = object["error"] {
+                reason = text
+            } else {
+                reason = ""
+            }
+            page.refusals.append((message.action, reason))
+        case .request:
+            break
+        }
+    }
+
+    func makeStartPayload() -> JSONValue {
+        .string("{}")
+    }
+
+    func bridgeDidRenderContent(count: Int) {
+        page.onContentRendered?(count)
+    }
+
+    func bridgeDidReportUnreadableContent() {
+        page.onUnreadableContentReport?()
+    }
+
+    func bridgeDidAskRenderableInapps(_ ids: [String], completion: @escaping ([String]) -> Void) {
+        page.onFeedQuestion?(ids, completion)
+    }
+
+    func bridgeDidRequestShowInApp(id: String, params: [String: JSONValue]) {
+        page.onShowInAppRequest?(id, params)
+    }
+}
+
+/// Not main-actor isolated because the protocol is not; the main-actor tests keep the web view on the main thread.
+final class SharedWebLayerMock: InappWebViewFacadeProtocol {
+
+    let webView = WKWebView()
+
+    private(set) var sentMessages: [BridgeMessage] = []
+    private(set) var loads: [(baseUrl: String, contentUrl: String)] = []
+    private(set) var initDataPushes: [[String: JSONValue]] = []
+
+    private(set) weak var messageDelegate: WebBridgeMessageDelegate?
+    private(set) weak var navigationDelegate: WebBridgeNavigationDelegate?
+
+    private var onLoadFailure: (() -> Void)?
+
+    var sentActions: [String] { sentMessages.map(\.action) }
+
+    func makeView() -> UIView {
+        webView
+    }
+
+    func loadHTML(baseUrl: String, contentUrl: String, onFailure: @escaping () -> Void) {
+        loads.append((baseUrl, contentUrl))
+        onLoadFailure = onFailure
+    }
+
+    func failLoad() {
+        onLoadFailure?()
+    }
+
+    func applyViewSettings(scrollViewDelegate: UIScrollViewDelegate?) {}
+
+    func cleanWebView() {}
+
+    private(set) var startPayloadRequests = 0
+
+    func makeStartPayload() -> JSONValue {
+        startPayloadRequests += 1
+        return .string("{}")
+    }
+
+    func sendInitDataUpdated(params: [String: JSONValue]) {
+        initDataPushes.append(params)
+    }
+
+    private(set) var cacheBypassingRetries: [String?] = []
+
+    func retryContentLoadBypassingCache(failedURL: String?, onPurgeOutcome: @escaping (_ didRemoveAnything: Bool) -> Void) {
+        cacheBypassingRetries.append(failedURL)
+        onPurgeOutcome(true)
+    }
+
+    func releaseRetainedContent() {}
+
+    func sendToJS(_ message: BridgeMessage) {
+        sentMessages.append(message)
+    }
+
+    func evaluateJavaScript(_ script: String, completion: @escaping (Result<Any?, Error>) -> Void) {
+        completion(.success(nil))
+    }
+
+    func setBridgeMessageDelegate(_ delegate: WebBridgeMessageDelegate?) {
+        messageDelegate = delegate
+    }
+
+    func setNavigationDelegate(_ delegate: WebBridgeNavigationDelegate?) {
+        navigationDelegate = delegate
     }
 }
 
@@ -73,12 +283,10 @@ final class EmbeddedBlockPageFactoryMock {
 
     private(set) var pages: [EmbeddedBlockPageMock] = []
     private(set) var contents: [EmbeddedBlockWebContent] = []
-    private(set) var ids: [String] = []
 
     var page: EmbeddedBlockPageMock? { pages.last }
 
-    func make(_ id: String, _ content: EmbeddedBlockWebContent) -> EmbeddedBlockPageHosting {
-        ids.append(id)
+    func make(_ content: EmbeddedBlockWebContent) -> EmbeddedBlockPageHosting {
         contents.append(content)
         let page = EmbeddedBlockPageMock()
         pages.append(page)
@@ -94,10 +302,11 @@ final class EmbeddedBlockResolverMock: EmbeddedBlockResolving {
     /// that lands after the block was stopped or reloaded is checked.
     var isDeferred = false
 
-    private(set) var resolvedIds: [String] = []
-    private(set) var forceRefreshHistory: [Bool] = []
+    private(set) var resolvedPlaces: [String] = []
 
-    var resolveCount: Int { resolvedIds.count }
+    private(set) var triggers: [ApplicationEvent?] = []
+
+    var resolveCount: Int { resolvedPlaces.count }
 
     private var pending: [(EmbeddedBlockResolution) -> Void] = []
 
@@ -105,9 +314,11 @@ final class EmbeddedBlockResolverMock: EmbeddedBlockResolving {
         self.resolution = resolution
     }
 
-    func resolve(_ id: String, forceRefresh: Bool, completion: @escaping (EmbeddedBlockResolution) -> Void) {
-        resolvedIds.append(id)
-        forceRefreshHistory.append(forceRefresh)
+    func resolve(_ place: String,
+                 trigger: ApplicationEvent?,
+                 completion: @escaping (EmbeddedBlockResolution) -> Void) {
+        resolvedPlaces.append(place)
+        triggers.append(trigger)
 
         if isDeferred {
             pending.append(completion)
@@ -120,6 +331,46 @@ final class EmbeddedBlockResolverMock: EmbeddedBlockResolving {
         let completions = pending
         pending = []
         completions.forEach { $0(resolution) }
+    }
+}
+
+final class EmbeddedBlockFeedServiceMock: EmbeddedBlockFeedServing {
+
+    var allowed: [String] = []
+
+    var isDeferred = false
+
+    private(set) var askedIds: [[String]] = []
+    private(set) var shown: [(id: String, params: [String: JSONValue])] = []
+
+    private var pending: [(FeedAnswer) -> Void] = []
+
+    private(set) var vouchCount = 0
+
+    func showInapp(id: String, params: [String: JSONValue]) {
+        shown.append((id, params))
+    }
+
+    func renderableInappIds(among ids: [String], completion: @escaping (FeedAnswer) -> Void) {
+        askedIds.append(ids)
+
+        if isDeferred {
+            pending.append(completion)
+        } else {
+            completion(answer)
+        }
+    }
+
+    func flush() {
+        let completions = pending
+        pending = []
+        completions.forEach { $0(answer) }
+    }
+
+    private var answer: FeedAnswer {
+        FeedAnswer(inappIds: allowed) { [weak self] in
+            self?.vouchCount += 1
+        }
     }
 }
 
@@ -165,7 +416,9 @@ final class TestScheduler {
 
 /// The waiting budget with a substituted clock, scheduler and notification center — everything
 /// that makes it different from the real one, gathered in one place.
-final class EmbeddedBlockTimeoutBed {
+final class EmbeddedBlockWaitBudgetBed {
+
+    let duration: TimeInterval
 
     let clock: TestClock
     let scheduler: TestScheduler
@@ -173,17 +426,18 @@ final class EmbeddedBlockTimeoutBed {
     /// One per bed: the background and the return from it must reach only this budget.
     let center: NotificationCenter
 
-    let timeout: EmbeddedBlockReadyTimeout
+    let budget: EmbeddedBlockWaitBudget
 
-    init(blockId: String = "block-id", duration: TimeInterval = 5) {
+    init(placeSystemName: String = "block-id", duration: TimeInterval = 5) {
+        self.duration = duration
         let clock = TestClock()
         let scheduler = TestScheduler()
         let center = NotificationCenter()
         self.clock = clock
         self.scheduler = scheduler
         self.center = center
-        timeout = EmbeddedBlockReadyTimeout(blockId: blockId,
-                                            duration: duration,
+        budget = EmbeddedBlockWaitBudget(placeSystemName: placeSystemName,
+                                            duration: { duration },
                                             now: { clock.now },
                                             notificationCenter: center,
                                             schedule: { scheduler.schedule($0, $1) })
@@ -198,32 +452,117 @@ final class EmbeddedBlockTimeoutBed {
     }
 }
 
+final class EmbeddedPlacesStub {
+    /// `nil` — no config seen (gate open); a place maps to the operations its in-apps listen to, an empty set wakes nothing.
+    var places: [String: Set<String>]?
+
+    var isDeferred = false
+
+    private var pending: [([String: Set<String>]?) -> Void] = []
+
+    func fetch(_ completion: @escaping ([String: Set<String>]?) -> Void) {
+        if isDeferred {
+            pending.append(completion)
+        } else {
+            completion(places)
+        }
+    }
+
+    func flush() {
+        let completions = pending
+        pending = []
+        completions.forEach { $0(places) }
+    }
+}
+
+final class EmbeddedBlockAckSchedulerMock {
+
+    private(set) var scheduled: [(delay: TimeInterval, work: DispatchWorkItem)] = []
+
+    func schedule(_ delay: TimeInterval, _ work: DispatchWorkItem) {
+        scheduled.append((delay, work))
+    }
+
+    func fire() {
+        guard let last = scheduled.last, !last.work.isCancelled else { return }
+
+        last.work.perform()
+    }
+}
+
 /// The provider with all dependencies substituted — the shared rig for the provider and container
-/// tests. The container is tested through a real provider: the single seam inside the block is the
-/// page, and there is nothing else to substitute.
+/// tests. The container runs through a real provider, the provider through a real place registry.
 final class EmbeddedBlockTestBed {
 
     let resolver: EmbeddedBlockResolverMock
-    let readinessOverrides: EmbeddedBlockReadinessOverridesMock
+    let feed: EmbeddedBlockFeedServiceMock
     let pageFactory: EmbeddedBlockPageFactoryMock
     let provider: EmbeddedBlockWebViewProvider
+    let showRecorder: EmbeddedBlockShowRecorderMock
+    let showReporter: EmbeddedBlockShowReporterMock
+    let failureReporter: EmbeddedBlockFailureReporterMock
+    let ackScheduler: EmbeddedBlockAckSchedulerMock
+
+    /// One per bed: a new config must reach only this provider.
+    let center: NotificationCenter
 
     var page: EmbeddedBlockPageMock? { pageFactory.page }
 
-    init(id: String = "block-id",
-         resolution: EmbeddedBlockResolution = .content(.stub),
-         treatsLoadedPageAsReady: Bool = false) {
-        let resolver = EmbeddedBlockResolverMock(resolution: resolution)
-        let readinessOverrides = EmbeddedBlockReadinessOverridesMock(treatsLoadedPageAsReady: treatsLoadedPageAsReady)
-        let pageFactory = EmbeddedBlockPageFactoryMock()
+    init(placeSystemName: String = "block-id",
+         resolution: EmbeddedBlockResolution = .content(.stub)) {
+        // The show-event dedup lives on the shared session singleton — reset, or beds would see each other's shows.
+        SessionTemporaryStorage.shared.blockShowsReportedInSession = []
 
+        let resolver = EmbeddedBlockResolverMock(resolution: resolution)
+        let feed = EmbeddedBlockFeedServiceMock()
+        let pageFactory = EmbeddedBlockPageFactoryMock()
+        let embeddedPlaces = EmbeddedPlacesStub()
+        let center = NotificationCenter()
+        let showRecorder = EmbeddedBlockShowRecorderMock()
+        let showReporter = EmbeddedBlockShowReporterMock()
+        let failureReporter = EmbeddedBlockFailureReporterMock()
+        let ackScheduler = EmbeddedBlockAckSchedulerMock()
+        let registry = EmbeddedBlockPlaceRegistry(resolver: resolver,
+                                                  notificationCenter: center,
+                                                  fetchEmbeddedPlaces: { embeddedPlaces.fetch($0) })
+
+        self.showRecorder = showRecorder
+        self.showReporter = showReporter
+        self.ackScheduler = ackScheduler
+        self.failureReporter = failureReporter
+        self.center = center
         self.resolver = resolver
-        self.readinessOverrides = readinessOverrides
+        self.feed = feed
         self.pageFactory = pageFactory
-        self.provider = EmbeddedBlockWebViewProvider(id: id,
-                                                     resolver: resolver,
-                                                     readinessOverrides: readinessOverrides,
-                                                     makePage: { pageFactory.make($0, $1) })
+        self.provider = EmbeddedBlockWebViewProvider(placeSystemName: placeSystemName,
+                                                     registry: registry,
+                                                     feed: feed,
+                                                     makePage: { pageFactory.make($0) },
+                                                     recordShow: { showRecorder.record($0) },
+                                                     reportShow: { showReporter.report($0, $1) },
+                                                     reportFailure: { failureReporter.report($0, $1, $2) },
+                                                     scheduleAckTimeout: { ackScheduler.schedule($0, $1) })
+    }
+
+    func announceNewConfig() {
+        center.post(name: .mobileConfigDownloaded, object: nil)
+    }
+
+    func deliverSamePageWithNewData(_ marker: String = "fresh") {
+        let fresh = EmbeddedBlockWebContent(inAppId: EmbeddedBlockWebContent.stub.inAppId,
+                                            baseUrl: EmbeddedBlockWebContent.stub.baseUrl,
+                                            contentUrl: EmbeddedBlockWebContent.stub.contentUrl,
+                                            frequency: EmbeddedBlockWebContent.stub.frequency,
+                                            tags: EmbeddedBlockWebContent.stub.tags,
+                                            params: [marker: .bool(true)])
+        resolver.resolution = .content(fresh)
+        announceNewConfig()
+    }
+
+    func announceOperation(_ name: String = "custom.operation") -> ApplicationEvent {
+        let event = ApplicationEvent(name: name, model: nil)
+        center.post(name: .inAppOperationOccurred, object: event)
+        return event
     }
 }
 
@@ -257,5 +596,12 @@ final class EmbeddedBlockViewDelegateMock: MindboxEmbeddedBlockViewDelegate {
 
     func mindboxEmbeddedBlockViewDidFail(_ blockView: MindboxEmbeddedBlockView) {
         events.append(.failed)
+    }
+}
+
+extension EmbeddedBlockResolving {
+
+    func resolve(_ place: String, completion: @escaping (EmbeddedBlockResolution) -> Void) {
+        resolve(place, trigger: nil, completion: completion)
     }
 }

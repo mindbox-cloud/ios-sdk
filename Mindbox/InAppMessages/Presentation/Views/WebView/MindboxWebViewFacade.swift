@@ -18,6 +18,11 @@ public protocol InappWebViewFacadeProtocol: AnyObject {
     func cleanWebView()
 
     func makeStartPayload() -> JSONValue
+
+    /// Pushes the start payload again, unprompted, after the config behind this page changed.
+    /// `params` replace the ones the page was created with — the config owns that part of the payload.
+    func sendInitDataUpdated(params: [String: JSONValue])
+
     func sendToJS(_ message: BridgeMessage)
     func evaluateJavaScript(_ script: String, completion: @escaping (Result<Any?, Error>) -> Void)
     func setBridgeMessageDelegate(_ delegate: WebBridgeMessageDelegate?)
@@ -27,35 +32,18 @@ public protocol InappWebViewFacadeProtocol: AnyObject {
 }
 
 @_spi(Internal)
-public extension InappWebViewFacadeProtocol {
-    // Defaults so existing conformers (mocks, test apps) keep compiling.
-    func retryContentLoadBypassingCache(failedURL: String?, onPurgeOutcome: @escaping (_ didRemoveAnything: Bool) -> Void) {}
-    func releaseRetainedContent() {}
-}
-
-@_spi(Internal)
-public protocol MindboxInternalWebViewFacadeProtocol: InappWebViewFacadeProtocol {
-    func reloadWebView()
-    func cleanWebView()
-
-    /// Test-only hook used by internal test apps to observe raw incoming `WKScriptMessage` objects.
-    ///
-    /// This is meant purely for visual/debug purposes (e.g. to display the unparsed message payload),
-    /// and must not be used by production code or relied upon as part of the SDK API contract.
-    func setWKScriptMessageDelegate(_ delegate: WebBridgeWKScriptMessageDelegate?)
-}
-
-@_spi(Internal)
 public typealias WebViewLog = (String) -> Void
 @_spi(Internal)
 public typealias WebViewLogError = (String) -> Void
 
 @_spi(Internal)
-public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
+public final class MindboxWebViewFacade: InappWebViewFacadeProtocol {
 
     private let webView: WKWebView
     private let bridge: MindboxWebBridge
-    private let params: [String: JSONValue]?
+
+    /// Main-confined, like every other send on this facade.
+    private var params: [String: JSONValue]?
     private let operation: (name: String, body: String)?
     private let inAppId: String
 
@@ -81,6 +69,7 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
                 operation: (name: String, body: String)? = nil,
                 userAgent: String,
                 inAppId: String = "",
+                mayBorrowWarmWebView: Bool = true,
                 log: @escaping WebViewLog = { _ in },
                 logError: @escaping WebViewLogError = { _ in }) {
         // Borrow the prewarmed live instance when available (kept across shows — hidden,
@@ -88,8 +77,12 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
         // resources stay visible either way. A warm instance can only serve a caller that
         // wants the stock UA: its applicationNameForUserAgent was baked at prewarm
         // creation and cannot change on a live WKWebView.
+        //
+        // A surface opts out when it would hold the instance instead of passing it on: a block
+        // lives as long as its screen, so borrowing would cost every later in-app its head start.
         let webView: WKWebView
-        if userAgent == SDKUserAgent.build(),
+        if mayBorrowWarmWebView,
+           userAgent == SDKUserAgent.build(),
            let warm = DI.injectOrFail(InAppWebViewPrewarmServiceProtocol.self).borrowWarmWebView() {
             webView = warm
         } else {
@@ -161,13 +154,6 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
         }
     }
 
-    public func reloadWebView() {
-        DispatchQueue.main.async { [weak self] in
-            guard let self, !self.isClosed else { return }
-            self.bridge.expectContentNavigation(self.webView.reload())
-        }
-    }
-
     public func cleanWebView() {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
@@ -195,6 +181,18 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
                                    logError: logError).build()
     }
     
+    public func sendInitDataUpdated(params: [String: JSONValue]) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self, !self.isClosed else { return }
+
+            self.params = params
+
+            self.bridge.send(BridgeMessage(type: .request,
+                                           action: BridgeMessage.Action.initDataUpdated,
+                                           payload: self.makeStartPayload()))
+        }
+    }
+
     public func sendToJS(_ message: BridgeMessage) {
         bridge.send(message)
     }
@@ -228,10 +226,6 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
     public func setNavigationDelegate(_ delegate: WebBridgeNavigationDelegate?) {
         bridge.navigationDelegate = delegate
     }
-    
-    public func setWKScriptMessageDelegate(_ delegate: WebBridgeWKScriptMessageDelegate?) {
-        bridge.delegate = delegate
-    }
 }
 
 extension MindboxWebViewFacade {
@@ -240,6 +234,13 @@ extension MindboxWebViewFacade {
                            completion: @escaping (String?) -> Void) {
         guard let url = URL(string: urlString) else {
             completion(nil)
+            return
+        }
+
+        // The embedded-block debug override packs markup into a data: url; URLSession would only
+        // die on the HTTPURLResponse cast, so it is read directly.
+        if url.scheme == "data" {
+            completion((try? Data(contentsOf: url)).flatMap { String(data: $0, encoding: .utf8) })
             return
         }
 

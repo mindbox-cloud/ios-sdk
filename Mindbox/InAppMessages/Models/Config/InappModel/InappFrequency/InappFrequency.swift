@@ -13,6 +13,7 @@ protocol iInappFrequency: Decodable, Equatable { }
 enum InappFrequencyType: String, Decodable {
     case periodic
     case once
+    case unlimited
     case unknown
 
     init(from decoder: Decoder) throws {
@@ -25,6 +26,7 @@ enum InappFrequencyType: String, Decodable {
 enum InappFrequency: Decodable, Equatable, Hashable {
     case periodic(PeriodicFrequency)
     case once(OnceFrequency)
+    case unlimited
     case unknown
 
     enum CodingKeys: String, CodingKey {
@@ -35,6 +37,7 @@ enum InappFrequency: Decodable, Equatable, Hashable {
         switch (lhs, rhs) {
             case (.periodic, .periodic): return true
             case (.once, .once): return true
+            case (.unlimited, .unlimited): return true
             case (.unknown, .unknown): return true
             default: return false
         }
@@ -44,8 +47,15 @@ enum InappFrequency: Decodable, Equatable, Hashable {
         switch self {
             case .periodic: hasher.combine("periodic")
             case .once: hasher.combine("once")
+            case .unlimited: hasher.combine("unlimited")
             case .unknown: hasher.combine("unknown")
         }
+    }
+
+    /// One rule for every show path, in sync with Android; the decoder fills a missing frequency,
+    /// so `nil` never arrives.
+    static func countsShows(_ frequency: InappFrequency?) -> Bool {
+        frequency != .unlimited
     }
 
     init(from decoder: Decoder) throws {
@@ -64,6 +74,8 @@ enum InappFrequency: Decodable, Equatable, Hashable {
             case .once:
                 let onceFrequency = try variantContainer.decode(OnceFrequency.self)
                 self = .once(onceFrequency)
+            case .unlimited:
+                self = .unlimited
             case .unknown:
                 self = .unknown
         }

@@ -64,6 +64,12 @@ final class VariantFilterService: VariantFilterProtocol {
                     let snackbarFormVariant = SnackbarFormVariant(content: contentModel)
                     let mindboxFormVariant = try MindboxFormVariant(type: .snackbar, snackbarVariant: snackbarFormVariant)
                     resultVariants.append(mindboxFormVariant)
+                case .embedded(let embeddedFormVariantDTO):
+                    guard let embeddedFormVariant = makeEmbeddedVariant(from: embeddedFormVariantDTO) else {
+                        continue
+                    }
+
+                    resultVariants.append(try MindboxFormVariant(type: .embedded, embeddedVariant: embeddedFormVariant))
                 case .unknown:
                     Logger.common(message: "Unknown type of variant. Variant will be skipped.", level: .debug, category: .inAppMessages)
                     continue
@@ -71,5 +77,51 @@ final class VariantFilterService: VariantFilterProtocol {
         }
 
         return resultVariants
+    }
+
+    private func makeEmbeddedVariant(from dto: EmbeddedFormVariantDTO) -> EmbeddedFormVariant? {
+        // A place name padded with spaces in the admin panel still means the same place; case has to match.
+        let placeSystemName = dto.placeSystemName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+
+        guard !placeSystemName.isEmpty else {
+            Logger.common(message: "[EmbeddedVariant] Variant has no place system name. Variant will be skipped.",
+                          level: .error, category: .inAppMessages)
+            return nil
+        }
+
+        guard let content = dto.content, let background = content.background else {
+            Logger.common(message: "[EmbeddedVariant] Variant for place '\(placeSystemName)' has no content. Variant will be skipped.",
+                          level: .error, category: .inAppMessages)
+            return nil
+        }
+
+        let filteredLayers: [ContentBackgroundLayer]
+        let filteredElements: [ContentElement]
+        do {
+            filteredLayers = try layersFilter.filter(background.layers)
+            filteredElements = try elementsFilter.filter(content.elements)
+        } catch {
+            Logger.common(message: "[EmbeddedVariant] Variant for place '\(placeSystemName)' has invalid content: \(error). Variant will be skipped.",
+                          level: .error, category: .inAppMessages)
+            return nil
+        }
+
+        // A block renders one web page: extra layers are a config mistake — ignored and logged, in
+        // sync with Android — but no webview layer at all means nothing to render.
+        guard let webviewLayerIndex = filteredLayers.firstIndex(where: { if case .webview = $0 { return true } else { return false } }) else {
+            Logger.common(message: "[EmbeddedVariant] Variant for place '\(placeSystemName)' has no webview layer. Variant will be skipped.",
+                          level: .error, category: .inAppMessages)
+            return nil
+        }
+
+        if filteredLayers.count > 1 {
+            Logger.common(message: "[EmbeddedVariant] Variant for place '\(placeSystemName)' has \(filteredLayers.count) layers; the first webview layer is used, the rest are ignored.",
+                          level: .error, category: .inAppMessages)
+        }
+
+        let backgroundModel = ContentBackground(layers: [filteredLayers[webviewLayerIndex]])
+        let contentModel = InappFormVariantContent(background: backgroundModel, elements: filteredElements)
+
+        return EmbeddedFormVariant(content: contentModel, placeSystemName: placeSystemName)
     }
 }

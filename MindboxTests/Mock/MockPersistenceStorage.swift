@@ -7,22 +7,24 @@
 //
 
 import Foundation
+import class MindboxLogger.Locked
 @testable import Mindbox
 
+/// Every stored property is `@Locked`: production reaches this storage from background queues while tests assert from their own threads — TSan flagged the unsynchronized version.
 class MockPersistenceStorage: PersistenceStorage {
 
     var onDidChange: (() -> Void)?
 
     init() {}
 
-    var deviceUUID: String? {
+    @Locked var deviceUUID: String? {
         didSet {
             configuration?.previousDeviceUUID = deviceUUID
             onDidChange?()
         }
     }
 
-    var installationId: String? {
+    @Locked var installationId: String? {
         didSet {
             onDidChange?()
         }
@@ -34,31 +36,31 @@ class MockPersistenceStorage: PersistenceStorage {
         installationDateString != nil
     }
 
-    var apnsToken: String? {
+    @Locked var apnsToken: String? {
         didSet {
             apnsTokenSaveDate = Date()
         }
     }
 
-    var apnsTokenSaveDate: Date? {
+    @Locked var apnsTokenSaveDate: Date? {
         didSet {
             onDidChange?()
         }
     }
 
-    var deprecatedEventsRemoveDate: Date? {
+    @Locked var deprecatedEventsRemoveDate: Date? {
         didSet {
             onDidChange?()
         }
     }
 
-    var configuration: MBConfiguration? {
+    @Locked var configuration: MBConfiguration? {
         didSet {
             onDidChange?()
         }
     }
 
-    var isNotificationsEnabled: Bool? {
+    @Locked var isNotificationsEnabled: Bool? {
         didSet {
             onDidChange?()
         }
@@ -67,79 +69,69 @@ class MockPersistenceStorage: PersistenceStorage {
     // Presence marker for `isInstalled`, mirroring production's installation-date string. The Date
     // itself is stored as-is (no `.utc` flooring) so the mock keeps full precision like its other
     // date properties — only `isInstalled` is derived from the marker's presence.
-    private var installationDateString: String?
+    @Locked private var installationDateString: String?
 
-    var installationDate: Date? {
+    @Locked var installationDate: Date? {
         didSet {
             installationDateString = installationDate?.toString(withFormat: .utc)
             onDidChange?()
         }
     }
 
-    var firstInitializationDateTime: Date? {
-        didSet {
-            onDidChange?()
-        }
-    }
-    
-    var lastInfoUpdateDate: Date? {
+    @Locked var firstInitializationDateTime: Date? {
         didSet {
             onDidChange?()
         }
     }
 
-    var shownInAppsIds: [String]?
-
-    var shownInappsDictionary: [String: Date]?
-    
-    var shownDatesByInApp: [String : [Date]]?
-
-    var lastInappStateChangeDate: Date?
-
-    var handledlogRequestIds: [String]?
-
-    var imageLoadingMaxTimeInSeconds: Double?
-
-    private var _userVisitCount: Int? = 0
-
-    var userVisitCount: Int? {
-        get { return _userVisitCount }
-        set { _userVisitCount = newValue }
-    }
-
-    private var _versionCodeForMigration: Int? = 0
-
-    var versionCodeForMigration: Int? {
-        get { return _versionCodeForMigration }
-        set { _versionCodeForMigration = newValue }
-    }
-
-    var configDownloadDate: Date? {
+    @Locked var lastInfoUpdateDate: Date? {
         didSet {
             onDidChange?()
         }
     }
 
-    var needUpdateInfoOnce: Bool? {
+    @Locked var shownInAppsIds: [String]?
+
+    @Locked var shownInappsDictionary: [String: Date]?
+
+    @Locked var shownDatesByInApp: [String: [Date]]?
+
+    @Locked var lastInappStateChangeDate: Date?
+
+    @Locked var handledlogRequestIds: [String]?
+
+    @Locked var imageLoadingMaxTimeInSeconds: Double?
+
+    @Locked var userVisitCount: Int? = 0
+
+    @Locked var versionCodeForMigration: Int? = 0
+
+    @Locked var configDownloadDate: Date? {
         didSet {
             onDidChange?()
         }
     }
-    
-    var applicationInfoUpdateVersion: Int?
-    
-    var applicationInstanceId: String?
 
-    var webViewLocalStateVersion: Int?
+    @Locked var needUpdateInfoOnce: Bool? {
+        didSet {
+            onDidChange?()
+        }
+    }
+
+    @Locked var applicationInfoUpdateVersion: Int?
+
+    @Locked var applicationInstanceId: String?
+
+    @Locked var webViewLocalStateVersion: Int?
 
     // Counts writes so a no-op-write regression (rewriting an unchanged dictionary) is
     // observable — the persisted value alone can't distinguish "written again" from "unchanged".
-    var webViewLearnedHostsWriteCount = 0
-    var webViewLearnedHosts: [String: [String]]? {
+    @Locked var webViewLearnedHostsWriteCount = 0
+    @Locked var webViewLearnedHosts: [String: [String]]? {
         didSet { webViewLearnedHostsWriteCount += 1 }
     }
 
-    var operationsDomainFromConfig: String? {
+    @Locked var operationsDomainFromConfig: String? {
         didSet {
             onDidChange?()
         }

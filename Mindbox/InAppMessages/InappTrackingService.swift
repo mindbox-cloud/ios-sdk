@@ -41,7 +41,7 @@ final class InAppTrackingService: InAppTrackingServiceProtocol {
     }
     
     private func trackInAppInSession(id: String) {
-        SessionTemporaryStorage.shared.sessionShownInApps.append(id)
+        SessionTemporaryStorage.shared.$sessionShownInApps.mutate { $0.append(id) }
     }
     
     private func updateShownDates(id: String, newDate: Date) {

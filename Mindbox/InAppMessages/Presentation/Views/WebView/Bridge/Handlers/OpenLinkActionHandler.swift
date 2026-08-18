@@ -94,12 +94,21 @@ private extension OpenLinkActionHandler {
         // after that covers a screen the user chose themselves.
         guard host.requireUserPresence(for: message) else { return }
 
-        guard let presenter = host.presentingViewController else {
+        guard var presenter = host.presentingViewController else {
             Logger.common(message: "[WebView] navigate: no presenting view controller found",
                           level: .default,
                           category: host.logCategory)
             host.respondError("Failed to open URL: no presenting view controller", to: message)
             return
+        }
+
+        // UIKit silently skips `present` — and with it the completion the answer is sent from —
+        // when the presenter is already presenting. A second link tapped while Safari is up would
+        // leave the page on a promise nothing settles, and its id pending forever. Walking to the
+        // top of the chain is the same answer the block host gives to "what do I present from",
+        // made here so every host gets it: the protocol promises a controller, not an idle one.
+        while let presented = presenter.presentedViewController {
+            presenter = presented
         }
 
         let safari = SFSafariViewController(url: url)

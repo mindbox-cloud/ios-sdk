@@ -11,10 +11,6 @@ import MindboxLogger
 
 /// Embedded block content — a web page found by the block id.
 ///
-/// The provider does not draw content and knows no mechanics: it asks the resolver what stands
-/// behind the id, translates the page's core messages into container states, and hands actions
-/// beyond the core layer to the universal handler.
-///
 /// An instance belongs to one container, so `start()` and `stop()` simply mirror its visibility
 /// and can be called in cycles. After `stop()` the provider must stay silent until the next
 /// `start()` — the container relies on this when it collapses an expired block.
@@ -23,253 +19,379 @@ final class EmbeddedBlockWebViewProvider {
     /// Reports every state change on the main thread. Set by the container.
     var onStateChange: ((EmbeddedBlockState) -> Void)?
 
+    var onContentArrived: (() -> Void)?
+
     var contentView: UIView? { isReady ? page?.view : nil }
 
-    private let id: String
-    private let resolver: EmbeddedBlockResolving
-    private let readinessOverrides: EmbeddedBlockReadinessOverriding
-    private let makePage: (String, EmbeddedBlockWebContent) -> EmbeddedBlockPageHosting
+    var isAwaitingAnswer: Bool { page == nil }
 
-    /// The page survives restarts: the container starts and stops the block by visibility, and
-    /// there is no reason to recreate the web view on every return to the window.
+    private let placeSystemName: String
+    private let registry: EmbeddedBlockPlaceRegistering
+    private let feed: EmbeddedBlockFeedServing
+    private let makePage: (EmbeddedBlockWebContent) -> EmbeddedBlockPageHosting
+
+    private let recordShow: (String) -> Void
+
+    private let reportShow: (EmbeddedBlockWebContent, String) -> Void
+
+    private let reportFailure: (EmbeddedBlockWebContent, InAppShowFailureReason, String) -> Void
+
     private var page: EmbeddedBlockPageHosting?
+
+    private var content: EmbeddedBlockWebContent?
 
     private var isStarted = false
 
-    /// How the current attempt ended: `nil` — nothing yet.
-    ///
-    /// The outcome survives `stop()`: it is a property of the page, not of being in the window.
-    /// A failure and `empty` do not kill the page — it is alive and can keep talking — so a known
-    /// outcome is also needed as a sign that the block is no longer on screen.
-    private var outcome: EmbeddedBlockState?
+    private var outcome: EmbeddedBlockState = .loading
 
     private var isReady: Bool { outcome == .ready }
 
-    /// The number of the current load attempt. A resolve may answer after `stop()` or after a
-    /// reload — the number shows that the answer belongs to a past attempt and must be thrown away.
     private var loadGeneration = 0
 
-    /// Whether the page has already reported its content for the current load.
-    private var didReportContent = false
+    private var didAccountForShow = false
 
-    init(id: String,
-         resolver: EmbeddedBlockResolving,
-         readinessOverrides: EmbeddedBlockReadinessOverriding = EmbeddedBlockReadinessOverrides.shared,
-         makePage: @escaping (String, EmbeddedBlockWebContent) -> EmbeddedBlockPageHosting) {
-        self.id = id
-        self.resolver = resolver
-        self.readinessOverrides = readinessOverrides
+    private var attemptStopwatch = ForegroundStopwatch()
+
+    private let scheduleAckTimeout: EmbeddedBlockWaitScheduling
+
+    private var dataPushAck: DispatchWorkItem?
+
+    init(placeSystemName: String,
+         registry: EmbeddedBlockPlaceRegistering,
+         feed: EmbeddedBlockFeedServing,
+         makePage: @escaping (EmbeddedBlockWebContent) -> EmbeddedBlockPageHosting,
+         recordShow: @escaping (String) -> Void,
+         reportShow: @escaping (EmbeddedBlockWebContent, String) -> Void,
+         reportFailure: @escaping (EmbeddedBlockWebContent, InAppShowFailureReason, String) -> Void,
+         scheduleAckTimeout: @escaping EmbeddedBlockWaitScheduling = { delay, work in
+             DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
+         }) {
+        self.placeSystemName = placeSystemName
+        self.registry = registry
+        self.feed = feed
         self.makePage = makePage
+        self.recordShow = recordShow
+        self.reportShow = reportShow
+        self.reportFailure = reportFailure
+        self.scheduleAckTimeout = scheduleAckTimeout
 
-        EmbeddedBlockWebViewProvider.blockCreated(id: id)
-    }
-
-    deinit {
-        EmbeddedBlockWebViewProvider.blockReleased(id: id)
+        registry.register(self, place: placeSystemName)
     }
 
     func start() {
-        start(forceRefresh: false)
+        guard !isStarted else { return }
+
+        isStarted = true
+        page?.isUserPresent = true
+
+        if isReady, page != nil {
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': showing the page rendered earlier",
+                          category: .embeddedBlocks)
+            onStateChange?(.ready)
+            registry.blockAppeared(placeSystemName)
+            return
+        }
+
+        beginAttempt()
     }
 
     func stop() {
         guard isStarted else { return }
 
         isStarted = false
-        // The outcome is not reset: it is a property of the page, not of being in the window.
-        // Otherwise every pass of the block across the screen would cost a full reload.
+        // The outcome is deliberately not reset: otherwise every pass of the block across the screen
+        // would cost a full reload.
         loadGeneration += 1
+        cancelDataPushAck()
         // The page stays alive off screen, so it has to be told that nobody is looking.
         page?.isUserPresent = false
-        page?.cancel()
+
+        if !isReady {
+            page?.cancel()
+        }
     }
 
-    /// Starts the load from scratch: drops the page and requests the address again, bypassing the
-    /// resolver cache — otherwise a moved or disabled block would forever get its previous address.
     func reload() {
-        Logger.common(message: "[EmbeddedBlock] Block '\(id)' is reloading", category: .embeddedBlocks)
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' is reloading", category: .embeddedBlocks)
 
-        // The previous page is no longer relevant — detach it from us first so that its late
-        // messages do not end up in the new attempt.
-        page?.onContentRendered = nil
-        page?.onLoadFailure = nil
-        page?.onLoadFinish = nil
-        page?.cancel()
-        page = nil
-
-        isStarted = false
-        outcome = nil
-        didReportContent = false
+        dropPage()
         loadGeneration += 1
+        isStarted = true
 
-        start(forceRefresh: true)
+        beginAttempt()
     }
 
-    /// The page reports what it rendered. Once per load: a repeat is a page bug, and acting on
-    /// it twice would let a block that already collapsed come back.
-    func handleContentRendered(count renderedCount: Int) {
+    private func beginAttempt() {
+        onStateChange?(.loading)
+        outcome = .loading
+        attemptStopwatch = ForegroundStopwatch()
+
+        if page != nil {
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the page from the previous attempt cannot be resumed, dropping it",
+                          category: .embeddedBlocks)
+            dropPage()
+        }
+
+        registry.blockAppeared(placeSystemName)
+    }
+
+    // MARK: - The registry's answer
+
+    func apply(_ resolution: EmbeddedBlockResolution) {
         guard isStarted else { return }
 
-        guard !didReportContent else {
-            Logger.common(message: "[EmbeddedBlock] Block '\(id)': ignored a repeated contentRendered(\(renderedCount))",
+        switch resolution {
+        case .empty:
+            guard outcome != .empty else { return }
+
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': nothing at this place — collapsing",
                           category: .embeddedBlocks)
-            return
+            outcome = .empty
+            onStateChange?(.empty)
+
+        case .content(let fresh):
+            applyContent(fresh)
         }
-
-        didReportContent = true
-
-        // The number the page reported, not the size of a collection.
-        guard renderedCount > 0 else {
-            // Alive, correct, and with nothing to show. Not a failure — the block simply gives
-            // its space back.
-            Logger.common(message: "[EmbeddedBlock] Block '\(id)': page rendered nothing",
-                          category: .embeddedBlocks)
-            finish(with: .empty)
-            return
-        }
-
-        Logger.common(message: "[EmbeddedBlock] Block '\(id)': page rendered \(renderedCount)",
-                      category: .embeddedBlocks)
-        finish(with: .ready)
     }
+
+    private func applyContent(_ fresh: EmbeddedBlockWebContent) {
+        if let current = content, let page = page, outcome != .failed {
+            // A collapsed page is deliberately not deduplicated: for it the same answer is news —
+            // re-sent data is what makes the page re-report itself and revive.
+            if fresh == current, outcome == .ready || outcome == .loading {
+                Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the place resolved to the same content — nothing to change",
+                              category: .embeddedBlocks)
+                return
+            }
+
+            if fresh.isSamePage(as: current) {
+                Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': same page, new data — telling the page",
+                              category: .embeddedBlocks)
+                content = fresh
+                page.sendInitData(params: fresh.params)
+                armDataPushAck()
+                return
+            }
+        }
+
+        let reason = page == nil ? "building its page" : "the place points at another page — rebuilding it"
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': \(reason)", category: .embeddedBlocks)
+        buildPage(with: fresh)
+    }
+
+    private func buildPage(with fresh: EmbeddedBlockWebContent) {
+        dropPage()
+
+        if outcome != .loading {
+            onStateChange?(.loading)
+            attemptStopwatch = ForegroundStopwatch()
+        }
+        outcome = .loading
+        loadGeneration += 1
+        didAccountForShow = false
+
+        let page = makePage(fresh)
+        page.isUserPresent = true
+        page.onContentRendered = { [weak self] count in
+            self?.applyContentRendered(count)
+        }
+        page.onUnreadableContentReport = { [weak self] in
+            self?.handleUnreadableContentReport()
+        }
+        page.onFeedQuestion = { [weak self] ids, completion in
+            self?.answerTargeting(ids, completion: completion)
+        }
+        page.onShowInAppRequest = { [weak self] inappId, params in
+            self?.showInapp(id: inappId, params: params)
+        }
+        page.onDataPushConfirmed = { [weak self] in
+            self?.acknowledgeDataPush()
+        }
+        page.onLoadFailure = { [weak self] in
+            self?.handleLoadFailure()
+        }
+        self.page = page
+        self.content = fresh
+
+        onContentArrived?()
+
+        page.load()
+    }
+
+    /// Detached from us first, so that its late messages do not end up in the new attempt.
+    private func dropPage() {
+        cancelDataPushAck()
+        page?.onContentRendered = nil
+        page?.onUnreadableContentReport = nil
+        page?.onFeedQuestion = nil
+        page?.onShowInAppRequest = nil
+        page?.onDataPushConfirmed = nil
+        page?.onLoadFailure = nil
+        page?.cancel()
+        page = nil
+        content = nil
+    }
+
+    // MARK: - The data push's confirmation
+
+    /// A page that misses the ack is rebuilt from scratch, in sync with Android. An error answer
+    /// counts as silence — the web layer drops error envelopes before they arrive.
+    private func armDataPushAck() {
+        cancelDataPushAck()
+
+        let generation = loadGeneration
+        let work = DispatchWorkItem { [weak self] in
+            guard let self, self.isStarted, self.loadGeneration == generation else { return }
+
+            self.dataPushAck = nil
+
+            guard let content = self.content else { return }
+
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the page never confirmed the data push — rebuilding it",
+                          level: .error, category: .embeddedBlocks)
+            self.buildPage(with: content)
+        }
+
+        dataPushAck = work
+        scheduleAckTimeout(TimeInterval(Constants.EmbeddedBlock.readyTimeoutSeconds), work)
+    }
+
+    private func cancelDataPushAck() {
+        dataPushAck?.cancel()
+        dataPushAck = nil
+    }
+
+    private func acknowledgeDataPush() {
+        guard isStarted else { return }
+        guard dataPushAck != nil else {
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the page confirmed a data push nobody was waiting on",
+                          level: .debug, category: .embeddedBlocks)
+            return
+        }
+
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the page confirmed the data push",
+                      category: .embeddedBlocks)
+        cancelDataPushAck()
+    }
+
+    // MARK: - The page's reports
 
     func handleLoadFailure() {
         guard isStarted else { return }
 
-        finish(with: .failed)
+        outcome = .failed
+        onStateChange?(.failed)
+        report(.webviewLoadFailed, "The block's page failed to load")
     }
 
-    /// While there is no outcome, the page is still loading — the user is looking at a live block.
-    private var isShown: Bool {
-        outcome == nil || outcome == .ready
+    func reportPageTimedOut() {
+        report(.presentationFailed, "The block's page did not report itself in time")
     }
 
-    /// A loaded document means nothing by itself: showing the block on it is allowed only by the
-    /// debug override — for pages that cannot send `ready` yet.
-    func handleLoadFinish() {
-        guard isStarted, !isReady, readinessOverrides.treatsLoadedPageAsReady else { return }
+    private func report(_ reason: InAppShowFailureReason, _ details: String) {
+        guard let content = content else { return }
 
-        Logger.common(message: "[EmbeddedBlock] Block '\(id)': debug readiness is ON, showing the loaded page without a contentRendered from it",
-                      level: .default,
-                      category: .embeddedBlocks)
-        finish(with: .ready)
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': reporting \(reason.rawValue) for in-app \(content.inAppId)",
+                      level: .error, category: .embeddedBlocks)
+        reportFailure(content, reason, details)
     }
 
-    private func start(forceRefresh: Bool) {
-        guard !isStarted else { return }
+    private var isAttemptAlive: Bool {
+        outcome == .loading || outcome == .ready
+    }
 
-        isStarted = true
-        // Above every early return below: the block is back in the window, whatever it takes to
-        // show it. Left further down it would only be restored on the paths that reload, and a
-        // page shown again from cache would stay marked invisible for the rest of its life —
-        // silently refusing every link the user taps on it.
-        page?.isUserPresent = true
-
-        // The page has already rendered and is still around — show it as is. Returning the block
-        // to the window costs no network, no shimmer, no repeated events to the host.
-        if isReady, page != nil {
-            Logger.common(message: "[EmbeddedBlock] Block '\(id)': showing the page rendered earlier",
+    /// A page whose block has collapsed or failed is still alive and can still ask — but no user
+    /// touch stands behind it, and the in-app would appear over the app out of nowhere.
+    private func showInapp(id inappId: String, params: [String: JSONValue]) {
+        guard isStarted, isAttemptAlive else {
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': ignored a show request from a block that is not shown",
                           category: .embeddedBlocks)
-            onStateChange?(.ready)
             return
         }
 
-        onStateChange?(.loading)
-        // A new attempt has started: how the previous one ended no longer matters.
-        outcome = nil
-        didReportContent = false
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': showing in-app \(inappId) with \(params.count) param(s)",
+                      category: .embeddedBlocks)
 
-        if let page {
-            page.load()
-            return
-        }
+        feed.showInapp(id: inappId, params: params)
+    }
+
+    /// A question shows nothing, so it is answered for as long as the block is running — including
+    /// while it is still loading, which is exactly when a feed asks.
+    private func answerTargeting(_ ids: [String], completion: @escaping ([String]) -> Void) {
+        guard isStarted else { return }
 
         let generation = loadGeneration
-        resolver.resolve(id, forceRefresh: forceRefresh) { [weak self] resolution in
+        feed.renderableInappIds(among: ids) { [weak self] answer in
             guard let self, self.isStarted, self.loadGeneration == generation else { return }
 
-            switch resolution {
-            case .empty:
-                Logger.common(message: "[EmbeddedBlock] Block id '\(self.id)' resolved as empty",
-                              category: .embeddedBlocks)
-                self.finish(with: .empty)
-            case .content(let content):
-                let page = self.makePage(self.id, content)
-                page.onContentRendered = { [weak self] count in
-                    self?.handleContentRendered(count: count)
-                }
-                page.onLoadFailure = { [weak self] in
-                    self?.handleLoadFailure()
-                }
-                page.onLoadFinish = { [weak self] in
-                    self?.handleLoadFinish()
-                }
-                self.page = page
-                page.load()
-            }
+            completion(answer.inappIds)
+            answer.vouch()
         }
     }
 
-    /// Records the outcome, tells the container, and keeps the page's view of the user in sync.
-    private func finish(with outcome: EmbeddedBlockState) {
-        self.outcome = outcome
-        page?.isUserPresent = isShown
-        onStateChange?(outcome)
+    private func applyContentRendered(_ count: Int) {
+        guard isStarted else { return }
+
+        guard count > 0 else {
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': page rendered nothing", category: .embeddedBlocks)
+            outcome = .empty
+            onStateChange?(.empty)
+            return
+        }
+
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': page rendered \(count) item(s)", category: .embeddedBlocks)
+        outcome = .ready
+        onStateChange?(.ready)
+        accountForShow()
+    }
+
+    private func handleUnreadableContentReport() {
+        guard isStarted else { return }
+
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': contentRendered without a readable count, treating as broken",
+                      level: .error, category: .embeddedBlocks)
+        outcome = .failed
+        onStateChange?(.failed)
+        report(.presentationFailed, "The block's page reported contentRendered without a readable count")
+    }
+
+    /// Blocks arrive `unlimited` by contract, so the backend is told even when the frequency writes
+    /// no history. The cooldown between overlay shows is deliberately left alone — a block interrupts nothing.
+    private func accountForShow() {
+        guard let content = content, !didAccountForShow else { return }
+
+        didAccountForShow = true
+
+        let timeToDisplay = attemptStopwatch.elapsed.toTimeSpan()
+        attemptStopwatch.stop()
+
+        // Deduplicated per session by the in-app, in sync with Android: a page rebuilt within a
+        // session re-draws what the user already saw.
+        if SessionTemporaryStorage.shared.blockShowsReportedInSession.contains(content.inAppId) {
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': in-app \(content.inAppId) is shown again this session — the event was already reported",
+                          category: .embeddedBlocks)
+        } else {
+            SessionTemporaryStorage.shared.$blockShowsReportedInSession.mutate { $0.insert(content.inAppId) }
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': in-app \(content.inAppId) is shown, timeToDisplay=\(timeToDisplay)",
+                          category: .embeddedBlocks)
+            reportShow(content, timeToDisplay)
+        }
+
+        guard InappFrequency.countsShows(content.frequency) else {
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': in-app \(content.inAppId) is shown without a limit — nothing to count",
+                          category: .embeddedBlocks)
+            return
+        }
+
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': counting a show of in-app \(content.inAppId)",
+                      category: .embeddedBlocks)
+        recordShow(content.inAppId)
     }
 }
 
-// MARK: - Live blocks
+// MARK: - The registry's view of the block
 
-/// How many blocks with each id are alive right now.
-///
-/// Diagnostics, not mechanics: two blocks with one id are a legitimate case, both will show the
-/// same content. But more often it is either a copied id or a reused cell that got a block
-/// container from another row — and neither case has noticeable symptoms beyond "the block ended
-/// up not where it was expected". So the SDK reports it to the log.
-///
-/// The counter is process-wide because the question is too: identical ids are looked for not
-/// inside one block but across blocks. It does not retain live blocks — it stores only counts.
-extension EmbeddedBlockWebViewProvider {
+extension EmbeddedBlockWebViewProvider: EmbeddedBlockPlaceHandling {
 
-    private static var liveBlocks: [String: Int] = [:]
-
-    /// Blocks are created and die with UIKit views, that is, on the main thread. The lock is here
-    /// in case that ever stops being true: diagnostics must not crash the SDK.
-    private static let liveBlocksLock = NSLock()
-
-    static func liveCount(for id: String) -> Int {
-        liveBlocksLock.lock()
-        defer { liveBlocksLock.unlock() }
-
-        return liveBlocks[id] ?? 0
-    }
-
-    fileprivate static func blockCreated(id: String) {
-        liveBlocksLock.lock()
-        let count = (liveBlocks[id] ?? 0) + 1
-        liveBlocks[id] = count
-        liveBlocksLock.unlock()
-
-        guard count > 1 else { return }
-
-        Logger.common(message: """
-        [EmbeddedBlock] \(count) live blocks share id '\(id)'. They show the same content, \
-        each rendered on its own. If that is unexpected, check that a reusable cell is not carrying \
-        a block container from another row: a block is created for one id and cannot be repointed.
-        """, category: .embeddedBlocks)
-    }
-
-    fileprivate static func blockReleased(id: String) {
-        liveBlocksLock.lock()
-        let remaining = max(0, (liveBlocks[id] ?? 1) - 1)
-        if remaining > 0 {
-            liveBlocks[id] = remaining
-        } else {
-            liveBlocks.removeValue(forKey: id)
-        }
-        liveBlocksLock.unlock()
-
-        Logger.common(message: "[EmbeddedBlock] Block '\(id)' is released, \(remaining) live with this id",
-                      category: .embeddedBlocks)
-    }
+    var isActive: Bool { isStarted }
 }

@@ -29,21 +29,18 @@ fileprivate enum InappConfig: String, Configurable {
 class ABTests: XCTestCase {
 
     private var inappFilter: InappsFilterService!
-    private var variantsFilter: VariantFilterProtocol!
     private var persistenceStorage: PersistenceStorage!
     private var stub: ABTestsStub!
 
     override func setUp() {
         super.setUp()
         self.inappFilter = DI.injectOrFail(InappFilterProtocol.self) as? InappsFilterService
-        self.variantsFilter = DI.injectOrFail(VariantFilterProtocol.self)
         self.persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         self.stub = ABTestsStub()
     }
 
     override func tearDown() {
         self.inappFilter = nil
-        self.variantsFilter = nil
         self.persistenceStorage = nil
         self.stub = nil
         super.tearDown()
@@ -52,7 +49,7 @@ class ABTests: XCTestCase {
     func test_no_abtests() throws {
         let response = try InappConfig.configWithABTest.getConfig()
 
-        let filteredInapps = filterValidInAppMessages(response.inapps?.elements ?? [])
+        let filteredInapps = inappFilter.filterValidInAppMessages(response.inapps?.elements ?? [])
         let expectedIds: Set = [
             "1",
             "2",
@@ -78,7 +75,7 @@ class ABTests: XCTestCase {
             ])
         ]
 
-        let filteredInapps = filterValidInAppMessages(response.inapps?.elements ?? [])
+        let filteredInapps = inappFilter.filterValidInAppMessages(response.inapps?.elements ?? [])
         persistenceStorage.deviceUUID = "4078E211-7C3F-C607-D35C-DC6B591EF355"
         let inappsFirstVariant = inappFilter.filterInappsByABTests(abTests, responseInapps: filteredInapps)
         XCTAssertEqual(inappsFirstVariant.count, 0, "Количество инапов не совпадает с ожидаемым")
@@ -99,7 +96,7 @@ class ABTests: XCTestCase {
 
     func test_compare_cg_and_concrete_inapps() throws {
         let response = try InappConfig.configWithABTestTwo.getConfig()
-        let filteredInapps = filterValidInAppMessages(response.inapps?.elements ?? [])
+        let filteredInapps = inappFilter.filterValidInAppMessages(response.inapps?.elements ?? [])
 
         let abTests: [ABTest]? = [
             stub.getABTest(variants: [
@@ -141,7 +138,7 @@ class ABTests: XCTestCase {
 
     func test_compare_cg_and_concrete_inapps_and_all_inapps() throws {
         let response = try InappConfig.configWithABTest.getConfig()
-        let filteredInapps = filterValidInAppMessages(response.inapps?.elements ?? [])
+        let filteredInapps = inappFilter.filterValidInAppMessages(response.inapps?.elements ?? [])
 
         let abTests: [ABTest]? = [
             stub.getABTest(variants: [
@@ -181,7 +178,7 @@ class ABTests: XCTestCase {
 
     func test_compare_2branch_and_concrete_inapps_and_cg() throws {
         let response = try InappConfig.configWithABTestTwo.getConfig()
-        let filteredInapps = filterValidInAppMessages(response.inapps?.elements ?? [])
+        let filteredInapps = inappFilter.filterValidInAppMessages(response.inapps?.elements ?? [])
 
         let abTests: [ABTest]? = [
             stub.getABTest(variants: [
@@ -230,7 +227,7 @@ class ABTests: XCTestCase {
 
     func test_compare_2branch_and_concrete_inapps() throws {
         let response = try InappConfig.configWithABTest.getConfig()
-        let filteredInapps = filterValidInAppMessages(response.inapps?.elements ?? [])
+        let filteredInapps = inappFilter.filterValidInAppMessages(response.inapps?.elements ?? [])
 
         let abTests: [ABTest]? = [
             stub.getABTest(variants: [
@@ -265,7 +262,7 @@ class ABTests: XCTestCase {
     }
     func test_aab_show_inapps_in_cg_branch() throws {
         let response = try InappConfig.configWithABTest.getConfig()
-        let filteredInapps = filterValidInAppMessages(response.inapps?.elements ?? [])
+        let filteredInapps = inappFilter.filterValidInAppMessages(response.inapps?.elements ?? [])
 
         let abTests: [ABTest]? = [
             stub.getABTest(variants: [
@@ -307,7 +304,7 @@ class ABTests: XCTestCase {
 
     func test_aab_not_show_inapps_in_cg_branch() throws {
         let response = try InappConfig.configWithABTest.getConfig()
-        let filteredInapps = filterValidInAppMessages(response.inapps?.elements ?? [])
+        let filteredInapps = inappFilter.filterValidInAppMessages(response.inapps?.elements ?? [])
 
         let abTests: [ABTest]? = [
             stub.getABTest(
@@ -348,7 +345,7 @@ class ABTests: XCTestCase {
 
     func test_ab_limit_value_check() throws {
         let response = try InappConfig.configWithABTest.getConfig()
-        let filteredInapps = filterValidInAppMessages(response.inapps?.elements ?? [])
+        let filteredInapps = inappFilter.filterValidInAppMessages(response.inapps?.elements ?? [])
 
         let abTests: [ABTest]? = [
             stub.getABTest(
@@ -396,7 +393,7 @@ class ABTests: XCTestCase {
 
     func test_compare_5_ab_tests_in_one_branch() throws {
         let response = try InappConfig.configWithABTestTwo.getConfig()
-        let filteredInapps = filterValidInAppMessages(response.inapps?.elements ?? [])
+        let filteredInapps = inappFilter.filterValidInAppMessages(response.inapps?.elements ?? [])
 
         let abTests: [ABTest]? = [
             stub.getABTest(
@@ -469,7 +466,7 @@ class ABTests: XCTestCase {
 
     func test_2_different_ab_tests_one() throws {
         let response = try InappConfig.configWithABTest.getConfig()
-        let filteredInapps = filterValidInAppMessages(response.inapps?.elements ?? [])
+        let filteredInapps = inappFilter.filterValidInAppMessages(response.inapps?.elements ?? [])
 
         let abTests: [ABTest]? = [
             stub.getABTest(
@@ -525,7 +522,7 @@ class ABTests: XCTestCase {
 
     func test_concrete_inapps_and_all() throws {
         let response = try InappConfig.configWithABTest.getConfig()
-        let filteredInapps = filterValidInAppMessages(response.inapps?.elements ?? [])
+        let filteredInapps = inappFilter.filterValidInAppMessages(response.inapps?.elements ?? [])
 
         let abTests: [ABTest]? = [
             stub.getABTest(
@@ -601,30 +598,5 @@ class ABTests: XCTestCase {
     func test_abtests_type_not_inapps_should_return_nil() throws {
         let response = try InappConfig.configWithABTypeNotInapps.getConfig()
         XCTAssertNil(response.abtests, "AB-тесты с типом, отличным от инапов, должны возвращать nil")
-    }
-}
-
-private extension ABTests {
-    func filterValidInAppMessages(_ inapps: [InAppDTO]) -> [InApp] {
-        var filteredInapps: [InApp] = []
-        for inapp in inapps {
-            do {
-                let variants = try variantsFilter.filter(inapp.form.variants)
-                if !variants.isEmpty {
-                    let formModel = InAppForm(variants: variants)
-                    let inappModel = InApp(id: inapp.id,
-                                           isPriority: inapp.isPriority,
-                                           delayTime: nil,
-                                           sdkVersion: inapp.sdkVersion,
-                                           targeting: inapp.targeting,
-                                           frequency: inapp.frequency,
-                                           form: formModel,
-                                           tags: inapp.tags)
-                    filteredInapps.append(inappModel)
-                }
-            } catch {
-            }
-        }
-        return filteredInapps
     }
 }

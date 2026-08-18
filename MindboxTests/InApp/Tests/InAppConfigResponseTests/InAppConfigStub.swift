@@ -140,6 +140,7 @@ extension InAppConfigStub {
                          delayTime: nil,
                          sdkVersion: .init(min: 8, max: nil),
                          frequency: .once(.init(kind: .session)),
+                         displayConditions: .unrestricted,
                          targeting: targeting,
                          form: try getForm(),
                          tags: nil)]
@@ -198,5 +199,13 @@ extension InAppConfigStub {
         let decoder = JSONDecoder()
         let formDTO = try decoder.decode(InAppFormDTO.self, from: jsonData)
         return formDTO
+    }
+}
+
+extension ConfigResponse {
+    /// Prepares candidates on every access — production prepares them once per applied config, so a suite
+    /// that wants that fidelity prepares once and holds the result. Needs `TestConfiguration.configure()`.
+    var candidates: ConfigCandidates {
+        DI.injectOrFail(InappFilterProtocol.self).candidates(from: self)
     }
 }
