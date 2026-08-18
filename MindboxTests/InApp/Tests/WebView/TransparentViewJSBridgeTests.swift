@@ -19,6 +19,9 @@ final class TransparentViewJSBridgeTests {
     private let databaseRepository = DatabaseRepositorySpy()
     private let eventRepository = EventRepositorySpy()
     private let facade = WebViewFacadeSpy()
+    /// Registry entries are weak, so the view a test built is held here as well: a local could
+    /// otherwise be released before an assertion that needs the page still registered.
+    private var viewUnderTest: TransparentView?
 
     init() {
         TestConfiguration.configure()
@@ -111,9 +114,62 @@ final class TransparentViewJSBridgeTests {
         #expect(body.keys.contains("tags") == false)
     }
 
+    // MARK: - Broadcasts
+
+    @Test("A popup joins the broadcast set on its first ready, and only once", .tags(.webView))
+    func popupJoinsTheBroadcastSetOnReady() {
+        let registry = MindboxWebPageRegistry()
+        let view = makeView(tags: nil, webPageRegistry: registry)
+
+        send(.ready, payload: "{}", to: view)
+        send(.ready, payload: "{}", to: view)
+
+        #expect(registry.count == 1)
+    }
+
+    @Test("A broadcast reaches the popup's page as a request carrying the payload", .tags(.webView))
+    func broadcastReachesThePopupAsARequest() throws {
+        let registry = MindboxWebPageRegistry()
+        let view = makeView(tags: nil, webPageRegistry: registry)
+        send(.ready, payload: "{}", to: view)
+
+        registry.broadcast(.localStateChanged, payload: .object(["version": .int(3)]), excluding: nil)
+
+        #expect(facade.sentMessages.count == 1)
+        let pushed = try #require(facade.sentMessages.first)
+        #expect(pushed.type == .request)
+        #expect(pushed.parsedAction == .localStateChanged)
+        #expect(pushed.payload == .object(["version": .int(3)]))
+    }
+
+    @Test("The popup that wrote is excluded by identity, so it never hears itself", .tags(.webView))
+    func popupDoesNotHearItsOwnWrite() {
+        let registry = MindboxWebPageRegistry()
+        let view = makeView(tags: nil, webPageRegistry: registry)
+        send(.ready, payload: "{}", to: view)
+
+        registry.broadcast(.localStateChanged, payload: .object(["version": .int(3)]), excluding: view)
+
+        #expect(facade.sentMessages.isEmpty)
+    }
+
+    @Test("Each broadcast reaches the popup under an id of its own", .tags(.webView))
+    func eachBroadcastCarriesItsOwnId() {
+        let registry = MindboxWebPageRegistry()
+        let view = makeView(tags: nil, webPageRegistry: registry)
+        send(.ready, payload: "{}", to: view)
+
+        registry.broadcast(.localStateChanged, payload: .object([:]), excluding: nil)
+        registry.broadcast(.localStateChanged, payload: .object([:]), excluding: nil)
+
+        #expect(facade.sentMessages.count == 2)
+        #expect(facade.sentMessages[0].id != facade.sentMessages[1].id)
+    }
+
     // MARK: - Helpers
 
-    private func makeView(tags: [String: String]?) -> TransparentView {
+    private func makeView(tags: [String: String]?,
+                          webPageRegistry: MindboxWebPageRegistry = MindboxWebPageRegistry()) -> TransparentView {
         // The real dispatch path, with doubles behind the handler: this suite is about what
         // reaches the repositories, and it should keep proving the view routes there at all.
         let handler = OperationActionHandler(featureToggleManager: self.featureToggleManager,
@@ -129,6 +185,8 @@ final class TransparentViewJSBridgeTests {
             actionRegistry: WebBridgeActionRegistry(handlers: [handler])
         )
         view.facade = facade
+        view.webPageRegistry = webPageRegistry
+        viewUnderTest = view
         return view
     }
 

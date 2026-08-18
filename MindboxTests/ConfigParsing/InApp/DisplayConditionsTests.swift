@@ -22,6 +22,20 @@ struct DisplayConditionsTests {
         return try JSONDecoder().decode(Holder.self, from: Data(json.utf8)).displayConditions
     }
 
+    private func decodeInapp(displayConditions: String?) throws -> InAppDTO {
+        let field = displayConditions.map { "\"displayConditions\": \($0)," } ?? ""
+        let json = """
+        {
+            "id": "inapp-1",
+            "sdkVersion": { "min": 1, "max": 1 },
+            \(field)
+            "targeting": { "$type": "true" },
+            "form": { "variants": [] }
+        }
+        """
+        return try JSONDecoder().decode(InAppDTO.self, from: Data(json.utf8))
+    }
+
     @Test("Direct call is the only restrictive value")
     func directCall() throws {
         #expect(try decode(#"{"$type": "directCall"}"#) == .directCall)
@@ -41,14 +55,13 @@ struct DisplayConditionsTests {
         #expect(try decode(value) == .unrestricted)
     }
 
-    @Test("Explicit null means showing as before")
-    func nullValue() throws {
-        #expect(try decode("null") == nil)
+    @Test("An in-app whose displayConditions is null shows as before")
+    func inappWithNullValue() throws {
+        #expect(try decodeInapp(displayConditions: "null").displayConditions == .unrestricted)
     }
 
-    @Test("Missing key means showing as before")
-    func missingKey() throws {
-        let decoded = try JSONDecoder().decode(Holder.self, from: Data("{}".utf8))
-        #expect(decoded.displayConditions == nil)
+    @Test("An in-app with no displayConditions key shows as before")
+    func inappWithMissingKey() throws {
+        #expect(try decodeInapp(displayConditions: nil).displayConditions == .unrestricted)
     }
 }

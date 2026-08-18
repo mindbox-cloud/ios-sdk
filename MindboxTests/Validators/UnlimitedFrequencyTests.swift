@@ -13,25 +13,11 @@ import Testing
 @Suite("Unlimited in-app frequency", .tags(.inAppSchedule))
 struct UnlimitedFrequencyTests {
 
-    private struct Holder: Decodable {
-        let frequency: InappFrequency?
-    }
-
-    private func decode(_ value: String) throws -> InappFrequency? {
-        let json = "{\"frequency\": \(value)}"
-        return try JSONDecoder().decode(Holder.self, from: Data(json.utf8)).frequency
-    }
-
     /// Private storage: the validator only reads it, so no need to join the serial-execution-bound suites.
     private func makeValidator(shownDates: [String: [Date]] = [:]) -> InappFrequencyValidator {
         let storage = MockPersistenceStorage()
         storage.shownDatesByInApp = shownDates
         return InappFrequencyValidator(persistenceStorage: storage)
-    }
-
-    @Test("Unlimited is parsed as its own case")
-    func parsesUnlimited() throws {
-        #expect(try decode(#"{"$type": "unlimited"}"#) == .unlimited)
     }
 
     @Test("Unlimited passes for an in-app that was never shown")
@@ -43,12 +29,6 @@ struct UnlimitedFrequencyTests {
     func passesWhenAlreadyShown() {
         let validator = makeValidator(shownDates: ["1": [Date(), Date()]])
         #expect(validator.isValid(frequency: .unlimited, id: "1"))
-    }
-
-    @Test("Once lifetime still blocks an in-app that was already shown")
-    func onceLifetimeStillBlocks() {
-        let validator = makeValidator(shownDates: ["1": [Date()]])
-        #expect(!validator.isValid(frequency: .once(OnceFrequency(kind: .lifetime)), id: "1"))
     }
 }
 

@@ -10,7 +10,7 @@ import Testing
 import Foundation
 @testable import MindboxLogger
 
-@Suite("Locked property wrapper", .tags(.storage))
+@Suite("Locked property wrapper", .tags(.concurrency))
 struct LockedTests {
 
     @Locked private var flag = false
@@ -34,17 +34,45 @@ struct LockedTests {
         #expect($flag.exchange(false) == false)
     }
 
+    // Real threads behind a start gate: a read-then-write `exchange` only misbehaves with two
+    // callers inside it at once, and one raised flag makes each round a single race — hence rounds.
     @Test("A raised flag is consumed by exactly one of the racing threads")
-    func exchangeHandsTheFlagToExactlyOneTaker() async {
-        let raised = Locked(wrappedValue: true)
+    func exchangeHandsTheFlagToExactlyOneTaker() {
+        let racers = max(4, ProcessInfo.processInfo.activeProcessorCount * 2)
 
-        let winners = await withTaskGroup(of: Bool.self) { group in
-            for _ in 0..<32 {
-                group.addTask { raised.exchange(false) }
+        for _ in 0..<100 {
+            let raised = Locked(wrappedValue: true)
+            let takes = TakeCounter()
+            let openGate = DispatchTime.now() + .milliseconds(1)
+
+            DispatchQueue.concurrentPerform(iterations: racers) { _ in
+                while DispatchTime.now() < openGate { }
+
+                if raised.exchange(false) {
+                    takes.record()
+                }
             }
-            return await group.reduce(into: 0) { $0 += $1 ? 1 : 0 }
-        }
 
-        #expect(winners == 1)
+            #expect(takes.total == 1)
+        }
+    }
+}
+
+/// Counts with its own lock: counting through `Locked` is a locked read then a locked write, which
+/// would swallow the very races this test is looking for.
+private final class TakeCounter: @unchecked Sendable {
+    private let lock = NSLock()
+    private var takes = 0
+
+    func record() {
+        lock.lock()
+        takes += 1
+        lock.unlock()
+    }
+
+    var total: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return takes
     }
 }

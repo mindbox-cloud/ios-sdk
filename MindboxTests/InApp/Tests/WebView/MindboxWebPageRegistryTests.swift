@@ -52,8 +52,8 @@ struct MindboxWebPageRegistryTests {
         #expect(page.received.map(\.action) == [.initDataUpdated])
     }
 
-    @Test("Each page gets its own payload copy under its own request")
-    func eachPageGetsItsOwnRequest() {
+    @Test("The payload reaches every receiver unchanged")
+    func payloadReachesEveryReceiverUnchanged() {
         let registry = MindboxWebPageRegistry()
         let first = WebPageSpy()
         let second = WebPageSpy()
@@ -109,7 +109,7 @@ struct MindboxWebPageRegistryTests {
     }
 }
 
-private final class WebPageSpy: MindboxWebPage {
+final class WebPageSpy: MindboxWebPage {
 
     private(set) var received: [(action: BridgeMessage.Action, payload: JSONValue)] = []
 

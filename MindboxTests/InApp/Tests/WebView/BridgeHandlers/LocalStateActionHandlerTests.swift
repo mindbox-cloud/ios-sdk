@@ -12,9 +12,20 @@ import Testing
 @Suite("LocalStateActionHandler", .tags(.webView))
 struct LocalStateActionHandlerTests {
 
-    private func makeSUT() -> (handler: LocalStateActionHandler, storage: LocalStateStorageSpy, host: HostSpy) {
+    private func makeSUT(webPageRegistry: MindboxWebPageRegistry = MindboxWebPageRegistry())
+        -> (handler: LocalStateActionHandler, storage: LocalStateStorageSpy, host: HostSpy) {
         let storage = LocalStateStorageSpy()
-        return (LocalStateActionHandler(makeStorage: { storage }), storage, HostSpy())
+        return (LocalStateActionHandler(makeStorage: { storage }, webPageRegistry: webPageRegistry),
+                storage,
+                HostSpy())
+    }
+
+    private func makeBroadcastSUT() -> (handler: LocalStateActionHandler,
+                                        registry: MindboxWebPageRegistry,
+                                        writer: BroadcastHostSpy) {
+        let registry = MindboxWebPageRegistry()
+        let (handler, _, _) = makeSUT(webPageRegistry: registry)
+        return (handler, registry, BroadcastHostSpy())
     }
 
     @Test("Owns all three local state actions")
@@ -129,6 +140,48 @@ struct LocalStateActionHandlerTests {
         #expect(response.payload == .object(["error": .string("Invalid payload: missing 'data' object")]))
     }
 
+    // MARK: - broadcast
+
+    @Test("A write reaches the other live pages with the same keys the writer got back")
+    func writeIsAnnouncedToTheOtherPages() throws {
+        let (handler, registry, writer) = makeBroadcastSUT()
+        let listener = WebPageSpy()
+        registry.register(listener)
+
+        handler.handle(.request(.localStateSet, payload: .object(["data": .object(["seen": .string("1")])])),
+                       host: writer)
+
+        let announced = try #require(listener.received.first)
+        #expect(announced.action == .localStateChanged)
+        #expect(announced.payload == writer.sent.last?.payload)
+    }
+
+    @Test("The writer does not hear its own write")
+    func writerIsExcludedFromTheAnnouncement() {
+        let (handler, registry, writer) = makeBroadcastSUT()
+        let listener = WebPageSpy()
+        registry.register(writer)
+        registry.register(listener)
+
+        handler.handle(.request(.localStateSet, payload: .object(["data": .object(["seen": .string("1")])])),
+                       host: writer)
+
+        #expect(listener.received.count == 1)
+        #expect(writer.pushed.isEmpty)
+    }
+
+    @Test("A rejected write is not announced")
+    func rejectedWriteIsNotAnnounced() {
+        let (handler, registry, writer) = makeBroadcastSUT()
+        let listener = WebPageSpy()
+        registry.register(listener)
+
+        handler.handle(.request(.localStateSet, payload: .object(["version": .int(1)])), host: writer)
+
+        #expect(writer.sent.last?.type == .error)
+        #expect(listener.received.isEmpty)
+    }
+
     // MARK: - init
 
     @Test("Initialization applies the version and the defaults")
@@ -197,6 +250,17 @@ struct LocalStateActionHandlerTests {
 }
 
 // MARK: - Doubles
+
+/// One object both answers the request and sits in the registry: the handler excludes the writer
+/// by identity, so a page that registered anything else would hear its own write.
+private final class BroadcastHostSpy: HostSpy, MindboxWebPage {
+
+    private(set) var pushed: [(action: BridgeMessage.Action, payload: JSONValue)] = []
+
+    func push(_ action: BridgeMessage.Action, payload: JSONValue) {
+        pushed.append((action, payload))
+    }
+}
 
 final class LocalStateStorageSpy: WebViewLocalStateStorageProtocol {
 

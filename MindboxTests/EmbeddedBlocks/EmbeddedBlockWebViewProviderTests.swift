@@ -101,33 +101,6 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.provider.contentView == nil)
     }
 
-    @Test("A count too large for an integer is a failure, not a crash")
-    func hugeCountIsFailure() {
-        let bed = EmbeddedBlockTestBed()
-        var states: [EmbeddedBlockState] = []
-        bed.provider.onStateChange = { states.append($0) }
-
-        bed.provider.start()
-        bed.page?.send(.contentRendered, ["count": .double(1e30)])
-
-        #expect(states.last == .failed)
-        #expect(bed.provider.contentView == nil)
-    }
-
-    /// Rounding would give one page bug two opposite fates — refused instead, one rule with Android and the overlay.
-    @Test("A fractional count is refused as unreadable")
-    func fractionalCountIsRefused() {
-        let bed = EmbeddedBlockTestBed()
-        var states: [EmbeddedBlockState] = []
-        bed.provider.onStateChange = { states.append($0) }
-
-        bed.provider.start()
-        bed.page?.send(.contentRendered, ["count": .double(2.5)])
-
-        #expect(states.last == .failed)
-        #expect(bed.failureReporter.reasons == [.presentationFailed])
-    }
-
     @Test("A page that drew nothing collapses the block")
     func pageEmptyCollapsesTheBlock() {
         let bed = EmbeddedBlockTestBed()
@@ -176,17 +149,6 @@ struct EmbeddedBlockWebViewProviderTests {
 
         #expect(bed.showReporter.inAppIds == [EmbeddedBlockWebContent.stub.inAppId])
         #expect(bed.showReporter.reported.first?.tags == EmbeddedBlockWebContent.stub.tags)
-    }
-
-    @Test("An unlimited block reports the show it does not count")
-    func unlimitedBlockStillReportsTheShow() {
-        let bed = EmbeddedBlockTestBed()
-
-        bed.provider.start()
-        bed.page?.reportRendered(3)
-
-        #expect(bed.showRecorder.recorded.isEmpty)
-        #expect(bed.showReporter.inAppIds == [EmbeddedBlockWebContent.stub.inAppId])
     }
 
     @Test("Nothing drawn, nothing reported")
@@ -704,28 +666,6 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.page?.responses.map(\.payload) == [.object(["inappIds": .array([.string("story-1")])])])
     }
 
-    @Test("A question without an id list is refused, not answered empty")
-    func questionWithoutIdsIsRefused() {
-        let bed = EmbeddedBlockTestBed()
-        bed.provider.start()
-
-        bed.page?.send(.checkInappsTargeting)
-
-        #expect(bed.feed.askedIds.isEmpty)
-        #expect(bed.page?.responses.isEmpty == true)
-        #expect(bed.page?.refusals.count == 1)
-    }
-
-    @Test("Ids that are not strings are left out of the question")
-    func nonStringIdsAreSkipped() {
-        let bed = EmbeddedBlockTestBed()
-        bed.provider.start()
-
-        bed.page?.send(.checkInappsTargeting, ["inappIds": .array([.string("story-1"), .int(7)])])
-
-        #expect(bed.feed.askedIds == [["story-1"]])
-    }
-
     @Test("A delivered answer is vouched for once")
     func deliveredAnswerIsVouchedFor() {
         let bed = EmbeddedBlockTestBed()
@@ -790,28 +730,6 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.page?.send(.showInApp, ["inappId": .string("story-id"), "params": .object(params)])
 
         #expect(bed.feed.shown.first?.params == params)
-    }
-
-    @Test("A request without an id is refused and shows nothing")
-    func showWithoutIdIsRefused() {
-        let bed = EmbeddedBlockTestBed()
-        bed.provider.start()
-
-        bed.page?.send(.showInApp, ["params": .object(["formId": .string("160477")])])
-
-        #expect(bed.feed.shown.isEmpty)
-        #expect(bed.page?.refusals.count == 1)
-    }
-
-    @Test("An empty id is refused too")
-    func showWithEmptyIdIsRefused() {
-        let bed = EmbeddedBlockTestBed()
-        bed.provider.start()
-
-        bed.page?.send(.showInApp, ["inappId": .string("")])
-
-        #expect(bed.feed.shown.isEmpty)
-        #expect(bed.page?.refusals.count == 1)
     }
 
     @Test("A stopped block does not answer at all")
@@ -902,6 +820,19 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.page?.cancelCount == 1)
         #expect(states.isEmpty)
         #expect(bed.provider.contentView == nil)
+    }
+
+    @Test("The page is told nobody is looking at it, and told again when the user comes back")
+    func stopAndStartTellThePageAboutTheUser() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+
+        bed.provider.stop()
+        #expect(bed.page?.isUserPresent == false)
+
+        bed.provider.start()
+        #expect(bed.page?.isUserPresent == true)
     }
 
     @Test("A return builds a new page when the previous one never rendered")

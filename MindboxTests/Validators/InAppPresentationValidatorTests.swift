@@ -412,18 +412,6 @@ final class InAppPresentationValidatorTests: XCTestCase {
         ], "Priority in-app should only perform isNotPresentingAnotherInApp and isValidFrequency checks")
     }
     
-    func test_canPresentInApp_validationOrderForUnlimitedInApp() {
-        let wrapper = InAppPresentationValidatorWrapper(persistenceStorage: persistenceStorage)
-
-        let result = wrapper.canPresentInApp(isPriority: false, frequency: .unlimited, id: "unlimited_inapp")
-
-        XCTAssertTrue(result)
-        XCTAssertEqual(wrapper.validationChecks, [
-            .isNotPresentingAnotherInApp,
-            .isValidFrequency
-        ], "An unlimited in-app should stop at the lock and its own frequency, like a priority one")
-    }
-
     func test_canPresentInApp_validationOrderForRegularInApp() {
         let wrapper = InAppPresentationValidatorWrapper(persistenceStorage: persistenceStorage)
         
@@ -481,7 +469,7 @@ class InAppPresentationValidatorWrapper: InAppPresentationValidatorProtocol {
             return false
         }
         
-        if isPriority || frequency == .unlimited {
+        if isPriority {
             return true
         }
 

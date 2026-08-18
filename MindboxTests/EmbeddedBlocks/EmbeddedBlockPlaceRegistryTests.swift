@@ -353,8 +353,8 @@ struct EmbeddedBlockPlaceRegistryTests {
 
     // MARK: - Lifetime
 
-    @Test("A dead block drops out of the map on its own")
-    func deadBlocksArePruned() {
+    @Test("A place whose only block has died resolves nothing")
+    func deadBlockLeavesNothingToResolve() {
         let rig = Rig()
         var block: BlockFake? = BlockFake()
         rig.registry.register(block!, place: "stories")

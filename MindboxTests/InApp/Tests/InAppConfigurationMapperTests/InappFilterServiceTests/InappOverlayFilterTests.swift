@@ -10,7 +10,7 @@ import Foundation
 import Testing
 @testable import Mindbox
 
-@Suite("Overlay path filters", .tags(.embeddedBlocks))
+@Suite("Overlay path filters", .tags(.inappSelection, .embeddedBlocks))
 struct InappOverlayFilterTests {
 
     private let sut = DI.injectOrFail(InappFilterProtocol.self) as? InappsFilterService

@@ -25,4 +25,6 @@ extension Tag {
     @Tag static var storageState: Self
     /// Log retention / size-limit trimming policy.
     @Tag static var trimming: Self
+    /// Thread-safety primitives shared by the SDK: the `Locked` property wrapper and its atomicity.
+    @Tag static var concurrency: Self
 }
