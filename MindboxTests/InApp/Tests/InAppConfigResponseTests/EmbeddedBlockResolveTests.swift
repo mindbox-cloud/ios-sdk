@@ -371,6 +371,16 @@ struct EmbeddedBlockResolveTests {
         #expect(formData.extraParams == params)
     }
 
+    @Test("A story tap after an operation pass carries no leftover operation")
+    func storyTapCarriesNoLeftoverOperation() async throws {
+        let event = ApplicationEvent(name: Constants.operationName, model: nil)
+        _ = await resolvePlace(Constants.place, trigger: event)
+
+        let formData = try #require(await inappToShow(Constants.onceStoryId))
+
+        #expect(formData.operation == nil)
+    }
+
     @Test("A story already shown still opens")
     func alreadyShownStoryStillOpens() async throws {
         let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
