@@ -164,6 +164,57 @@ final class InappShowFailureManagerTests: XCTestCase {
         XCTAssertEqual(failures[0].errorDetails, "segment")
     }
 
+    // MARK: - sendFailure: past the buffer
+
+    /// The bug this exists for: the buffer keeps one failure per in-app id and only lets targeting
+    /// reasons replace each other, so a block's failure used to be dropped whenever a selection pass
+    /// had already buffered one for the same id.
+    func testSendFailure_isNotSwallowedByABufferedTargetingFailure() throws {
+        manager.addFailure(inappId: "inapp-1", reason: .geoRequestFailed, details: "geo down", tags: nil)
+
+        manager.sendFailure(inappId: "inapp-1", reason: .presentationFailed, details: "page said nothing", tags: nil)
+
+        assertCreatedEventsCountEventually(1)
+        let event = try XCTUnwrap(databaseRepository.createdEvents.first)
+        let failures = try XCTUnwrap(decodeFailures(from: event))
+        XCTAssertEqual(failures.count, 1)
+        XCTAssertEqual(failures[0].failureReason, .presentationFailed)
+        XCTAssertEqual(failures[0].errorDetails, "page said nothing")
+    }
+
+    /// The buffered failure is left for its own pass to flush — sending one at once must not consume it.
+    func testSendFailure_leavesTheBufferIntact() throws {
+        manager.addFailure(inappId: "inapp-1", reason: .geoRequestFailed, details: "geo down", tags: nil)
+        manager.sendFailure(inappId: "inapp-1", reason: .webviewLoadFailed, details: "markup", tags: nil)
+        assertCreatedEventsCountEventually(1)
+
+        manager.sendFailures()
+
+        assertCreatedEventsCountEventually(2)
+        let second = try XCTUnwrap(databaseRepository.createdEvents.last)
+        let failures = try XCTUnwrap(decodeFailures(from: second))
+        XCTAssertEqual(failures.map(\.failureReason), [.geoRequestFailed])
+    }
+
+    func testSendFailure_whenFeatureDisabled_sendsNothing() {
+        applyFeatureToggle(shouldSendInAppShowError: false)
+
+        manager.sendFailure(inappId: "inapp-1", reason: .presentationFailed, details: nil, tags: nil)
+
+        assertCreatedEventsCountEventually(0)
+    }
+
+    func testSendFailure_truncatesErrorDetailsToLimit() throws {
+        let long = String(repeating: "a", count: InappShowFailureManager.errorDetailsLimit + 100)
+
+        manager.sendFailure(inappId: "inapp-1", reason: .presentationFailed, details: long, tags: nil)
+
+        assertCreatedEventsCountEventually(1)
+        let event = try XCTUnwrap(databaseRepository.createdEvents.first)
+        let failures = try XCTUnwrap(decodeFailures(from: event))
+        XCTAssertEqual(failures[0].errorDetails?.utf8.count, InappShowFailureManager.errorDetailsLimit)
+    }
+
     func testClearFailures_removesBufferedFailures() {
         manager.addFailure(
             inappId: "inapp-clear",

@@ -44,9 +44,14 @@ final class MockSegmentationService: SegmentationServiceProtocol {
 
 final class MockInappShowFailureManager: InappShowFailureManagerProtocol {
     private(set) var failures: [(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?)] = []
+    private(set) var sentAtOnce: [(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?)] = []
 
     func addFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?) {
         failures.append((inappId: inappId, reason: reason, details: details, tags: tags))
+    }
+
+    func sendFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?) {
+        sentAtOnce.append((inappId: inappId, reason: reason, details: details, tags: tags))
     }
 
     func clearFailures() {

@@ -622,10 +622,15 @@ final class InappShowFailureManagerMock: InappShowFailureManagerProtocol {
     @Locked private(set) var clearFailuresCallCount = 0
     @Locked private(set) var sendFailuresCallCount = 0
     @Locked private(set) var addFailureCalls: [AddFailureCall] = []
+    @Locked private(set) var sentAtOnce: [AddFailureCall] = []
 
     func addFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?) {
         addFailureCallCount += 1
         addFailureCalls.append(AddFailureCall(inappId: inappId, reason: reason, details: details, tags: tags))
+    }
+
+    func sendFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?) {
+        sentAtOnce.append(AddFailureCall(inappId: inappId, reason: reason, details: details, tags: tags))
     }
 
     func clearFailures() {
