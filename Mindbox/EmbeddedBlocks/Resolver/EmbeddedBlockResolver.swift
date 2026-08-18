@@ -42,13 +42,6 @@ final class EmbeddedBlockResolver: EmbeddedBlockResolving {
     func resolve(_ place: String,
                  trigger: ApplicationEvent?,
                  completion: @escaping (EmbeddedBlockResolution) -> Void) {
-        if let overridden = EmbeddedBlockDebugOverrides.shared.resolution(for: place) {
-            Logger.common(message: "[EmbeddedBlock] Place '\(place)' answered from a debug override",
-                          category: .embeddedBlocks)
-            deliverOnMain(overridden, completion)
-            return
-        }
-
         load(place, trigger) { resolution in
             self.deliverOnMain(resolution, completion)
         }
