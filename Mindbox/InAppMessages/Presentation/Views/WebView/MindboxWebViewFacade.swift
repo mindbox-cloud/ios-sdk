@@ -41,24 +41,12 @@ public extension InappWebViewFacadeProtocol {
 }
 
 @_spi(Internal)
-public protocol MindboxInternalWebViewFacadeProtocol: InappWebViewFacadeProtocol {
-    func reloadWebView()
-    func cleanWebView()
-
-    /// Test-only hook used by internal test apps to observe raw incoming `WKScriptMessage` objects.
-    ///
-    /// This is meant purely for visual/debug purposes (e.g. to display the unparsed message payload),
-    /// and must not be used by production code or relied upon as part of the SDK API contract.
-    func setWKScriptMessageDelegate(_ delegate: WebBridgeWKScriptMessageDelegate?)
-}
-
-@_spi(Internal)
 public typealias WebViewLog = (String) -> Void
 @_spi(Internal)
 public typealias WebViewLogError = (String) -> Void
 
 @_spi(Internal)
-public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
+public final class MindboxWebViewFacade: InappWebViewFacadeProtocol {
 
     private let webView: WKWebView
     private let bridge: MindboxWebBridge
@@ -175,13 +163,6 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
         }
     }
 
-    public func reloadWebView() {
-        DispatchQueue.main.async { [weak self] in
-            guard let self, !self.isClosed else { return }
-            self.bridge.expectContentNavigation(self.webView.reload())
-        }
-    }
-
     public func cleanWebView() {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
@@ -253,10 +234,6 @@ public final class MindboxWebViewFacade: MindboxInternalWebViewFacadeProtocol {
     
     public func setNavigationDelegate(_ delegate: WebBridgeNavigationDelegate?) {
         bridge.navigationDelegate = delegate
-    }
-    
-    public func setWKScriptMessageDelegate(_ delegate: WebBridgeWKScriptMessageDelegate?) {
-        bridge.delegate = delegate
     }
 }
 
