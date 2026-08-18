@@ -33,12 +33,15 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     private let queue = DispatchQueue(label: "com.Mindbox.configurationManager")
     private var configResponse: ConfigResponse?
 
+    /// Confined to `queue`, like `configResponse`.
+    private var configCandidates: ConfigCandidates?
+
     private static let defaultConfigWaitBudget: TimeInterval = 30
 
     private let configWaitBudget: TimeInterval
 
     /// Confined to `queue`, like `configResponse`.
-    private var configWaiters: [(ConfigResponse?) -> Void] = []
+    private var configWaiters: [(ConfigCandidates?) -> Void] = []
     private let inAppConfigRepository: InAppConfigurationRepository
 
     /// Confined to `queue`, like `configResponse`: swapped on session expiry while the previous
@@ -48,6 +51,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     private let persistenceStorage: PersistenceStorage
     private let featureToggleManager: FeatureToggleManager
     private let webViewPrewarmService: InAppWebViewPrewarmServiceProtocol
+    private let inappFilterService: InappFilterProtocol
 
     init(
         inAppConfigAPI: InAppConfigurationAPI,
@@ -56,6 +60,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         persistenceStorage: PersistenceStorage,
         featureToggleManager: FeatureToggleManager,
         webViewPrewarmService: InAppWebViewPrewarmServiceProtocol,
+        inappFilterService: InappFilterProtocol,
         configWaitBudget: TimeInterval = InAppConfigurationManager.defaultConfigWaitBudget
     ) {
         self.inAppConfigRepository = inAppConfigRepository
@@ -64,6 +69,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         self.persistenceStorage = persistenceStorage
         self.featureToggleManager = featureToggleManager
         self.webViewPrewarmService = webViewPrewarmService
+        self.inappFilterService = inappFilterService
         self.configWaitBudget = configWaitBudget
     }
 
@@ -77,12 +83,12 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     
     func handleInapps(event: ApplicationEvent? = nil, _ completion: @escaping (InAppFormData?) -> Void) {
         queue.async {
-            guard let inappMapper = self.inappMapper, let config = self.configResponse else {
+            guard let inappMapper = self.inappMapper, let candidates = self.configCandidates else {
                 completion(nil)
                 return
             }
 
-            inappMapper.handleInapps(event, config) { inapp in
+            inappMapper.handleInapps(event, candidates) { inapp in
                 completion(inapp)
             }
         }
@@ -91,35 +97,35 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     /// Waits for the first config rather than answering nil early: an early "nothing to show"
     /// collapses the block for the screen's whole life — nothing retries.
     func selectInappForPlace(_ place: String, trigger: ApplicationEvent?, _ completion: @escaping (InAppTransitionData?) -> Void) {
-        awaitConfig("place '\(place)'") { [weak self] config in
-            guard let self = self, let inappMapper = self.inappMapper, let config = config else {
+        awaitConfig("place '\(place)'") { [weak self] candidates in
+            guard let self = self, let inappMapper = self.inappMapper, let candidates = candidates else {
                 completion(nil)
                 return
             }
 
-            inappMapper.selectInappForPlace(place, trigger: trigger, config, completion)
+            inappMapper.selectInappForPlace(place, trigger: trigger, candidates, completion)
         }
     }
 
     func getRenderableInappIds(_ ids: [String], _ completion: @escaping (FeedAnswer) -> Void) {
-        awaitConfig("a feed asking about \(ids.count) in-app(s)") { [weak self] config in
-            guard let self = self, let inappMapper = self.inappMapper, let config = config else {
+        awaitConfig("a feed asking about \(ids.count) in-app(s)") { [weak self] candidates in
+            guard let self = self, let inappMapper = self.inappMapper, let candidates = candidates else {
                 completion(.nothing)
                 return
             }
 
-            inappMapper.getRenderableInappIds(ids, config, completion)
+            inappMapper.getRenderableInappIds(ids, candidates, completion)
         }
     }
 
     func getInAppToShowById(_ id: String, params: [String: JSONValue], _ completion: @escaping (InAppFormData?) -> Void) {
-        awaitConfig("showing in-app \(id)") { [weak self] config in
-            guard let self = self, let inappMapper = self.inappMapper, let config = config else {
+        awaitConfig("showing in-app \(id)") { [weak self] candidates in
+            guard let self = self, let inappMapper = self.inappMapper, let candidates = candidates else {
                 completion(nil)
                 return
             }
 
-            inappMapper.getInAppToShowById(id, params: params, config, completion)
+            inappMapper.getInAppToShowById(id, params: params, candidates, completion)
         }
     }
 
@@ -172,10 +178,10 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         }
     }
 
-    private func awaitConfig(_ what: String, _ completion: @escaping (ConfigResponse?) -> Void) {
+    private func awaitConfig(_ what: String, _ completion: @escaping (ConfigCandidates?) -> Void) {
         queue.async {
-            if let config = self.configResponse {
-                completion(config)
+            if let candidates = self.configCandidates {
+                completion(candidates)
                 return
             }
 
@@ -183,11 +189,11 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
                           level: .debug, category: .inAppMessages)
 
             var hasAnswered = false
-            let answer: (ConfigResponse?) -> Void = { config in
+            let answer: (ConfigCandidates?) -> Void = { candidates in
                 guard !hasAnswered else { return }
 
                 hasAnswered = true
-                completion(config)
+                completion(candidates)
             }
 
             self.configWaiters.append(answer)
@@ -240,9 +246,11 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             Logger.common(message: "Failed to download InApp configuration. Error: \(error.localizedDescription)", level: .error, category: .inAppMessages)
         }
 
+        configCandidates = configResponse.map { inappFilterService.candidates(from: $0) }
+
         let waiters = configWaiters
         configWaiters = []
-        waiters.forEach { $0(configResponse) }
+        waiters.forEach { $0(configCandidates) }
 
         // Prewarm stage 2: warm what the config's webview in-apps need (or release the
         // warm instance when the config proves there are none).

@@ -12,21 +12,21 @@ import MindboxLogger
 
 protocol InappMapperProtocol {
     func handleInapps(_ event: ApplicationEvent?,
-                      _ response: ConfigResponse,
+                      _ candidates: ConfigCandidates,
                       _ completion: @escaping (InAppFormData?) -> Void)
     func selectInappForPlace(_ place: String,
                              trigger: ApplicationEvent?,
-                             _ response: ConfigResponse,
+                             _ candidates: ConfigCandidates,
                              _ completion: @escaping (InAppTransitionData?) -> Void)
     func getInAppById(_ id: String,
-                      _ response: ConfigResponse,
+                      _ candidates: ConfigCandidates,
                       _ completion: @escaping (InAppTransitionData?) -> Void)
     func getRenderableInappIds(_ ids: [String],
-                               _ response: ConfigResponse,
+                               _ candidates: ConfigCandidates,
                                _ completion: @escaping (FeedAnswer) -> Void)
     func getInAppToShowById(_ id: String,
                             params: [String: JSONValue],
-                            _ response: ConfigResponse,
+                            _ candidates: ConfigCandidates,
                             _ completion: @escaping (InAppFormData?) -> Void)
 }
 
@@ -41,7 +41,6 @@ class InappMapper: InappMapperProtocol {
     private let presentationValidator: InAppPresentationValidatorProtocol
 
     @Locked private var shownInappIDWithHashValue: [String: Int] = [:]
-    @Locked private var abTests: [ABTest]?
     
     private let processingQueue = DispatchQueue(label: "com.Mindbox.inAppMapper.processingQueue")
     
@@ -56,7 +55,7 @@ class InappMapper: InappMapperProtocol {
     }
 
     func handleInapps(_ event: ApplicationEvent?,
-                      _ response: ConfigResponse,
+                      _ candidates: ConfigCandidates,
                       _ completion: @escaping (InAppFormData?) -> Void) {
         processingQueue.async {
             let group = DispatchGroup()
@@ -65,13 +64,10 @@ class InappMapper: InappMapperProtocol {
             Logger.common(message: "[InappMapper] Start handingInapps by event: \(event?.name ?? "start")",
                           level: .debug, category: .inAppMessages)
             self.setupEnvironment(event: event)
-            self.abTests = response.abtests
-            let filteredInapps = self.getFilteredInapps(inappsDTO: response.inapps?.elements, abTests: response.abtests)
-            self.prepareTargetingChecker(for: filteredInapps)
-            self.prepareForRemainingTargeting()
+            self.prepareTargetingChecker(for: candidates.renderable)
 
-            self.chooseInappToShow(filteredInapps: filteredInapps) { formData in
-                self.sendRemainingInappsTargeting {
+            self.chooseInappToShow(candidates) { formData in
+                self.sendRemainingInappsTargeting(candidates) {
                     completion(formData)
                     group.leave()
                 }
@@ -83,17 +79,14 @@ class InappMapper: InappMapperProtocol {
 
     func selectInappForPlace(_ place: String,
                              trigger: ApplicationEvent?,
-                             _ response: ConfigResponse,
+                             _ candidates: ConfigCandidates,
                              _ completion: @escaping (InAppTransitionData?) -> Void) {
         let query = TargetingQuery(
             label: "place '\(place)'",
             event: trigger,
-            response: response,
             fetchesDependencies: true,
             candidates: {
-                self.inappFilterService.filter(place: place,
-                                               inapps: response.inapps?.elements,
-                                               abTests: response.abtests)
+                self.inappFilterService.filter(place: place, in: candidates)
             },
             pickVariant: { $0.form.variants.first { $0.placeSystemName == place } }
         )
@@ -122,17 +115,14 @@ class InappMapper: InappMapperProtocol {
     /// Never goes to the network: answers from what the session already fetched, and an id whose
     /// targeting lacks data is cut — fail closed, in sync with Android.
     func getRenderableInappIds(_ ids: [String],
-                               _ response: ConfigResponse,
+                               _ candidates: ConfigCandidates,
                                _ completion: @escaping (FeedAnswer) -> Void) {
         let query = TargetingQuery(
             label: "a feed asking about \(ids.count) in-app(s)",
             event: nil,
-            response: response,
             fetchesDependencies: false,
             candidates: {
-                self.inappFilterService.filter(feedIds: ids,
-                                               inapps: response.inapps?.elements,
-                                               abTests: response.abtests)
+                self.inappFilterService.filter(feedIds: ids, in: candidates)
             },
             pickVariant: { $0.form.variants.first { $0.isOverlayPresentable } }
         )
@@ -170,7 +160,6 @@ class InappMapper: InappMapperProtocol {
         let label: String
 
         let event: ApplicationEvent?
-        let response: ConfigResponse
 
         /// A place resolve may fetch geo/segmentations; a feed may not — its page holds a
         /// three-second deadline, and a checker asked without data says "not targeted".
@@ -224,10 +213,10 @@ class InappMapper: InappMapperProtocol {
 
     /// Nothing checked, display conditions included: a direct call may show anything the config holds.
     func getInAppById(_ id: String,
-                      _ response: ConfigResponse,
+                      _ candidates: ConfigCandidates,
                       _ completion: @escaping (InAppTransitionData?) -> Void) {
         processingQueue.async {
-            guard let inapp = self.inappFilterService.filter(id: id, inapps: response.inapps?.elements) else {
+            guard let inapp = self.inappFilterService.filter(id: id, in: candidates) else {
                 completion(nil)
                 return
             }
@@ -252,9 +241,9 @@ class InappMapper: InappMapperProtocol {
     /// has to open it however many times it opened before.
     func getInAppToShowById(_ id: String,
                             params: [String: JSONValue],
-                            _ response: ConfigResponse,
+                            _ candidates: ConfigCandidates,
                             _ completion: @escaping (InAppFormData?) -> Void) {
-        getInAppById(id, response) { transitionData in
+        getInAppById(id, candidates) { transitionData in
             guard let transitionData = transitionData else {
                 completion(nil)
                 return
@@ -276,28 +265,24 @@ class InappMapper: InappMapperProtocol {
         targetingChecker.event = event
     }
 
-    private func getFilteredInapps(inappsDTO: [InAppDTO]?, abTests: [ABTest]?) -> [InApp] {
-        inappFilterService.filter(inapps: inappsDTO, abTests: abTests)
-    }
-
     private func prepareTargetingChecker(for inapps: [InApp]) {
         inapps.forEach {
             targetingChecker.prepare(id: $0.id, targeting: $0.targeting)
         }
     }
 
-    private func prepareForRemainingTargeting() {
-        let estimatedInapps = inappFilterService.validInapps
-        prepareTargetingChecker(for: estimatedInapps)
-    }
-
-    private func chooseInappToShow(filteredInapps: [InApp], completion: @escaping (InAppFormData?) -> Void) {
+    private func chooseInappToShow(_ candidates: ConfigCandidates, completion: @escaping (InAppFormData?) -> Void) {
         dataFacade.fetchDependencies(model: applicationEvent?.model) {
-            let inapps = self.applicationEvent == nil ? filteredInapps : self.inappFilterService.filterInappsByOperationForShow(
-                event: self.applicationEvent,
-                abTests: self.abTests,
-                operationInapps: self.targetingChecker.context.operationInapps
-            )
+            let inapps: [InApp]
+            if let event = self.applicationEvent {
+                inapps = self.inappFilterService.filterInappsByOperationForShow(
+                    event: event,
+                    operationInapps: self.targetingChecker.context.operationInapps,
+                    in: candidates
+                )
+            } else {
+                inapps = self.inappFilterService.filterForTrigger(in: candidates)
+            }
             let suitableInapps = self.inappFilterService.filterInappsByTargeting(inapps: inapps, targetingChecker: self.targetingChecker)
             let suitableIds = Set(suitableInapps.map(\.inAppId))
             let failedTargetingInappIds = Set(inapps.map(\.id)).subtracting(suitableIds)
@@ -435,12 +420,18 @@ class InappMapper: InappMapperProtocol {
         return (name: name, body: body)
     }
 
-    func sendRemainingInappsTargeting(_ completion: @escaping () -> Void) {
+    private func sendRemainingInappsTargeting(_ candidates: ConfigCandidates, _ completion: @escaping () -> Void) {
         self.dataFacade.fetchDependencies(model: applicationEvent?.model, shouldCollectFailures: false) {
-            let inapps = self.applicationEvent == nil ? self.inappFilterService.validInapps : self.inappFilterService.filterInappsByOperation(
-                event: self.applicationEvent,
-                operationInapps: self.targetingChecker.context.operationInapps
-            )
+            let inapps: [InApp]
+            if let event = self.applicationEvent {
+                inapps = self.inappFilterService.filterInappsByOperation(
+                    event: event,
+                    operationInapps: self.targetingChecker.context.operationInapps,
+                    in: candidates
+                )
+            } else {
+                inapps = candidates.renderable
+            }
             // A direct-call in-app answers no trigger, so the catch-up does not vouch for it either —
             // otherwise every start would pump the story funnel with every user.
             let triggerable = inapps.filter { $0.displayConditions != .directCall }
@@ -451,14 +442,14 @@ class InappMapper: InappMapperProtocol {
 
             let logMessage = """
             [InappMapper] TR | Initiating processing of remaining in-app targeting requests.
-                 Full list of in-app messages: \(self.inappFilterService.validInapps.map { $0.id })
+                 Full list of in-app messages: \(candidates.renderable.map { $0.id })
                  Saved event for targeting: \(self.applicationEvent?.name ?? "None")
             """
             Logger.common(message: logMessage, level: .debug, category: .inAppMessages)
 
             for inapp in suitableInapps {
                 if self.shownInappIDWithHashValue[inapp.inAppId] != self.getEventHashValue(),
-                   let inapp = self.inappFilterService.validInapps.first(where: { $0.id == inapp.inAppId }),
+                   let inapp = candidates.renderable.first(where: { $0.id == inapp.inAppId }),
                     self.targetingChecker.check(targeting: inapp.targeting) {
                        self.dataFacade.trackTargeting(id: inapp.id, tags: inapp.tags)
                 }
