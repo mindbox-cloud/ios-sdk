@@ -416,11 +416,11 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(appearance.values == [.content, .placeholder])
     }
 
-    /// The same case without a reload: a shown error screen gives way to the placeholder when the
-    /// block returns to the window and loads anew. The failure it came from is still the last
-    /// outcome, so only the appearance can tell the wrapper to stop drawing the error screen.
-    @Test("Block that failed with an error view goes back to the placeholder on a retry")
-    func failedBlockWithErrorViewGoesBackToPlaceholder() {
+    /// The same case without a reload: a shown error screen stays. Returning to the window is not a
+    /// reload — the page that failed is still the page — so replacing the host's screen with a
+    /// placeholder would only flash it away and put it straight back.
+    @Test("Block that failed with an error view keeps it on a retry")
+    func failedBlockWithErrorViewKeepsIt() {
         let block = BlockFixture()
         block.view.errorView = UIView()
         block.attachToWindow()
@@ -430,6 +430,25 @@ struct MindboxEmbeddedBlockViewTests {
 
         block.removeFromWindow()
         block.attachToWindow()
+
+        // Not an exact list: the same value legitimately arrives more than once — subscribing hands
+        // out a snapshot, and every state change reports where the block stands, changed or not. The
+        // rule is that the error screen is never swapped for a placeholder.
+        #expect(appearance.values.allSatisfy { $0 == .error })
+    }
+
+    /// A reload is the one thing that reopens the cycle: only then does the error screen give way to
+    /// the placeholder, because the block really is loading again.
+    @Test("Reload after a failure with an error view shows the placeholder")
+    func reloadAfterErrorViewShowsThePlaceholder() {
+        let block = BlockFixture()
+        block.view.errorView = UIView()
+        block.attachToWindow()
+        block.page?.failLoad()
+        let appearance = EmbeddedBlockAppearanceSpy()
+        block.view.setAppearanceObserver { appearance.record($0) }
+
+        block.view.reload()
 
         #expect(appearance.values == [.error, .placeholder])
     }

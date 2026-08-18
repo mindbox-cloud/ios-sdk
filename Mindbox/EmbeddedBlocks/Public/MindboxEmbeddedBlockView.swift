@@ -154,14 +154,19 @@ public final class MindboxEmbeddedBlockView: UIView {
         }
     }
 
-    /// Whether the block has collapsed since the last explicit reload.
+    /// Whether the block has already settled on a place without content — collapsed, or showing the
+    /// host's error view.
     ///
-    /// Space once ceded to the host is not taken back: a retry — and the block gets one on every
-    /// return to a window — does not expand the container back for the placeholder. Otherwise a
-    /// block that failed to show would jerk the host layout by its height and flash the shimmer
-    /// on every pass across the screen, showing nothing in the end. Only shown content expands it
-    /// back — or an explicit reload, which is precisely consent to the full cycle anew.
-    private var hasCollapsed = false
+    /// A settled block keeps what it shows. A retry — and the block gets one on every return to a
+    /// window — is not a reload: the page behind the place is the one that already failed, so it
+    /// answers the same way, while the host watches its layout jerk by the block's height and a
+    /// placeholder flash on every pass across the screen, to show nothing in the end. That holds for
+    /// the error view just as much as for a collapse: a screen replaced by a placeholder and then by
+    /// itself again is the same flicker.
+    ///
+    /// Two things end it: content that actually appeared, and an explicit reload — which is precisely
+    /// consent to the full cycle anew.
+    private var hasSettled = false
 
     /// What the container shows right now. Stored, not computed on the fly: it is the one source for
     /// both the height and the report to the wrapper — otherwise they could diverge. It also tells a
@@ -348,9 +353,9 @@ public final class MindboxEmbeddedBlockView: UIView {
         // A new attempt means a new outcome: the host must hear it in full, even if it matches
         // the previous one.
         deliveredEvent = nil
-        // And a new attempt is entitled to take space again: a reload is the host's explicit consent
-        // to the full cycle with the placeholder, unlike the block's silent return to a window.
-        hasCollapsed = false
+        // And a new attempt is entitled to the full cycle again: a reload is the host's explicit
+        // consent to it, placeholder included, unlike the block's silent return to a window.
+        hasSettled = false
         contentProvider.reload()
         timeout.armIfNeeded()
     }
@@ -376,8 +381,8 @@ public final class MindboxEmbeddedBlockView: UIView {
     private func apply(_ state: EmbeddedBlockState) {
         shownAppearance = appearance(for: state)
 
-        if shownAppearance == .collapsed {
-            hasCollapsed = true
+        if shownAppearance == .collapsed || shownAppearance == .error {
+            hasSettled = true
         }
 
         layers.show(view(for: shownAppearance))
@@ -389,9 +394,9 @@ public final class MindboxEmbeddedBlockView: UIView {
 
     private func appearance(for state: EmbeddedBlockState) -> MindboxEmbeddedBlockAppearance {
         switch state {
-        // A collapsed block stays collapsed even while it loads anew: a retry does not win back
-        // the space the host has already reclaimed.
-        case .loading: return hasCollapsed ? .collapsed : .placeholder
+        // A block that already settled keeps what it shows even while it loads anew: a retry earns
+        // neither the space the host has reclaimed nor a placeholder over the error screen.
+        case .loading: return hasSettled ? shownAppearance : .placeholder
         case .ready: return .content
         // A failure is shown only to those who opted in explicitly; for the rest the block collapses.
         case .failed: return errorView == nil ? .collapsed : .error
