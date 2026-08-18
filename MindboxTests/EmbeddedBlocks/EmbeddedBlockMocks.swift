@@ -7,7 +7,7 @@
 //
 
 import UIKit
-@testable import Mindbox
+@_spi(Internal) @testable import Mindbox
 
 extension EmbeddedBlockWebContent {
 
@@ -227,15 +227,18 @@ final class EmbeddedBlockTestBed {
     }
 }
 
-/// Collects what the container tells a wrapper through `setVisibilityObserver`.
-final class EmbeddedBlockVisibilitySpy {
+/// Collects what the container tells a wrapper through `setAppearanceObserver`.
+final class EmbeddedBlockAppearanceSpy {
 
-    private(set) var values: [Bool] = []
+    private(set) var values: [MindboxEmbeddedBlockAppearance] = []
 
-    var last: Bool? { values.last }
+    var last: MindboxEmbeddedBlockAppearance? { values.last }
 
-    func record(_ isVisible: Bool) {
-        values.append(isVisible)
+    /// Whether the block took space in every report — the question a wrapper asks about its layout.
+    var wasAlwaysVisible: Bool { !values.contains(.collapsed) }
+
+    func record(_ appearance: MindboxEmbeddedBlockAppearance) {
+        values.append(appearance)
     }
 }
 

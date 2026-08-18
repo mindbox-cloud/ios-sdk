@@ -8,7 +8,7 @@
 
 import Testing
 import SwiftUI
-@testable import Mindbox
+@_spi(Internal) @testable import Mindbox
 
 /// The coordinator writes the presentation reported by the container deferred — on the next turn
 /// of the main queue. `dismantleUIView` silences the container's callbacks, but a write already
@@ -28,25 +28,23 @@ struct EmbeddedBlockCoordinatorTests {
     func updateWritesOnScheduledTurn() {
         guard #available(iOS 13.0, *) else { return }
 
-        var written = [EmbeddedBlockPresentation]()
+        var written = [MindboxEmbeddedBlockAppearance]()
         var scheduled = [() -> Void]()
         let coordinator = EmbeddedBlockRepresentable.Coordinator(
-            presentation: Binding(get: { EmbeddedBlockPresentation(layer: .placeholder, height: 104) },
-                                  set: { written.append($0) }),
+            appearance: Binding(get: { .placeholder }, set: { written.append($0) }),
             creationHeight: 104,
             onLoad: nil,
             onFail: nil,
             schedule: { scheduled.append($0) }
         )
 
-        let content = EmbeddedBlockPresentation(layer: .content, height: 104)
-        coordinator.update(content)
+        coordinator.update(.content)
 
         #expect(written.isEmpty)
 
         scheduled.forEach { $0() }
 
-        #expect(written == [content])
+        #expect(written == [.content])
     }
 
     /// The dismantle race: the write is already queued, the view leaves the tree before it runs.
@@ -56,18 +54,17 @@ struct EmbeddedBlockCoordinatorTests {
     func detachDropsScheduledWrite() {
         guard #available(iOS 13.0, *) else { return }
 
-        var written = [EmbeddedBlockPresentation]()
+        var written = [MindboxEmbeddedBlockAppearance]()
         var scheduled = [() -> Void]()
         let coordinator = EmbeddedBlockRepresentable.Coordinator(
-            presentation: Binding(get: { EmbeddedBlockPresentation(layer: .placeholder, height: 104) },
-                                  set: { written.append($0) }),
+            appearance: Binding(get: { .placeholder }, set: { written.append($0) }),
             creationHeight: 104,
             onLoad: nil,
             onFail: nil,
             schedule: { scheduled.append($0) }
         )
 
-        coordinator.update(EmbeddedBlockPresentation(layer: .content, height: 104))
+        coordinator.update(.content)
         coordinator.detach()
 
         scheduled.forEach { $0() }

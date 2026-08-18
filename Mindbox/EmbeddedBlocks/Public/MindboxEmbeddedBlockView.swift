@@ -79,28 +79,17 @@ public final class MindboxEmbeddedBlockView: UIView {
         }
     }
 
-    /// What the container shows, for the SwiftUI wrapper: it sizes the representable itself instead
-    /// of relying on `intrinsicContentSize`, and it draws the host's placeholder and error screen
-    /// itself instead of handing them over as `UIView`s. Internal: not part of the public API.
-    var onPresentationChange: ((EmbeddedBlockPresentation) -> Void)?
-
     // MARK: - Wrapper API
 
-    /// Reports whether the block occupies space in the host layout right now. `false` means it
-    /// collapsed and the space went back to the host.
+    /// Reports how the block occupies its place, for wrappers that lay it out themselves instead of
+    /// relying on `intrinsicContentSize` — see `MindboxEmbeddedBlockAppearance`.
     ///
-    /// For wrappers that lay the block out themselves instead of relying on `intrinsicContentSize`.
-    /// A Flutter platform view is sized from the Dart side, and neither `intrinsicContentSize` nor
-    /// the layer model reaches it — so the collapse has to arrive as a signal. A boolean and not
-    /// `EmbeddedBlockPresentation`: which layer the container shows is its own business, and the
-    /// wrapper needs exactly one bit of it.
-    ///
-    /// The current value arrives right away on subscribing, so a wrapper that subscribes after the
-    /// outcome cannot miss the collapse that came with it.
+    /// The current value arrives right away on subscribing: a wrapper that comes after the outcome
+    /// cannot miss what the block already decided.
     @_spi(Internal)
-    public func setVisibilityObserver(_ observer: ((Bool) -> Void)?) {
-        visibilityObserver = observer
-        observer?(isVisible)
+    public func setAppearanceObserver(_ observer: ((MindboxEmbeddedBlockAppearance) -> Void)?) {
+        appearanceObserver = observer
+        observer?(shownAppearance)
     }
 
     /// Tells the block whether the host still shows it — a second source for the same input as
@@ -140,8 +129,7 @@ public final class MindboxEmbeddedBlockView: UIView {
                       category: .embeddedBlocks)
         isReleased = true
         delegate = nil
-        visibilityObserver = nil
-        onPresentationChange = nil
+        appearanceObserver = nil
         updateContentActivity(reason: "was released by the host wrapper")
     }
 
@@ -175,15 +163,12 @@ public final class MindboxEmbeddedBlockView: UIView {
     /// back — or an explicit reload, which is precisely consent to the full cycle anew.
     private var hasCollapsed = false
 
-    /// The layer shown right now. Stored, not computed on the fly: it is the one source for both
-    /// the height and the report to the wrapper — otherwise they could diverge. It also tells a
+    /// What the container shows right now. Stored, not computed on the fly: it is the one source for
+    /// both the height and the report to the wrapper — otherwise they could diverge. It also tells a
     /// shown error screen from one merely assigned: an `errorView` given after collapse is not shown.
-    private var shownLayer: EmbeddedBlockPresentation.Layer = .placeholder
+    private var shownAppearance: MindboxEmbeddedBlockAppearance = .placeholder
 
-    /// Whether the block takes space in the host layout: every layer except `nothing` does.
-    private var isVisible: Bool { shownLayer != .nothing }
-
-    private var visibilityObserver: ((Bool) -> Void)?
+    private var appearanceObserver: ((MindboxEmbeddedBlockAppearance) -> Void)?
 
     /// Whether the wrapper's host still shows the block. Nobody says otherwise until a wrapper does.
     private var isHostVisible = true
@@ -284,7 +269,7 @@ public final class MindboxEmbeddedBlockView: UIView {
 
         // The block reserves its space right away, before any loading starts, and reserved space
         // must not look blank.
-        layers.show(view(for: shownLayer))
+        layers.show(view(for: shownAppearance))
     }
 
     // MARK: - Layout
@@ -299,7 +284,7 @@ public final class MindboxEmbeddedBlockView: UIView {
     }
 
     private var contentHeight: CGFloat {
-        isVisible ? max(0, preferredHeight) : 0
+        shownAppearance == .collapsed ? 0 : max(0, preferredHeight)
     }
 
     // MARK: - Visibility
@@ -389,45 +374,44 @@ public final class MindboxEmbeddedBlockView: UIView {
     }
 
     private func apply(_ state: EmbeddedBlockState) {
-        shownLayer = layer(for: state)
+        shownAppearance = appearance(for: state)
 
-        if shownLayer == .nothing {
+        if shownAppearance == .collapsed {
             hasCollapsed = true
         }
 
-        layers.show(view(for: shownLayer))
+        layers.show(view(for: shownAppearance))
 
         invalidateIntrinsicContentSize()
-        onPresentationChange?(EmbeddedBlockPresentation(layer: shownLayer, height: contentHeight))
-        visibilityObserver?(isVisible)
+        appearanceObserver?(shownAppearance)
         scheduleDelivery()
     }
 
-    private func layer(for state: EmbeddedBlockState) -> EmbeddedBlockPresentation.Layer {
+    private func appearance(for state: EmbeddedBlockState) -> MindboxEmbeddedBlockAppearance {
         switch state {
         // A collapsed block stays collapsed even while it loads anew: a retry does not win back
         // the space the host has already reclaimed.
-        case .loading: return hasCollapsed ? .nothing : .placeholder
+        case .loading: return hasCollapsed ? .collapsed : .placeholder
         case .ready: return .content
         // A failure is shown only to those who opted in explicitly; for the rest the block collapses.
-        case .failed: return errorView == nil ? .nothing : .errorView
-        case .empty: return .nothing
+        case .failed: return errorView == nil ? .collapsed : .error
+        case .empty: return .collapsed
         }
     }
 
-    private func view(for layer: EmbeddedBlockPresentation.Layer) -> UIView? {
-        switch layer {
+    private func view(for appearance: MindboxEmbeddedBlockAppearance) -> UIView? {
+        switch appearance {
         case .placeholder: return placeholderView ?? defaultPlaceholder
         case .content: return contentProvider.contentView
-        case .errorView: return errorView
-        case .nothing: return nil
+        case .error: return errorView
+        case .collapsed: return nil
         }
     }
 
     /// A placeholder swap takes effect immediately, but only while the placeholder is what the
     /// container shows — in any other state the new view is simply remembered for the next load.
     private func refreshPlaceholder() {
-        guard shownLayer == .placeholder else { return }
+        guard shownAppearance == .placeholder else { return }
         layers.show(view(for: .placeholder))
     }
 
@@ -436,7 +420,7 @@ public final class MindboxEmbeddedBlockView: UIView {
     /// of nowhere would make the layout jump. The new view is remembered for the next load. In
     /// any other state the view is simply remembered too.
     private func refreshErrorView() {
-        guard state == .failed, shownLayer == .errorView else { return }
+        guard state == .failed, shownAppearance == .error else { return }
         apply(state)
     }
 

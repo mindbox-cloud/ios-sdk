@@ -107,7 +107,7 @@ private struct EmbeddedBlockBody: View {
 
     /// Starts from the same point the container starts from: the space is taken, the placeholder
     /// is shown. The block occupies its height right away, not from the container's first report.
-    @State private var presentation: EmbeddedBlockPresentation
+    @State private var appearance: MindboxEmbeddedBlockAppearance
 
     init(placeSystemName: String,
          height: CGFloat,
@@ -121,35 +121,36 @@ private struct EmbeddedBlockBody: View {
         self.onFail = onFail
         self.placeholder = placeholder
         self.errorContent = errorContent
-        _presentation = State(initialValue: EmbeddedBlockPresentation(layer: .placeholder,
-                                                                     height: max(0, height)))
+        _appearance = State(initialValue: .placeholder)
     }
 
     var body: some View {
         ZStack {
             EmbeddedBlockRepresentable(placeSystemName: placeSystemName,
                                        height: height,
-                                       presentation: $presentation,
+                                       appearance: $appearance,
                                        onLoad: onLoad,
                                        onFail: onFail,
                                        hasPlaceholder: placeholder != nil,
                                        hasErrorView: errorContent != nil)
             hostLayer
         }
-        .frame(height: presentation.height)
+        // The container gives the height to a UIKit host through `intrinsicContentSize`, which SwiftUI
+        // does not read: here the same rule is applied to the frame instead.
+        .frame(height: appearance == .collapsed ? 0 : max(0, height))
     }
 
     @ViewBuilder private var hostLayer: some View {
-        switch presentation.layer {
+        switch appearance {
         case .placeholder:
             if let placeholder {
                 placeholder()
             }
-        case .errorView:
+        case .error:
             if let errorContent {
                 errorContent()
             }
-        case .content, .nothing:
+        case .content, .collapsed:
             EmptyView()
         }
     }
@@ -161,7 +162,7 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
     let placeSystemName: String
     let height: CGFloat
 
-    @Binding var presentation: EmbeddedBlockPresentation
+    @Binding var appearance: MindboxEmbeddedBlockAppearance
 
     let onLoad: (() -> Void)?
     let onFail: (() -> Void)?
@@ -170,7 +171,7 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
     let hasErrorView: Bool
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(presentation: $presentation,
+        Coordinator(appearance: $appearance,
                     creationHeight: height,
                     onLoad: onLoad,
                     onFail: onFail)
@@ -180,8 +181,8 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
         let blockView = MindboxEmbeddedBlockView(placeSystemName: placeSystemName, height: height)
         let coordinator = context.coordinator
         blockView.delegate = coordinator
-        blockView.onPresentationChange = { presentation in
-            coordinator.update(presentation)
+        blockView.setAppearanceObserver { appearance in
+            coordinator.update(appearance)
         }
         syncStandIns(in: blockView)
         return blockView
@@ -189,7 +190,7 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
 
     func updateUIView(_ uiView: MindboxEmbeddedBlockView, context: Context) {
         let coordinator = context.coordinator
-        coordinator.presentation = $presentation
+        coordinator.appearance = $appearance
         coordinator.onLoad = onLoad
         coordinator.onFail = onFail
         coordinator.warnIfHeightIsIgnored(height, placeSystemName: placeSystemName)
@@ -197,7 +198,7 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
     }
 
     static func dismantleUIView(_ uiView: MindboxEmbeddedBlockView, coordinator: Coordinator) {
-        uiView.onPresentationChange = nil
+        uiView.setAppearanceObserver(nil)
         uiView.delegate = nil
         coordinator.detach()
     }
@@ -229,7 +230,7 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
 
     final class Coordinator: MindboxEmbeddedBlockViewDelegate {
 
-        var presentation: Binding<EmbeddedBlockPresentation>
+        var appearance: Binding<MindboxEmbeddedBlockAppearance>
         var onLoad: (() -> Void)?
         var onFail: (() -> Void)?
 
@@ -242,23 +243,23 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
         /// Where `update` defers its write — `DispatchQueue.main` outside tests.
         private let schedule: (@escaping () -> Void) -> Void
 
-        init(presentation: Binding<EmbeddedBlockPresentation>,
+        init(appearance: Binding<MindboxEmbeddedBlockAppearance>,
              creationHeight: CGFloat,
              onLoad: (() -> Void)?,
              onFail: (() -> Void)?,
              schedule: @escaping (@escaping () -> Void) -> Void = { work in DispatchQueue.main.async { work() } }) {
-            self.presentation = presentation
+            self.appearance = appearance
             self.creationHeight = creationHeight
             self.onLoad = onLoad
             self.onFail = onFail
             self.schedule = schedule
         }
 
-        func update(_ newPresentation: EmbeddedBlockPresentation) {
+        func update(_ newAppearance: MindboxEmbeddedBlockAppearance) {
             schedule { [weak self] in
                 guard let self, !self.isDetached,
-                      self.presentation.wrappedValue != newPresentation else { return }
-                self.presentation.wrappedValue = newPresentation
+                      self.appearance.wrappedValue != newAppearance else { return }
+                self.appearance.wrappedValue = newAppearance
             }
         }
 

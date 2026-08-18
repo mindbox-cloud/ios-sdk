@@ -355,64 +355,83 @@ struct MindboxEmbeddedBlockViewTests {
 
     // MARK: - Presentation for the SwiftUI wrapper
 
-    /// SwiftUI does not read `intrinsicContentSize` on the representable view and draws the host's
-    /// layers itself, so the wrapper needs both the height and the layer — and what it receives
-    /// must match what the container actually shows.
-    @Test("Every change is pushed to the SwiftUI wrapper as a layer and a height")
-    func presentationChangesArePushedToWrapper() {
+    /// A wrapper lays the block out itself, so it is told what the container shows — and what it
+    /// hears must match what the container actually did. The first report is the snapshot handed out
+    /// on subscribing.
+    @Test("Every change is reported to the wrapper")
+    func everyChangeIsReportedToTheWrapper() {
         let block = BlockFixture()
         block.attachToWindow()
-        var reported: [EmbeddedBlockPresentation] = []
-        block.view.onPresentationChange = { reported.append($0) }
+        let appearance = EmbeddedBlockAppearanceSpy()
+        block.view.setAppearanceObserver { appearance.record($0) }
 
         block.page?.renderContent(count: 3)
         block.page?.failLoad()
 
-        #expect(reported == [EmbeddedBlockPresentation(layer: .content, height: 120),
-                             EmbeddedBlockPresentation(layer: .nothing, height: 0)])
+        #expect(appearance.values == [.placeholder, .content, .collapsed])
     }
 
     /// A failure without an error screen is, for the wrapper, the same collapsed block as an empty
-    /// one: there is nothing to draw.
-    @Test("Failed block without an error view reports nothing to show")
-    func failedBlockReportsNothingToShow() {
+    /// one: there is nothing to draw and no space to hold.
+    @Test("Failed block without an error view reports a collapsed block")
+    func failedBlockReportsCollapsed() {
         let block = BlockFixture()
         block.attachToWindow()
-        var reported: [EmbeddedBlockPresentation] = []
-        block.view.onPresentationChange = { reported.append($0) }
+        let appearance = EmbeddedBlockAppearanceSpy()
+        block.view.setAppearanceObserver { appearance.record($0) }
 
         block.page?.failLoad()
 
-        #expect(reported == [EmbeddedBlockPresentation(layer: .nothing, height: 0)])
+        #expect(appearance.last == .collapsed)
     }
 
-    /// The container sees the agreement to show an error screen by the assigned `errorView` — and
-    /// only then asks the wrapper to draw its layer.
-    @Test("Failed block with an error view reports the error layer")
-    func failedBlockWithErrorViewReportsErrorLayer() {
+    /// The container reads the host's consent to show a failure off the assigned `errorView` — and
+    /// only then asks the wrapper to draw its own error screen.
+    @Test("Failed block with an error view reports the error appearance")
+    func failedBlockWithErrorViewReportsError() {
         let block = BlockFixture()
         block.view.errorView = UIView()
         block.attachToWindow()
-        var reported: [EmbeddedBlockPresentation] = []
-        block.view.onPresentationChange = { reported.append($0) }
+        let appearance = EmbeddedBlockAppearanceSpy()
+        block.view.setAppearanceObserver { appearance.record($0) }
 
         block.page?.failLoad()
 
-        #expect(reported == [EmbeddedBlockPresentation(layer: .errorView, height: 120)])
+        #expect(appearance.last == .error)
     }
 
-    /// A reload returns the block to loading — the wrapper must show the placeholder again.
-    @Test("Reload reports the placeholder layer again")
-    func reloadReportsPlaceholderLayer() {
+    /// A reload returns the block to loading, and the wrapper must show the placeholder again. This
+    /// is what an outcome cannot express: the last outcome is still the old one, and only what the
+    /// container shows has changed.
+    @Test("Reload reports the placeholder appearance again")
+    func reloadReportsPlaceholderAgain() {
         let block = BlockFixture()
         block.attachToWindow()
         block.page?.renderContent(count: 3)
-        var reported: [EmbeddedBlockPresentation] = []
-        block.view.onPresentationChange = { reported.append($0) }
+        let appearance = EmbeddedBlockAppearanceSpy()
+        block.view.setAppearanceObserver { appearance.record($0) }
 
         block.view.reload()
 
-        #expect(reported == [EmbeddedBlockPresentation(layer: .placeholder, height: 120)])
+        #expect(appearance.values == [.content, .placeholder])
+    }
+
+    /// The same case without a reload: a shown error screen gives way to the placeholder when the
+    /// block returns to the window and loads anew. The failure it came from is still the last
+    /// outcome, so only the appearance can tell the wrapper to stop drawing the error screen.
+    @Test("Block that failed with an error view goes back to the placeholder on a retry")
+    func failedBlockWithErrorViewGoesBackToPlaceholder() {
+        let block = BlockFixture()
+        block.view.errorView = UIView()
+        block.attachToWindow()
+        block.page?.failLoad()
+        let appearance = EmbeddedBlockAppearanceSpy()
+        block.view.setAppearanceObserver { appearance.record($0) }
+
+        block.removeFromWindow()
+        block.attachToWindow()
+
+        #expect(appearance.values == [.error, .placeholder])
     }
 
     // MARK: - Lifecycle
@@ -684,72 +703,72 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(delegate.events.last == .failed)
     }
 
-    // MARK: - Visibility observer
+    // MARK: - Appearance observer
 
-    /// A wrapper that lays the block out itself gets exactly one bit of the container's state:
-    /// whether the block takes space. The current value arrives on subscribing, so a wrapper that
-    /// comes after the outcome cannot miss the collapse that came with it.
-    @Test("Visibility observer reports the current value on subscribe")
-    func visibilityObserverReportsCurrentValueOnSubscribe() {
+    /// The current value arrives on subscribing, so a wrapper that comes after the outcome cannot
+    /// miss what the container already decided.
+    @Test("Appearance observer reports the current value on subscribe")
+    func appearanceObserverReportsCurrentValueOnSubscribe() {
         let block = BlockFixture()
         block.attachToWindow()
         block.page?.failLoad()
 
-        let visibility = EmbeddedBlockVisibilitySpy()
-        block.view.setVisibilityObserver { visibility.record($0) }
+        let appearance = EmbeddedBlockAppearanceSpy()
+        block.view.setAppearanceObserver { appearance.record($0) }
 
-        #expect(visibility.values == [false])
+        #expect(appearance.values == [.collapsed])
     }
 
-    @Test("Visibility observer reports the collapse of a failed block")
-    func visibilityObserverReportsTheCollapse() {
+    @Test("Appearance observer reports the collapse of a failed block")
+    func appearanceObserverReportsTheCollapse() {
         let block = BlockFixture()
-        let visibility = EmbeddedBlockVisibilitySpy()
-        block.view.setVisibilityObserver { visibility.record($0) }
+        let appearance = EmbeddedBlockAppearanceSpy()
+        block.view.setAppearanceObserver { appearance.record($0) }
         block.attachToWindow()
 
         block.page?.failLoad()
 
-        #expect(visibility.last == false)
+        #expect(appearance.last == .collapsed)
     }
 
-    /// A shown block keeps the space it was given, and the wrapper must not collapse it: the report
-    /// stays `true` through the whole load.
-    @Test("Visibility observer stays true while the block loads and shows content")
-    func visibilityObserverStaysTrueForShownBlock() {
+    /// A shown block keeps the space it was given, and the wrapper must not collapse it anywhere on
+    /// the way from the placeholder to the content.
+    @Test("Block that loads and shows content never reports a collapse")
+    func shownBlockNeverReportsCollapse() {
         let block = BlockFixture()
-        let visibility = EmbeddedBlockVisibilitySpy()
-        block.view.setVisibilityObserver { visibility.record($0) }
+        let appearance = EmbeddedBlockAppearanceSpy()
+        block.view.setAppearanceObserver { appearance.record($0) }
         block.attachToWindow()
 
         block.page?.renderContent(count: 3)
 
-        #expect(visibility.last == true)
-        #expect(!visibility.values.contains(false))
+        #expect(appearance.last == .content)
+        #expect(appearance.wasAlwaysVisible)
     }
 
-    /// The rule "an `errorView` keeps the space, an empty block collapses anyway" is applied by the
-    /// container, and the wrapper sees only the answer — which is the whole point of a boolean.
-    @Test("Visibility observer follows the error view opt-in")
-    func visibilityObserverFollowsTheErrorViewOptIn() {
+    /// The rule "an `errorView` keeps the place through a failure, an empty place collapses anyway"
+    /// is applied by the container, and the wrapper sees only the answer — which is the whole point
+    /// of reporting what to show instead of what happened.
+    @Test("Appearance observer follows the error view opt-in")
+    func appearanceObserverFollowsTheErrorViewOptIn() {
         let failed = BlockFixture()
-        let failedVisibility = EmbeddedBlockVisibilitySpy()
+        let failedAppearance = EmbeddedBlockAppearanceSpy()
         failed.view.errorView = UIView()
-        failed.view.setVisibilityObserver { failedVisibility.record($0) }
+        failed.view.setAppearanceObserver { failedAppearance.record($0) }
         failed.attachToWindow()
 
         failed.page?.failLoad()
 
-        #expect(failedVisibility.last == true)
+        #expect(failedAppearance.last == .error)
 
         let empty = BlockFixture(resolution: .empty)
-        let emptyVisibility = EmbeddedBlockVisibilitySpy()
+        let emptyAppearance = EmbeddedBlockAppearanceSpy()
         empty.view.errorView = UIView()
-        empty.view.setVisibilityObserver { emptyVisibility.record($0) }
+        empty.view.setAppearanceObserver { emptyAppearance.record($0) }
 
         empty.attachToWindow()
 
-        #expect(emptyVisibility.last == false)
+        #expect(emptyAppearance.last == .collapsed)
     }
 
     // MARK: - Host visibility
@@ -923,18 +942,18 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.bed.resolver.resolveCount == 1)
     }
 
-    /// Nothing reaches the wrapper after it let the block go — neither outcomes nor visibility.
-    @Test("Release silences the delegate and the visibility observer")
+    /// Nothing reaches the wrapper after it let the block go — neither outcomes nor appearances.
+    @Test("Release silences the delegate and the appearance observer")
     func releaseSilencesTheWrapper() async {
         let block = BlockFixture()
         let delegate = EmbeddedBlockViewDelegateMock()
-        let visibility = EmbeddedBlockVisibilitySpy()
+        let appearance = EmbeddedBlockAppearanceSpy()
         block.view.delegate = delegate
-        block.view.setVisibilityObserver { visibility.record($0) }
+        block.view.setAppearanceObserver { appearance.record($0) }
         block.attachToWindow()
         block.page?.renderContent(count: 3)
         await mainQueueTurn()
-        let reportsBeforeRelease = visibility.values.count
+        let reportsBeforeRelease = appearance.values.count
 
         block.view.release()
         block.page?.failLoad()
@@ -942,7 +961,7 @@ struct MindboxEmbeddedBlockViewTests {
 
         #expect(block.view.delegate == nil)
         #expect(delegate.events == [.loaded])
-        #expect(visibility.values.count == reportsBeforeRelease)
+        #expect(appearance.values.count == reportsBeforeRelease)
     }
 
     @Test("Repeated release changes nothing")
