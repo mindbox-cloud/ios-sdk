@@ -173,7 +173,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             return Set([SessionTemporaryStorage.shared.viewProductOperation?.lowercased()].compactMap { $0 })
         case .viewProductCategoryId, .viewProductCategoryIdIn:
             return Set([SessionTemporaryStorage.shared.viewCategoryOperation?.lowercased()].compactMap { $0 })
-        default:
+        case .true, .segment, .city, .region, .country, .visit, .pushEnabled, .unknown:
             return []
         }
     }
