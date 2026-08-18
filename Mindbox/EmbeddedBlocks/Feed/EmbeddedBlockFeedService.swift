@@ -35,22 +35,32 @@ protocol EmbeddedBlockFeedServing: AnyObject {
 final class EmbeddedBlockFeedService: EmbeddedBlockFeedServing {
 
     private let ask: (_ ids: [String], _ completion: @escaping (FeedAnswer) -> Void) -> Void
+    private let fetchInappToShow: (_ id: String, _ params: [String: JSONValue], _ completion: @escaping (InAppFormData?) -> Void) -> Void
+    private let showNow: (InAppFormData) -> Void
 
-    init(ask: ((_ ids: [String], _ completion: @escaping (FeedAnswer) -> Void) -> Void)? = nil) {
+    init(ask: ((_ ids: [String], _ completion: @escaping (FeedAnswer) -> Void) -> Void)? = nil,
+         fetchInappToShow: ((_ id: String, _ params: [String: JSONValue], _ completion: @escaping (InAppFormData?) -> Void) -> Void)? = nil,
+         showNow: ((InAppFormData) -> Void)? = nil) {
         self.ask = ask ?? { ids, completion in
             DI.injectOrFail(InAppConfigurationManagerProtocol.self).getRenderableInappIds(ids, completion)
+        }
+        self.fetchInappToShow = fetchInappToShow ?? { id, params, completion in
+            DI.injectOrFail(InAppConfigurationManagerProtocol.self).getInAppToShowById(id, params: params, completion)
+        }
+        self.showNow = showNow ?? { formData in
+            DI.injectOrFail(InappScheduleManagerProtocol.self).showInAppNow(formData)
         }
     }
 
     func showInapp(id: String, params: [String: JSONValue]) {
-        DI.injectOrFail(InAppConfigurationManagerProtocol.self).getInAppToShowById(id, params: params) { formData in
+        fetchInappToShow(id, params) { [showNow] formData in
             guard let formData = formData else {
                 Logger.common(message: "[EmbeddedBlock] Nothing to show for in-app \(id)",
                               level: .error, category: .embeddedBlocks)
                 return
             }
 
-            DI.injectOrFail(InappScheduleManagerProtocol.self).showInAppNow(formData)
+            showNow(formData)
         }
     }
 
