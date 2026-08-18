@@ -69,6 +69,61 @@ struct InAppConfigurationManagerTests {
         override func clean() {}
     }
 
+    /// Counts the config-only work the manager is supposed to do once per applied config, and
+    /// forwards everything else to the real service.
+    private final class CountingFilterService: InappFilterProtocol {
+        private let wrapped = DI.injectOrFail(InappFilterProtocol.self)
+        @Locked private(set) var prepareCount = 0
+
+        func candidates(from response: ConfigResponse) -> ConfigCandidates {
+            prepareCount += 1
+            return wrapped.candidates(from: response)
+        }
+
+        func filterForTrigger(in candidates: ConfigCandidates) -> [InApp] {
+            wrapped.filterForTrigger(in: candidates)
+        }
+
+        func filter(place: String, in candidates: ConfigCandidates) -> [InApp] {
+            wrapped.filter(place: place, in: candidates)
+        }
+
+        func filter(feedIds ids: [String], in candidates: ConfigCandidates) -> [InApp] {
+            wrapped.filter(feedIds: ids, in: candidates)
+        }
+
+        func filter(id: String, in candidates: ConfigCandidates) -> InApp? {
+            wrapped.filter(id: id, in: candidates)
+        }
+
+        func filterInappsByOperation(event: ApplicationEvent?,
+                                     operationInapps: [String: Set<String>],
+                                     in candidates: ConfigCandidates) -> [InApp] {
+            wrapped.filterInappsByOperation(event: event, operationInapps: operationInapps, in: candidates)
+        }
+
+        func filterOutNonOverlayInapps(_ inapps: [InApp]) -> [InApp] {
+            wrapped.filterOutNonOverlayInapps(inapps)
+        }
+
+        func filterInappsByOperationForShow(event: ApplicationEvent?,
+                                            operationInapps: [String: Set<String>],
+                                            in candidates: ConfigCandidates) -> [InApp] {
+            wrapped.filterInappsByOperationForShow(event: event, operationInapps: operationInapps, in: candidates)
+        }
+
+        func filterInappsByTargeting(inapps: [InApp],
+                                     targetingChecker: InAppTargetingCheckerProtocol) -> [InAppTransitionData] {
+            wrapped.filterInappsByTargeting(inapps: inapps, targetingChecker: targetingChecker)
+        }
+
+        func filterInappsByTargeting(inapps: [InApp],
+                                     targetingChecker: InAppTargetingCheckerProtocol,
+                                     pickVariant: (InApp) -> MindboxFormVariant?) -> [InAppTransitionData] {
+            wrapped.filterInappsByTargeting(inapps: inapps, targetingChecker: targetingChecker, pickVariant: pickVariant)
+        }
+    }
+
     private let api = HeldConfigAPI()
     private let manager: InAppConfigurationManager
 
@@ -182,6 +237,35 @@ struct InAppConfigurationManagerTests {
 
         try await waitUntil(!answers.isEmpty)
         #expect((answers.first ?? nil)?.inAppId == "11111111-1111-1111-1111-111111111111")
+    }
+
+    @Test("One applied config is prepared once, however many blocks and feeds ask")
+    func configIsPreparedOncePerDownload() async throws {
+        let counting = CountingFilterService()
+        let manager = InAppConfigurationManager(
+            inAppConfigAPI: api,
+            inAppConfigRepository: EmptyConfigRepository(),
+            inappMapper: DI.injectOrFail(InappMapperProtocol.self),
+            persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
+            featureToggleManager: DI.injectOrFail(FeatureToggleManager.self),
+            webViewPrewarmService: DI.injectOrFail(InAppWebViewPrewarmServiceProtocol.self),
+            inappFilterService: counting,
+            configWaitBudget: 0.2
+        )
+
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.data(try fixtureData()))
+
+        let feeds = Answers<[String]>()
+        let places = Answers<InAppTransitionData?>()
+        manager.getRenderableInappIds([Constants.liveStoryId]) { feeds.append($0.inappIds) }
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { places.append($0) }
+        manager.getRenderableInappIds([Constants.liveStoryId]) { feeds.append($0.inappIds) }
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { places.append($0) }
+
+        try await waitUntil(feeds.all.count == 2 && places.all.count == 2)
+        #expect(counting.prepareCount == 1)
     }
 
     @Test("A config arriving later replaces the models the previous one left")

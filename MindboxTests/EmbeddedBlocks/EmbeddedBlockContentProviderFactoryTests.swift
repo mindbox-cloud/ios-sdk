@@ -13,8 +13,6 @@ import Testing
 @MainActor
 struct EmbeddedBlockContentProviderFactoryTests {
 
-    /// Two blocks sharing an id are a legitimate case, and each must get its own provider: a
-    /// shared one would make their state and page one for both.
     @Test("Every call makes its own provider")
     func eachCallMakesItsOwnProvider() {
         let place = "factory-independent-blocks"
@@ -24,7 +22,6 @@ struct EmbeddedBlockContentProviderFactoryTests {
         let second = factory.makeProvider(placeSystemName: place)
 
         #expect(first !== second)
-        withExtendedLifetime((first, second)) {}
     }
 
     @Test("The provider pulls the requested place through the shared registry")
@@ -33,7 +30,9 @@ struct EmbeddedBlockContentProviderFactoryTests {
         let registry = EmbeddedBlockPlaceRegistry(resolver: resolver,
                                                   notificationCenter: NotificationCenter(),
                                                   fetchEmbeddedPlaces: { $0(nil) })
-        let factory = EmbeddedBlockContentProviderFactory(registry: registry, feed: EmbeddedBlockFeedServiceMock())
+        let factory = EmbeddedBlockContentProviderFactory(registry: registry,
+                                                          feed: EmbeddedBlockFeedServiceMock(),
+                                                          failureManager: InappShowFailureManagerMock())
 
         let provider = factory.makeProvider(placeSystemName: "factory-shared-registry")
         withExtendedLifetime(provider) {
@@ -41,6 +40,28 @@ struct EmbeddedBlockContentProviderFactoryTests {
         }
 
         #expect(resolver.resolvedPlaces == ["factory-shared-registry"])
+    }
+
+    @Test("A block's failure is sent at once, never queued in the buffer")
+    func failureGoesPastTheBuffer() {
+        let manager = InappShowFailureManagerMock()
+        let content = EmbeddedBlockWebContent(inAppId: "block-failure-id",
+                                              baseUrl: "https://inapp.local/stories",
+                                              contentUrl: "https://inapp.local/stories.html",
+                                              frequency: .unlimited,
+                                              tags: ["campaign": "stories"],
+                                              params: [:])
+
+        EmbeddedBlockContentProviderFactory.report(failure: .webviewLoadFailed,
+                                                   details: "the page did not load",
+                                                   for: content,
+                                                   to: manager)
+
+        #expect(manager.addFailureCallCount == 0)
+        #expect(manager.sendFailuresCallCount == 0)
+        #expect(manager.sentAtOnce.count == 1)
+        #expect(manager.sentAtOnce.first?.inappId == "block-failure-id")
+        #expect(manager.sentAtOnce.first?.tags == ["campaign": "stories"])
     }
 
     // MARK: - Helpers
@@ -52,6 +73,7 @@ struct EmbeddedBlockContentProviderFactoryTests {
                                                   notificationCenter: NotificationCenter(),
                                                   fetchEmbeddedPlaces: { $0(nil) })
         return EmbeddedBlockContentProviderFactory(registry: registry,
-                                                   feed: EmbeddedBlockFeedServiceMock())
+                                                   feed: EmbeddedBlockFeedServiceMock(),
+                                                   failureManager: InappShowFailureManagerMock())
     }
 }
