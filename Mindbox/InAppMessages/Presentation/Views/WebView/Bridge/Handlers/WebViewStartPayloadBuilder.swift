@@ -61,6 +61,16 @@ struct WebViewStartPayloadBuilder {
 
     let logError: WebViewLogError
 
+    /// The params a show is started with: what the caller asked for wins over what the configuration
+    /// carries, and both win over the fields the SDK fills in — a direct call names what this show
+    /// must carry, and neither the config nor the SDK can know it.
+    static func mergedParams(config: [String: JSONValue],
+                             fromCaller: [String: JSONValue]?) -> [String: JSONValue] {
+        guard let fromCaller else { return config }
+
+        return config.merging(fromCaller) { _, caller in caller }
+    }
+
     func build() -> JSONValue {
         let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         let systemInfoProvider = DI.injectOrFail(SystemInfoProvider.self)

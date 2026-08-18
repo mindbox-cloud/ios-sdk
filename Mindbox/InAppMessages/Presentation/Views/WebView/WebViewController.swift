@@ -103,7 +103,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
 
         switch layer {
         case .webview(let webviewLayer):
-            let params = webviewLayer.params.merging(extraParams ?? [:]) { _, fromCaller in fromCaller }
+            let params = WebViewStartPayloadBuilder.mergedParams(config: webviewLayer.params, fromCaller: extraParams)
             let webView = TransparentView(frame: .zero, params: params, userAgent: createUserAgent(), operation: operation, inAppId: id, tags: tags)
             view.addSubview(webView)
 
