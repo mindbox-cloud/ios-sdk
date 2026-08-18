@@ -46,14 +46,13 @@ final class EmbeddedBlockContentProviderFactory: EmbeddedBlockContentProviderMak
                                          }
                                      },
                                      reportFailure: { content, reason, details in
-                                         // Sent right away rather than buffered: a block's failure does not
-                                         // belong to a selection pass, and nothing else will flush it.
-                                         let manager = DI.injectOrFail(InappShowFailureManagerProtocol.self)
-                                         manager.addFailure(inappId: content.inAppId,
-                                                            reason: reason,
-                                                            details: details,
-                                                            tags: content.tags)
-                                         manager.sendFailures()
+                                         // Past the buffer: it keeps one failure per in-app id and would drop
+                                         // this one whenever a selection pass had already buffered another.
+                                         DI.injectOrFail(InappShowFailureManagerProtocol.self)
+                                             .sendFailure(inappId: content.inAppId,
+                                                          reason: reason,
+                                                          details: details,
+                                                          tags: content.tags)
                                      })
     }
 }
