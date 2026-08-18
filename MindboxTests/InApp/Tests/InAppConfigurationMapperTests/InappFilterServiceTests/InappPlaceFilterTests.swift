@@ -60,28 +60,28 @@ struct InappPlaceFilterTests {
     @Test("An in-app set up for the place is a candidate")
     func keepsInappForPlace() throws {
         let sut = try #require(sut)
-        let inapps = sut.filterInappsForPlace(place, inapps: [inapp(id: "1", variants: [embedded(place: place)])], abTests: nil)
+        let inapps = sut.filterInappsForPlace(place, inapps: [inapp(id: "1", variants: [embedded(place: place)])])
         #expect(ids(inapps) == ["1"])
     }
 
     @Test("An in-app set up for another place is not")
     func dropsInappForAnotherPlace() throws {
         let sut = try #require(sut)
-        let inapps = sut.filterInappsForPlace(place, inapps: [inapp(id: "1", variants: [embedded(place: "other-place")])], abTests: nil)
+        let inapps = sut.filterInappsForPlace(place, inapps: [inapp(id: "1", variants: [embedded(place: "other-place")])])
         #expect(inapps.isEmpty)
     }
 
     @Test("Place names are case-sensitive")
     func placeNamesAreCaseSensitive() throws {
         let sut = try #require(sut)
-        let inapps = sut.filterInappsForPlace(place, inapps: [inapp(id: "1", variants: [embedded(place: "Stories-List-Container")])], abTests: nil)
+        let inapps = sut.filterInappsForPlace(place, inapps: [inapp(id: "1", variants: [embedded(place: "Stories-List-Container")])])
         #expect(inapps.isEmpty)
     }
 
     @Test("A modal in-app is never a candidate for a place")
     func dropsOverlayInapp() throws {
         let sut = try #require(sut)
-        let inapps = sut.filterInappsForPlace(place, inapps: [inapp(id: "1", variants: [modal()])], abTests: nil)
+        let inapps = sut.filterInappsForPlace(place, inapps: [inapp(id: "1", variants: [modal()])])
         #expect(inapps.isEmpty)
     }
 
@@ -91,8 +91,7 @@ struct InappPlaceFilterTests {
     func dropsDirectCallInapp() throws {
         let sut = try #require(sut)
         let inapps = sut.filterInappsForPlace(place,
-                                              inapps: [inapp(id: "1", variants: [embedded(place: place)], displayConditions: .directCall)],
-                                              abTests: nil)
+                                              inapps: [inapp(id: "1", variants: [embedded(place: place)], displayConditions: .directCall)])
         #expect(inapps.isEmpty)
     }
 
@@ -104,8 +103,7 @@ struct InappPlaceFilterTests {
     func frequencyPassesForUnshownBlock(frequency: InappFrequency) throws {
         let sut = try #require(sut)
         let inapps = sut.filterInappsForPlace(place,
-                                              inapps: [inapp(id: "unshown-block-id", variants: [embedded(place: place)], frequency: frequency)],
-                                              abTests: nil)
+                                              inapps: [inapp(id: "unshown-block-id", variants: [embedded(place: place)], frequency: frequency)])
         #expect(ids(inapps) == ["unshown-block-id"])
     }
 
@@ -129,8 +127,7 @@ struct InappPlaceFilterTests {
         SessionTemporaryStorage.shared.sessionShownInApps = ["shown-block-id"]
 
         let inapps = sut.filterInappsForPlace(place,
-                                              inapps: [inapp(id: "shown-block-id", variants: [embedded(place: place)], frequency: frequency)],
-                                              abTests: nil)
+                                              inapps: [inapp(id: "shown-block-id", variants: [embedded(place: place)], frequency: frequency)])
         #expect(inapps.isEmpty)
     }
 
@@ -140,7 +137,7 @@ struct InappPlaceFilterTests {
         let inapps = sut.filterInappsForPlace(place, inapps: [
             inapp(id: "regular", variants: [embedded(place: place)]),
             inapp(id: "priority", variants: [embedded(place: place)], isPriority: true)
-        ], abTests: nil)
+        ])
 
         #expect(ids(inapps) == ["priority", "regular"])
     }

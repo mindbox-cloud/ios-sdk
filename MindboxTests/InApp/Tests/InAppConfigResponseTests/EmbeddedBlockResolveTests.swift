@@ -37,6 +37,7 @@ struct EmbeddedBlockResolveTests {
     private let mapper: InappMapperProtocol
     private let dataFacade: MockInAppConfigurationDataFacade
     private let config: ConfigResponse
+    private let candidates: ConfigCandidates
 
     init() throws {
         TestConfiguration.configure()
@@ -51,23 +52,25 @@ struct EmbeddedBlockResolveTests {
         let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         persistenceStorage.shownDatesByInApp = [:]
         persistenceStorage.deviceUUID = "00000000-0000-0000-0000-000000000000"
+
+        candidates = config.candidates
     }
 
     private func resolvePlace(_ place: String, trigger: ApplicationEvent? = nil) async -> InAppTransitionData? {
         await withCheckedContinuation { continuation in
-            mapper.selectInappForPlace(place, trigger: trigger, config) { continuation.resume(returning: $0) }
+            mapper.selectInappForPlace(place, trigger: trigger, candidates) { continuation.resume(returning: $0) }
         }
     }
 
     private func resolveId(_ id: String) async -> InAppTransitionData? {
         await withCheckedContinuation { continuation in
-            mapper.getInAppById(id, config) { continuation.resume(returning: $0) }
+            mapper.getInAppById(id, candidates) { continuation.resume(returning: $0) }
         }
     }
 
     private func renderable(_ ids: [String]) async -> [String] {
         await withCheckedContinuation { continuation in
-            mapper.getRenderableInappIds(ids, config) { answer in
+            mapper.getRenderableInappIds(ids, candidates) { answer in
                 // Delivering the answer, as a block does, is what sends targeting — the selection does not vouch by itself.
                 answer.vouch()
                 continuation.resume(returning: answer.inappIds.sorted())
@@ -348,7 +351,7 @@ struct EmbeddedBlockResolveTests {
 
     private func inappToShow(_ id: String, params: [String: JSONValue] = [:]) async -> InAppFormData? {
         await withCheckedContinuation { continuation in
-            mapper.getInAppToShowById(id, params: params, config) { continuation.resume(returning: $0) }
+            mapper.getInAppToShowById(id, params: params, candidates) { continuation.resume(returning: $0) }
         }
     }
 
@@ -393,7 +396,7 @@ struct EmbeddedBlockResolveTests {
     @Test("The trigger path still picks the ordinary modal")
     func triggerPathPicksModal() async throws {
         let formData: InAppFormData? = await withCheckedContinuation { continuation in
-            mapper.handleInapps(nil, config) { continuation.resume(returning: $0) }
+            mapper.handleInapps(nil, candidates) { continuation.resume(returning: $0) }
         }
 
         #expect(try #require(formData).inAppId == Constants.modalId)
@@ -402,7 +405,7 @@ struct EmbeddedBlockResolveTests {
     @Test("The startup catch-up vouches for no direct-call in-app")
     func catchUpSkipsDirectCallInapps() async {
         _ = await withCheckedContinuation { continuation in
-            mapper.handleInapps(nil, config) { continuation.resume(returning: $0) }
+            mapper.handleInapps(nil, candidates) { continuation.resume(returning: $0) }
         } as InAppFormData?
 
         #expect(!dataFacade.targetingArray.contains(Constants.unlimitedStoryId))
@@ -413,7 +416,7 @@ struct EmbeddedBlockResolveTests {
     @Test("The startup catch-up vouches for no in-app without an overlay variant")
     func catchUpSkipsPureEmbeddedInapps() async {
         _ = await withCheckedContinuation { continuation in
-            mapper.handleInapps(nil, config) { continuation.resume(returning: $0) }
+            mapper.handleInapps(nil, candidates) { continuation.resume(returning: $0) }
         } as InAppFormData?
 
         #expect(!dataFacade.targetingArray.contains(Constants.blockId))

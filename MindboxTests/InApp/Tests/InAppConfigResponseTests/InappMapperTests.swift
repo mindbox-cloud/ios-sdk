@@ -76,7 +76,7 @@ struct InappRemainingTargetingTests {
         config: ConfigResponse
     ) async -> InAppFormData? {
         await withCheckedContinuation { continuation in
-            mapper.handleInapps(event, config) { formData in
+            mapper.handleInapps(event, config.candidates) { formData in
                 continuation.resume(returning: formData)
             }
         }

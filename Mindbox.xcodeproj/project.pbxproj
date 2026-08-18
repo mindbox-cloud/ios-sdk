@@ -262,6 +262,7 @@
 		5E32A011000000000000000C /* EmbeddedFormVariant.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E32A011000000000000000B /* EmbeddedFormVariant.swift */; };
 		5E32A011000000000000000E /* EmbeddedFormVariantTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E32A011000000000000000D /* EmbeddedFormVariantTests.swift */; };
 		5E32A0110000000000000014 /* InappOverlayFilterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E32A0110000000000000013 /* InappOverlayFilterTests.swift */; };
+		5E32A0110000000000000021 /* ConfigCandidatesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E32A0110000000000000020 /* ConfigCandidatesTests.swift */; };
 		5E32A0110000000000000016 /* InappPlaceFilterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E32A0110000000000000015 /* InappPlaceFilterTests.swift */; };
 		5E32A0110000000000000018 /* EmbeddedBlockConfig.json in Resources */ = {isa = PBXBuildFile; fileRef = 5E32A0110000000000000017 /* EmbeddedBlockConfig.json */; };
 		5E32A011000000000000001A /* EmbeddedBlockResolveTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E32A0110000000000000019 /* EmbeddedBlockResolveTests.swift */; };
@@ -1042,6 +1043,7 @@
 		5E32A011000000000000000B /* EmbeddedFormVariant.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmbeddedFormVariant.swift; sourceTree = "<group>"; };
 		5E32A011000000000000000D /* EmbeddedFormVariantTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmbeddedFormVariantTests.swift; sourceTree = "<group>"; };
 		5E32A0110000000000000013 /* InappOverlayFilterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappOverlayFilterTests.swift; sourceTree = "<group>"; };
+		5E32A0110000000000000020 /* ConfigCandidatesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigCandidatesTests.swift; sourceTree = "<group>"; };
 		5E32A0110000000000000015 /* InappPlaceFilterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappPlaceFilterTests.swift; sourceTree = "<group>"; };
 		5E32A0110000000000000017 /* EmbeddedBlockConfig.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = EmbeddedBlockConfig.json; sourceTree = "<group>"; };
 		5E32A0110000000000000019 /* EmbeddedBlockResolveTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmbeddedBlockResolveTests.swift; sourceTree = "<group>"; };
@@ -3740,6 +3742,7 @@
 				5E32A0110000000000000015 /* InappPlaceFilterTests.swift */,
 				5E32A0110000000000000013 /* InappOverlayFilterTests.swift */,
 				5E32A011000000000000000D /* EmbeddedFormVariantTests.swift */,
+				5E32A0110000000000000020 /* ConfigCandidatesTests.swift */,
 			);
 			path = InappFilterServiceTests;
 			sourceTree = "<group>";
@@ -4944,6 +4947,7 @@
 				5E32A0110000000000000016 /* InappPlaceFilterTests.swift in Sources */,
 				5E32A0110000000000000014 /* InappOverlayFilterTests.swift in Sources */,
 				5E32A011000000000000000E /* EmbeddedFormVariantTests.swift in Sources */,
+				5E32A0110000000000000021 /* ConfigCandidatesTests.swift in Sources */,
 				F34A103C2F455B840065392A /* SettingsConfigParsingTests.swift in Sources */,
 				F34A103D2F455B840065392A /* FeatureTogglesConfigParsingTests.swift in Sources */,
 				F3FEEAA92C25CC9F000E9D0F /* InjectionMocks.swift in Sources */,

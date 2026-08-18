@@ -87,6 +87,7 @@ struct InAppConfigurationManagerTests {
             persistenceStorage: persistenceStorage,
             featureToggleManager: DI.injectOrFail(FeatureToggleManager.self),
             webViewPrewarmService: DI.injectOrFail(InAppWebViewPrewarmServiceProtocol.self),
+            inappFilterService: DI.injectOrFail(InappFilterProtocol.self),
             configWaitBudget: 0.2
         )
     }
@@ -156,6 +157,7 @@ struct InAppConfigurationManagerTests {
             persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
             featureToggleManager: DI.injectOrFail(FeatureToggleManager.self),
             webViewPrewarmService: DI.injectOrFail(InAppWebViewPrewarmServiceProtocol.self),
+            inappFilterService: DI.injectOrFail(InappFilterProtocol.self),
             configWaitBudget: 60
         )
         slowBudgetManager.prepareConfiguration()
@@ -180,5 +182,26 @@ struct InAppConfigurationManagerTests {
 
         try await waitUntil(!answers.isEmpty)
         #expect((answers.first ?? nil)?.inAppId == "11111111-1111-1111-1111-111111111111")
+    }
+
+    @Test("A config arriving later replaces the models the previous one left")
+    func laterConfigReplacesThePreparedModels() async throws {
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.data(try fixtureData()))
+
+        let withBlock = Answers<InAppTransitionData?>()
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { withBlock.append($0) }
+        try await waitUntil(!withBlock.isEmpty)
+        #expect((withBlock.first ?? nil)?.inAppId == "11111111-1111-1111-1111-111111111111")
+
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.empty)
+
+        let withoutBlock = Answers<InAppTransitionData?>()
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { withoutBlock.append($0) }
+        try await waitUntil(!withoutBlock.isEmpty)
+        #expect((withoutBlock.first ?? nil)?.inAppId == nil)
     }
 }

@@ -25,3 +25,10 @@ enum TestConfiguration {
         MBInject.mode = .test
     }
 }
+
+extension ConfigResponse {
+    /// Candidates the way the configuration manager builds them, so a selection test starts where production starts.
+    var candidates: ConfigCandidates {
+        DI.injectOrFail(InappFilterProtocol.self).candidates(from: self)
+    }
+}
