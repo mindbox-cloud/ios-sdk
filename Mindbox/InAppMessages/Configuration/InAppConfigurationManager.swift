@@ -214,16 +214,6 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
 
     // MARK: - Private
     private func downloadConfig() {
-        // LOCAL VERIFICATION ONLY — remove together with LocalStoriesConfigOverride.swift.
-        if LocalStoriesConfigOverride.isEnabled, let data = LocalStoriesConfigOverride.data {
-            Logger.common(message: "[InAppConfigurationManager] Using the LOCAL stories config override",
-                          level: .error, category: .inAppMessages)
-            queue.async {
-                self.completeDownloadTask(.data(data))
-            }
-            return
-        }
-
         inAppConfigAPI.fetchConfig(completionQueue: queue) { result in
             self.completeDownloadTask(result)
         }
