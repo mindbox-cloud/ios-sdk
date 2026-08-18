@@ -46,6 +46,49 @@ struct EmbeddedBlockFeedServiceTests {
         #expect(bed.answers == [["story-1"]])
     }
 
+    @Test("A tap fetches the in-app with its params and hands it to the scheduler")
+    func tapHandsTheFetchedInappToTheScheduler() {
+        var fetched: [(id: String, params: [String: JSONValue])] = []
+        var shown: [String] = []
+        let service = EmbeddedBlockFeedService(
+            fetchInappToShow: { id, params, completion in
+                fetched.append((id, params))
+                completion(Self.formData(id: id))
+            },
+            showNow: { shown.append($0.inAppId) }
+        )
+
+        service.showInapp(id: "story-1", params: ["formId": .string("160477")])
+
+        #expect(fetched.map(\.id) == ["story-1"])
+        #expect(fetched.map(\.params) == [["formId": .string("160477")]])
+        #expect(shown == ["story-1"])
+    }
+
+    @Test("A tap that resolves to nothing schedules nothing")
+    func tapResolvingToNothingSchedulesNothing() {
+        var shownCount = 0
+        let service = EmbeddedBlockFeedService(
+            fetchInappToShow: { _, _, completion in completion(nil) },
+            showNow: { _ in shownCount += 1 }
+        )
+
+        service.showInapp(id: "story-1", params: [:])
+
+        #expect(shownCount == 0)
+    }
+
+    private static func formData(id: String) -> InAppFormData {
+        let modal = ModalFormVariant(content: InappFormVariantContent(background: ContentBackground(layers: []), elements: nil))
+        return InAppFormData(inAppId: id,
+                             isPriority: false,
+                             delayTime: nil,
+                             imagesDict: [:],
+                             firstImageValue: "",
+                             content: .modal(modal),
+                             frequency: .once(OnceFrequency(kind: .session)))
+    }
+
     @Test("An answer from a background thread is delivered on the main thread")
     func backgroundAnswerIsDeliveredOnTheMainThread() async {
         let service = EmbeddedBlockFeedService(ask: { _, completion in
