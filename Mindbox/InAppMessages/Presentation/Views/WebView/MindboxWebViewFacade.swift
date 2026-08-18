@@ -32,15 +32,6 @@ public protocol InappWebViewFacadeProtocol: AnyObject {
 }
 
 @_spi(Internal)
-public extension InappWebViewFacadeProtocol {
-    // Defaults so existing conformers (mocks, test apps) keep compiling. Footgun: a conformer whose
-    // signature drifts silently gets the default as its witness, and the call becomes a no-op.
-    func retryContentLoadBypassingCache(failedURL: String?, onPurgeOutcome: @escaping (_ didRemoveAnything: Bool) -> Void) {}
-    func releaseRetainedContent() {}
-    func sendInitDataUpdated(params: [String: JSONValue]) {}
-}
-
-@_spi(Internal)
 public typealias WebViewLog = (String) -> Void
 @_spi(Internal)
 public typealias WebViewLogError = (String) -> Void
