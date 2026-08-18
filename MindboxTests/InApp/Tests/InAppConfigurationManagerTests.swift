@@ -226,6 +226,29 @@ struct InAppConfigurationManagerTests {
         #expect(answers.all == [[]])
     }
 
+    @Test("A caller arriving after a failed download is answered with nothing at once")
+    func callerAfterFailedDownloadDoesNotWaitOutTheBudget() async throws {
+        let slowBudgetManager = InAppConfigurationManager(
+            inAppConfigAPI: api,
+            inAppConfigRepository: EmptyConfigRepository(),
+            inappMapper: DI.injectOrFail(InappMapperProtocol.self),
+            persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
+            featureToggleManager: DI.injectOrFail(FeatureToggleManager.self),
+            webViewPrewarmService: DI.injectOrFail(InAppWebViewPrewarmServiceProtocol.self),
+            inappFilterService: DI.injectOrFail(InappFilterProtocol.self),
+            configWaitBudget: 60
+        )
+        slowBudgetManager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.error(MindboxError.connectionError))
+
+        let answers = Answers<[String]>()
+        slowBudgetManager.getRenderableInappIds([Constants.liveStoryId]) { answers.append($0.inappIds) }
+
+        try await waitUntil(!answers.isEmpty)
+        #expect(answers.all == [[]])
+    }
+
     @Test("A place asked before the config resolves once it lands")
     func placeAskedBeforeConfigResolvesOnArrival() async throws {
         manager.prepareConfiguration()
