@@ -46,16 +46,19 @@ struct WebViewStartPayloadBuilderTests {
         let payload = try build()
 
         for key in ["sdkVersion", "sdkVersionNumeric", "endpointId", "deviceUUID",
-                    "userVisitCount", "inAppId", "localStateVersion", "insets"] {
+                    "userVisitCount", "inappId", "localStateVersion", "insets"] {
             #expect(payload[key] != nil, "'\(key)' is missing from the start payload")
         }
     }
 
-    @Test("The content id travels as inAppId — the key the contract already uses")
-    func contentIdTravelsAsInAppId() throws {
+    /// The backend's spelling, and the one every other bridge payload already uses. Pages read
+    /// `inappId` first and fall back to the old `inAppId`, so an older SDK keeps working.
+    @Test("The content id travels as inappId, not the old inAppId")
+    func contentIdTravelsAsInappId() throws {
         let payload = try build(contentId: "block-42")
 
-        #expect(payload["inAppId"] == .string("block-42"))
+        #expect(payload["inappId"] == .string("block-42"))
+        #expect(payload["inAppId"] == nil)
     }
 
     @Test("Insets are reported as four named edges")
@@ -102,7 +105,7 @@ struct WebViewStartPayloadBuilderTests {
     /// Deliberate: a direct call names what this show must carry, so its params outrank the fields
     /// the SDK fills in. Pinned so the day someone protects these keys is a decision, not a slip.
     @Test("A param can displace a field the SDK fills in", arguments: [
-        "deviceUUID", "endpointId", "inAppId", "sdkVersion", "userVisitCount", "localStateVersion"
+        "deviceUUID", "endpointId", "inappId", "sdkVersion", "userVisitCount", "localStateVersion"
     ])
     func customParamsDisplaceSdkFields(key: String) throws {
         let untouched = try build()
