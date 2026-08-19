@@ -40,8 +40,12 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
 
     private let configWaitBudget: TimeInterval
 
+    /// Confined to `queue`, like `configResponse`. Keyed so a waiter that gave up leaves the set
+    /// instead of sitting in it until some download completes.
+    private var configWaiters: [Int: (ConfigCandidates?) -> Void] = [:]
+
     /// Confined to `queue`, like `configResponse`.
-    private var configWaiters: [(ConfigCandidates?) -> Void] = []
+    private var nextConfigWaiterToken = 0
 
     /// Confined to `queue`, like `configResponse`.
     private var hasConcludedDownload = false
@@ -198,22 +202,17 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             Logger.common(message: "[InAppConfigurationManager] No config yet, \(what) waits for it",
                           level: .debug, category: .inAppMessages)
 
-            var hasAnswered = false
-            let answer: (ConfigCandidates?) -> Void = { candidates in
-                guard !hasAnswered else { return }
-
-                hasAnswered = true
-                completion(candidates)
-            }
-
-            self.configWaiters.append(answer)
+            let token = self.nextConfigWaiterToken
+            self.nextConfigWaiterToken += 1
+            self.configWaiters[token] = completion
 
             self.queue.asyncAfter(deadline: .now() + self.configWaitBudget) {
-                guard !hasAnswered else { return }
+                // Whoever answers first takes the waiter out, so nobody is answered twice.
+                guard let waiter = self.configWaiters.removeValue(forKey: token) else { return }
 
                 Logger.common(message: "[InAppConfigurationManager] Gave up waiting \(self.configWaitBudget)s for a config, \(what) gets nothing",
                               level: .error, category: .inAppMessages)
-                answer(nil)
+                waiter(nil)
             }
         }
     }
@@ -261,8 +260,8 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         hasConcludedDownload = true
 
         let waiters = configWaiters
-        configWaiters = []
-        waiters.forEach { $0(configCandidates) }
+        configWaiters = [:]
+        waiters.sorted { $0.key < $1.key }.forEach { $0.value(configCandidates) }
 
         // Prewarm stage 2: warm what the config's webview in-apps need (or release the
         // warm instance when the config proves there are none).
