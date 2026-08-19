@@ -56,8 +56,9 @@ public struct MindboxEmbeddedBlock: View {
     ///   - height: The height the block occupies while loading and shown. Fixed at creation:
     ///     a new value given to a live block is ignored.
     ///   - timeout: How long the block waits to learn what it shows before collapsing as
-    ///     empty, in seconds. `nil` means the SDK default of 30. A late answer still expands the
-    ///     block.
+    ///     empty, in seconds. `nil` means the SDK default of 30. An answer that arrives after that
+    ///     no longer expands the block; the next attempt starts when the block enters the window
+    ///     again.
     ///   - onLoad: The block content is shown and the container is visible.
     ///   - onFail: The block cannot be shown — a failure or an empty block.
     public init(placeSystemName: String,

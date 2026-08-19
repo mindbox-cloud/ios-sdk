@@ -179,7 +179,9 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
     // MARK: - The place slot
 
     /// One live resolve per place: an invalidation landing mid-flight is queued — the in-flight
-    /// pass may be reading the config it is about — and runs right after.
+    /// pass may be reading the config it is about — and runs right after. Only the newest trigger
+    /// survives that wait: the place would end up on it anyway, but an in-app targeted at nothing
+    /// but a dropped operation never speaks its own `Inapp.Targeting`.
     private func requestResolve(place: String, cause: ResolveCause) {
         prune(place)
 

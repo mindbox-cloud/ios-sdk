@@ -217,8 +217,9 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         }
     }
 
-    /// The new session's config download is enqueued after this from the same flow, so the swap
-    /// always lands on `queue` before that download completes.
+    /// Reached through the core manager's queue, while the new session's config download goes
+    /// straight onto `queue` — so a fresh config can land first and one pass of the new session
+    /// still run on the previous session's mapper.
     func resetInappManager() {
         queue.async {
             Logger.common(message: "[InAppConfigurationManager] Reset inappMapper.")
