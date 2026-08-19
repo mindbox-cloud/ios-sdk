@@ -180,9 +180,11 @@ struct InappScheduleManagerTests {
         }
     }
 
+    /// The delay keeps the manager's own timer out of the test: with no delay it fires at once and
+    /// clears the failures itself, which races the "not cleared yet" check below.
     @Test("Eligible in-app cleanup clears buffered failures", .tags(.inAppSchedule))
     func showEligibleInapp_clearsFailuresAfterCleanup() {
-        let inapp = createInAppFormData(id: "clear-on-show", isPriority: false, delayTime: nil)
+        let inapp = createInAppFormData(id: "clear-on-show", isPriority: false, delayTime: "00:01:00")
         scheduleManager.scheduleInApp(inapp, processingDuration: 0)
 
         var presentationTime: TimeInterval?
