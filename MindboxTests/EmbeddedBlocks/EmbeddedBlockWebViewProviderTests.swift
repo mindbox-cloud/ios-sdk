@@ -726,7 +726,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.start()
 
         let params: [String: JSONValue] = ["formId": .string("160477"),
-                                           "lastChangedDateTimeUtc": .string("2026-08-13T09:00:00.000000Z")]
+                                           "lastContentUpdateDateTimeUtc": .string("2026-08-13T09:00:00.000000Z")]
         bed.page?.send(.showInApp, ["inappId": .string("story-id"), "params": .object(params)])
 
         #expect(bed.feed.shown.first?.params == params)
