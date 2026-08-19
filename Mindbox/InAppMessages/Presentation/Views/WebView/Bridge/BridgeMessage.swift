@@ -257,7 +257,7 @@ public struct BridgeMessage: Codable {
         ///     "endpointId": "my-app-endpoint",
         ///     "deviceUUID": "A1B2C3D4-E5F6-7890-ABCD-EF1234567890",
         ///     "userVisitCount": "41",
-        ///     "inAppId": "65f3a8b9-2c4d-4e5f-a6b7-c8d9e0f12345",
+        ///     "inappId": "65f3a8b9-2c4d-4e5f-a6b7-c8d9e0f12345",
         ///     "firstInitializationDateTime": "2025-01-15T10:30:00Z",
         ///     "localStateVersion": 1,
         ///     "operationName": "Inapp.Click",
@@ -550,8 +550,8 @@ public struct BridgeMessage: Codable {
 
         // MARK: JS → Native: Feeds
         //
-        // Two spellings by contract: bridge payloads say `inappId`/`inappIds`, feed list entries say
-        // `inAppId` (the config's spelling, forwarded untouched) — neither may be "corrected".
+        // Bridge payloads say `inappId`/`inappIds` throughout, the start payload included. Feed list
+        // entries carry whatever the config spells — forwarded untouched, never corrected.
 
         /// JS asks which of these in-apps it is allowed to render.
         ///

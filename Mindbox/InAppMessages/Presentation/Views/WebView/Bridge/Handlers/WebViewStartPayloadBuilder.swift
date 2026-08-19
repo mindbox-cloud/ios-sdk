@@ -16,7 +16,7 @@ private enum PayloadKey {
     static let deviceUuid = "deviceUUID"
     static let userVisitCount = "userVisitCount"
 
-    static let inAppId = "inAppId"
+    static let inappId = "inappId"
     static let operationName = "operationName"
     static let operationBody = "operationBody"
 
@@ -96,7 +96,7 @@ private extension WebViewStartPayloadBuilder {
             PayloadKey.deviceUuid: persistenceStorage.deviceUUID ?? "",
             PayloadKey.userVisitCount: "\(persistenceStorage.userVisitCount ?? 0)",
             PayloadKey.sdkVersionNumeric: "\(Constants.Versions.sdkVersionNumeric)",
-            PayloadKey.inAppId: contentId,
+            PayloadKey.inappId: contentId,
             // Add localState version for WebView JS migration logic
             PayloadKey.localStateVersion: persistenceStorage.webViewLocalStateVersion ?? Constants.WebViewLocalState.defaultVersion
         ]

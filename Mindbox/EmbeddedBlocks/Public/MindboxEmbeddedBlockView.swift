@@ -196,8 +196,9 @@ public final class MindboxEmbeddedBlockView: UIView {
     ///     whatever its content turns out to be, so the SDK reports it as an integration error.
     ///   - timeout: How long the block waits to learn what it shows — the config has to
     ///     arrive and the selection has to run — before collapsing as empty, in seconds. `nil`
-    ///     means the SDK default of 30. A late answer still expands the block. The separate budget
-    ///     a loaded page gets to render itself is not affected.
+    ///     means the SDK default of 30. An answer that arrives after that no longer expands the
+    ///     block; the next attempt starts when the block enters the window again. The separate
+    ///     budget a loaded page gets to render itself is not affected.
     public convenience init(placeSystemName: String, height: CGFloat, timeout: TimeInterval? = nil) {
         self.init(placeSystemName: placeSystemName,
                   height: height,

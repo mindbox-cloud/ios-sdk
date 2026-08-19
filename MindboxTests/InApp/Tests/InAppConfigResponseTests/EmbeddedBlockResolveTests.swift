@@ -371,6 +371,16 @@ struct EmbeddedBlockResolveTests {
         #expect(formData.extraParams == params)
     }
 
+    @Test("A story tap after an operation pass carries no leftover operation")
+    func storyTapCarriesNoLeftoverOperation() async throws {
+        let event = ApplicationEvent(name: Constants.operationName, model: nil)
+        _ = await resolvePlace(Constants.place, trigger: event)
+
+        let formData = try #require(await inappToShow(Constants.onceStoryId))
+
+        #expect(formData.operation == nil)
+    }
+
     @Test("A story already shown still opens")
     func alreadyShownStoryStillOpens() async throws {
         let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
@@ -379,6 +389,16 @@ struct EmbeddedBlockResolveTests {
         let formData = try #require(await inappToShow(Constants.onceStoryId))
 
         #expect(formData.inAppId == Constants.onceStoryId)
+    }
+
+    /// The feed offers a mixed form because it has an overlay variant; the tap has to open that one
+    /// even though the embedded variant comes first in the config.
+    @Test("A tap on a mixed form opens its overlay variant")
+    func mixedFormTapOpensTheOverlayVariant() async throws {
+        let formData = try #require(await inappToShow(Constants.mixedId))
+
+        #expect(formData.inAppId == Constants.mixedId)
+        #expect(formData.content.isOverlayPresentable)
     }
 
     @Test("An id no config knows shows nothing")
