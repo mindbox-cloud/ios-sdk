@@ -26,7 +26,7 @@ struct InAppCoreManagerTests {
         func getInAppById(_ id: String, _ completion: @escaping (InAppTransitionData?) -> Void) {
             completion(nil)
         }
-        func getRenderableInappIds(_ ids: [String], _ completion: @escaping (FeedAnswer) -> Void) {
+        func getShowableInappIds(_ ids: [String], _ completion: @escaping (FeedAnswer) -> Void) {
             completion(.nothing)
         }
         func getInAppToShowById(_ id: String, params: [String: JSONValue], _ completion: @escaping (InAppFormData?) -> Void) {

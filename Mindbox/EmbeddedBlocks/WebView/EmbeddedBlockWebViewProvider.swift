@@ -198,8 +198,8 @@ final class EmbeddedBlockWebViewProvider {
         page.onUnreadableContentReport = { [weak self] in
             self?.handleUnreadableContentReport()
         }
-        page.onFeedQuestion = { [weak self] ids, completion in
-            self?.answerTargeting(ids, completion: completion)
+        page.onShowableQuestion = { [weak self] ids, completion in
+            self?.answerShowableQuestion(ids, completion: completion)
         }
         page.onShowInAppRequest = { [weak self] inappId, params in
             self?.showInapp(id: inappId, params: params)
@@ -223,7 +223,7 @@ final class EmbeddedBlockWebViewProvider {
         cancelDataPushAck()
         page?.onContentRendered = nil
         page?.onUnreadableContentReport = nil
-        page?.onFeedQuestion = nil
+        page?.onShowableQuestion = nil
         page?.onShowInAppRequest = nil
         page?.onDataPushConfirmed = nil
         page?.onLoadFailure = nil
@@ -317,11 +317,11 @@ final class EmbeddedBlockWebViewProvider {
 
     /// A question shows nothing, so it is answered for as long as the block is running — including
     /// while it is still loading, which is exactly when a feed asks.
-    private func answerTargeting(_ ids: [String], completion: @escaping ([String]) -> Void) {
+    private func answerShowableQuestion(_ ids: [String], completion: @escaping ([String]) -> Void) {
         guard isStarted else { return }
 
         let generation = loadGeneration
-        feed.renderableInappIds(among: ids) { [weak self] answer in
+        feed.showableInappIds(among: ids) { [weak self] answer in
             guard let self, self.isStarted, self.loadGeneration == generation else { return }
 
             completion(answer.inappIds)

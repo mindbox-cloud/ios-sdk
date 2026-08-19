@@ -70,7 +70,7 @@ struct EmbeddedBlockResolveTests {
 
     private func renderable(_ ids: [String]) async -> [String] {
         await withCheckedContinuation { continuation in
-            mapper.getRenderableInappIds(ids, candidates) { answer in
+            mapper.getShowableInappIds(ids, candidates) { answer in
                 // Delivering the answer, as a block does, is what sends targeting — the selection does not vouch by itself.
                 answer.vouch()
                 continuation.resume(returning: answer.inappIds.sorted())

@@ -21,9 +21,9 @@ protocol InappMapperProtocol {
     func getInAppById(_ id: String,
                       _ candidates: ConfigCandidates,
                       _ completion: @escaping (InAppTransitionData?) -> Void)
-    func getRenderableInappIds(_ ids: [String],
-                               _ candidates: ConfigCandidates,
-                               _ completion: @escaping (FeedAnswer) -> Void)
+    func getShowableInappIds(_ ids: [String],
+                             _ candidates: ConfigCandidates,
+                             _ completion: @escaping (FeedAnswer) -> Void)
     func getInAppToShowById(_ id: String,
                             params: [String: JSONValue],
                             _ candidates: ConfigCandidates,
@@ -117,9 +117,9 @@ class InappMapper: InappMapperProtocol {
 
     /// Never goes to the network: answers from what the session already fetched, and an id whose
     /// targeting lacks data is cut — fail closed, in sync with Android.
-    func getRenderableInappIds(_ ids: [String],
-                               _ candidates: ConfigCandidates,
-                               _ completion: @escaping (FeedAnswer) -> Void) {
+    func getShowableInappIds(_ ids: [String],
+                             _ candidates: ConfigCandidates,
+                             _ completion: @escaping (FeedAnswer) -> Void) {
         let query = TargetingQuery(
             label: "a feed asking about \(ids.count) in-app(s)",
             event: nil,

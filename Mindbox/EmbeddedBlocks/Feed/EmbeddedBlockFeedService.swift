@@ -26,7 +26,7 @@ protocol EmbeddedBlockFeedServing: AnyObject {
 
     /// Answered from what the session already fetched, never the network — an id whose targeting
     /// cannot be checked without one is cut: fail closed, in sync with Android.
-    func renderableInappIds(among ids: [String], completion: @escaping (FeedAnswer) -> Void)
+    func showableInappIds(among ids: [String], completion: @escaping (FeedAnswer) -> Void)
 
     /// Deliberately unchecked: whether to offer the in-app was decided when the page drew it.
     func showInapp(id: String, params: [String: JSONValue])
@@ -42,7 +42,7 @@ final class EmbeddedBlockFeedService: EmbeddedBlockFeedServing {
          fetchInappToShow: ((_ id: String, _ params: [String: JSONValue], _ completion: @escaping (InAppFormData?) -> Void) -> Void)? = nil,
          showNow: ((InAppFormData) -> Void)? = nil) {
         self.ask = ask ?? { ids, completion in
-            DI.injectOrFail(InAppConfigurationManagerProtocol.self).getRenderableInappIds(ids, completion)
+            DI.injectOrFail(InAppConfigurationManagerProtocol.self).getShowableInappIds(ids, completion)
         }
         self.fetchInappToShow = fetchInappToShow ?? { id, params, completion in
             DI.injectOrFail(InAppConfigurationManagerProtocol.self).getInAppToShowById(id, params: params, completion)
@@ -64,7 +64,7 @@ final class EmbeddedBlockFeedService: EmbeddedBlockFeedServing {
         }
     }
 
-    func renderableInappIds(among ids: [String], completion: @escaping (FeedAnswer) -> Void) {
+    func showableInappIds(among ids: [String], completion: @escaping (FeedAnswer) -> Void) {
         guard !ids.isEmpty else {
             completion(.nothing)
             return

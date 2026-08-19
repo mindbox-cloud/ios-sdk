@@ -171,7 +171,7 @@ struct InAppConfigurationManagerTests {
         try await waitUntil(api.isFetchPending)
 
         let answers = Answers<[String]>()
-        manager.getRenderableInappIds([Constants.liveStoryId]) { answers.append($0.inappIds) }
+        manager.getShowableInappIds([Constants.liveStoryId]) { answers.append($0.inappIds) }
 
         api.deliver(.data(try fixtureData()))
 
@@ -186,7 +186,7 @@ struct InAppConfigurationManagerTests {
         api.deliver(.data(try fixtureData()))
 
         let answers = Answers<[String]>()
-        manager.getRenderableInappIds([Constants.liveStoryId]) { answers.append($0.inappIds) }
+        manager.getShowableInappIds([Constants.liveStoryId]) { answers.append($0.inappIds) }
 
         try await waitUntil(!answers.isEmpty)
         #expect(answers.all == [[Constants.liveStoryId]])
@@ -197,7 +197,7 @@ struct InAppConfigurationManagerTests {
         manager.prepareConfiguration()
 
         let answers = Answers<[String]>()
-        manager.getRenderableInappIds([Constants.liveStoryId]) { answers.append($0.inappIds) }
+        manager.getShowableInappIds([Constants.liveStoryId]) { answers.append($0.inappIds) }
 
         try await waitUntil(!answers.isEmpty)
         #expect(answers.all == [[]])
@@ -219,7 +219,7 @@ struct InAppConfigurationManagerTests {
         try await waitUntil(api.isFetchPending)
 
         let answers = Answers<[String]>()
-        slowBudgetManager.getRenderableInappIds([Constants.liveStoryId]) { answers.append($0.inappIds) }
+        slowBudgetManager.getShowableInappIds([Constants.liveStoryId]) { answers.append($0.inappIds) }
         api.deliver(.error(MindboxError.connectionError))
 
         try await waitUntil(!answers.isEmpty)
@@ -232,7 +232,7 @@ struct InAppConfigurationManagerTests {
         try await waitUntil(api.isFetchPending)
 
         let answers = Answers<[String]>()
-        manager.getRenderableInappIds([Constants.liveStoryId]) { answers.append($0.inappIds) }
+        manager.getShowableInappIds([Constants.liveStoryId]) { answers.append($0.inappIds) }
         try await waitUntil(!answers.isEmpty)
 
         api.deliver(.data(try fixtureData()))
@@ -258,7 +258,7 @@ struct InAppConfigurationManagerTests {
         api.deliver(.error(MindboxError.connectionError))
 
         let answers = Answers<[String]>()
-        slowBudgetManager.getRenderableInappIds([Constants.liveStoryId]) { answers.append($0.inappIds) }
+        slowBudgetManager.getShowableInappIds([Constants.liveStoryId]) { answers.append($0.inappIds) }
 
         try await waitUntil(!answers.isEmpty)
         #expect(answers.all == [[]])
@@ -297,9 +297,9 @@ struct InAppConfigurationManagerTests {
 
         let feeds = Answers<[String]>()
         let places = Answers<InAppTransitionData?>()
-        manager.getRenderableInappIds([Constants.liveStoryId]) { feeds.append($0.inappIds) }
+        manager.getShowableInappIds([Constants.liveStoryId]) { feeds.append($0.inappIds) }
         manager.selectInappForPlace("stories-list-container", trigger: nil) { places.append($0) }
-        manager.getRenderableInappIds([Constants.liveStoryId]) { feeds.append($0.inappIds) }
+        manager.getShowableInappIds([Constants.liveStoryId]) { feeds.append($0.inappIds) }
         manager.selectInappForPlace("stories-list-container", trigger: nil) { places.append($0) }
 
         try await waitUntil(feeds.all.count == 2 && places.all.count == 2)

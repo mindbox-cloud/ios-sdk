@@ -9,24 +9,24 @@
 import Testing
 @_spi(Internal) @testable import Mindbox
 
-@Suite("CheckInappsTargetingActionHandler", .tags(.webView))
-struct CheckInappsTargetingActionHandlerTests {
+@Suite("FilterShowableInappsActionHandler", .tags(.webView))
+struct FilterShowableInappsActionHandlerTests {
 
-    @Test("Owns the checkInappsTargeting action")
+    @Test("Owns the filterShowableInapps action")
     func ownsAction() {
-        #expect(CheckInappsTargetingActionHandler().actions == [.checkInappsTargeting])
+        #expect(FilterShowableInappsActionHandler().actions == [.filterShowableInapps])
     }
 
     @Test("The feed's answer travels back in the response")
     func feedAnswerTravelsBack() throws {
         let host = FeedHostSpy()
         host.allowed = ["id-1", "id-3"]
-        let message = BridgeMessage.request(.checkInappsTargeting,
+        let message = BridgeMessage.request(.filterShowableInapps,
                                             payload: .object(["inappIds": .array([.string("id-1"),
                                                                                   .string("id-2"),
                                                                                   .string("id-3")])]))
 
-        CheckInappsTargetingActionHandler().handle(message, host: host)
+        FilterShowableInappsActionHandler().handle(message, host: host)
 
         #expect(host.askedIds == [["id-1", "id-2", "id-3"]])
         let response = try #require(host.sent.first)
@@ -40,7 +40,7 @@ struct CheckInappsTargetingActionHandlerTests {
         let host = FeedHostSpy()
         host.isDeferred = true
 
-        CheckInappsTargetingActionHandler().handle(.request(.checkInappsTargeting,
+        FilterShowableInappsActionHandler().handle(.request(.filterShowableInapps,
                                                             payload: .object(["inappIds": .array([.string("id-1")])])),
                                                    host: host)
 
@@ -56,7 +56,7 @@ struct CheckInappsTargetingActionHandlerTests {
     func emptyRequestIsAnswered() {
         let host = FeedHostSpy()
 
-        CheckInappsTargetingActionHandler().handle(.request(.checkInappsTargeting,
+        FilterShowableInappsActionHandler().handle(.request(.filterShowableInapps,
                                                             payload: .object(["inappIds": .array([])])),
                                                    host: host)
 
@@ -69,8 +69,8 @@ struct CheckInappsTargetingActionHandlerTests {
         let host = FeedHostSpy()
         host.allowed = ["id-1"]
 
-        CheckInappsTargetingActionHandler().handle(
-            .request(.checkInappsTargeting, payload: .object(["inappIds": .array([.string("id-1"), .int(7)])])),
+        FilterShowableInappsActionHandler().handle(
+            .request(.filterShowableInapps, payload: .object(["inappIds": .array([.string("id-1"), .int(7)])])),
             host: host
         )
 
@@ -82,7 +82,7 @@ struct CheckInappsTargetingActionHandlerTests {
     func missingArrayIsRefused() throws {
         let host = FeedHostSpy()
 
-        CheckInappsTargetingActionHandler().handle(.request(.checkInappsTargeting, payload: .object([:])), host: host)
+        FilterShowableInappsActionHandler().handle(.request(.filterShowableInapps, payload: .object([:])), host: host)
 
         #expect(host.askedIds.isEmpty)
         let response = try #require(host.sent.first)
@@ -95,7 +95,7 @@ struct CheckInappsTargetingActionHandlerTests {
         let host = FeedHostSpy()
         host.allowed = ["id-1"]
 
-        CheckInappsTargetingActionHandler().handle(.request(.checkInappsTargeting,
+        FilterShowableInappsActionHandler().handle(.request(.filterShowableInapps,
                                                             payload: .string(#"{"inappIds":["id-1"]}"#)),
                                                    host: host)
 
@@ -106,7 +106,7 @@ struct CheckInappsTargetingActionHandlerTests {
     func hostWithoutFeedStaysSilent() {
         let host = HostSpy()
 
-        CheckInappsTargetingActionHandler().handle(.request(.checkInappsTargeting,
+        FilterShowableInappsActionHandler().handle(.request(.filterShowableInapps,
                                                             payload: .object(["inappIds": .array([.string("id-1")])])),
                                                    host: host)
 
@@ -195,7 +195,7 @@ private final class FeedHostSpy: HostSpy, WebBridgeFeedHosting {
 
     private var pending: [([String]) -> Void] = []
 
-    func bridgeDidAskRenderableInapps(_ ids: [String], completion: @escaping ([String]) -> Void) {
+    func bridgeDidAskShowableInapps(_ ids: [String], completion: @escaping ([String]) -> Void) {
         askedIds.append(ids)
 
         if isDeferred {

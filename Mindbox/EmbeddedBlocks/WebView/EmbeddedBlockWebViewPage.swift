@@ -20,7 +20,7 @@ final class EmbeddedBlockWebViewPage: NSObject, EmbeddedBlockPageHosting {
 
     var onUnreadableContentReport: (() -> Void)?
 
-    var onFeedQuestion: (([String], @escaping ([String]) -> Void) -> Void)?
+    var onShowableQuestion: (([String], @escaping ([String]) -> Void) -> Void)?
 
     var onShowInAppRequest: ((String, [String: JSONValue]) -> Void)?
 
@@ -161,8 +161,8 @@ extension EmbeddedBlockWebViewPage: WebBridgeContentHosting {
 
 extension EmbeddedBlockWebViewPage: WebBridgeFeedHosting {
 
-    func bridgeDidAskRenderableInapps(_ ids: [String], completion: @escaping ([String]) -> Void) {
-        onFeedQuestion?(ids, completion)
+    func bridgeDidAskShowableInapps(_ ids: [String], completion: @escaping ([String]) -> Void) {
+        onShowableQuestion?(ids, completion)
     }
 
     func bridgeDidRequestShowInApp(id: String, params: [String: JSONValue]) {
