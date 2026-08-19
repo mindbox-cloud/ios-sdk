@@ -51,8 +51,8 @@ struct WebViewStartPayloadBuilderTests {
         }
     }
 
-    /// The backend's spelling, and the one every other bridge payload already uses. Pages read
-    /// `inappId` first and fall back to the old `inAppId`, so an older SDK keeps working.
+    /// The backend's spelling, and the one every other bridge payload already uses. Safe only in
+    /// this order: the page that reads `inappId` and falls back to `inAppId` ships before this SDK.
     @Test("The content id travels as inappId, not the old inAppId")
     func contentIdTravelsAsInappId() throws {
         let payload = try build(contentId: "block-42")
