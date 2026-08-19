@@ -224,7 +224,10 @@ class InappMapper: InappMapperProtocol {
                 return
             }
 
-            guard let variant = inapp.form.variants.first else {
+            // The same variant a feed offers: it keeps an in-app that has any overlay variant, so
+            // taking the first one would refuse a mixed form whose embedded variant comes first.
+            guard let variant = inapp.form.variants.first(where: { $0.isOverlayPresentable })
+                    ?? inapp.form.variants.first else {
                 Logger.common(message: "[InappMapper] In-app \(id) has no variant left to render.",
                               level: .error, category: .inAppMessages)
                 completion(nil)
