@@ -226,6 +226,21 @@ struct InAppConfigurationManagerTests {
         #expect(answers.all == [[]])
     }
 
+    @Test("A caller who gave up waiting is not answered again when the config lands")
+    func callerThatGaveUpIsNotAnsweredTwice() async throws {
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+
+        let answers = Answers<[String]>()
+        manager.getRenderableInappIds([Constants.liveStoryId]) { answers.append($0.inappIds) }
+        try await waitUntil(!answers.isEmpty)
+
+        api.deliver(.data(try fixtureData()))
+        try await waitUntil(self.api.isFetchPending == false)
+
+        #expect(answers.all == [[]])
+    }
+
     @Test("A caller arriving after a failed download is answered with nothing at once")
     func callerAfterFailedDownloadDoesNotWaitOutTheBudget() async throws {
         let slowBudgetManager = InAppConfigurationManager(
