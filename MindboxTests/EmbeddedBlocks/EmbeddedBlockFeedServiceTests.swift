@@ -96,7 +96,7 @@ struct EmbeddedBlockFeedServiceTests {
         })
 
         let deliveredOnMainThread: Bool = await withCheckedContinuation { continuation in
-            service.renderableInappIds(among: ["story-1"]) { _ in
+            service.showableInappIds(among: ["story-1"]) { _ in
                 continuation.resume(returning: Thread.isMainThread)
             }
         }
@@ -144,7 +144,7 @@ private final class FeedBed {
     }
 
     func ask(_ ids: [String]) {
-        service.renderableInappIds(among: ids) { [weak self] answer in
+        service.showableInappIds(among: ids) { [weak self] answer in
             self?.answers.append(answer.inappIds)
         }
     }

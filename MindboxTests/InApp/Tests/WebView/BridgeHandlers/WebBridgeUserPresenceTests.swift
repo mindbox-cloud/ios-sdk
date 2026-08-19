@@ -46,7 +46,7 @@ struct WebBridgeUserPresenceTests {
                       .asyncOperation,
                       .syncOperation,
                       .contentRendered,
-                      .checkInappsTargeting,
+                      .filterShowableInapps,
                       .close,
                       .hide,
                       .click,

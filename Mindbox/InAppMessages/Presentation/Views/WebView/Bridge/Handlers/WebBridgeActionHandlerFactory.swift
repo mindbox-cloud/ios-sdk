@@ -31,7 +31,7 @@ enum WebBridgeActionHandlerFactory {
             OperationActionHandler(),
             LifecycleActionHandler(),
             ContentRenderedActionHandler(),
-            CheckInappsTargetingActionHandler(),
+            FilterShowableInappsActionHandler(),
             ShowInAppActionHandler()
         ]
     }

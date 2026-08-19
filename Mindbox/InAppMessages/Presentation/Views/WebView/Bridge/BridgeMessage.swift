@@ -553,7 +553,7 @@ public struct BridgeMessage: Codable {
         // Bridge payloads say `inappId`/`inappIds` throughout, the start payload included. Feed list
         // entries carry whatever the config spells — forwarded untouched, never corrected.
 
-        /// JS asks which of these in-apps it is allowed to render.
+        /// JS asks which of these in-apps are showable — the page draws only those.
         ///
         /// The page gives up after 3 seconds and renders an empty feed; the SDK does not race that
         /// deadline — it answers when the selection answers.
@@ -566,7 +566,7 @@ public struct BridgeMessage: Codable {
         ///   ```json
         ///   { "inappIds": ["<string>", "..."] }
         ///   ```
-        case checkInappsTargeting
+        case filterShowableInapps
 
         /// JS reports how many items it actually rendered, exactly once per load.
         ///
@@ -655,7 +655,7 @@ public struct BridgeMessage: Codable {
 
             // Both carry an answer the page acts on: one returns the ids that passed, the other
             // reports whether the show was accepted.
-            case .checkInappsTargeting, .showInApp:
+            case .filterShowableInapps, .showInApp:
                 return true
 
             // Operations
@@ -728,7 +728,7 @@ public struct BridgeMessage: Codable {
                 return true
 
             case .motionStop, .ready, .close, .`init`, .click, .hide, .log,
-                 .contentRendered, .checkInappsTargeting,
+                 .contentRendered, .filterShowableInapps,
                  .asyncOperation, .syncOperation,
                  .localStateGet, .localStateSet, .localStateInit,
                  .motionEvent, .navigationIntercepted,

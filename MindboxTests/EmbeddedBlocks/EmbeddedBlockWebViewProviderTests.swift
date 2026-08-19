@@ -660,7 +660,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.feed.allowed = ["story-1"]
         bed.provider.start()
 
-        bed.page?.send(.checkInappsTargeting, ["inappIds": .array([.string("story-1"), .string("story-2")])])
+        bed.page?.send(.filterShowableInapps, ["inappIds": .array([.string("story-1"), .string("story-2")])])
 
         #expect(bed.feed.askedIds == [["story-1", "story-2"]])
         #expect(bed.page?.responses.map(\.payload) == [.object(["inappIds": .array([.string("story-1")])])])
@@ -672,7 +672,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.feed.allowed = ["story-1", "story-2"]
         bed.provider.start()
 
-        bed.page?.send(.checkInappsTargeting, ["inappIds": .array([.string("story-1"), .string("story-2")])])
+        bed.page?.send(.filterShowableInapps, ["inappIds": .array([.string("story-1"), .string("story-2")])])
 
         #expect(bed.feed.vouchCount == 1)
     }
@@ -684,7 +684,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.feed.isDeferred = true
         bed.provider.start()
 
-        bed.page?.send(.checkInappsTargeting, ["inappIds": .array([.string("story-1")])])
+        bed.page?.send(.filterShowableInapps, ["inappIds": .array([.string("story-1")])])
         bed.provider.stop()
         bed.feed.flush()
 
@@ -697,7 +697,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.feed.isDeferred = true
         bed.provider.start()
 
-        bed.page?.send(.checkInappsTargeting, ["inappIds": .array([.string("story-1")])])
+        bed.page?.send(.filterShowableInapps, ["inappIds": .array([.string("story-1")])])
         bed.provider.stop()
         bed.feed.flush()
 

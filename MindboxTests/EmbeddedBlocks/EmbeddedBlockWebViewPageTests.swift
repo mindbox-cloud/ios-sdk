@@ -134,7 +134,7 @@ struct EmbeddedBlockWebViewPageTests {
     func feedQuestionReachesTheBlock() throws {
         let bed = PageBed()
 
-        let question = BridgeMessage.pageRequest(.checkInappsTargeting,
+        let question = BridgeMessage.pageRequest(.filterShowableInapps,
                                                  ["inappIds": .array([.string("one"), .string("two")])])
         bed.receive(question)
 
@@ -335,7 +335,7 @@ private final class PageBed {
         page.onLoadFailure = { [weak self] in
             self?.failures += 1
         }
-        page.onFeedQuestion = { [weak self] ids, completion in
+        page.onShowableQuestion = { [weak self] ids, completion in
             self?.feedQuestions.append(ids)
             self?.feedCompletions.append(completion)
         }
