@@ -10,7 +10,7 @@ import Testing
 import Foundation
 @testable import Mindbox
 
-/// Contract tests for the public operations pipeline (MOBILE-208): the heavy work
+/// Contract tests for the public operations pipeline: the heavy work
 /// runs on the serial eventQueue, yet every externally observable guarantee holds —
 /// call order equals DB write order, the body is snapshotted at call time, invalid
 /// input is dropped before the hop, executeSyncOperation completions always arrive

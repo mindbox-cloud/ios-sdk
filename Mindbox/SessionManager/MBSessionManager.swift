@@ -34,6 +34,7 @@ final class MBSessionManager {
             object: nil,
             queue: nil
         ) { [weak self] _ in
+            Logger.common(message: "········ [Foreground] app did become active ········", level: .info, category: .general)
             self?.isActive = true
         }
 
@@ -42,6 +43,7 @@ final class MBSessionManager {
             object: nil,
             queue: nil
         ) { [weak self] _ in
+            Logger.common(message: "········ [Background] app did enter background ········", level: .info, category: .general)
             self?.isActive = false
         }
 

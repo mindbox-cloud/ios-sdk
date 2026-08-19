@@ -12,6 +12,14 @@ import XCTest
 
 final class SDKLogManagerTests: XCTestCase {
 
+    // Shared cross-platform vectors: target is the MD5 hex of the lowercased deviceUUID.
+    private enum Stub {
+        static let deviceUUID = "216E6225-3170-4089-A6F0-3D1ED8F64153" // persisted uppercased, as the real SDK stores it
+        static let target = "334db432a8f72f64a89664682f7bc032"
+        static let foreignTarget = "248eccb79da2bbca61c133c59e4a1516" // another device's target
+        static let emptyStringTarget = "d41d8cd98f00b204e9800998ecf8427e" // md5 of ""
+    }
+
     var eventRepositoryMock: EventRepositoryMock!
     var logsManager: SDKLogsManager!
     var persistenceStorageMock: PersistenceStorage!
@@ -19,7 +27,7 @@ final class SDKLogManagerTests: XCTestCase {
     override func setUp() {
         super.setUp()
         persistenceStorageMock = DI.injectOrFail(PersistenceStorage.self)
-        persistenceStorageMock.deviceUUID = "2"
+        persistenceStorageMock.deviceUUID = Stub.deviceUUID
         eventRepositoryMock = DI.injectOrFail(EventRepositoryMock.self)
         logsManager = DI.injectOrFail(SDKLogsManagerProtocol.self) as? SDKLogsManager
     }
@@ -31,32 +39,73 @@ final class SDKLogManagerTests: XCTestCase {
         super.tearDown()
     }
 
-    func testBody_withWrongUUID_shouldReturnNil() {
-        let dateFrom = Date().addingTimeInterval(-60)
-        let dateTo = Date()
-        let logs: [Monitoring.Logs] = [
-            .init(requestId: "1",
-                  deviceUUID: "2",
-                  from: dateFrom.toString(withFormat: .utc),
-                  to: dateTo.toString(withFormat: .utc))
-        ]
-        persistenceStorageMock.deviceUUID = "3"
-        logsManager.sendLogs(logs: logs)
+    func testBody_withMatchingTarget_shouldSendLogs() {
+        logsManager.sendLogs(logs: [makeLog(target: Stub.target)])
+
+        XCTAssertEqual(eventRepositoryMock.requests.count, 1)
+    }
+
+    func testBody_withForeignTarget_shouldNotSendLogs() {
+        logsManager.sendLogs(logs: [makeLog(target: Stub.foreignTarget)])
 
         XCTAssertNil(eventRepositoryMock.lastBody)
         XCTAssertEqual(eventRepositoryMock.requests.count, 0)
     }
 
+    func testBody_withUppercasedTargetHex_shouldSendLogs() {
+        logsManager.sendLogs(logs: [makeLog(target: Stub.target.uppercased())])
+
+        XCTAssertEqual(eventRepositoryMock.requests.count, 1)
+    }
+
     func testBody_withRepeatedRequestID_shouldReturnOneRequest() {
-        let dateFrom = Date().addingTimeInterval(-60).toString(withFormat: .utc)
-        let dateTo = Date().toString(withFormat: .utc)
-        let logs: [Monitoring.Logs] = [
-            .init(requestId: "1", deviceUUID: "2", from: dateFrom, to: dateTo),
-            .init(requestId: "1", deviceUUID: "2", from: dateFrom, to: dateTo)
+        let logs = [
+            makeLog(requestId: "1", target: Stub.target),
+            makeLog(requestId: "1", target: Stub.target)
         ]
 
         logsManager.sendLogs(logs: logs)
+
         XCTAssertEqual(eventRepositoryMock.requests.count, 1)
+    }
+
+    func testBody_withNilDeviceUUID_shouldNotSendLogs() {
+        persistenceStorageMock.deviceUUID = nil
+        let logs = [
+            makeLog(requestId: "1", target: Stub.target),
+            makeLog(requestId: "2", target: Stub.emptyStringTarget)
+        ]
+
+        logsManager.sendLogs(logs: logs)
+
+        XCTAssertEqual(eventRepositoryMock.requests.count, 0)
+    }
+
+    func testBody_withEmptyDeviceUUID_shouldNotSendLogs() {
+        // A blank persisted deviceUUID must match nothing, even a config carrying md5("").
+        persistenceStorageMock.deviceUUID = ""
+        logsManager.sendLogs(logs: [makeLog(target: Stub.emptyStringTarget)])
+
+        XCTAssertEqual(eventRepositoryMock.requests.count, 0)
+    }
+
+    func testBody_withEmptyTarget_shouldNotSendLogs() {
+        // Parity with Android's validator: a blank target must never match.
+        logsManager.sendLogs(logs: [makeLog(target: "")])
+
+        XCTAssertEqual(eventRepositoryMock.requests.count, 0)
+    }
+
+    func testBody_withMalformedDatesEntry_shouldStillProcessSubsequentEntries() {
+        let logs = [
+            Monitoring.Logs(requestId: "1", target: Stub.target, from: "not-a-date", to: "not-a-date"),
+            makeLog(requestId: "2", target: Stub.target)
+        ]
+
+        logsManager.sendLogs(logs: logs)
+
+        XCTAssertEqual(eventRepositoryMock.requests.count, 1, "The valid entry after the malformed one must still be sent")
+        XCTAssertEqual(persistenceStorageMock.handledlogRequestIds, ["1", "2"], "Both entries must be marked handled and persisted")
     }
 
     func test_status_shouldReturnOk() throws {
@@ -125,5 +174,15 @@ final class SDKLogManagerTests: XCTestCase {
 
         XCTAssertEqual(actualLogs.count, 1)
         XCTAssertEqual(actualLogs, expectedResult)
+    }
+
+    private func makeLog(requestId: String = "1",
+                         target: String,
+                         from: Date = Date().addingTimeInterval(-60),
+                         to: Date = Date()) -> Monitoring.Logs {
+        .init(requestId: requestId,
+              target: target,
+              from: from.toString(withFormat: .utc),
+              to: to.toString(withFormat: .utc))
     }
 }

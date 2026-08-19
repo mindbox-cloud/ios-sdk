@@ -191,7 +191,7 @@ class MindboxTests: XCTestCase {
 
     // Functional validator cases live in OperationNameValidatorTests (Swift Testing).
 
-    // Regression (MOBILE-208): observe() used to invoke the host completion while
+    // Regression: observe() used to invoke the host completion while
     // holding observeSemaphore, so re-entering getDeviceUUID/getAPNSToken from inside
     // a completion deadlocked the controller queue. Now the completion runs after the
     // lock is released; on the old code this test fails by expectation timeout.

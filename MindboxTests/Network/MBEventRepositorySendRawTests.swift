@@ -219,7 +219,7 @@ struct MBEventRepositorySendRawTests {
         #expect(isMain)
     }
 
-    // MARK: - send<T>: completion always on the main queue (MOBILE-208 contract)
+    // MARK: - send<T>: completion always on the main queue (public contract)
 
     @Test("send<T> network-path completion is delivered on the main queue")
     func sendTyped_completion_onMainQueue() async throws {

@@ -20,11 +20,14 @@ fileprivate enum MonitoringConfig: String, Configurable {
     case monitoringLogsTypeError = "MonitoringLogsTypeError" // Type of `logs` is Int instead of FailableDecodableArray<Logs>
 
     case monitoringLogsOneElementError = "MonitoringLogsOneElementError" // Key is `request` instead of `requestId`
-    case monitoringLogsTwoElementsError = "MonitoringLogsTwoElementsError" // Key is `request` instead of `requestId` and key is `device` instead of `deviceUUID`
+    case monitoringLogsTwoElementsError = "MonitoringLogsTwoElementsError" // Key is `request` instead of `requestId` and key is `toTest` instead of `to`
 
     case monitoringLogsOneElementTypeError = "MonitoringLogsOneElementTypeError" // Type of `requestId` is Int instead of String
     case monitoringLogsTwoElementsTypeError = "MonitoringLogsTwoElementsTypeError" // Type of `requestId` is Int instead of String and type of `from` is Object instead `String`
     case monitoringLogsElementsMixedError = "MonitoringLogsElementsMixedError" // Type of `requestId` is Int instead of String and key is `fromTest` instead of `from`
+
+    case monitoringLogsOldDeviceUuidFormat = "MonitoringLogsOldDeviceUuidFormat" // Legacy element with `deviceUUID` instead of `target`, next to a new-format element
+    case monitoringLogsBothFieldsFormat = "MonitoringLogsBothFieldsFormat" // Element carries both `deviceUUID` and `target`
 }
 
 final class MonitoringConfigParsingTests: XCTestCase {
@@ -34,13 +37,15 @@ final class MonitoringConfigParsingTests: XCTestCase {
         let config = try! MonitoringConfig.configWithMonitoring.getConfig()
 
         XCTAssertEqual(config.logs.elements.count, 2)
+        XCTAssertEqual(config.logs.elements.first?.target, "334db432a8f72f64a89664682f7bc032")
+        XCTAssertEqual(config.logs.elements.last?.target, "248eccb79da2bbca61c133c59e4a1516")
 
         for log in config.logs.elements {
             XCTContext.runActivity(named: "Check log \(log) is in `config.logs.elements`") { _ in
-                XCTAssertNotNil(log.deviceUUID)
-                XCTAssertNotNil(log.requestId)
-                XCTAssertNotNil(log.from)
-                XCTAssertNotNil(log.to)
+                XCTAssertFalse(log.target.isEmpty)
+                XCTAssertFalse(log.requestId.isEmpty)
+                XCTAssertFalse(log.from.isEmpty)
+                XCTAssertFalse(log.to.isEmpty)
             }
         }
     }
@@ -68,10 +73,10 @@ final class MonitoringConfigParsingTests: XCTestCase {
 
         for log in config!.logs.elements {
             XCTContext.runActivity(named: "Check log \(log) is in `config.logs.elements`") { _ in
-                XCTAssertNotNil(log.deviceUUID)
-                XCTAssertNotNil(log.requestId)
-                XCTAssertNotNil(log.from)
-                XCTAssertNotNil(log.to)
+                XCTAssertFalse(log.target.isEmpty)
+                XCTAssertFalse(log.requestId.isEmpty)
+                XCTAssertFalse(log.from.isEmpty)
+                XCTAssertFalse(log.to.isEmpty)
             }
         }
     }
@@ -85,16 +90,16 @@ final class MonitoringConfigParsingTests: XCTestCase {
 
         for log in config!.logs.elements {
             XCTContext.runActivity(named: "Check log \(log) is in `config.logs.elements`") { _ in
-                XCTAssertNotNil(log.deviceUUID)
-                XCTAssertNotNil(log.requestId)
-                XCTAssertNotNil(log.from)
-                XCTAssertNotNil(log.to)
+                XCTAssertFalse(log.target.isEmpty)
+                XCTAssertFalse(log.requestId.isEmpty)
+                XCTAssertFalse(log.from.isEmpty)
+                XCTAssertFalse(log.to.isEmpty)
             }
         }
     }
 
     func test_MonitoringConfig_withLogsTwoElementsError_shouldParseSuccessfullyRemainsElements() {
-        // Key is `request` instead `requestId` and key is `device` instead of `deviceUUID`
+        // Key is `request` instead of `requestId` and key is `toTest` instead of `to`
         let config = try? MonitoringConfig.monitoringLogsTwoElementsError.getConfig()
         XCTAssertNotNil(config?.logs, "Monitoring must be parsed successfully")
 
@@ -115,5 +120,21 @@ final class MonitoringConfigParsingTests: XCTestCase {
         XCTAssertNotNil(config?.logs, "Monitoring must be parsed successfully, but with empty array")
 
         XCTAssertEqual(config?.logs.elements.count, 0)
+    }
+
+    func test_MonitoringConfig_withOldDeviceUuidFormat_shouldDropLegacyElements() {
+        // First element has legacy `deviceUUID` instead of `target`, second is new-format
+        let config = try! MonitoringConfig.monitoringLogsOldDeviceUuidFormat.getConfig()
+
+        XCTAssertEqual(config.logs.elements.count, 1, "Legacy element must be dropped, new-format element must remain")
+        XCTAssertEqual(config.logs.elements.first?.target, "248eccb79da2bbca61c133c59e4a1516")
+    }
+
+    func test_MonitoringConfig_withBothFieldsInElement_shouldParseTarget() {
+        // Element carries both legacy `deviceUUID` and new `target`; `target` is decoded, `deviceUUID` is ignored
+        let config = try! MonitoringConfig.monitoringLogsBothFieldsFormat.getConfig()
+
+        XCTAssertEqual(config.logs.elements.count, 1)
+        XCTAssertEqual(config.logs.elements.first?.target, "334db432a8f72f64a89664682f7bc032")
     }
 }

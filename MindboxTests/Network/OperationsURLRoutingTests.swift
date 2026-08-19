@@ -164,6 +164,57 @@ struct OperationsURLRoutingTests {
         #expect(url?.path == "/v3/operations/async")
     }
 
+    // MARK: - Path prefix in operationsDomain
+
+    @Test("operationsDomain with path prefix appends operation endpoint after the prefix")
+    func pathPrefixAppendsEndpointAfterPrefix() throws {
+        let builder = URLRequestBuilder(domain: domain, operationsDomain: "https://api-v2.letu.ru/api/mindbox-regular")
+        let wrapper = Self.makeEventWrapper(.installed)
+
+        let url = try builder.asURLRequest(route: EventRoute.asyncEvent(wrapper)).url
+        #expect(url?.scheme == "https")
+        #expect(url?.host == "api-v2.letu.ru")
+        #expect(url?.path == "/api/mindbox-regular/v3/operations/async")
+    }
+
+    @Test("Sync operations route keeps the path prefix")
+    func pathPrefixKeptOnSyncRoute() throws {
+        let builder = URLRequestBuilder(domain: domain, operationsDomain: "https://api-v2.letu.ru/api/mindbox-regular")
+        let syncWrapper = Self.makeEventWrapper(.syncEvent, bodyJSON: #"{"name":"X","payload":"{}"}"#)
+
+        let url = try builder.asURLRequest(route: EventRoute.syncEvent(syncWrapper)).url
+        #expect(url?.path == "/api/mindbox-regular/v3/operations/sync")
+    }
+
+    @Test("Bare host with path prefix gets default https:// and keeps the prefix")
+    func barePathPrefixUsesHttps() throws {
+        let builder = URLRequestBuilder(domain: domain, operationsDomain: "domain.com/api/v2")
+        let wrapper = Self.makeEventWrapper(.installed)
+
+        let url = try builder.asURLRequest(route: EventRoute.asyncEvent(wrapper)).url
+        #expect(url?.scheme == "https")
+        #expect(url?.host == "domain.com")
+        #expect(url?.path == "/api/v2/v3/operations/async")
+    }
+
+    @Test("Trailing slash after path prefix does not produce a double slash")
+    func trailingSlashAfterPathPrefixStripped() throws {
+        let builder = URLRequestBuilder(domain: domain, operationsDomain: "domain.com/api/v2/")
+        let wrapper = Self.makeEventWrapper(.installed)
+
+        let url = try builder.asURLRequest(route: EventRoute.asyncEvent(wrapper)).url
+        #expect(url?.path == "/api/v2/v3/operations/async")
+    }
+
+    @Test("Config and geo routes are unaffected by operations path prefix")
+    func domainRoutesUnaffectedByPathPrefix() throws {
+        let builder = URLRequestBuilder(domain: domain, operationsDomain: "https://api-v2.letu.ru/api/mindbox-regular")
+
+        let geoURL = try builder.asURLRequest(route: FetchInAppGeoRoute()).url
+        #expect(geoURL?.host == domain)
+        #expect(geoURL?.path == "/geo")
+    }
+
     @Test("Fails fast when base URL is unparseable (no silent relative-URL request)")
     func failsFastOnUnparseableBaseURL() {
         // Embedded space defeats both `URLComponents(string:)` parsing and
@@ -361,6 +412,74 @@ struct OperationsURLRoutingTests {
         #expect(
             OperationsDomainConfigPolicy.action(for: "x.ru", currentlyStored: "x.ru")
                 == .save("https://x.ru")
+        )
+    }
+
+    @Test("Policy — saves value with path prefix in canonical form")
+    func policySavesPathPrefixValue() {
+        #expect(
+            OperationsDomainConfigPolicy.action(for: "api-v2.letu.ru/api/mindbox-regular", currentlyStored: nil)
+                == .save("https://api-v2.letu.ru/api/mindbox-regular")
+        )
+    }
+
+    @Test("Policy — normalizes trailing slash after path prefix")
+    func policyNormalizesTrailingSlashAfterPathPrefix() {
+        #expect(
+            OperationsDomainConfigPolicy.action(for: "https://x.ru/api/v2/", currentlyStored: nil)
+                == .save("https://x.ru/api/v2")
+        )
+    }
+
+    @Test("Policy — keeps when canonical path-prefix form equals stored")
+    func policyKeepsOnMatchingPathPrefix() {
+        #expect(
+            OperationsDomainConfigPolicy.action(
+                for: "x.ru/api/v2/",
+                currentlyStored: "https://x.ru/api/v2"
+            ) == .keep
+        )
+    }
+
+    @Test("Policy — rejects path with query string")
+    func policyRejectsPathWithQuery() {
+        #expect(
+            OperationsDomainConfigPolicy.action(for: "x.ru/api?x=1", currentlyStored: "https://good.ru")
+                == .rejected("x.ru/api?x=1")
+        )
+    }
+
+    @Test("Policy — rejects empty path segment")
+    func policyRejectsEmptyPathSegment() {
+        #expect(
+            OperationsDomainConfigPolicy.action(for: "x.ru//api", currentlyStored: "https://good.ru")
+                == .rejected("x.ru//api")
+        )
+    }
+
+    @Test("Policy — accepts valid percent-encoded octet in path")
+    func policyAcceptsValidPercentEncoding() {
+        #expect(
+            OperationsDomainConfigPolicy.action(for: "x.ru/a%20b", currentlyStored: nil)
+                == .save("https://x.ru/a%20b")
+        )
+    }
+
+    @Test("Policy — rejects non-hex percent escape from config")
+    func policyRejectsNonHexPercentEscape() {
+        // Regression: "%zz" is not a valid percent-encoded octet — it would corrupt
+        // (or fail to build) the request URL at runtime if accepted here.
+        #expect(
+            OperationsDomainConfigPolicy.action(for: "x.ru/a%zz", currentlyStored: "https://good.ru")
+                == .rejected("x.ru/a%zz")
+        )
+    }
+
+    @Test("Policy — rejects dangling percent at end of path from config")
+    func policyRejectsDanglingPercent() {
+        #expect(
+            OperationsDomainConfigPolicy.action(for: "x.ru/a%", currentlyStored: "https://good.ru")
+                == .rejected("x.ru/a%")
         )
     }
 

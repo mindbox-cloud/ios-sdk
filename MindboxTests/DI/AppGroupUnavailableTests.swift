@@ -11,7 +11,7 @@ import CoreData
 import MindboxLogger
 @testable import Mindbox
 
-/// #705 core-SDK fallback: an unavailable App Group must degrade to local storage, not crash.
+/// Core-SDK fallback: an unavailable App Group must degrade to local storage, not crash.
 /// Serialized — the cases mutate global `MBInject` / `MBPersistenceStorage.defaults` / `MBPersistentContainer`.
 @Suite("App Group unavailable — core SDK fallback", .serialized)
 struct AppGroupUnavailableTests {
@@ -25,7 +25,7 @@ struct AppGroupUnavailableTests {
         func getDeviceUUID(completion: @escaping (String) -> Void) { completion(UUID().uuidString) }
     }
 
-    /// #705: the getter used to `fatalError` on an unavailable container — a trap would tear down
+    /// The getter used to `fatalError` on an unavailable container — a trap would tear down
     /// the runner, so simply reaching the assertion proves it's gone.
     @Test
     func coreFetcherResolvesWithoutTrapping() {
@@ -71,7 +71,7 @@ struct AppGroupUnavailableTests {
     }
 }
 
-/// Storage-transition reporter (#705 follow-up): reports only when install state is in BOTH stores; read-only.
+/// Storage-transition reporter: reports only when install state is in BOTH stores; read-only.
 @Suite("App Group storage-transition reporter")
 struct AppGroupStorageTransitionReporterTests {
 

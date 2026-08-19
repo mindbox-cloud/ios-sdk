@@ -10,7 +10,7 @@ import Foundation
 import CoreData
 @testable import MindboxLogger
 
-/// Regression coverage for App Group store-URL resolution (issue #705).
+/// Regression coverage for App Group store-URL resolution.
 ///
 /// Previously `FileManager.storeURL(for:databaseName:)` called `fatalError` when
 /// the shared container was unavailable, which crashed the host straight through
