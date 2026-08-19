@@ -391,6 +391,16 @@ struct EmbeddedBlockResolveTests {
         #expect(formData.inAppId == Constants.onceStoryId)
     }
 
+    /// The feed offers a mixed form because it has an overlay variant; the tap has to open that one
+    /// even though the embedded variant comes first in the config.
+    @Test("A tap on a mixed form opens its overlay variant")
+    func mixedFormTapOpensTheOverlayVariant() async throws {
+        let formData = try #require(await inappToShow(Constants.mixedId))
+
+        #expect(formData.inAppId == Constants.mixedId)
+        #expect(formData.content.isOverlayPresentable)
+    }
+
     @Test("An id no config knows shows nothing")
     func unknownIdShowsNothing() async {
         #expect(await inappToShow("44444444-4444-4444-4444-444444444444") == nil)
