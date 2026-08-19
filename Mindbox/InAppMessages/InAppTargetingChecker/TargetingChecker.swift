@@ -54,11 +54,13 @@ final class InAppTargetingChecker: InAppTargetingCheckerProtocol {
         setupCheckerMap()
     }
 
-    var context = PreparationContext()
-    var checkedSegmentations: [SegmentationCheckResponse.CustomerSegmentation]?
-    var checkedProductSegmentations: [DictionaryKeyValueModel: [InAppProductSegmentResponse.CustomerSegmentation]] = [:]
-    var geoModels: InAppGeoResponse?
-    var event: ApplicationEvent?
+    // @Locked: selection passes fill these on their queue and fetch callbacks while `eraseCache()`
+    // clears from another thread; an erase overlapping a pass at worst answers from a cleared cache.
+    @Locked var context = PreparationContext()
+    @Locked var checkedSegmentations: [SegmentationCheckResponse.CustomerSegmentation]?
+    @Locked var checkedProductSegmentations: [DictionaryKeyValueModel: [InAppProductSegmentResponse.CustomerSegmentation]] = [:]
+    @Locked var geoModels: InAppGeoResponse?
+    @Locked var event: ApplicationEvent?
     var persistenceStorage: PersistenceStorage
 
     var checkerMap: [Targeting: (Targeting) -> CheckerFunctions] = [:]

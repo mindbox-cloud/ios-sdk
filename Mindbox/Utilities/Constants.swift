@@ -33,7 +33,7 @@ enum Constants {
     /// Mobile configuration sdkVersion.
     enum Versions {
         static let webBridgeVersion = 1
-        static let sdkVersionNumeric = 12
+        static let sdkVersionNumeric = 13
     }
 
     enum WebViewLocalState {
@@ -116,17 +116,11 @@ enum Constants {
     }
 
     enum EmbeddedBlock {
-        /// How long an embedded block waits for the page to report its content before collapsing.
-        ///
-        /// Its own budget rather than the in-apps' one, even when the numbers agree: a block sits
-        /// in the host's layout, and how long it holds that space is a product decision of its
-        /// own, not a consequence of what a popup waits for.
-        ///
-        /// It covers strictly more than a popup's: the page has to load, boot its bridge, ask for
-        /// its start payload, run its own pipeline — which includes waiting up to three seconds
-        /// on a targeting answer before giving up on it — and only then report what it drew.
-        /// Roughly 3s to load, 1s to boot, 3s of targeting, 3s to render, and slack.
-        static let readyTimeoutSeconds = 12
+        /// Deliberately its own budget, not shared with the in-apps' timeouts.
+        static let readyTimeoutSeconds = 7
+
+        /// Sized for a no-network cold start (in sync with Android).
+        static let answerTimeoutSeconds = 30
     }
 
     enum MagicNumbers {

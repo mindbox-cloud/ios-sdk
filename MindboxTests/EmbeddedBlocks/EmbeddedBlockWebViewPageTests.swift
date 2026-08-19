@@ -7,35 +7,35 @@
 //
 
 import Testing
-import UIKit
 import WebKit
 @_spi(Internal) @testable import Mindbox
 
-/// The page only judges its own business: the load failed or the document arrived. It is exactly
-/// this separation that is checked here — and above all, that a cancelled navigation does not end up
-/// among the failures.
 @Suite("Embedded block web view page", .tags(.embeddedBlocks))
 @MainActor
 struct EmbeddedBlockWebViewPageTests {
 
+    // MARK: - Navigation
+
     /// A navigation is cancelled in two perfectly ordinary cases: it was superseded by a client-side
     /// redirect, and it was stopped by our own `cancel()` on a block that went off screen. Neither
     /// means the block is broken — while a failure collapses it for good.
-    @Test("A cancelled provisional navigation is not a load failure")
-    func cancelledProvisionalNavigationIsNotAFailure() {
+    @Test("A cancelled navigation is not a load failure")
+    func cancelledNavigationIsNotAFailure() {
         let bed = PageBed()
 
-        bed.failProvisionalNavigation(with: bed.cancellationError)
+        bed.failNavigation(with: bed.error(code: NSURLErrorCancelled))
 
         #expect(bed.failures == 0)
     }
 
     /// A real network error, on the other hand, is exactly what the page must report.
-    @Test("A real provisional navigation error is a load failure")
-    func realProvisionalErrorIsAFailure() {
+    @Test("A real navigation error is a load failure", arguments: [NSURLErrorNotConnectedToInternet,
+                                                                  NSURLErrorTimedOut,
+                                                                  NSURLErrorCannotFindHost])
+    func realNavigationErrorIsAFailure(code: Int) {
         let bed = PageBed()
 
-        bed.failProvisionalNavigation(with: bed.error(code: NSURLErrorNotConnectedToInternet))
+        bed.failNavigation(with: bed.error(code: code))
 
         #expect(bed.failures == 1)
     }
@@ -45,310 +45,375 @@ struct EmbeddedBlockWebViewPageTests {
     func cancellationDoesNotSwallowLaterFailures() {
         let bed = PageBed()
 
-        bed.failProvisionalNavigation(with: bed.cancellationError)
-        bed.failProvisionalNavigation(with: bed.error(code: NSURLErrorCannotFindHost))
+        bed.failNavigation(with: bed.error(code: NSURLErrorCancelled))
+        bed.failNavigation(with: bed.error(code: NSURLErrorCannotFindHost))
 
         #expect(bed.failures == 1)
     }
 
-    @Test("A finished document is reported as a finish, not as a failure")
-    func finishedDocumentIsReportedAsFinish() {
+    @Test("New init data reaches the web layer")
+    func initDataReachesTheWebLayer() {
+        let bed = PageBed()
+
+        bed.page.sendInitData(params: ["stories": .string("fresh")])
+
+        #expect(bed.facade.initDataPushes == [["stories": .string("fresh")]])
+    }
+
+    @Test("A finished document is not a failure")
+    func finishedDocumentIsNotAFailure() {
         let bed = PageBed()
 
         bed.finishNavigation()
 
-        #expect(bed.finishes == 1)
         #expect(bed.failures == 0)
     }
 
-    // MARK: - Speaking the shared bridge
-
-    /// The bridge drops every script message until the load's own document commits, because a
-    /// reused web view can still deliver a previous owner's. Handing it the navigation is what
-    /// opens that gate — forget it and the page's messages vanish with no error anywhere.
-    ///
-    /// > Note: what the bridge was told is not observable from here — `contentLoadIssued` and
-    /// > `contentURL` are private to `MindboxWebBridge`, and a `WKScriptMessage` cannot be built in
-    /// > a test to drive the gate from the outside. So this pins the half that is visible: the load
-    /// > that the registration accompanies actually goes to the block's own address.
-    @Test("Loading a url block loads that url")
-    func loadingURLContentLoadsThatURL() {
+    @Test("A markup fetch failure fails the block")
+    func markupFetchFailureFailsTheBlock() {
         let bed = PageBed()
-        guard case .url(let contentURL) = EmbeddedBlockWebContent.stub.source else {
-            Issue.record("the stub stands for a block with an address")
-            return
-        }
 
         bed.page.load()
+        bed.facade.failLoad()
 
-        #expect(bed.page.webView.url == contentURL)
+        #expect(bed.facade.loads.map(\.contentUrl) == [EmbeddedBlockWebContent.stub.contentUrl])
+        #expect(bed.failures == 1)
     }
 
-    /// Markup has no address of its own: it is loaded with a nil base URL on purpose, so the page
-    /// gets an `about:blank` origin rather than the privileges of some domain.
-    @Test("Loading html content gives the page no domain of its own")
-    func loadingHTMLContentHasNoOrigin() {
-        let bed = PageBed(content: EmbeddedBlockWebContent(html: "<html><body>block</body></html>"))
-
-        bed.page.load()
-
-        #expect(bed.page.webView.url == nil || bed.page.webView.url?.absoluteString == "about:blank")
-    }
-
-    // MARK: - Being a host of the shared bridge
-
-    /// The point of the move onto the shared bridge: a request from the page's document reaches the
-    /// same registry an in-app show uses, with the page itself as the host.
-    @Test("A request from the page is routed into the action registry")
-    func requestIsRoutedIntoTheRegistry() throws {
-        let owner = RecordingHandler(actions: [.openLink])
-        let bed = PageBed(handlers: [owner])
-        let message = BridgeMessage.request(.openLink)
-
-        bed.deliver(message)
-
-        #expect(owner.handled.map(\.id) == [message.id])
-        #expect(owner.hosts.first === bed.page, "the page hosts its own requests")
-    }
-
-    /// Responses and errors are answers to something the SDK asked, and the dispatcher matches them
-    /// to their pending request. Routing them as if they were requests would run a handler twice.
-    ///
-    /// Both kinds in one test rather than as arguments: `MessageType` crossing into a `@MainActor`
-    /// suite as a parameter is not `Sendable` enough for the Swift 6 language mode.
-    @Test("Anything that is not a request is not routed")
-    func nonRequestIsNotRouted() {
-        let owner = RecordingHandler(actions: [.openLink])
-        let bed = PageBed(handlers: [owner])
-        let action = BridgeMessage.Action.openLink.rawValue
-
-        bed.deliver(BridgeMessage(type: .response, action: action, payload: nil))
-        bed.deliver(BridgeMessage(type: .error, action: action, payload: nil))
-
-        #expect(owner.handled.isEmpty)
-    }
-
-    /// A vocabulary newer than the SDK is allowed: an action nobody owns is journalled and dropped,
-    /// not treated as a failure of the block.
-    @Test("An action nobody owns is dropped without disturbing the block")
-    func unownedActionIsDropped() {
-        let bed = PageBed(handlers: [])
-
-        bed.deliver(.request(.openLink))
-
-        #expect(bed.failures == 0)
-        #expect(bed.finishes == 0)
-    }
-
-    @Test("The block identifies itself by its own id and journals under its own category")
-    func hostIdentityIsTheBlocks() {
+    @Test("A user-started navigation is blocked and handed back to the page")
+    func userStartedNavigationIsBlocked() {
         let bed = PageBed()
 
-        #expect(bed.page.contentId == "block-id")
-        #expect(bed.page.logCategory == .embeddedBlocks)
-    }
-
-    /// Tags belong to an in-app show — they are what an operation is attributed to. A block has no
-    /// show behind it, so it contributes none.
-    @Test("A block carries no in-app tags")
-    func hostCarriesNoTags() {
-        let bed = PageBed()
-
-        #expect(bed.page.tags == nil)
-    }
-
-    /// The provider is what knows whether anyone is looking, and it says so through this. A page
-    /// starts out in front of the user because it is built when the block enters the window.
-    @Test("A fresh page starts out in front of the user")
-    func freshPageStartsPresent() {
-        let bed = PageBed()
-
-        #expect(bed.page.isUserPresent)
-    }
-
-    @Test("What the provider sets is what the bridge reads")
-    func presenceFollowsTheProvider() {
-        let bed = PageBed()
-
-        bed.page.isUserPresent = false
-
-        #expect(bed.page.isUserPresent == false)
-    }
-
-    /// The block is a piece of the host's own layout, so a tap must not replace the feed with the
-    /// destination in place. Links belong in `openLink`.
-    @Test("An in-place link navigation is refused")
-    func inPlaceLinkNavigationIsRefused() async {
-        let bed = PageBed()
-
-        let policy = await bed.decidePolicy(for: .linkActivated)
+        let policy = bed.decidePolicy(for: URL(string: "https://mindbox.ru")!, type: .linkActivated)
 
         #expect(policy == .cancel)
+        #expect(bed.facade.sentActions == [BridgeMessage.Action.navigationIntercepted.rawValue])
     }
 
-    @Test("The page's own loads are allowed", arguments: [WKNavigationType.other, .reload, .backForward])
-    func ownNavigationIsAllowed(type: WKNavigationType) async {
+    @Test("The content load itself is allowed", arguments: [WKNavigationType.other,
+                                                            .reload,
+                                                            .backForward])
+    func contentLoadIsAllowed(type: WKNavigationType) {
         let bed = PageBed()
 
-        let policy = await bed.decidePolicy(for: type)
+        let policy = bed.decidePolicy(for: URL(string: "https://mindbox.ru")!, type: type)
 
         #expect(policy == .allow)
+        #expect(bed.facade.sentActions.isEmpty)
     }
 
-    // MARK: - Presenting from the host's hierarchy
+    // MARK: - Who owns a message
 
-    /// A handler that needs a controller of its own gets the topmost one. The root is not it: a root
-    /// that already presents something refuses to present anything else, and UIKit refuses without
-    /// calling the completion the answer to the page is sent from.
-    @Test("The presenter is the topmost presented controller, not the window root")
-    func presenterIsTheTopmostController() {
+    @Test("Ready is answered with the start payload under the request's own id")
+    func readyIsAnsweredWithTheStartPayload() throws {
         let bed = PageBed()
-        let modal = StubPresentingController()
-        bed.putInWindow(presenting: modal)
 
-        #expect(bed.page.presentingViewController === modal)
+        let ready = BridgeMessage.pageRequest(.ready)
+        bed.receive(ready)
+
+        #expect(bed.facade.startPayloadRequests == 1)
+        let answer = try #require(bed.facade.sentMessages.first)
+        #expect(answer.type == .response)
+        #expect(answer.id == ready.id)
     }
 
-    /// A block inside a modal that itself presents a sheet is still the same question, one level
-    /// deeper — the walk does not stop at the first answer.
-    @Test("The walk goes through the whole presentation chain")
-    func presenterIsFoundThroughTheChain() {
-        let bed = PageBed()
-        let sheet = StubPresentingController()
-        let modal = StubPresentingController()
-        modal.stubbedPresented = sheet
-        bed.putInWindow(presenting: modal)
+    @Test("A page joins the broadcast set on its first ready, once")
+    func pageJoinsTheBroadcastSetOnReady() {
+        let registry = MindboxWebPageRegistry()
+        let bed = PageBed(registry: registry)
 
-        #expect(bed.page.presentingViewController === sheet)
+        #expect(registry.count == 0)
+
+        bed.receive(.pageRequest(.ready))
+        bed.receive(.pageRequest(.ready))
+
+        #expect(registry.count == 1)
     }
 
-    @Test("With nothing presented the root is the presenter")
-    func rootIsThePresenterWhenNothingIsPresented() {
+    @Test("The feed's question reaches the block and the answer goes back to the page")
+    func feedQuestionReachesTheBlock() throws {
         let bed = PageBed()
-        bed.putInWindow(presenting: nil)
 
-        #expect(bed.page.presentingViewController === bed.root)
+        let question = BridgeMessage.pageRequest(.checkInappsTargeting,
+                                                 ["inappIds": .array([.string("one"), .string("two")])])
+        bed.receive(question)
+
+        #expect(bed.feedQuestions == [["one", "two"]])
+
+        bed.answerFeed(["one"])
+
+        let answer = try #require(bed.facade.sentMessages.first)
+        #expect(answer.type == .response)
+        #expect(answer.id == question.id)
+        #expect(answer.payload == .object(["inappIds": .array([.string("one")])]))
     }
 
-    /// Off the window there is nobody to present from, and the handler answers the page with an
-    /// error rather than waiting on a presentation that cannot happen.
-    @Test("Off the window there is no presenter")
-    func thereIsNoPresenterOffTheWindow() {
+    @Test("A render report reaches the block with its count")
+    func renderReportReachesTheBlock() {
         let bed = PageBed()
 
-        #expect(bed.page.presentingViewController == nil)
+        bed.receive(.pageRequest(.contentRendered, ["count": .int(4)]))
+
+        #expect(bed.renderedCounts == [4])
+    }
+
+    @Test("An unreadable render report reaches the block as such")
+    func unreadableRenderReportReachesTheBlock() {
+        let bed = PageBed()
+
+        bed.receive(.pageRequest(.contentRendered))
+
+        #expect(bed.renderedCounts.isEmpty)
+        #expect(bed.unreadableReports == 1)
+        #expect(bed.facade.sentMessages.map(\.type) == [.error])
+    }
+
+    @Test("A show request reaches the block with its params")
+    func showRequestReachesTheBlock() throws {
+        let bed = PageBed()
+
+        bed.receive(.pageRequest(.showInApp, ["inappId": .string("story-1"),
+                                              "params": .object(["k": .string("v")])]))
+
+        let request = try #require(bed.showRequests.first)
+        #expect(request.id == "story-1")
+        #expect(request.params == ["k": .string("v")])
+        #expect(bed.facade.sentMessages.map(\.type) == [.response])
+    }
+
+    @Test("A show request from a page nobody is looking at is refused")
+    func showRequestWithoutUserIsRefused() {
+        let bed = PageBed()
+        bed.page.isUserPresent = false
+
+        bed.receive(.pageRequest(.showInApp, ["inappId": .string("story-1")]))
+
+        #expect(bed.showRequests.isEmpty)
+        #expect(bed.facade.sentMessages.map(\.type) == [.error])
+    }
+
+    // MARK: - The provider's one response
+
+    @Test("The data push's confirmation is caught before the registry")
+    func dataPushConfirmationReachesTheBlock() {
+        let bed = PageBed()
+
+        bed.receive(BridgeMessage(type: .response,
+                                  action: .initDataUpdated,
+                                  payload: .object(["success": .bool(true)])))
+
+        #expect(bed.ackCount == 1)
+        #expect(bed.facade.sentMessages.isEmpty)
+    }
+
+    @Test("Another response is swallowed in silence")
+    func foreignResponseIsSwallowed() {
+        let bed = PageBed()
+
+        bed.receive(BridgeMessage(type: .response, action: .log, payload: .object(["success": .bool(true)])))
+
+        #expect(bed.ackCount == 0)
+        #expect(bed.facade.sentMessages.isEmpty)
+    }
+
+    @Test("An overlay's lifecycle message is dropped without an extra answer",
+          arguments: [BridgeMessage.Action.close, .`init`, .click, .hide])
+    func overlayLifecycleMessageIsDropped(action: BridgeMessage.Action) {
+        let bed = PageBed()
+
+        bed.receive(.pageRequest(action))
+
+        #expect(bed.facade.sentMessages.isEmpty)
+    }
+
+    /// The storage is in memory only because the test container does not carry the real one.
+    @Test("A shared action is served by the shared handlers")
+    func sharedActionIsServed() throws {
+        let handlers: [WebBridgeActionHandler] = [
+            LocalStateActionHandler(makeStorage: { EphemeralLocalStateStorage() },
+                                    webPageRegistry: MindboxWebPageRegistry())
+        ]
+        let bed = PageBed(actionRegistry: WebBridgeActionRegistry(handlers: handlers))
+
+        let request = BridgeMessage.pageRequest(.localStateGet, ["data": .array([])])
+        bed.receive(request)
+
+        let answer = try #require(bed.facade.sentMessages.first)
+        #expect(answer.type == .response)
+        #expect(answer.id == request.id)
+    }
+
+    @Test("An action nobody knows is not answered")
+    func unknownActionIsNotAnswered() {
+        let bed = PageBed()
+
+        bed.receive(BridgeMessage(type: .request, action: "somethingNobodyDefined", payload: .string("{}")))
+
+        #expect(bed.facade.sentMessages.isEmpty)
+    }
+
+    // MARK: - Pushing
+
+    @Test("A push reaches the page as a request it has to answer")
+    func pushIsARequest() {
+        let bed = PageBed()
+
+        bed.page.push(.localStateChanged, payload: .object(["version": .int(3)]))
+
+        #expect(bed.facade.sentMessages.map(\.type) == [.request])
+        #expect(bed.facade.sentActions == [BridgeMessage.Action.localStateChanged.rawValue])
+    }
+
+    // MARK: - Healing a poisoned cache
+
+    @Test("A failing script is retried with the cache bypassed")
+    func subresourceErrorHealsThePoisonedCache() {
+        let bed = PageBed()
+
+        bed.reportSubresourceError(url: "https://cdn.example/feed.js")
+
+        #expect(bed.facade.cacheBypassingRetries == ["https://cdn.example/feed.js"])
+    }
+
+    @Test("A booted page is not healed")
+    func bootedPageIsNotHealed() {
+        let bed = PageBed()
+
+        bed.receive(.pageRequest(.ready))
+        bed.reportSubresourceError(url: "https://cdn.example/feed.js")
+
+        #expect(bed.facade.cacheBypassingRetries.isEmpty)
+    }
+
+    @Test("A non-script subresource error is not healed")
+    func nonScriptErrorIsNotHealed() {
+        let bed = PageBed()
+
+        bed.reportSubresourceError(url: "https://cdn.example/banner.png")
+
+        #expect(bed.facade.cacheBypassingRetries.isEmpty)
+    }
+
+    @Test("The heal respects the cache kill switch")
+    func healRespectsTheKillSwitch() {
+        let bed = PageBed(isCacheFeatureEnabled: false)
+
+        bed.reportSubresourceError(url: "https://cdn.example/feed.js")
+
+        #expect(bed.facade.cacheBypassingRetries.isEmpty)
     }
 }
 
-/// Records what the registry routed to it, and which host came with it.
-private final class RecordingHandler: WebBridgeActionHandler {
-
-    let actions: Set<BridgeMessage.Action>
-
-    private(set) var handled: [BridgeMessage] = []
-    private(set) var hosts: [WebBridgeHost] = []
-
-    init(actions: Set<BridgeMessage.Action>) {
-        self.actions = actions
-    }
-
-    func handle(_ message: BridgeMessage, host: WebBridgeHost) {
-        handled.append(message)
-        hosts.append(host)
-    }
-}
-
-/// Reports whatever the test put on top of it.
-///
-/// `presentedViewController` is set by an actual presentation, which drags a visible window and a
-/// transition into a unit test. What is checked here is the walk, not UIKit's animation.
-@MainActor
-private final class StubPresentingController: UIViewController {
-
-    var stubbedPresented: UIViewController?
-
-    override var presentedViewController: UIViewController? { stubbedPresented }
-}
-
-/// A real page with a real web view, but without the network: the tests call the navigation delegate
-/// methods themselves — it is their handling that is checked here.
 @MainActor
 private final class PageBed {
 
     let page: EmbeddedBlockWebViewPage
-
-    /// The controller the host's window is rooted at.
-    let root = StubPresentingController()
+    let facade = SharedWebLayerMock()
 
     private(set) var failures = 0
-    private(set) var finishes = 0
+    private(set) var feedQuestions: [[String]] = []
+    private(set) var renderedCounts: [Int] = []
+    private(set) var unreadableReports = 0
+    private(set) var showRequests: [(id: String, params: [String: JSONValue])] = []
+    private(set) var ackCount = 0
 
-    var cancellationError: Error { error(code: NSURLErrorCancelled) }
+    private var feedCompletions: [([String]) -> Void] = []
 
-    /// Held on purpose: a window nobody retains takes the page's view out of the hierarchy with it,
-    /// and the page would look off screen again.
-    private var window: UIWindow?
+    private lazy var bridge = MindboxWebBridge(webView: facade.webView)
 
-    /// Through the protocol rather than directly: the page has both a `webView` property and
-    /// delegate methods with the same name, so they are better called where the name is unambiguous.
-    private var navigation: WebBridgeNavigationDelegate { page }
+    init(registry: MindboxWebPageRegistry = MindboxWebPageRegistry(),
+         actionRegistry: WebBridgeActionRegistry
+         = WebBridgeActionRegistry(handlers: WebBridgeActionHandlerFactory.makeHandlers()),
+         isCacheFeatureEnabled: Bool = true) {
+        TestConfiguration.configure()
 
-    private var messages: WebBridgeMessageDelegate { page }
-
-    private let bridge: MindboxWebBridge
-
-    /// - Parameter handlers: the registry the page routes into. Empty by default — a suite that does
-    ///   not send anything has no use for the shipped set, and building it here would drag every
-    ///   handler's dependencies into tests about navigation.
-    init(content: EmbeddedBlockWebContent = .stub, handlers: [WebBridgeActionHandler] = []) {
-        let webView = WKWebView()
-        bridge = MindboxWebBridge(webView: webView)
-        page = EmbeddedBlockWebViewPage(id: "block-id",
-                                       content: content,
-                                       webView: webView,
-                                       actionRegistry: WebBridgeActionRegistry(handlers: handlers))
+        page = EmbeddedBlockWebViewPage(content: .stub,
+                                        facade: facade,
+                                        registry: registry,
+                                        actionRegistry: actionRegistry,
+                                        noCacheRetryPolicy: WebViewNoCacheRetryPolicy { isCacheFeatureEnabled })
         page.onLoadFailure = { [weak self] in
             self?.failures += 1
         }
-        page.onLoadFinish = { [weak self] in
-            self?.finishes += 1
+        page.onFeedQuestion = { [weak self] ids, completion in
+            self?.feedQuestions.append(ids)
+            self?.feedCompletions.append(completion)
         }
-    }
-
-    /// Hands the page a message as the bridge would.
-    func deliver(_ message: BridgeMessage) {
-        messages.webBridge(bridge, didReceiveBridgeMessage: message)
-    }
-
-    /// Puts the page where a real block lives — inside the host's own view hierarchy — with
-    /// `presented` standing on top of the window's root.
-    func putInWindow(presenting presented: UIViewController?) {
-        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 320, height: 480))
-        root.stubbedPresented = presented
-        window.rootViewController = root
-        // Straight onto the window rather than into the root's view: all the page needs is to have
-        // a window, and a test window belongs to no scene — it installs its root's view only when
-        // it is about to be shown.
-        window.addSubview(page.view)
-        self.window = window
+        page.onContentRendered = { [weak self] count in
+            self?.renderedCounts.append(count)
+        }
+        page.onUnreadableContentReport = { [weak self] in
+            self?.unreadableReports += 1
+        }
+        page.onShowInAppRequest = { [weak self] id, params in
+            self?.showRequests.append((id, params))
+        }
+        page.onDataPushConfirmed = { [weak self] in
+            self?.ackCount += 1
+        }
     }
 
     func error(code: Int) -> Error {
         NSError(domain: NSURLErrorDomain, code: code)
     }
 
-    func failProvisionalNavigation(with error: Error) {
-        navigation.webBridge(bridge, didFailProvisionalNavigation: nil, error: error)
+    func receive(_ message: BridgeMessage) {
+        facade.messageDelegate?.webBridge(bridge, didReceiveBridgeMessage: message)
+    }
+
+    func answerFeed(_ allowed: [String]) {
+        feedCompletions.forEach { $0(allowed) }
+        feedCompletions = []
+    }
+
+    func reportSubresourceError(url: String?) {
+        facade.navigationDelegate?.webBridge(bridge, didReceiveHTTPError: url)
+    }
+
+    func failNavigation(with error: Error) {
+        facade.navigationDelegate?.webBridge(bridge, didFailProvisionalNavigation: nil, error: error)
     }
 
     func finishNavigation() {
-        navigation.webBridge(bridge, didFinishNavigation: nil)
+        facade.navigationDelegate?.webBridge(bridge, didFinishNavigation: nil)
     }
 
-    func decidePolicy(for type: WKNavigationType) async -> WKNavigationActionPolicy {
-        await withCheckedContinuation { continuation in
-            navigation.webBridge(bridge, decidePolicyFor: nil, navigationType: type) {
-                continuation.resume(returning: $0)
+    func decidePolicy(for url: URL, type: WKNavigationType) -> WKNavigationActionPolicy? {
+        var decision: WKNavigationActionPolicy?
+        facade.navigationDelegate?.webBridge(bridge, decidePolicyFor: url, navigationType: type) { decision = $0 }
+        return decision
+    }
+}
+
+private final class EphemeralLocalStateStorage: WebViewLocalStateStorageProtocol {
+
+    private var version = 1
+    private var storage: [String: String] = [:]
+
+    func get(keys: [String]) -> WebViewLocalState {
+        let data = keys.isEmpty ? storage : storage.filter { keys.contains($0.key) }
+        return WebViewLocalState(version: version, data: data)
+    }
+
+    func set(data: [String: String?]) -> WebViewLocalState {
+        apply(data)
+        return WebViewLocalState(version: version, data: storage.filter { data.keys.contains($0.key) })
+    }
+
+    func initialize(version: Int, data: [String: String?]) -> WebViewLocalState? {
+        guard version > 0 else { return nil }
+
+        self.version = version
+        apply(data)
+        return WebViewLocalState(version: version, data: storage.filter { data.keys.contains($0.key) })
+    }
+
+    private func apply(_ data: [String: String?]) {
+        for (key, value) in data {
+            if let value {
+                storage[key] = value
+            } else {
+                storage.removeValue(forKey: key)
             }
         }
     }

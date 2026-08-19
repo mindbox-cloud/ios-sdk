@@ -10,36 +10,44 @@ import Foundation
 import UserNotifications
 import MindboxLogger
 
+/// Touched from every queue the SDK runs on. `@Locked` makes each access atomic; the single writer
+/// per property is what keeps compound mutations (`append`, `insert`) safe without a wider transaction.
 final class SessionTemporaryStorage {
 
     public static let shared = SessionTemporaryStorage()
 
-    var observedCustomOperations: Set<String> = []
-    var viewProductOperation: String?
-    var viewCategoryOperation: String?
-    var geoRequestResult: Result<InAppGeoResponse?, MindboxError>?
-    var segmentationRequestResult: Result<[SegmentationCheckResponse.CustomerSegmentation]?, MindboxError>?
-    var isPresentingInAppMessage = false
-    var pushPermissionStatus: UNAuthorizationStatus = .denied
-    var sessionShownInApps: [String] = []
-    var isInstalledFromPersistenceStorageBeforeInitSDK: Bool = false
-    var isInitializationCalled = false {
+    @Locked var observedCustomOperations: Set<String> = []
+    @Locked var viewProductOperation: String?
+    @Locked var viewCategoryOperation: String?
+    @Locked var geoRequestResult: Result<InAppGeoResponse?, MindboxError>?
+    @Locked var segmentationRequestResult: Result<[SegmentationCheckResponse.CustomerSegmentation]?, MindboxError>?
+    @Locked var isPresentingInAppMessage = false
+    @Locked var pushPermissionStatus: UNAuthorizationStatus = .denied
+    @Locked var sessionShownInApps: [String] = []
+    @Locked var isInstalledFromPersistenceStorageBeforeInitSDK: Bool = false
+    @Locked var isInitializationCalled = false {
         didSet {
             if isInitializationCalled, isInitializationCalled != oldValue {
                 NotificationCenter.default.post(name: .initializationCompleted, object: nil)
             }
         }
     }
-    
-    var lastInappClickedID: String?
+
+    @Locked var lastInappClickedID: String?
+
+    @Locked var vouchedInappIds: Set<String> = []
+
+    /// `Inapp.Show` dedup for blocks, in sync with Android down to the name: a rebuilt page re-draws
+    /// what the user saw. Local show history deliberately stays per rendered page on both platforms.
+    @Locked var blockShowsReportedInSession: Set<String> = []
 
     /// Last track-visit data (source and requestUrl only)
-    var lastTrackVisit: (source: TrackVisitSource?, requestUrl: String?)?
+    @Locked var lastTrackVisit: (source: TrackVisitSource?, requestUrl: String?)?
 
-    var expiredConfigSession: String?
-    var isUserVisitSaved = false
-    var inAppSettings: Settings.InAppSettings?
-    var configSessionExpirationTime: Date?
+    @Locked var expiredConfigSession: String?
+    @Locked var isUserVisitSaved = false
+    @Locked var inAppSettings: Settings.InAppSettings?
+    @Locked var configSessionExpirationTime: Date?
 
     private init() {}
 
@@ -57,6 +65,8 @@ final class SessionTemporaryStorage {
         sessionShownInApps = []
         isUserVisitSaved = false
         lastInappClickedID = nil
+        vouchedInappIds = []
+        blockShowsReportedInSession = []
         lastTrackVisit = nil
         inAppSettings = nil
         configSessionExpirationTime = nil

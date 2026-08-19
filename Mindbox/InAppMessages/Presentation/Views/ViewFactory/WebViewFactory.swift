@@ -21,7 +21,8 @@ class WebViewFactory: ViewFactoryProtocol {
                                                      onCloseInApp: params.onClose,
                                                      onError: params.onError,
                                                      operation: params.operation,
-                                                     tags: params.tags)
+                                                     tags: params.tags,
+                                                     extraParams: params.extraParams)
             myViewController = viewController
             return viewController
         }

@@ -29,17 +29,15 @@ final class ContentRenderedActionHandler: WebBridgeActionHandler {
             // behalf: `0.4` would collapse it as empty, `0.6` would show it. Named instead, so
             // the bug is found where it is rather than lived with as a block that sometimes
             // disappears.
-            host.respondError("Invalid payload: 'count' must be a whole number, got \(count)", to: message)
+            refuse("Invalid payload: 'count' must be a whole number, got \(count)", message: message, host: host)
             return
         case .absent:
-            host.respondError("Invalid payload: missing or non-numeric 'count'", to: message)
+            refuse("Invalid payload: missing or non-numeric 'count'", message: message, host: host)
             return
         }
 
-        // A count of items the page drew, not the size of a collection: a negative number is
-        // a page bug worth naming rather than clamping.
         guard renderedCount >= 0 else {
-            host.respondError("Invalid payload: 'count' must not be negative, got \(renderedCount)", to: message)
+            refuse("Invalid payload: 'count' must not be negative, got \(renderedCount)", message: message, host: host)
             return
         }
 
@@ -52,6 +50,11 @@ final class ContentRenderedActionHandler: WebBridgeActionHandler {
 
         content.bridgeDidRenderContent(count: renderedCount)
         host.respondSuccess(to: message)
+    }
+
+    private func refuse(_ reason: String, message: BridgeMessage, host: WebBridgeHost) {
+        host.respondError(reason, to: message)
+        (host as? WebBridgeContentHosting)?.bridgeDidReportUnreadableContent()
     }
 
     /// What the payload's `count` turned out to be.

@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 protocol ModuleInjecting {
     func inject<Dependency>(_ serviceType: Dependency.Type) -> Dependency?
@@ -29,9 +30,11 @@ enum MBInject {
         case test
     }
 
-    static var container: MBContainer = MBInject.buildDefaulContainer()
+    // @Locked: read by DI from every queue the SDK runs on; tests' setUp swaps it while a previous
+    // test's config queue may still be reading (TSan-confirmed race).
+    @Locked static var container: MBContainer = MBInject.buildDefaulContainer()
 
-    static var mode: InjectionMode = .standard {
+    @Locked static var mode: InjectionMode = .standard {
         didSet {
             switch mode {
                 case .standard:

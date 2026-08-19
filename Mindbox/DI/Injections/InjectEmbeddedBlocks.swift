@@ -10,16 +10,23 @@ import Foundation
 
 extension MBContainer {
     func registerEmbeddedBlocks() -> Self {
-        // The resolver is shared: its per-id cache and its queue of waiting blocks are what make
-        // several blocks with the same id resolve through a single load of the data. Providers,
-        // in contrast, are made per block by the factory, so blocks stay independent of each
-        // other — and so does the bridge session each of their pages runs.
+        // One resolver and one registry per container: blocks of one place share a single resolve.
         register(EmbeddedBlockResolving.self) {
             EmbeddedBlockResolver()
         }
 
+        register(EmbeddedBlockPlaceRegistering.self) {
+            EmbeddedBlockPlaceRegistry(resolver: DI.injectOrFail(EmbeddedBlockResolving.self))
+        }
+
+        register(EmbeddedBlockFeedServing.self) {
+            EmbeddedBlockFeedService()
+        }
+
         register(EmbeddedBlockContentProviderMaking.self) {
-            EmbeddedBlockContentProviderFactory(resolver: DI.injectOrFail(EmbeddedBlockResolving.self))
+            EmbeddedBlockContentProviderFactory(registry: DI.injectOrFail(EmbeddedBlockPlaceRegistering.self),
+                                                feed: DI.injectOrFail(EmbeddedBlockFeedServing.self),
+                                                failureManager: DI.injectOrFail(InappShowFailureManagerProtocol.self))
         }
 
         return self

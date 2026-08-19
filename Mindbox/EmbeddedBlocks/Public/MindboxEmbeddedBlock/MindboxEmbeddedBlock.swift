@@ -12,14 +12,15 @@ import MindboxLogger
 
 /// SwiftUI wrapper over `MindboxEmbeddedBlockView`.
 ///
-/// Created with the `placeSystemName` of the place from the admin panel and the `height` the block
-/// should occupy. Place it anywhere in a layout — the caller decides only the position and the
-/// width. The block keeps the given height while its content is loading and shown; a block with
-/// nothing to show collapses to zero height.
+/// Created with the `placeSystemName` of the place from the admin panel and the `height` the
+/// block should occupy.
+/// Place it anywhere in a layout — the caller decides only the position and the width. The block
+/// keeps the given height while its content is loading and shown; a block with nothing to show
+/// collapses to zero height.
 ///
-/// Both values are fixed at creation. A different `placeSystemName` is a different block, built from
-/// scratch in place of the old one. A different `height` changes nothing: the block keeps the height
-/// it was created with and reports the ignored value to the log.
+/// Both values are fixed at creation. A different `placeSystemName` is a different block, built
+/// from scratch in place of the old one. A different `height` changes nothing: the block keeps the height it was
+/// created with and reports the ignored value to the log.
 ///
 /// Both outcomes can be customized the same way as in UIKit, through modifiers on the block
 /// itself: `placeholder` replaces the stock loading shimmer, and `errorView` opts into showing a
@@ -43,6 +44,7 @@ public struct MindboxEmbeddedBlock: View {
 
     private let placeSystemName: String
     private let height: CGFloat
+    private let timeout: TimeInterval?
     private let onLoad: (() -> Void)?
     private let onFail: (() -> Void)?
 
@@ -53,14 +55,20 @@ public struct MindboxEmbeddedBlock: View {
     ///   - placeSystemName: The system name of the place from the admin panel.
     ///   - height: The height the block occupies while loading and shown. Fixed at creation:
     ///     a new value given to a live block is ignored.
+    ///   - timeout: How long the block waits to learn what it shows before collapsing as
+    ///     empty, in seconds. `nil` means the SDK default of 30. An answer that arrives after that
+    ///     no longer expands the block; the next attempt starts when the block enters the window
+    ///     again.
     ///   - onLoad: The block content is shown and the container is visible.
     ///   - onFail: The block cannot be shown — a failure or an empty block.
     public init(placeSystemName: String,
                 height: CGFloat,
+                timeout: TimeInterval? = nil,
                 onLoad: (() -> Void)? = nil,
                 onFail: (() -> Void)? = nil) {
         self.placeSystemName = placeSystemName
         self.height = height
+        self.timeout = timeout
         self.onLoad = onLoad
         self.onFail = onFail
     }
@@ -87,6 +95,7 @@ public struct MindboxEmbeddedBlock: View {
     public var body: some View {
         EmbeddedBlockBody(placeSystemName: placeSystemName,
                           height: height,
+                          timeout: timeout,
                           onLoad: onLoad,
                           onFail: onFail,
                           placeholder: placeholderBuilder,
@@ -100,23 +109,24 @@ private struct EmbeddedBlockBody: View {
 
     let placeSystemName: String
     let height: CGFloat
+    let timeout: TimeInterval?
     let onLoad: (() -> Void)?
     let onFail: (() -> Void)?
     let placeholder: (() -> AnyView)?
     let errorContent: (() -> AnyView)?
 
-    /// Starts from the same point the container starts from: the space is taken, the placeholder
-    /// is shown. The block occupies its height right away, not from the container's first report.
     @State private var presentation: EmbeddedBlockPresentation
 
     init(placeSystemName: String,
          height: CGFloat,
+         timeout: TimeInterval?,
          onLoad: (() -> Void)?,
          onFail: (() -> Void)?,
          placeholder: (() -> AnyView)?,
          errorContent: (() -> AnyView)?) {
         self.placeSystemName = placeSystemName
         self.height = height
+        self.timeout = timeout
         self.onLoad = onLoad
         self.onFail = onFail
         self.placeholder = placeholder
@@ -129,6 +139,7 @@ private struct EmbeddedBlockBody: View {
         ZStack {
             EmbeddedBlockRepresentable(placeSystemName: placeSystemName,
                                        height: height,
+                                       timeout: timeout,
                                        presentation: $presentation,
                                        onLoad: onLoad,
                                        onFail: onFail,
@@ -160,6 +171,7 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
 
     let placeSystemName: String
     let height: CGFloat
+    let timeout: TimeInterval?
 
     @Binding var presentation: EmbeddedBlockPresentation
 
@@ -177,7 +189,7 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
     }
 
     func makeUIView(context: Context) -> MindboxEmbeddedBlockView {
-        let blockView = MindboxEmbeddedBlockView(placeSystemName: placeSystemName, height: height)
+        let blockView = MindboxEmbeddedBlockView(placeSystemName: placeSystemName, height: height, timeout: timeout)
         let coordinator = context.coordinator
         blockView.delegate = coordinator
         blockView.onPresentationChange = { presentation in
@@ -239,7 +251,7 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
 
         private var isDetached = false
 
-        /// Where `update` defers its write — `DispatchQueue.main` outside tests.
+        /// `DispatchQueue.main` outside tests.
         private let schedule: (@escaping () -> Void) -> Void
 
         init(presentation: Binding<EmbeddedBlockPresentation>,
@@ -262,9 +274,7 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
             }
         }
 
-        /// The height is fixed when the block is created: a new value given to a live block is
-        /// ignored, and the host has no other way to notice — the block simply keeps standing at
-        /// its old height.
+        /// An ignored height has no other symptom.
         func warnIfHeightIsIgnored(_ newHeight: CGFloat, placeSystemName: String) {
             guard !hasWarnedAboutIgnoredHeight, newHeight != creationHeight else { return }
 
@@ -274,8 +284,7 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
                           category: .embeddedBlocks)
         }
 
-        /// The view left the tree: silences the write `update` has already queued — nulling the
-        /// callbacks in `dismantleUIView` cannot recall it, and `weak self` is no guarantee: when
+        /// Silences the write `update` has already queued: `weak self` is no guarantee — when
         /// SwiftUI releases the coordinator after dismantling is unspecified.
         func detach() {
             isDetached = true

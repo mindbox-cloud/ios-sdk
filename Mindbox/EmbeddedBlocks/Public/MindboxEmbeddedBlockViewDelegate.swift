@@ -10,9 +10,8 @@ import Foundation
 
 /// The events a host app can observe on `MindboxEmbeddedBlockView`.
 ///
-/// The block resolves into one of two outcomes: it is either shown or it is not. Everything the
-/// host can react to fits these two calls, so the API has no more of them — intermediate states
-/// like "started loading" stay internal.
+/// The block resolves into one of two outcomes: it is either shown or it is not. Intermediate
+/// states like "started loading" stay internal.
 ///
 /// Every method has an empty default implementation, so only the interesting ones have to be
 /// written. Calls always arrive on the main thread. Every method hands back the view that fired

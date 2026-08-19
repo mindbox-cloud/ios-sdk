@@ -9,11 +9,8 @@
 import Foundation
 import MindboxLogger
 
-/// Answers which of the in-apps the page asked about currently pass targeting.
-///
-/// **Not implemented yet: every id is let through.** The page can therefore render its whole
-/// feed, which is what makes the rest of the contract testable, but nothing here is filtering
-/// anything.
+/// An unreadable question is refused rather than answered with an empty list: the page can
+/// retry a refusal, while an empty answer it would take for the truth.
 final class CheckInappsTargetingActionHandler: WebBridgeActionHandler {
 
     let actions: Set<BridgeMessage.Action> = [.checkInappsTargeting]
@@ -29,23 +26,23 @@ final class CheckInappsTargetingActionHandler: WebBridgeActionHandler {
             return id
         }
 
-        // TODO: Answer from the targeting the SDK has already computed, without touching the
-        // network — the page gives up after three seconds and renders nothing rather than wait.
-        //   - the ids are looked up in `inappFilterService.validInapps`;
-        //   - `targetingChecker.check(targeting:)` is synchronous and does no I/O: it reads
-        //     `checkedSegmentations` / `geoModels` that a previous pass already warmed;
-        //   - a cold cache answers false, which is a feed that renders nothing. That is accepted
-        //     rather than waited out, but it deserves a log of its own — silence here is
-        //     indistinguishable from "nothing passed";
-        //   - an id absent from the config is excluded rather than let through, and named in the
-        //     log: "why is my story missing" is the first question this will be asked;
-        //   - ORDER MATTERS: the page maps the answer back onto its own cards.
-        //   - THREAD SAFETY: `checkedSegmentations` is written from `InappMapper`'s queue, and
-        //     this would be the first main-thread reader. Settle that together with the logic.
-        Logger.common(message: "[WebView] checkInappsTargeting is not implemented: letting all \(ids.count) id(s) through",
-                      level: .default,
-                      category: host.logCategory)
+        if ids.count != requested.count {
+            Logger.common(message: "[WebView] checkInappsTargeting: \(requested.count - ids.count) of \(requested.count) asked ids are not strings, skipping them",
+                          level: .error,
+                          category: host.logCategory)
+        }
 
-        host.respond(to: message, payload: .object(["inappIds": .array(ids.map { .string($0) })]))
+        guard let feedHost = host as? WebBridgeFeedHosting else {
+            // Left unanswered, not refused: feedless surfaces may conform later, and a refusal
+            // would have to be unlearned by every page that starts relying on it.
+            Logger.common(message: "[WebView] Bridge: checkInappsTargeting from '\(host.contentId)' has no feed to ask here, ignoring",
+                          level: .error,
+                          category: host.logCategory)
+            return
+        }
+
+        feedHost.bridgeDidAskRenderableInapps(ids) { [weak host] allowed in
+            host?.respond(to: message, payload: .object(["inappIds": .array(allowed.map { .string($0) })]))
+        }
     }
 }

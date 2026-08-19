@@ -18,6 +18,10 @@ protocol InAppPresentationManagerProtocol: AnyObject {
         onPresentationCompleted: @escaping () -> Void,
         onError: @escaping (InAppPresentationError) -> Void
     )
+
+    /// Closes the overlay on screen, if any, through its normal completion path, exactly as a
+    /// user's close would. Main thread only.
+    func dismissActiveInApp()
 }
 
 enum InAppPresentationError {
@@ -58,10 +62,18 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
 
     private let displayUseCase: PresentationDisplayUseCaseProtocol
 
+    /// The token lets a finishing show release only its own slot, never a newer show's.
+    /// Main-confined, like the shows.
+    private var activePresentation: (token: UUID, complete: () -> Void)?
+
     init(displayUseCase: PresentationDisplayUseCaseProtocol) {
         self.displayUseCase = displayUseCase
 
         addObserverToDismissInApp()
+    }
+
+    func dismissActiveInApp() {
+        displayUseCase.dismissInAppUIModel(onClose: activePresentation?.complete ?? {})
     }
 
     private func addObserverToDismissInApp() {
@@ -84,8 +96,16 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
         onError: @escaping (InAppPresentationError) -> Void
     ) {
         let callbackGuard = PresentationCallbackGuard()
+        let token = UUID()
+        // Releasing the completion also releases the form data — images included — that it holds.
+        let releaseActivePresentation: () -> Void = { [weak self] in
+            guard self?.activePresentation?.token == token else { return }
+
+            self?.activePresentation = nil
+        }
         let safeOnError: (InAppPresentationError) -> Void = { error in
             DispatchQueue.main.async {
+                releaseActivePresentation()
                 callbackGuard.finishWithError {
                     onError(error)
                 }
@@ -93,6 +113,7 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
         }
         let safeOnPresentationCompleted: () -> Void = {
             DispatchQueue.main.async {
+                releaseActivePresentation()
                 callbackGuard.finishSuccessfully {
                     onPresentationCompleted()
                 }
@@ -105,6 +126,7 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
                 return
             }
 
+            self.activePresentation = (token, safeOnPresentationCompleted)
             self.displayUseCase.presentInAppUIModel(model: inAppFormData,
                                                     onPresented: {
                 self.displayUseCase.onPresented(id: inAppFormData.inAppId, onPresented)

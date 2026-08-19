@@ -38,6 +38,10 @@ final class TransparentView: UIView {
     private let noCacheRetryPolicy = WebViewNoCacheRetryPolicy {
         InAppWebViewDataStore.isCacheFeatureEnabled
     }
+    lazy var webPageRegistry = MindboxWebPageRegistry.shared
+    /// A page joins the broadcast set on its first `ready`: registering earlier would aim
+    /// `localState.changed` at a document that has no bridge yet.
+    private var isRegisteredForBroadcasts = false
 
     /// - Parameter actionRegistry: The handlers this show runs with. Injectable so a test can
     ///   drive the real dispatch path with doubles behind it.
@@ -240,6 +244,11 @@ extension TransparentView: WebBridgeMessageDelegate {
             category: .webViewInAppMessages
         )
 
+        if message.type == .request, message.parsedAction == .ready, !isRegisteredForBroadcasts {
+            isRegisteredForBroadcasts = true
+            webPageRegistry.register(self)
+        }
+
         // Every action a page can send is owned by a handler now. An action nobody owns is
         // not an error: the web vocabulary is allowed to be newer than the SDK.
         guard actionRegistry.handle(message, host: self) else {
@@ -344,56 +353,34 @@ extension TransparentView: WebBridgeNavigationDelegate {
     }
     
     func webBridge(_ bridge: MindboxWebBridge, decidePolicyFor url: URL?, navigationType: WKNavigationType, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
-        let urlString = url?.absoluteString ?? "unknown"
+        let decision = WebViewNavigationPolicy.decision(for: navigationType, url: url)
+        WebViewNavigationPolicy.log(decision, navigationType: navigationType, url: url, category: .webViewInAppMessages)
 
-        switch navigationType {
-        case .other, .reload, .backForward:
-            Logger.common(
-                message: "[WebView] WKNavigationDelegate: allowing navigation (\(navigationType.debugLabel)) to URL \(urlString)",
-                category: .webViewInAppMessages
-            )
+        switch decision {
+        case .allow:
             decisionHandler(.allow)
 
-        case .linkActivated, .formSubmitted, .formResubmitted:
-            Logger.common(
-                message: "[WebView] WKNavigationDelegate: blocking navigation (\(navigationType.debugLabel)) to URL \(urlString). Forwarding to JS.",
-                category: .webViewInAppMessages
-            )
+        case .handInBack(let url):
             decisionHandler(.cancel)
 
-            if let url = url {
-                let payload: JSONValue = .object(["url": .string(url.absoluteString)])
-                let event = BridgeMessage(
-                    type: .request,
-                    action: BridgeMessage.Action.navigationIntercepted,
-                    payload: payload
-                )
-                facade?.sendToJS(event)
-            }
+            guard let url = url else { return }
 
-        @unknown default:
-            Logger.common(
-                message: "[WebView] WKNavigationDelegate: blocking unknown navigation type (\(navigationType.rawValue)) to URL \(urlString)",
-                category: .webViewInAppMessages
+            let event = BridgeMessage(
+                type: .request,
+                action: BridgeMessage.Action.navigationIntercepted,
+                payload: .object(["url": .string(url.absoluteString)])
             )
-            decisionHandler(.cancel)
+            facade?.sendToJS(event)
         }
     }
 }
 
-// MARK: - WKNavigationType String Representation
+// MARK: - MindboxWebPage
 
-private extension WKNavigationType {
-    var debugLabel: String {
-        switch self {
-        case .linkActivated:    return "linkActivated"
-        case .formSubmitted:    return "formSubmitted"
-        case .backForward:      return "backForward"
-        case .reload:           return "reload"
-        case .formResubmitted:  return "formResubmitted"
-        case .other:            return "other"
-        @unknown default:       return "unknown(\(rawValue))"
-        }
+extension TransparentView: MindboxWebPage {
+
+    func push(_ action: BridgeMessage.Action, payload: JSONValue) {
+        facade?.sendToJS(BridgeMessage(type: .request, action: action, payload: payload))
     }
 }
 

@@ -11,6 +11,7 @@ import MindboxLogger
 
 protocol InAppPresentationValidatorProtocol {
     func canPresentInApp(isPriority: Bool, frequency: InappFrequency?, id: String) -> Bool
+    func isWithinShowBudgets(isPriority: Bool, frequency: InappFrequency?, id: String) -> Bool
 }
 
 final class InAppPresentationValidator: InAppPresentationValidatorProtocol {
@@ -22,21 +23,32 @@ final class InAppPresentationValidator: InAppPresentationValidatorProtocol {
     
     func canPresentInApp(isPriority: Bool, frequency: InappFrequency?, id: String) -> Bool {
         Logger.common(message: "[PresentationValidator] Checking if can present in-app: \(id)", level: .debug, category: .inAppMessages)
-        
-        guard isNotPresentingAnotherInApp(), isValidFrequency(frequency: frequency, id: id) else {
+
+        guard isNotPresentingAnotherInApp() else {
             return false
         }
 
-        if isPriority {
+        return isWithinShowBudgets(isPriority: isPriority, frequency: frequency, id: id)
+    }
+
+    func isWithinShowBudgets(isPriority: Bool, frequency: InappFrequency?, id: String) -> Bool {
+        guard isValidFrequency(frequency: frequency, id: id) else {
+            return false
+        }
+
+        // `unlimited` is outside the show accounting in both directions: it records no show
+        // (`InappFrequency.countsShows`) and no recorded show holds it back.
+        if isPriority || frequency == .unlimited {
+            let reason = isPriority ? "Priority" : "Unlimited"
             let currentShownCount = SessionTemporaryStorage.shared.sessionShownInApps.count
             let shownInappsToday = getShownInappsTodayCount()
-            
+
             Logger.common(message: """
-                [PresentationValidator] Priority in-app detected, skipping all checks except isNotPresentingAnotherInApp
+                [PresentationValidator] \(reason) in-app detected, skipping the show budgets
                 - Current session shown count: \(currentShownCount)
                 - Shown in-apps today: \(shownInappsToday)
                 """, level: .debug, category: .inAppMessages)
-            
+
             return true
         }
         

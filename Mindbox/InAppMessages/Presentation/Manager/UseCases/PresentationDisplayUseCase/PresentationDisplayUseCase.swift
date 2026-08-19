@@ -91,7 +91,8 @@ final class PresentationDisplayUseCase: PresentationDisplayUseCaseProtocol {
                                                onClose: onClose,
                                                onError: onError,
                                                operation: model.operation,
-                                               tags: model.tags)
+                                               tags: model.tags,
+                                               extraParams: model.extraParams)
 
         guard let viewController = factory.create(with: parameters) else {
             onError(.failed("[PresentationDisplayUseCase] Failed to create in-app view controller."))

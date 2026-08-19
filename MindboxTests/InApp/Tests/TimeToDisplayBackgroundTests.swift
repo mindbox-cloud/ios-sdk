@@ -141,8 +141,10 @@ struct TimeToDisplayBackgroundTests {
 
 final class InAppMessagesTrackerSpyMock: InAppMessagesTrackerProtocol {
     private(set) var trackViewCallCount = 0
+    private(set) var trackTargetingCallCount = 0
     private(set) var lastTimeToDisplay: String?
     private(set) var lastTrackedId: String?
+    private(set) var lastTargetedId: String?
 
     func trackView(id: String, timeToDisplay: String?, tags: [String: String]?) throws {
         trackViewCallCount += 1
@@ -151,4 +153,9 @@ final class InAppMessagesTrackerSpyMock: InAppMessagesTrackerProtocol {
     }
 
     func trackClick(id: String, tags: [String: String]?) throws {}
+
+    func trackTargeting(id: String, tags: [String: String]?) throws {
+        trackTargetingCallCount += 1
+        lastTargetedId = id
+    }
 }

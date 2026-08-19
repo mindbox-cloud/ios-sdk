@@ -18,11 +18,13 @@ import Testing
 @Suite("WebBridgeActionHandlerFactory", .tags(.webView))
 struct WebBridgeActionHandlerFactoryTests {
 
-    /// Actions the registry is not meant to own: both travel native → JS and never arrive as
-    /// a request.
+    /// Actions the registry is not meant to own: all of these travel native → JS and never
+    /// arrive as a request.
     private static let notOwnedByRegistry: Set<BridgeMessage.Action> = [
         .navigationIntercepted,
-        .motionEvent
+        .motionEvent,
+        .initDataUpdated,
+        .localStateChanged
     ]
 
     @Test("Every action a page can send has an owner in the shipped set")
@@ -42,7 +44,7 @@ struct WebBridgeActionHandlerFactoryTests {
             $0.formUnion($1.actions)
         }
 
-        #expect(owned.isDisjoint(with: [.navigationIntercepted, .motionEvent]))
+        #expect(owned.isDisjoint(with: Self.notOwnedByRegistry))
     }
 
     /// Two handlers claiming one action is resolved by the registry, but silently — the set

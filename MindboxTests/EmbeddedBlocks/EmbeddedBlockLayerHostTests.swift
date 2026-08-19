@@ -8,7 +8,7 @@
 
 import Testing
 import UIKit
-@testable import Mindbox
+@_spi(Internal) @testable import Mindbox
 
 /// The layer host has one promise: the container holds exactly one view, stretched to its edges. The
 /// block's layers are mutually exclusive, so showing a new one means removing the previous one.

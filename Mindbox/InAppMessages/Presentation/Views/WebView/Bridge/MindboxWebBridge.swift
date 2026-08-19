@@ -39,7 +39,6 @@ protocol BridgePendingStore: AnyObject {
 @_spi(Internal)
 public final class MindboxWebBridge: NSObject {
 
-    weak var delegate: WebBridgeWKScriptMessageDelegate?
     weak var messageDelegate: WebBridgeMessageDelegate?
     weak var navigationDelegate: WebBridgeNavigationDelegate?
 
@@ -245,7 +244,6 @@ extension MindboxWebBridge: WKScriptMessageHandler {
             category: .webViewInAppMessages
         )
 
-        delegate?.webBridge(self, didReceiveFromJS: message)
         dispatcher.dispatch(bridgeMessage, in: self)
     }
 }
