@@ -88,7 +88,7 @@ final class EmbeddedBlockPageMock: EmbeddedBlockPageHosting {
 
     var onUnreadableContentReport: (() -> Void)?
 
-    var onFeedQuestion: (([String], @escaping ([String]) -> Void) -> Void)?
+    var onShowableQuestion: (([String], @escaping ([String]) -> Void) -> Void)?
 
     var onShowInAppRequest: ((String, [String: JSONValue]) -> Void)?
 
@@ -111,7 +111,7 @@ final class EmbeddedBlockPageMock: EmbeddedBlockPageHosting {
     private lazy var host = EmbeddedBlockPageMockHost(page: self)
     private lazy var registry = WebBridgeActionRegistry(handlers: [
         ContentRenderedActionHandler(),
-        CheckInappsTargetingActionHandler(),
+        FilterShowableInappsActionHandler(),
         ShowInAppActionHandler()
     ])
 
@@ -199,8 +199,8 @@ private final class EmbeddedBlockPageMockHost: WebBridgeHost, WebBridgeContentHo
         page.onUnreadableContentReport?()
     }
 
-    func bridgeDidAskRenderableInapps(_ ids: [String], completion: @escaping ([String]) -> Void) {
-        page.onFeedQuestion?(ids, completion)
+    func bridgeDidAskShowableInapps(_ ids: [String], completion: @escaping ([String]) -> Void) {
+        page.onShowableQuestion?(ids, completion)
     }
 
     func bridgeDidRequestShowInApp(id: String, params: [String: JSONValue]) {
@@ -351,7 +351,7 @@ final class EmbeddedBlockFeedServiceMock: EmbeddedBlockFeedServing {
         shown.append((id, params))
     }
 
-    func renderableInappIds(among ids: [String], completion: @escaping (FeedAnswer) -> Void) {
+    func showableInappIds(among ids: [String], completion: @escaping (FeedAnswer) -> Void) {
         askedIds.append(ids)
 
         if isDeferred {

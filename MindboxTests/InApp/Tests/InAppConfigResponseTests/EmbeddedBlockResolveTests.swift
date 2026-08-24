@@ -68,9 +68,9 @@ struct EmbeddedBlockResolveTests {
         }
     }
 
-    private func renderable(_ ids: [String]) async -> [String] {
+    private func showable(_ ids: [String]) async -> [String] {
         await withCheckedContinuation { continuation in
-            mapper.getRenderableInappIds(ids, candidates) { answer in
+            mapper.getShowableInappIds(ids, candidates) { answer in
                 // Delivering the answer, as a block does, is what sends targeting — the selection does not vouch by itself.
                 answer.vouch()
                 continuation.resume(returning: answer.inappIds.sorted())
@@ -139,8 +139,8 @@ struct EmbeddedBlockResolveTests {
     /// Every delivered answer is a new offer — the rule operation targeting lives by (in sync with Android).
     @Test("A feed asking again vouches for the same in-apps again")
     func feedVouchesPerDeliveredAnswer() async {
-        _ = await renderable(everyId)
-        _ = await renderable(everyId)
+        _ = await showable(everyId)
+        _ = await showable(everyId)
 
         let vouched = dataFacade.trackTargetingCalls.filter { $0.id == Constants.unlimitedStoryId }
         #expect(vouched.count == 2)
@@ -253,7 +253,7 @@ struct EmbeddedBlockResolveTests {
 
     @Test("A feed may draw the stories and the modal, but not the block")
     func feedKeepsDirectCallAndDropsTheBlock() async {
-        #expect(await renderable(everyId) == [Constants.unlimitedStoryId, Constants.modalId, Constants.onceStoryId].sorted())
+        #expect(await showable(everyId) == [Constants.unlimitedStoryId, Constants.modalId, Constants.onceStoryId].sorted())
     }
 
     @Test("A watched unlimited story is still drawn")
@@ -261,7 +261,7 @@ struct EmbeddedBlockResolveTests {
         let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         persistenceStorage.shownDatesByInApp = [Constants.unlimitedStoryId: [Date()]]
 
-        #expect(await renderable([Constants.unlimitedStoryId]) == [Constants.unlimitedStoryId])
+        #expect(await showable([Constants.unlimitedStoryId]) == [Constants.unlimitedStoryId])
     }
 
     @Test("A once story that was already shown is not drawn")
@@ -269,17 +269,17 @@ struct EmbeddedBlockResolveTests {
         let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         persistenceStorage.shownDatesByInApp = [Constants.onceStoryId: [Date()]]
 
-        #expect(await renderable([Constants.onceStoryId]).isEmpty)
+        #expect(await showable([Constants.onceStoryId]).isEmpty)
     }
 
     @Test("An id no config knows is not drawn")
     func feedDropsUnknownId() async {
-        #expect(await renderable(["44444444-4444-4444-4444-444444444444"]).isEmpty)
+        #expect(await showable(["44444444-4444-4444-4444-444444444444"]).isEmpty)
     }
 
     @Test("A feed vouches for every story it allows and for nothing it cuts")
     func feedVouchesForWhatItAllows() async {
-        let allowed = await renderable(everyId)
+        let allowed = await showable(everyId)
         let vouched = Set(dataFacade.trackTargetingCalls.compactMap(\.id))
 
         #expect(vouched == Set(allowed))
@@ -288,7 +288,7 @@ struct EmbeddedBlockResolveTests {
 
     @Test("A story only an operation targets is not drawn for a feed")
     func feedDropsAnOperationTargetedStory() async {
-        #expect(await renderable([Constants.operationStoryId]).isEmpty)
+        #expect(await showable([Constants.operationStoryId]).isEmpty)
     }
 
     // MARK: - The feed answers without the network
@@ -296,7 +296,7 @@ struct EmbeddedBlockResolveTests {
     /// The wire contract gives the page three seconds: the feed is answered from what the session already fetched — fail closed, in sync with Android.
     @Test("A feed's question asks nothing of the network")
     func feedAsksNothingOfTheNetwork() async {
-        _ = await renderable(everyId)
+        _ = await showable(everyId)
 
         #expect(dataFacade.fetchDependenciesCalls == 0)
     }
@@ -312,7 +312,7 @@ struct EmbeddedBlockResolveTests {
     func coldCacheCutsASegmentStory() async {
         dataFacade.targetingChecker.checkedSegmentations = nil
 
-        #expect(await renderable([Constants.segmentStoryId]).isEmpty)
+        #expect(await showable([Constants.segmentStoryId]).isEmpty)
     }
 
     @Test("A segment story on a warm cache is drawn without a fetch")
@@ -322,7 +322,7 @@ struct EmbeddedBlockResolveTests {
                   segment: .init(ids: .init(externalId: "feed-segment")))
         ]
 
-        #expect(await renderable([Constants.segmentStoryId]) == [Constants.segmentStoryId])
+        #expect(await showable([Constants.segmentStoryId]) == [Constants.segmentStoryId])
         #expect(dataFacade.fetchDependenciesCalls == 0)
     }
 
@@ -330,17 +330,17 @@ struct EmbeddedBlockResolveTests {
     func showLimitsDoNotShrinkTheFeedAnswer() async {
         spendEveryShowBudget()
 
-        #expect(await renderable([Constants.unlimitedStoryId]) == [Constants.unlimitedStoryId])
+        #expect(await showable([Constants.unlimitedStoryId]) == [Constants.unlimitedStoryId])
     }
 
     @Test("An empty question gets an empty answer")
     func feedAnswersNothingToNothing() async {
-        #expect(await renderable([]).isEmpty)
+        #expect(await showable([]).isEmpty)
     }
 
     @Test("Answering a feed writes nothing to the show history")
     func feedAnswerWritesNothingToShowHistory() async {
-        _ = await renderable(everyId)
+        _ = await showable(everyId)
 
         let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         #expect(persistenceStorage.shownDatesByInApp?.isEmpty == true)
@@ -446,6 +446,6 @@ struct EmbeddedBlockResolveTests {
 
     @Test("A feed keeps a mixed in-app — its overlay half can be drawn")
     func feedKeepsAMixedInapp() async {
-        #expect(await renderable([Constants.mixedId]) == [Constants.mixedId])
+        #expect(await showable([Constants.mixedId]) == [Constants.mixedId])
     }
 }
