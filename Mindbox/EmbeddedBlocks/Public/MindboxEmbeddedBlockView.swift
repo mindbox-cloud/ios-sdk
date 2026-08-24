@@ -421,9 +421,14 @@ public final class MindboxEmbeddedBlockView: UIView {
 
     private func appearance(for state: EmbeddedBlockState) -> MindboxEmbeddedBlockAppearance {
         switch state {
-        // A block that already settled keeps what it shows even while it loads anew: a retry earns
-        // neither the space the host has reclaimed nor a placeholder over the error screen.
-        case .loading: return hasSettled ? shownAppearance : .placeholder
+        case .loading:
+            guard hasSettled else { return .placeholder }
+
+            // A block that already settled keeps what it shows even while it loads anew: a retry
+            // earns neither the space the host has reclaimed nor a placeholder over the error screen.
+            // What it does not keep is an error screen the host has taken away in the meantime —
+            // there is nothing left to draw, so the block collapses.
+            return shownAppearance == .error && errorView == nil ? .collapsed : shownAppearance
         case .ready: return .content
         // A failure is shown only to those who opted in explicitly; for the rest the block collapses.
         case .failed: return errorView == nil ? .collapsed : .error
@@ -445,8 +450,13 @@ public final class MindboxEmbeddedBlockView: UIView {
         layers.show(view(for: .placeholder))
     }
 
+    /// Not only a live failure: a block that settled on its error screen goes on showing it while the
+    /// next attempt loads, and a host swapping or taking that view away has to be obeyed there too.
+    /// What is shown is the subject — a block that has already collapsed is never expanded by a view
+    /// assigned afterwards.
     private func refreshErrorView() {
-        guard state == .failed, shownAppearance == .error else { return }
+        guard shownAppearance == .error else { return }
+
         apply(state)
     }
 

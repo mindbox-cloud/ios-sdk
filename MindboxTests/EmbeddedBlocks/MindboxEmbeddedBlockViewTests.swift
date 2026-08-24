@@ -100,6 +100,46 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(errorView.superview == nil)
     }
 
+    /// A failed block goes on showing its error screen while the attempt it gets on the way back
+    /// loads: the state has moved on from `failed`, what is on screen has not, and the host taking
+    /// that screen away has to be obeyed there too.
+    @Test("Taking the error view away collapses a failure still shown after a return")
+    func errorViewRemovedAfterReturnCollapsesTheBlock() {
+        let block = BlockFixture()
+        let errorView = UIView()
+        block.view.errorView = errorView
+        block.attachToWindow()
+        block.page?.failLoad()
+
+        block.removeFromWindow()
+        block.attachToWindow()
+        #expect(block.view.intrinsicContentSize.height == 120)
+        #expect(errorView.superview === block.view)
+
+        block.view.errorView = nil
+
+        #expect(block.view.intrinsicContentSize.height == 0)
+        #expect(errorView.superview == nil)
+    }
+
+    @Test("An error view swapped after a return replaces the one still on screen")
+    func errorViewSwappedAfterReturnReplacesTheShownOne() {
+        let block = BlockFixture()
+        let first = UIView()
+        block.view.errorView = first
+        block.attachToWindow()
+        block.page?.failLoad()
+
+        block.removeFromWindow()
+        block.attachToWindow()
+
+        let second = UIView()
+        block.view.errorView = second
+
+        #expect(second.superview === block.view)
+        #expect(first.superview == nil)
+    }
+
     @Test("Error view assigned after the collapse does not expand the block")
     func lateErrorViewDoesNotExpandCollapsedBlock() {
         let block = BlockFixture()
@@ -910,7 +950,8 @@ struct MindboxEmbeddedBlockViewTests {
     }
 
     /// A pause, not a reset — the same as leaving a window: the page that was already loaded is kept
-    /// instead of being resolved and built anew.
+    /// instead of being built anew. The place is asked again, as it is on any return, and an
+    /// unchanged answer keeps that page.
     @Test("Block hidden and shown again keeps its page")
     func hostHiddenBlockKeepsItsPage() {
         let block = BlockFixture()
@@ -919,7 +960,7 @@ struct MindboxEmbeddedBlockViewTests {
         block.view.setHostVisible(false)
         block.view.setHostVisible(true)
 
-        #expect(block.bed.resolver.resolveCount == 1)
+        #expect(block.bed.resolver.resolveCount == 2)
         #expect(block.bed.pageFactory.pages.count == 1)
     }
 
@@ -970,7 +1011,7 @@ struct MindboxEmbeddedBlockViewTests {
 
         #expect(block.view.intrinsicContentSize.height == 120)
         #expect(delegate.events == [.loaded])
-        #expect(block.bed.resolver.resolveCount == 1)
+        #expect(block.bed.resolver.resolveCount == 2)
     }
 
     /// A reload needs somebody to look at the block, and the window is no longer the only one who
