@@ -38,7 +38,8 @@ public final class MindboxEmbeddedBlockView: UIView {
         didSet {
             // The same delegate is not a new subscriber: the host rebuilds its layout on the
             // outcome, and the rebuild reassigns the delegate again — answering that would loop.
-            guard delegate !== oldValue else { return }
+            // Nor is a released block's own teardown one: it drops the delegate on its way out.
+            guard delegate !== oldValue, !isReleased else { return }
 
             deliveredEvent = nil
             scheduleDelivery()
@@ -125,6 +126,9 @@ public final class MindboxEmbeddedBlockView: UIView {
         delegate = nil
         appearanceObserver = nil
         updateContentActivity(reason: "was released by the host wrapper")
+        // Stopping is only a pause now, and a released block is not coming back: the page is closed
+        // here rather than waiting for the container's own deallocation.
+        contentProvider.teardown()
     }
 
     // MARK: - State
@@ -262,7 +266,7 @@ public final class MindboxEmbeddedBlockView: UIView {
 
     deinit {
         waitBudget.pause()
-        contentProvider.stop()
+        contentProvider.teardown()
     }
 
     private func setUpContainer() {
@@ -379,8 +383,9 @@ public final class MindboxEmbeddedBlockView: UIView {
         let hadContentToLoad = !contentProvider.isAwaitingAnswer
 
         contentProvider.reportPageTimedOut()
-        // The provider must not resurrect content the container has already given up on.
-        contentProvider.stop()
+        // The provider must not resurrect content the container has already given up on — and a stop
+        // no longer guarantees that, since a paused attempt is meant to resume.
+        contentProvider.abandonAttempt()
         state = hadContentToLoad ? .failed : .empty
     }
 
@@ -397,8 +402,13 @@ public final class MindboxEmbeddedBlockView: UIView {
     private func apply(_ state: EmbeddedBlockState) {
         shownAppearance = appearance(for: state)
 
-        if shownAppearance == .collapsed || shownAppearance == .error {
-            hasSettled = true
+        switch shownAppearance {
+        // A place without content, however it is drawn, is what the block settles on.
+        case .collapsed, .error: hasSettled = true
+        // And content that actually appeared ends it: from here the block is an ordinary one again,
+        // and the next load it really starts is entitled to its placeholder.
+        case .content: hasSettled = false
+        case .placeholder: break
         }
 
         layers.show(view(for: shownAppearance))

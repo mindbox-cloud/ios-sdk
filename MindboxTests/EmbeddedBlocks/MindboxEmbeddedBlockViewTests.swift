@@ -443,7 +443,10 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.page?.cancelCount == 0)
 
         block.removeFromWindow()
-        #expect(block.page?.cancelCount == 1)
+        // Leaving is a pause: the page is told nobody is looking, not closed — closing it would make
+        // the return a new attempt.
+        #expect(block.page?.cancelCount == 0)
+        #expect(block.page?.isUserPresent == false)
     }
 
     @Test("Block returning to the window keeps its content as it was")
@@ -834,7 +837,7 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.bed.resolver.resolveCount == 0)
         #expect(block.bed.pageFactory.pages.isEmpty)
         // Not armed at all, so there is no budget to run out while the screen is out of sight.
-        #expect(block.timeoutBed.scheduler.lastDelay == nil)
+        #expect(block.waitBudgetBed.scheduler.lastDelay == nil)
     }
 
     /// Being shown again by the wrapper is the same event as entering a window: the block starts.
@@ -863,14 +866,15 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.bed.pageFactory.pages.isEmpty)
     }
 
-    @Test("Host-hidden block stops its content")
-    func hostHiddenBlockStopsContent() {
+    @Test("Host-hidden block pauses its content and keeps its page")
+    func hostHiddenBlockPausesContent() {
         let block = BlockFixture()
         block.attachToWindow()
 
         block.view.setHostVisible(false)
 
-        #expect(block.page?.cancelCount == 1)
+        #expect(block.page?.isUserPresent == false)
+        #expect(block.page?.cancelCount == 0)
     }
 
     /// Three sources drive one switch, and they repeat each other freely — the same value twice must
@@ -883,7 +887,9 @@ struct MindboxEmbeddedBlockViewTests {
         block.view.setHostVisible(false)
         block.view.setHostVisible(false)
 
-        #expect(block.page?.cancelCount == 1)
+        #expect(block.page?.isUserPresent == false)
+        #expect(block.page?.cancelCount == 0)
+        #expect(block.bed.pageFactory.pages.count == 1)
     }
 
     /// A pause, not a reset — the same as leaving a window: the page that was already loaded is kept
@@ -909,7 +915,7 @@ struct MindboxEmbeddedBlockViewTests {
         block.view.delegate = delegate
         block.attachToWindow()
 
-        block.timeoutBed.clock.advance(2)
+        block.waitBudgetBed.clock.advance(2)
         block.view.setHostVisible(false)
         block.expireTimeout()
         await mainQueueTurn()
@@ -921,7 +927,7 @@ struct MindboxEmbeddedBlockViewTests {
         block.view.setHostVisible(true)
 
         // Five seconds of budget, two of them already spent on screen.
-        #expect(block.timeoutBed.scheduler.lastDelay == 3)
+        #expect(block.waitBudgetBed.scheduler.lastDelay == 3)
 
         block.expireTimeout()
         await mainQueueTurn()
@@ -961,7 +967,7 @@ struct MindboxEmbeddedBlockViewTests {
         block.view.reload()
 
         #expect(block.bed.pageFactory.pages.count == 1)
-        #expect(block.bed.resolver.forceRefreshHistory == [false])
+        #expect(block.bed.resolver.resolveCount == 1)
     }
 
     // MARK: - Release

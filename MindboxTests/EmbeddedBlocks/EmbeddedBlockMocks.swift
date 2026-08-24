@@ -8,6 +8,7 @@
 
 import UIKit
 import WebKit
+import MindboxLogger
 @_spi(Internal) @testable import Mindbox
 
 extension EmbeddedBlockWebContent {

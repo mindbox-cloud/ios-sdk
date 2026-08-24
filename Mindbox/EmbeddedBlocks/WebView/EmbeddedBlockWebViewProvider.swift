@@ -56,6 +56,14 @@ final class EmbeddedBlockWebViewProvider {
 
     private var dataPushAck: DispatchWorkItem?
 
+    /// The registry's answer that arrived while nobody was looking.
+    ///
+    /// Dropping it was harmless while every return re-resolved; now that a return resumes instead,
+    /// this is the only way a block hears that its place changed behind another screen. Applying it
+    /// right away is not: swapping the page under a container that is not showing it is work for
+    /// nothing, and the newest answer is the only one worth keeping.
+    private var pendingResolution: EmbeddedBlockResolution?
+
     init(placeSystemName: String,
          registry: EmbeddedBlockPlaceRegistering,
          feed: EmbeddedBlockFeedServing,
@@ -84,11 +92,33 @@ final class EmbeddedBlockWebViewProvider {
         isStarted = true
         page?.isUserPresent = true
 
-        if isReady, page != nil {
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': showing the page rendered earlier",
+        let pending = pendingResolution
+        pendingResolution = nil
+
+        // Coming back to the screen resumes the attempt that was already running: the page it built
+        // stands, whatever it reported while nobody was looking is announced now, and the registry is
+        // not asked again. Only a block with nothing to resume — no page at all, or one whose attempt
+        // failed — starts a new cycle.
+        if page != nil, outcome != .failed {
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': back on screen, resuming its attempt at \(outcome)",
                           category: .embeddedBlocks)
-            onStateChange?(.ready)
-            registry.blockAppeared(placeSystemName)
+            onStateChange?(outcome)
+            // A page that rendered off screen is only shown now, so this is where the show is counted.
+            if outcome == .ready {
+                accountForShow()
+            }
+
+            // And only then what changed while nobody was looking, so the block is seen where it was
+            // left before it moves on.
+            if let pending = pending {
+                apply(pending)
+            }
+            return
+        }
+
+        // Nothing to resume, but the answer is already in hand — no reason to ask for it again.
+        if let pending = pending {
+            apply(pending)
             return
         }
 
@@ -99,16 +129,29 @@ final class EmbeddedBlockWebViewProvider {
         guard isStarted else { return }
 
         isStarted = false
-        // The outcome is deliberately not reset: otherwise every pass of the block across the screen
-        // would cost a full reload.
-        loadGeneration += 1
+        // A pause, not an end: the outcome stands and the page keeps living — leaving the screen must
+        // not cost the attempt, and `cancel()` closes a page for good, so a cancelled one could never
+        // be resumed. What ends an attempt is `abandonAttempt()`; what ends the block is `teardown()`.
         cancelDataPushAck()
         // The page stays alive off screen, so it has to be told that nobody is looking.
         page?.isUserPresent = false
+    }
 
-        if !isReady {
-            page?.cancel()
-        }
+    /// The container gave up on this attempt — it ran out of patience. The page is closed so it
+    /// cannot report its way back into a block that has already collapsed, and the next time the
+    /// block is looked at it starts a cycle anew rather than resuming this one.
+    func abandonAttempt() {
+        isStarted = false
+        outcome = .failed
+        pendingResolution = nil
+        dropPage()
+    }
+
+    /// The block is gone for good. Unlike `stop()`, this closes the page: nothing is coming back.
+    func teardown() {
+        isStarted = false
+        pendingResolution = nil
+        dropPage()
     }
 
     func reload() {
@@ -138,7 +181,10 @@ final class EmbeddedBlockWebViewProvider {
     // MARK: - The registry's answer
 
     func apply(_ resolution: EmbeddedBlockResolution) {
-        guard isStarted else { return }
+        guard isStarted else {
+            pendingResolution = resolution
+            return
+        }
 
         switch resolution {
         case .empty:
@@ -276,11 +322,21 @@ final class EmbeddedBlockWebViewProvider {
 
     // MARK: - The page's reports
 
-    func handleLoadFailure() {
+    /// Where the attempt got to, recorded whether or not anybody is looking.
+    ///
+    /// A page that finishes behind another screen is not a page that has to load again: the outcome
+    /// is kept and announced by the next `start()`. Announcing it right away would push a state into
+    /// a container that has already paused.
+    private func settle(_ newOutcome: EmbeddedBlockState) {
+        outcome = newOutcome
+
         guard isStarted else { return }
 
-        outcome = .failed
-        onStateChange?(.failed)
+        onStateChange?(newOutcome)
+    }
+
+    func handleLoadFailure() {
+        settle(.failed)
         report(.webviewLoadFailed, "The block's page failed to load")
     }
 
@@ -330,30 +386,28 @@ final class EmbeddedBlockWebViewProvider {
     }
 
     private func applyContentRendered(_ count: Int) {
-        guard isStarted else { return }
-
         // The page reports a number, not a collection, so `isEmpty` has nothing to be asked of here.
         // swiftlint:disable:next empty_count
         guard count > 0 else {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': page rendered nothing", category: .embeddedBlocks)
-            outcome = .empty
-            onStateChange?(.empty)
+            settle(.empty)
             return
         }
 
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': page rendered \(count) item(s)", category: .embeddedBlocks)
-        outcome = .ready
-        onStateChange?(.ready)
+        settle(.ready)
+
+        // Only what somebody is looking at counts as shown; a page that rendered off screen is
+        // counted by the `start()` that brings it back.
+        guard isStarted else { return }
+
         accountForShow()
     }
 
     private func handleUnreadableContentReport() {
-        guard isStarted else { return }
-
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': contentRendered without a readable count, treating as broken",
                       level: .error, category: .embeddedBlocks)
-        outcome = .failed
-        onStateChange?(.failed)
+        settle(.failed)
         report(.presentationFailed, "The block's page reported contentRendered without a readable count")
     }
 

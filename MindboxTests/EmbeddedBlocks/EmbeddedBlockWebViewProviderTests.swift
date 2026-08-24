@@ -806,9 +806,10 @@ struct EmbeddedBlockWebViewProviderTests {
     // MARK: - Stop and restart
 
     /// After `stop()` the provider must stay silent — the container relies on this when it
-    /// collapses expired content on its own timeout.
-    @Test("Stop cancels the page and ignores what it says afterwards")
-    func stopCancelsThePage() {
+    /// collapses expired content on its own timeout. Silent, but not deaf: the page lives on and
+    /// what it says is kept for the return.
+    @Test("Stop keeps the page, records what it says and announces nothing")
+    func stopPausesThePage() {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
         var states: [EmbeddedBlockState] = []
@@ -817,9 +818,36 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.stop()
         bed.page?.reportRendered(1)
 
-        #expect(bed.page?.cancelCount == 1)
+        #expect(bed.page?.cancelCount == 0)
         #expect(states.isEmpty)
+
+        bed.provider.start()
+
+        // The page finished behind another screen, and the return is where that is heard.
+        #expect(states == [.ready])
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.provider.contentView === bed.page?.view)
+    }
+
+    /// An attempt the container gave up on is a different matter: it is closed, and the page cannot
+    /// report its way back into a block that has already collapsed.
+    @Test("An abandoned attempt cancels the page and is not resumed")
+    func abandonedAttemptCancelsThePage() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.abandonAttempt()
+
+        #expect(bed.page?.cancelCount == 1)
         #expect(bed.provider.contentView == nil)
+
+        bed.provider.start()
+
+        // Nothing to resume, so the block starts a cycle anew.
+        #expect(bed.resolver.resolveCount == 2)
+        #expect(states == [.loading])
     }
 
     @Test("The page is told nobody is looking at it, and told again when the user comes back")
@@ -835,8 +863,10 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.page?.isUserPresent == true)
     }
 
-    @Test("A return builds a new page when the previous one never rendered")
-    func returnRebuildsAPageThatNeverRendered() {
+    /// A return is a resume, not a retry: a page that is still loading is the same page, and asking
+    /// the registry again would cost a rebuild for a block that never stopped trying.
+    @Test("A return resumes a page that never rendered")
+    func returnResumesAPageThatNeverRendered() {
         let bed = EmbeddedBlockTestBed()
 
         bed.provider.start()
@@ -844,14 +874,16 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.start()
         bed.page?.reportRendered(1)
 
-        #expect(bed.resolver.resolveCount == 2)
-        #expect(bed.pageFactory.pages.count == 2)
+        #expect(bed.resolver.resolveCount == 1)
+        #expect(bed.pageFactory.pages.count == 1)
         #expect(bed.page?.loadCount == 1)
         #expect(bed.provider.contentView === bed.page?.view)
     }
 
-    @Test("A return builds a new page for a block that had collapsed as empty")
-    func returnRebuildsACollapsedPage() {
+    /// An empty place is an answer, not a breakage: the page that gave it stands, and it is the one
+    /// that revives the block when it has something to draw after all.
+    @Test("A return resumes the page of a block that had collapsed as empty")
+    func returnResumesACollapsedPage() {
         let bed = EmbeddedBlockTestBed()
 
         bed.provider.start()
@@ -860,7 +892,8 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.start()
         bed.page?.reportRendered(2)
 
-        #expect(bed.pageFactory.pages.count == 2)
+        #expect(bed.resolver.resolveCount == 1)
+        #expect(bed.pageFactory.pages.count == 1)
         #expect(bed.provider.contentView === bed.page?.view)
     }
 
@@ -877,7 +910,7 @@ struct EmbeddedBlockWebViewProviderTests {
 
         #expect(states == [.ready])
         #expect(bed.page?.loadCount == 1)
-        #expect(bed.resolver.resolveCount == 2)
+        #expect(bed.resolver.resolveCount == 1)
         #expect(bed.provider.contentView === bed.page?.view)
     }
 
@@ -908,11 +941,14 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.page?.reportRendered(1)
         bed.provider.stop()
 
-        bed.resolver.resolution = .content(.other)
+        // The registry answered while the block was off screen. The answer is kept rather than
+        // dropped — a return no longer asks again, so this is the only way the block hears it.
+        bed.provider.apply(.content(.other))
         var states: [EmbeddedBlockState] = []
         bed.provider.onStateChange = { states.append($0) }
         bed.provider.start()
 
+        // Where the block was left, and only then what it has become.
         #expect(states.first == .ready)
         #expect(bed.pageFactory.pages.count == 2)
         #expect(bed.pageFactory.contents.last == .other)
