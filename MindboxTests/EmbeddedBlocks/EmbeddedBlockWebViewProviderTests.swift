@@ -863,9 +863,11 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.page?.isUserPresent == true)
     }
 
-    /// A return is a resume, not a retry: a page that is still loading is the same page, and asking
-    /// the registry again would cost a rebuild for a block that never stopped trying.
-    @Test("A return resumes a page that never rendered")
+    /// A return is a resume, not a retry: a page that is still loading is the same page. The place
+    /// is asked again all the same — an invalidation that landed off screen was dropped where it
+    /// happened — and an unchanged answer is deduplicated against the page that already stands, so
+    /// the block that never stopped trying is not made to start over.
+    @Test("A return resumes a page that never rendered and the same answer changes nothing")
     func returnResumesAPageThatNeverRendered() {
         let bed = EmbeddedBlockTestBed()
 
@@ -874,7 +876,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.start()
         bed.page?.reportRendered(1)
 
-        #expect(bed.resolver.resolveCount == 1)
+        #expect(bed.resolver.resolveCount == 2)
         #expect(bed.pageFactory.pages.count == 1)
         #expect(bed.page?.loadCount == 1)
         #expect(bed.provider.contentView === bed.page?.view)
@@ -892,7 +894,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.start()
         bed.page?.reportRendered(2)
 
-        #expect(bed.resolver.resolveCount == 1)
+        #expect(bed.resolver.resolveCount == 2)
         #expect(bed.pageFactory.pages.count == 1)
         #expect(bed.provider.contentView === bed.page?.view)
     }
@@ -910,7 +912,8 @@ struct EmbeddedBlockWebViewProviderTests {
 
         #expect(states == [.ready])
         #expect(bed.page?.loadCount == 1)
-        #expect(bed.resolver.resolveCount == 1)
+        // The place is asked again on the way back, and the answer it gives is the page that stands.
+        #expect(bed.resolver.resolveCount == 2)
         #expect(bed.provider.contentView === bed.page?.view)
     }
 
@@ -941,8 +944,10 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.page?.reportRendered(1)
         bed.provider.stop()
 
-        // The registry answered while the block was off screen. The answer is kept rather than
-        // dropped — a return no longer asks again, so this is the only way the block hears it.
+        // The place moved on while the block was off screen: the answer that landed then is kept
+        // rather than dropped, and the registry now answers the same way — the ask the return makes
+        // finds the world the block has just been told about.
+        bed.resolver.resolution = .content(.other)
         bed.provider.apply(.content(.other))
         var states: [EmbeddedBlockState] = []
         bed.provider.onStateChange = { states.append($0) }
@@ -952,6 +957,114 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(states.first == .ready)
         #expect(bed.pageFactory.pages.count == 2)
         #expect(bed.pageFactory.contents.last == .other)
+    }
+
+    /// The registry drops an invalidation that lands on a place with no block on screen — it has
+    /// nowhere to draw it, and nobody re-sends it. So the return asks for itself.
+    @Test("A return hears about a config that changed while nobody was on the place")
+    func returnAsksAgainAfterAnInvalidationItNeverHeard() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.provider.stop()
+
+        // The config arrives while the block is away, so there is nowhere to deliver it.
+        bed.resolver.resolution = .content(.other)
+        bed.announceNewConfig()
+        #expect(bed.pageFactory.pages.count == 1)
+
+        bed.provider.start()
+
+        #expect(bed.pageFactory.contents.last == .other)
+        #expect(bed.pageFactory.pages.count == 2)
+    }
+
+    /// An empty place is an answer, not a substitute for asking: a block that comes back with one in
+    /// hand and nothing to build still has to find out whether the place has filled up since.
+    @Test("A return with an empty answer in hand still asks the place")
+    func returnWithAnEmptyAnswerStillAsks() {
+        let bed = EmbeddedBlockTestBed(resolution: .empty)
+        bed.provider.start()
+        bed.provider.stop()
+        bed.provider.apply(.empty)
+
+        bed.provider.start()
+
+        #expect(bed.resolver.resolveCount == 2)
+    }
+
+    /// A reload replaces the attempt an answer belonged to: parked for a screen that is gone, it must
+    /// not resurface over the page the reload builds.
+    @Test("A reload drops the answer parked for the attempt it replaces")
+    func reloadDropsTheParkedAnswer() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.provider.abandonAttempt()
+        bed.provider.apply(.content(.other))
+
+        bed.provider.reload()
+        #expect(bed.pageFactory.contents.last == .stub)
+
+        bed.provider.stop()
+        bed.provider.start()
+
+        #expect(bed.pageFactory.contents.last == .stub)
+        #expect(bed.pageFactory.pages.count == 2)
+    }
+
+    /// The backend hears about blocks the user was shown: a page that failed behind another screen is
+    /// reported when somebody looks at the block, not while nobody does.
+    @Test("A failure off screen is reported when the block comes back")
+    func failureOffScreenIsHeldUntilTheReturn() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.provider.stop()
+
+        bed.page?.failLoad()
+
+        #expect(bed.failureReporter.reported.isEmpty)
+
+        bed.provider.start()
+
+        #expect(bed.failureReporter.reasons == [.webviewLoadFailed])
+    }
+
+    /// The page's wait for a confirmation pauses with the block: data nobody answered for is still
+    /// unanswered on the way back, and a page that never confirms is rebuilt — as it is on Android.
+    @Test("A data push left unconfirmed off screen is waited on again after the return")
+    func dataPushAckIsRearmedAfterAReturn() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData()
+        #expect(bed.ackScheduler.scheduled.count == 1)
+
+        bed.provider.stop()
+        #expect(bed.ackScheduler.scheduled.last?.work.isCancelled == true)
+
+        bed.provider.start()
+        #expect(bed.ackScheduler.scheduled.count == 2)
+
+        bed.ackScheduler.fire()
+
+        #expect(bed.pageFactory.pages.count == 2)
+    }
+
+    /// `timeToDisplay` measures the wait for the page, not the user's absence from the screen: the
+    /// show is counted by the return, with the time the render itself took.
+    @Test("The show reports the time the render took, not the time spent off screen")
+    func showReportsTheRenderTimeNotTheAbsence() async throws {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.provider.stop()
+        bed.page?.reportRendered(1)
+
+        try await Task.sleep(nanoseconds: 1_200_000_000)
+        bed.provider.start()
+
+        // A whole second would be the one the block spent behind another screen.
+        #expect(bed.showReporter.reported.count == 1)
+        #expect(bed.showReporter.reported.first?.timeToDisplay.hasPrefix("0:00:00.") == true)
     }
 
     @Test("Failed block tries again when it comes back")
