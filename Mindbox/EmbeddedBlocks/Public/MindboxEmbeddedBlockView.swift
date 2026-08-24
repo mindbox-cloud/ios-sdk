@@ -63,10 +63,11 @@ public final class MindboxEmbeddedBlockView: UIView {
     /// The SDK ships no stock error screen — what a failed block looks like is the host's design
     /// decision. Applies only to failures; an empty block always collapses.
     ///
-    /// A view assigned mid-failure swaps the error screen that is already shown, but never
-    /// expands a block that has already collapsed — reopening space the host layout has
-    /// reclaimed would make the layout jump. Such a view is remembered and takes effect on
-    /// the next load.
+    /// A view assigned mid-failure swaps the error screen that is already shown, and `nil` given
+    /// while one is shown takes the failure back down to a collapse — the space returns to the host
+    /// layout. What neither does is expand a block that has already collapsed: reopening space the
+    /// host layout has reclaimed would make the layout jump, so such a view is remembered and takes
+    /// effect on the next load.
     public var errorView: UIView? {
         didSet {
             guard errorView !== oldValue else { return }

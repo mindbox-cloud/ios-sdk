@@ -83,6 +83,23 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(first.superview == nil)
     }
 
+    @Test("Taking the error view away collapses the failure it was showing")
+    func errorViewRemovedMidFailureCollapsesTheBlock() {
+        let block = BlockFixture()
+        let errorView = UIView()
+        block.view.errorView = errorView
+        block.attachToWindow()
+        block.page?.failLoad()
+        #expect(block.view.intrinsicContentSize.height == 120)
+
+        block.view.errorView = nil
+
+        // Whether a failure is shown at all is this view's doing, so taking it away is not a swap of
+        // screens — the block goes back to the collapse it would have had without one.
+        #expect(block.view.intrinsicContentSize.height == 0)
+        #expect(errorView.superview == nil)
+    }
+
     @Test("Error view assigned after the collapse does not expand the block")
     func lateErrorViewDoesNotExpandCollapsedBlock() {
         let block = BlockFixture()
