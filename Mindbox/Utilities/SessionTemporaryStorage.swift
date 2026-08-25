@@ -17,6 +17,13 @@ struct BlockOffer: Hashable {
     let inappId: String
 }
 
+/// A `delayTime` that ran out for an in-app at a place: a block coming back to the screen gets that
+/// content at once instead of waiting again.
+struct ServedPlaceDelay: Hashable {
+    let place: String
+    let inappId: String
+}
+
 /// Touched from every queue the SDK runs on. `@Locked` makes each access atomic; the single writer
 /// per property is what keeps compound mutations (`append`, `insert`) safe without a wider transaction.
 final class SessionTemporaryStorage {
@@ -53,6 +60,8 @@ final class SessionTemporaryStorage {
     /// Places whose block already reported that the SDK never answered — once per place per session.
     @Locked var placesReportedUnanswered: Set<String> = []
 
+    @Locked var servedPlaceDelays: Set<ServedPlaceDelay> = []
+
     /// The in-app each place showed last: a block's show is accounted when this changes, so a rebuilt
     /// page stays silent while 1 → 2 → 1 speaks three times (agreed with the backend, in sync with Android).
     @Locked var placeShownInappId: [String: String] = [:]
@@ -85,6 +94,7 @@ final class SessionTemporaryStorage {
         placeTargetedInappId = [:]
         vouchedBlockOffers = []
         placesReportedUnanswered = []
+        servedPlaceDelays = []
         placeShownInappId = [:]
         lastTrackVisit = nil
         inAppSettings = nil

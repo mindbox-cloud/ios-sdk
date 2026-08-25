@@ -214,9 +214,7 @@ internal extension InappScheduleManager {
     }
     
     func getDelay(_ time: String?) -> TimeInterval {
-        let delayTimeStr = time
-        let delayMilis = (try? delayTimeStr?.parseTimeSpanToMillis()) ?? 0
-        return TimeInterval(delayMilis) / 1000
+        TimeInterval.delay(fromTimeSpan: time)
     }
     
     func addObserver() {

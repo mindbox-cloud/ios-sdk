@@ -21,9 +21,15 @@ final class EmbeddedBlockWebViewProvider {
 
     var onContentArrived: (() -> Void)?
 
+    /// The place's answer is known and held back by its `delayTime`. Set by the container.
+    var onContentDelayed: (() -> Void)?
+
     var contentView: UIView? { isReady ? page?.view : nil }
 
     var isAwaitingAnswer: Bool { page == nil }
+
+    /// While set, the block keeps loading on purpose: content is coming, the SDK is not silent.
+    private(set) var isAwaitingDelayedContent = false
 
     private let placeSystemName: String
     private let registry: EmbeddedBlockPlaceRegistering
@@ -128,6 +134,7 @@ final class EmbeddedBlockWebViewProvider {
     private func beginAttempt() {
         onStateChange?(.loading)
         outcome = .loading
+        isAwaitingDelayedContent = false
 
         if page != nil {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the page from the previous attempt cannot be resumed, dropping it",
@@ -143,6 +150,8 @@ final class EmbeddedBlockWebViewProvider {
     func apply(_ resolution: EmbeddedBlockResolution, processingDuration: TimeInterval) {
         guard isStarted else { return }
 
+        isAwaitingDelayedContent = false
+
         switch resolution {
         case .empty:
             guard outcome != .empty else { return }
@@ -155,6 +164,15 @@ final class EmbeddedBlockWebViewProvider {
         case .content(let fresh):
             applyContent(fresh, processingDuration: processingDuration)
         }
+    }
+
+    func contentIsDelayed() {
+        guard isStarted else { return }
+
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': content is coming after its delay — waiting",
+                      category: .embeddedBlocks)
+        isAwaitingDelayedContent = true
+        onContentDelayed?()
     }
 
     private func applyContent(_ fresh: EmbeddedBlockWebContent, processingDuration: TimeInterval) {

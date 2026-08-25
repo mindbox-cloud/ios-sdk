@@ -8,6 +8,12 @@
 import Foundation
 
 extension TimeInterval {
+    /// A config `delayTime` as seconds; a missing or unreadable one is no delay.
+    static func delay(fromTimeSpan timeSpan: String?) -> TimeInterval {
+        let millis = (try? timeSpan?.parseTimeSpanToMillis()) ?? 0
+        return TimeInterval(millis) / 1000
+    }
+
     func toTimeSpan() -> String {
         let total = abs(self)
         let days = Int(total / 86400)

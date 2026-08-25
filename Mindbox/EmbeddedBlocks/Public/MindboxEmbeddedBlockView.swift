@@ -205,9 +205,14 @@ public final class MindboxEmbeddedBlockView: UIView {
             self.waitBudget.armIfNeeded()
         }
 
+        // Known content on its way is not silence: the budget stands down until the page starts loading.
+        contentProvider.onContentDelayed = { [weak self] in
+            self?.waitBudget.reset()
+        }
+
         waitBudget.isNeeded = { [weak self] in
             guard let self else { return false }
-            return self.window != nil && self.state == .loading
+            return self.window != nil && self.state == .loading && !self.contentProvider.isAwaitingDelayedContent
         }
         waitBudget.onExpire = { [weak self] in
             self?.handleTimeout()
