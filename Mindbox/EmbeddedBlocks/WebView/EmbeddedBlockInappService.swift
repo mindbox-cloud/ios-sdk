@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import QuartzCore
 import MindboxLogger
 
 protocol EmbeddedBlockInappServing: AnyObject {
@@ -52,11 +53,10 @@ final class EmbeddedBlockInappService: EmbeddedBlockInappServing {
     }
 
     func showInapp(id: String, params: [String: JSONValue]) {
-        // The tap is the trigger: the fetch and the form build count into timeToDisplay, like the overlay's pass.
-        let stopwatch = ForegroundStopwatch()
+        // The tap is the trigger: the fetch and the form build count into timeToDisplay, on the overlay pass's clock.
+        let tappedAt = CACurrentMediaTime()
         fetchInappToShow(id, params) { [showNow] formData in
-            let processingDuration = stopwatch.elapsed
-            stopwatch.stop()
+            let processingDuration = CACurrentMediaTime() - tappedAt
 
             guard let formData = formData else {
                 Logger.common(message: "[EmbeddedBlock] Nothing to show for in-app \(id)",

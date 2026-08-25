@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import QuartzCore
 import MindboxLogger
 
 protocol InAppConfigurationDelegate: AnyObject {
@@ -23,7 +24,8 @@ protocol InAppConfigurationManagerProtocol: AnyObject {
     func handleInapps(event: ApplicationEvent?, _ completion: @escaping (InAppFormData?) -> Void)
     /// `processingDuration` runs from this call — the wait for a config included: a block's
     /// `timeToDisplay` counts from the moment the block asked for content, whatever the SDK was
-    /// still missing (in sync with Android).
+    /// still missing (in sync with Android). On the overlay pass's clock; the page's rendering is
+    /// the foreground part, like the overlay's presentation.
     func selectInappForPlace(_ place: String,
                              trigger: ApplicationEvent?,
                              _ completion: @escaping (InAppTransitionData?, _ processingDuration: TimeInterval) -> Void)
@@ -116,18 +118,15 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     func selectInappForPlace(_ place: String,
                              trigger: ApplicationEvent?,
                              _ completion: @escaping (InAppTransitionData?, _ processingDuration: TimeInterval) -> Void) {
-        let stopwatch = ForegroundStopwatch()
+        let requestedAt = CACurrentMediaTime()
         awaitConfig("place '\(place)'") { [weak self] candidates in
             guard let self = self, let inappMapper = self.inappMapper, let candidates = candidates else {
-                stopwatch.stop()
                 completion(nil, 0)
                 return
             }
 
             inappMapper.selectInappForPlace(place, trigger: trigger, candidates) { inapp in
-                let processingDuration = stopwatch.elapsed
-                stopwatch.stop()
-                completion(inapp, processingDuration)
+                completion(inapp, CACurrentMediaTime() - requestedAt)
             }
         }
     }

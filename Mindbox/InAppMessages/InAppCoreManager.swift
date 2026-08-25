@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import QuartzCore
 import MindboxLogger
 
 /// Event that may trigger showing in-app message
@@ -146,11 +147,10 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
             NotificationCenter.default.post(name: .inAppOperationOccurred, object: applicationEvent)
         }
 
-        let stopwatch = ForegroundStopwatch()
+        let triggerTimestamp = CACurrentMediaTime()
 
         self.configManager.handleInapps(event: event.applicationEvent) { inapp in
-            let processingDuration = stopwatch.elapsed
-            stopwatch.stop()
+            let processingDuration = CACurrentMediaTime() - triggerTimestamp
             self.onReceivedInAppResponse(inapp: inapp, processingDuration: processingDuration) {
                 completion()
             }
