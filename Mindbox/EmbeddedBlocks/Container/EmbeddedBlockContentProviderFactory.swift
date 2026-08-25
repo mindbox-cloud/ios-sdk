@@ -44,6 +44,9 @@ final class EmbeddedBlockContentProviderFactory: EmbeddedBlockContentProviderMak
                                          // Captured, not read through the factory: a provider outliving it
                                          // would otherwise drop the failure it is reporting.
                                          Self.report(failure: reason, details: details, for: content, to: failureManager)
+                                     },
+                                     reportUnansweredWait: { [failureManager] in
+                                         failureManager.sendUnattributedFailure()
                                      })
     }
 

@@ -13,6 +13,10 @@ protocol InappShowFailureManagerProtocol {
     func addFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?)
     func sendFailures()
 
+    /// A failure with no in-app to pin it on — a block whose place never got an answer. `failures` goes
+    /// out empty, which the backend reads as "the SDK stayed silent" (agreed 20.08, in sync with Android).
+    func sendUnattributedFailure()
+
     /// Sends one failure at once, without joining the buffer the selection pass fills.
     ///
     /// The buffer keeps a single failure per in-app id and only lets the three targeting reasons
@@ -143,6 +147,20 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
         }
     }
     
+    func sendUnattributedFailure() {
+        guard featureToggleManager.isFeatureEnabled(.shouldSendInAppShowError) else {
+            Logger.common(message: "[InappShowFailureManager] sendUnattributedFailure ignored, feature is disabled", category: .inAppMessages)
+            return
+        }
+
+        queue.async { [self] in
+            guard enqueue([]) else { return }
+
+            Logger.common(message: "[InappShowFailureManager] Inapp.ShowFailure event sent with no in-app to attribute it to",
+                          category: .inAppMessages)
+        }
+    }
+
     private func makeFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?) -> InAppShowFailure {
         InAppShowFailure(
             inappId: inappId,

@@ -34,6 +34,8 @@ final class EmbeddedBlockWebViewProvider {
 
     private let reportFailure: (EmbeddedBlockWebContent, InAppShowFailureReason, String) -> Void
 
+    private let reportUnansweredWait: () -> Void
+
     private var page: EmbeddedBlockPageHosting?
 
     private var content: EmbeddedBlockWebContent?
@@ -60,6 +62,7 @@ final class EmbeddedBlockWebViewProvider {
          makePage: @escaping (EmbeddedBlockWebContent) -> EmbeddedBlockPageHosting,
          accounting: InappShowAccounting,
          reportFailure: @escaping (EmbeddedBlockWebContent, InAppShowFailureReason, String) -> Void,
+         reportUnansweredWait: @escaping () -> Void,
          scheduleAckTimeout: @escaping EmbeddedBlockWaitScheduling = { delay, work in
              DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
          }) {
@@ -69,6 +72,7 @@ final class EmbeddedBlockWebViewProvider {
         self.makePage = makePage
         self.accounting = accounting
         self.reportFailure = reportFailure
+        self.reportUnansweredWait = reportUnansweredWait
         self.scheduleAckTimeout = scheduleAckTimeout
 
         registry.register(self, place: placeSystemName)
@@ -282,6 +286,21 @@ final class EmbeddedBlockWebViewProvider {
 
     func reportPageTimedOut() {
         report(.presentationFailed, "The block's page did not report itself in time")
+    }
+
+    /// The SDK never answered within the block's budget — a failure with no in-app to pin it on, once
+    /// per place per session. Any answer, "nothing" included, would have disarmed the budget instead.
+    func reportAnswerTimedOut() {
+        guard !SessionTemporaryStorage.shared.placesReportedUnanswered.contains(placeSystemName) else {
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the SDK stayed silent again this session — already reported",
+                          category: .embeddedBlocks)
+            return
+        }
+
+        SessionTemporaryStorage.shared.$placesReportedUnanswered.mutate { $0.insert(placeSystemName) }
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the SDK never answered within the budget — reporting a failure without an in-app",
+                      level: .error, category: .embeddedBlocks)
+        reportUnansweredWait()
     }
 
     private func report(_ reason: InAppShowFailureReason, _ details: String) {

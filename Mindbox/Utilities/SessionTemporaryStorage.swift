@@ -50,6 +50,9 @@ final class SessionTemporaryStorage {
 
     @Locked var vouchedBlockOffers: Set<BlockOffer> = []
 
+    /// Places whose block already reported that the SDK never answered — once per place per session.
+    @Locked var placesReportedUnanswered: Set<String> = []
+
     /// The in-app each place showed last: a block's show is accounted when this changes, so a rebuilt
     /// page stays silent while 1 → 2 → 1 speaks three times (agreed with the backend, in sync with Android).
     @Locked var placeShownInappId: [String: String] = [:]
@@ -81,6 +84,7 @@ final class SessionTemporaryStorage {
         vouchedInappIds = []
         placeTargetedInappId = [:]
         vouchedBlockOffers = []
+        placesReportedUnanswered = []
         placeShownInappId = [:]
         lastTrackVisit = nil
         inAppSettings = nil

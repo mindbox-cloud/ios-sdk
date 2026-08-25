@@ -270,12 +270,16 @@ public final class MindboxEmbeddedBlockView: UIView {
         waitBudget.armIfNeeded()
     }
 
-    /// Running out of patience is a failure only for a page that was built and stayed silent; a
-    /// block that never learned what to show has nothing to show — an outcome, not a breakage.
+    /// A page that was built and stayed silent fails. A block the SDK never answered has nothing to
+    /// show and collapses as empty — but the silence itself is still reported.
     private func handleTimeout() {
         let hadContentToLoad = !contentProvider.isAwaitingAnswer
 
-        contentProvider.reportPageTimedOut()
+        if hadContentToLoad {
+            contentProvider.reportPageTimedOut()
+        } else {
+            contentProvider.reportAnswerTimedOut()
+        }
         // The provider must not resurrect content the container has already given up on.
         contentProvider.stop()
         state = hadContentToLoad ? .failed : .empty

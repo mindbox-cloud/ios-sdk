@@ -216,7 +216,8 @@ class InappMapper: InappMapperProtocol {
         let fetchesDependencies: Bool
 
         /// A failed geo/segmentation fetch becomes a buffered `Inapp.ShowFailure` for every candidate
-        /// the pass then cut. The trigger's own selection only, in sync with develop.
+        /// the pass then cut — the selections that show something; a page's question does not report
+        /// what it cut in this iteration.
         let collectsFailures: Bool
 
         let pickVariant: (InApp) -> MindboxFormVariant?
@@ -331,7 +332,7 @@ class InappMapper: InappMapperProtocol {
             prepares: { self.inappFilterService.filter(place: place, in: candidates) },
             candidates: { prepared, _ in prepared },
             fetchesDependencies: true,
-            collectsFailures: false,
+            collectsFailures: true,
             pickVariant: { $0.form.variants.first { $0.placeSystemName == place } }
         )
     }
