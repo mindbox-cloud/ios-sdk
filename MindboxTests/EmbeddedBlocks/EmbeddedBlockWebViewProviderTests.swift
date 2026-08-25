@@ -115,50 +115,31 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.provider.contentView == nil)
     }
 
-    // MARK: - Counting the show
+    // MARK: - Accounting for the show
 
-    /// Counted by the frequency's rule — same as the overlay path and Android; nothing else on the place path writes this history.
-    @Test("A block that drew its page counts the show")
-    func renderedBlockCountsTheShow() {
+    /// Whether a show sends the event, writes history or moves the cooldown is the accountant's rule; the block hands it what was shown.
+    @Test("A block that drew its page hands the show to the accounting")
+    func renderedBlockIsAccountedFor() throws {
         let bed = EmbeddedBlockTestBed(resolution: .content(.counted()))
 
         bed.provider.start()
         bed.page?.reportRendered(3)
 
-        #expect(bed.showRecorder.recorded == [EmbeddedBlockWebContent.stub.inAppId])
+        let show = try #require(bed.accounting.shows.first)
+        #expect(bed.accounting.shows.count == 1)
+        #expect(show.inAppId == EmbeddedBlockWebContent.stub.inAppId)
+        #expect(show.frequency == EmbeddedBlockWebContent.counted().frequency)
+        #expect(show.tags == EmbeddedBlockWebContent.stub.tags)
     }
 
-    @Test("An unlimited block counts nothing")
-    func unlimitedBlockCountsNothing() {
-        let bed = EmbeddedBlockTestBed()
-
-        bed.provider.start()
-        bed.page?.reportRendered(3)
-
-        #expect(bed.showRecorder.recorded.isEmpty)
-    }
-
-    // MARK: - Reporting the show
-
-    @Test("A block that drew its page reports the show")
-    func renderedBlockReportsTheShow() {
-        let bed = EmbeddedBlockTestBed()
-
-        bed.provider.start()
-        bed.page?.reportRendered(3)
-
-        #expect(bed.showReporter.inAppIds == [EmbeddedBlockWebContent.stub.inAppId])
-        #expect(bed.showReporter.reported.first?.tags == EmbeddedBlockWebContent.stub.tags)
-    }
-
-    @Test("Nothing drawn, nothing reported")
-    func pageWithoutContentReportsNoShow() {
+    @Test("Nothing drawn, nothing accounted")
+    func pageWithoutContentIsNotAccounted() {
         let bed = EmbeddedBlockTestBed()
 
         bed.provider.start()
         bed.page?.reportRendered(0)
 
-        #expect(bed.showReporter.reported.isEmpty)
+        #expect(bed.accounting.shows.isEmpty)
     }
 
     @Test("A negative count is a failure, not an empty block")
@@ -171,18 +152,18 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.page?.reportRendered(-1)
 
         #expect(states.last == .failed)
-        #expect(bed.showReporter.reported.isEmpty)
+        #expect(bed.accounting.shows.isEmpty)
         #expect(bed.failureReporter.reasons == [.presentationFailed])
     }
 
-    @Test("A page that failed to load reports no show")
-    func failedPageReportsNoShow() {
+    @Test("A page that failed to load is not accounted")
+    func failedPageIsNotAccounted() {
         let bed = EmbeddedBlockTestBed()
 
         bed.provider.start()
         bed.page?.failLoad()
 
-        #expect(bed.showReporter.reported.isEmpty)
+        #expect(bed.accounting.shows.isEmpty)
     }
 
     @Test("An unreadable report is a failure, not a show")
@@ -192,24 +173,24 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.start()
         bed.page?.reportRenderedWithoutCount()
 
-        #expect(bed.showReporter.reported.isEmpty)
+        #expect(bed.accounting.shows.isEmpty)
         #expect(bed.failureReporter.reasons == [.presentationFailed])
     }
 
-    @Test("A page reporting itself again reports one show")
-    func repeatedReportSendsOneEvent() {
+    @Test("A page reporting itself again is accounted once")
+    func repeatedReportIsAccountedOnce() {
         let bed = EmbeddedBlockTestBed()
 
         bed.provider.start()
         bed.page?.reportRendered(3)
         bed.page?.reportRendered(4)
 
-        #expect(bed.showReporter.reported.count == 1)
+        #expect(bed.accounting.shows.count == 1)
     }
 
-    /// In sync with Android: one show per in-app per session, while the local history stays per rendered page.
-    @Test("A page rebuilt in the same session reports no second show")
-    func rebuiltPageInSessionReportsNoSecondShow() {
+    /// In sync with Android: one show per in-app per session — a rebuilt page re-draws what the user already saw.
+    @Test("A page rebuilt in the same session is accounted once")
+    func rebuiltPageInSessionIsAccountedOnce() {
         let bed = EmbeddedBlockTestBed(resolution: .content(.counted()))
         bed.provider.start()
         bed.page?.reportRendered(3)
@@ -217,12 +198,23 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.reload()
         bed.page?.reportRendered(3)
 
-        #expect(bed.showReporter.reported.count == 1)
-        #expect(bed.showRecorder.recorded.count == 2)
+        #expect(bed.accounting.shows.count == 1)
     }
 
-    @Test("Another in-app at the place reports its own show")
-    func anotherInappAtThePlaceReportsItsOwnShow() {
+    @Test("A page shown again on return is accounted once")
+    func returningBlockIsAccountedOnce() {
+        let bed = EmbeddedBlockTestBed(resolution: .content(.counted()))
+
+        bed.provider.start()
+        bed.page?.reportRendered(3)
+        bed.provider.stop()
+        bed.provider.start()
+
+        #expect(bed.accounting.shows.count == 1)
+    }
+
+    @Test("Another in-app at the place is accounted on its own")
+    func anotherInappAtThePlaceIsAccounted() {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
         bed.page?.reportRendered(1)
@@ -231,12 +223,12 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.announceNewConfig()
         bed.page?.reportRendered(1)
 
-        #expect(bed.showReporter.inAppIds == [EmbeddedBlockWebContent.stub.inAppId,
-                                              EmbeddedBlockWebContent.other.inAppId])
+        #expect(bed.accounting.shownIds == [EmbeddedBlockWebContent.stub.inAppId,
+                                            EmbeddedBlockWebContent.other.inAppId])
     }
 
-    @Test("A new session reports the show again")
-    func newSessionReportsTheShowAgain() {
+    @Test("A new session accounts the show again")
+    func newSessionAccountsTheShowAgain() {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
         bed.page?.reportRendered(1)
@@ -245,75 +237,18 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.reload()
         bed.page?.reportRendered(1)
 
-        #expect(bed.showReporter.reported.count == 2)
+        #expect(bed.accounting.shows.count == 2)
     }
 
-    /// The backend parses one format for overlay and block alike — the value is a real measurement, so only its shape is pinned.
-    @Test("The reported show carries a timeToDisplay in the overlay's format")
-    func reportedShowCarriesTimeToDisplay() throws {
+    @Test("The accounted show carries the time the page took")
+    func accountedShowCarriesTimeToDisplay() throws {
         let bed = EmbeddedBlockTestBed()
 
         bed.provider.start()
         bed.page?.reportRendered(3)
 
-        let timeToDisplay = try #require(bed.showReporter.reported.first?.timeToDisplay)
-        #expect(timeToDisplay.range(of: #"^\d+:\d{2}:\d{2}\.\d{7}$"#, options: .regularExpression) != nil,
-                "timeToDisplay '\(timeToDisplay)' is not the format toTimeSpan() produces")
-    }
-
-    @Test("A page that drew nothing counts no show")
-    func emptyPageCountsNoShow() {
-        let bed = EmbeddedBlockTestBed(resolution: .content(.counted()))
-
-        bed.provider.start()
-        bed.page?.reportRendered(0)
-
-        #expect(bed.showRecorder.recorded.isEmpty)
-    }
-
-    @Test("A page that failed to load counts no show")
-    func failedPageCountsNoShow() {
-        let bed = EmbeddedBlockTestBed(resolution: .content(.counted()))
-
-        bed.provider.start()
-        bed.page?.failLoad()
-
-        #expect(bed.showRecorder.recorded.isEmpty)
-    }
-
-    @Test("A page reporting itself again counts one show")
-    func repeatedReportCountsOneShow() {
-        let bed = EmbeddedBlockTestBed(resolution: .content(.counted()))
-
-        bed.provider.start()
-        bed.page?.reportRendered(3)
-        bed.page?.reportRendered(4)
-
-        #expect(bed.showRecorder.recorded.count == 1)
-    }
-
-    @Test("A page shown again on return counts no second show")
-    func returningBlockCountsNoSecondShow() {
-        let bed = EmbeddedBlockTestBed(resolution: .content(.counted()))
-
-        bed.provider.start()
-        bed.page?.reportRendered(3)
-        bed.provider.stop()
-        bed.provider.start()
-
-        #expect(bed.showRecorder.recorded.count == 1)
-    }
-
-    @Test("A page built again counts its own show")
-    func rebuiltPageCountsItsOwnShow() {
-        let bed = EmbeddedBlockTestBed(resolution: .content(.counted()))
-
-        bed.provider.start()
-        bed.page?.reportRendered(3)
-        bed.provider.reload()
-        bed.page?.reportRendered(3)
-
-        #expect(bed.showRecorder.recorded.count == 2)
+        let show = try #require(bed.accounting.shows.first)
+        #expect(show.timeToDisplay >= 0)
     }
 
     // MARK: - Load failure

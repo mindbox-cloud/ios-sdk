@@ -38,24 +38,20 @@ extension EmbeddedBlockWebContent {
     }
 }
 
-final class EmbeddedBlockShowRecorderMock {
+final class InappShowAccountingMock: InappShowAccounting {
 
-    private(set) var recorded: [String] = []
+    private(set) var shows: [InappShow] = []
 
-    func record(_ inAppId: String) {
-        recorded.append(inAppId)
+    private(set) var cooldowns: [InappFrequency?] = []
+
+    var shownIds: [String] { shows.map(\.inAppId) }
+
+    func recordShow(_ show: InappShow) {
+        shows.append(show)
     }
-}
 
-/// Unlike the recorder above: the backend hears every show, the history only the frequencies that count them.
-final class EmbeddedBlockShowReporterMock {
-
-    private(set) var reported: [(inAppId: String, timeToDisplay: String, tags: [String: String]?)] = []
-
-    var inAppIds: [String] { reported.map(\.inAppId) }
-
-    func report(_ content: EmbeddedBlockWebContent, _ timeToDisplay: String) {
-        reported.append((content.inAppId, timeToDisplay, content.tags))
+    func recordCooldown(frequency: InappFrequency?) {
+        cooldowns.append(frequency)
     }
 }
 
@@ -499,8 +495,7 @@ final class EmbeddedBlockTestBed {
     let feed: EmbeddedBlockFeedServiceMock
     let pageFactory: EmbeddedBlockPageFactoryMock
     let provider: EmbeddedBlockWebViewProvider
-    let showRecorder: EmbeddedBlockShowRecorderMock
-    let showReporter: EmbeddedBlockShowReporterMock
+    let accounting: InappShowAccountingMock
     let failureReporter: EmbeddedBlockFailureReporterMock
     let ackScheduler: EmbeddedBlockAckSchedulerMock
 
@@ -519,16 +514,14 @@ final class EmbeddedBlockTestBed {
         let pageFactory = EmbeddedBlockPageFactoryMock()
         let embeddedPlaces = EmbeddedPlacesStub()
         let center = NotificationCenter()
-        let showRecorder = EmbeddedBlockShowRecorderMock()
-        let showReporter = EmbeddedBlockShowReporterMock()
+        let accounting = InappShowAccountingMock()
         let failureReporter = EmbeddedBlockFailureReporterMock()
         let ackScheduler = EmbeddedBlockAckSchedulerMock()
         let registry = EmbeddedBlockPlaceRegistry(resolver: resolver,
                                                   notificationCenter: center,
                                                   fetchEmbeddedPlaces: { embeddedPlaces.fetch($0) })
 
-        self.showRecorder = showRecorder
-        self.showReporter = showReporter
+        self.accounting = accounting
         self.ackScheduler = ackScheduler
         self.failureReporter = failureReporter
         self.center = center
@@ -539,8 +532,7 @@ final class EmbeddedBlockTestBed {
                                                      registry: registry,
                                                      feed: feed,
                                                      makePage: { pageFactory.make($0) },
-                                                     recordShow: { showRecorder.record($0) },
-                                                     reportShow: { showReporter.report($0, $1) },
+                                                     accounting: accounting,
                                                      reportFailure: { failureReporter.report($0, $1, $2) },
                                                      scheduleAckTimeout: { ackScheduler.schedule($0, $1) })
     }

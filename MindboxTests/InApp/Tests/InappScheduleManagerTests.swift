@@ -30,8 +30,7 @@ struct InappScheduleManagerTests {
         scheduleManager = InappScheduleManager(
             presentationManager: presentationManagerMock,
             presentationValidator: DI.injectOrFail(InAppPresentationValidatorProtocol.self),
-            trackingService: trackingServiceMock,
-            tracker: DI.injectOrFail(InAppMessagesTracker.self),
+            accountant: InappShowAccountant(tracker: DI.injectOrFail(InAppMessagesTracker.self), trackingService: trackingServiceMock),
             failureManager: failureManagerMock
         )
 
@@ -436,8 +435,7 @@ struct InappScheduleManagerTests {
         InappScheduleManager(
             presentationManager: presentationManagerMock,
             presentationValidator: DI.injectOrFail(InAppPresentationValidatorProtocol.self),
-            trackingService: trackingServiceMock,
-            tracker: tracker,
+            accountant: InappShowAccountant(tracker: tracker, trackingService: trackingServiceMock),
             failureManager: failureManagerMock
         )
     }

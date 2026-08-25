@@ -32,7 +32,8 @@ struct EmbeddedBlockContentProviderFactoryTests {
                                                   fetchEmbeddedPlaces: { $0(nil) })
         let factory = EmbeddedBlockContentProviderFactory(registry: registry,
                                                           feed: EmbeddedBlockFeedServiceMock(),
-                                                          failureManager: InappShowFailureManagerMock())
+                                                          failureManager: InappShowFailureManagerMock(),
+                                                          accounting: InappShowAccountingMock())
 
         let provider = factory.makeProvider(placeSystemName: "factory-shared-registry")
         withExtendedLifetime(provider) {
@@ -74,6 +75,7 @@ struct EmbeddedBlockContentProviderFactoryTests {
                                                   fetchEmbeddedPlaces: { $0(nil) })
         return EmbeddedBlockContentProviderFactory(registry: registry,
                                                    feed: EmbeddedBlockFeedServiceMock(),
-                                                   failureManager: InappShowFailureManagerMock())
+                                                   failureManager: InappShowFailureManagerMock(),
+                                                   accounting: InappShowAccountingMock())
     }
 }
