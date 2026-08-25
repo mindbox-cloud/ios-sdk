@@ -278,6 +278,15 @@ final class InappShowFailureManagerTests: XCTestCase {
         assertCreatedEventsCountEventually(1)
     }
 
+    func testClearFailures_dropsTheBuffer_nothingIsSentAfterwards() {
+        manager.addFailure(inappId: "inapp-dropped", reason: .geoRequestFailed, details: nil, tags: nil)
+
+        manager.clearFailures()
+        manager.sendFailures()
+
+        assertCreatedEventsCountEventually(0)
+    }
+
     func testSendFailures_createEventFails_keepsBufferedFailures() {
         manager.addFailure(
             inappId: "inapp-retry",

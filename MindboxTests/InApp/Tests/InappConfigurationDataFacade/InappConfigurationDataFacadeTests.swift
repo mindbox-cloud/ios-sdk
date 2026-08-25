@@ -53,6 +53,12 @@ final class MockInappShowFailureManager: InappShowFailureManagerProtocol {
 
     func sendFailures() {}
 
+    private(set) var clearFailuresCallCount = 0
+
+    func clearFailures() {
+        clearFailuresCallCount += 1
+    }
+
     func sendWaitBudgetExceeded(place: String, waited: TimeInterval, phase: EmbeddedBlockShowFailure.Phase) {}
 }
 
@@ -198,6 +204,12 @@ final class InAppConfigurationDataFacadeTests: XCTestCase {
         XCTAssertEqual(mockFailureManager.failures.count, 1)
         XCTAssertEqual(Set(mockFailureManager.failures.map { $0.inappId }), Set(["inapp-2"]))
         XCTAssertTrue(mockFailureManager.failures.allSatisfy { $0.reason == .productSegmentRequestFailed })
+    }
+
+    func test_discardCollectedFailures_dropsWhatThePassBuffered() {
+        dataFacade.discardCollectedFailures()
+
+        XCTAssertEqual(mockFailureManager.clearFailuresCallCount, 1)
     }
 
     func test_collectTargetingFailures_propagatesTagsByInappId() {

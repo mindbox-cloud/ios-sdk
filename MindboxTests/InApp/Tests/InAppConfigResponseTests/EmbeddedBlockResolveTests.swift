@@ -206,11 +206,20 @@ struct EmbeddedBlockResolveTests {
         #expect(persistenceStorage.lastInappStateChangeDate == nil)
     }
 
-    @Test("A place resolve sends its buffered failures when the pass ends")
-    func placeResolveSendsBufferedFailures() async {
+    @Test("A place resolve that picked a winner drops the pass's buffered failures, like the overlay's pass")
+    func placeResolveWithWinnerDropsBufferedFailures() async {
         _ = await resolvePlace(Constants.place)
 
+        #expect(dataFacade.discardCollectedFailuresCalls == 1)
+        #expect(dataFacade.sendCollectedFailuresCalls == 0)
+    }
+
+    @Test("A place resolve that picked nothing sends the pass's buffered failures")
+    func placeResolveWithoutWinnerSendsBufferedFailures() async {
+        _ = await resolvePlace("place-nobody-addresses")
+
         #expect(dataFacade.sendCollectedFailuresCalls == 1)
+        #expect(dataFacade.discardCollectedFailuresCalls == 0)
     }
 
     @Test("A place resolve hands the in-apps its targeting cut to the failure collection")

@@ -169,15 +169,26 @@ struct InappRemainingTargetingTests {
         ])
     }
 
-    @Test("A pass that found a winner still sends the failures of the in-apps it cut", .tags(.remainingTargeting))
-    func passWithWinner_sendsTheCutInappsFailures() async throws {
+    @Test("A pass that found a winner drops the failures of the in-apps it cut — something was shown", .tags(.remainingTargeting))
+    func passWithWinner_dropsTheCutInappsFailures() async throws {
         let config = try InappTargetingConfig.tagsFailedTargeting.getConfig()
 
         await handleInapps(event: nil, config: config)
 
         assertTargetingShows(id: "2")
         #expect(mockDataFacade.collectedTargetingFailureIds == [Set(["1", "3"])])
+        #expect(mockDataFacade.discardCollectedFailuresCalls == 1)
+        #expect(mockDataFacade.sendCollectedFailuresCalls == 0)
+    }
+
+    @Test("A pass that found nothing to show sends the failures it collected", .tags(.remainingTargeting))
+    func passWithoutWinner_sendsTheCollectedFailures() async throws {
+        let config = try InappTargetingConfig.tagsFailedTargeting.getConfig()
+
+        await handleInapps(event: ApplicationEvent(name: "nobody.listens", model: nil), config: config)
+
         #expect(mockDataFacade.sendCollectedFailuresCalls == 1)
+        #expect(mockDataFacade.discardCollectedFailuresCalls == 0)
     }
 
     @Test("Shown in-app propagates its tags into trackTargeting and downloadImage", .tags(.remainingTargeting, .inAppTags))
