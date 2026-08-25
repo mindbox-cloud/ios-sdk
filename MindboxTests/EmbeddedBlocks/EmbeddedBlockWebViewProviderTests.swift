@@ -132,6 +132,21 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(show.tags == EmbeddedBlockWebContent.stub.tags)
     }
 
+    /// The snapshot the place resolved to is what the user saw; the config may have moved on since.
+    @Test("A show is accounted from the content the block was given, whatever the place resolves to later")
+    func showIsAccountedFromTheSnapshot() throws {
+        let bed = EmbeddedBlockTestBed(resolution: .content(.counted()))
+        bed.provider.start()
+
+        bed.resolver.resolution = .content(.other)
+        bed.page?.reportRendered(3)
+
+        let show = try #require(bed.accounting.shows.first)
+        #expect(show.inAppId == EmbeddedBlockWebContent.stub.inAppId)
+        #expect(show.frequency == EmbeddedBlockWebContent.counted().frequency)
+        #expect(show.tags == EmbeddedBlockWebContent.stub.tags)
+    }
+
     @Test("Nothing drawn, nothing accounted")
     func pageWithoutContentIsNotAccounted() {
         let bed = EmbeddedBlockTestBed()
