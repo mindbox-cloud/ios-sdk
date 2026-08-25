@@ -66,8 +66,8 @@ public final class MindboxEmbeddedBlockView: UIView {
     /// A view assigned mid-failure swaps the error screen that is already shown, and `nil` given
     /// while one is shown takes the failure back down to a collapse — the space returns to the host
     /// layout. What neither does is expand a block that has already collapsed: reopening space the
-    /// host layout has reclaimed would make the layout jump, so such a view is remembered and takes
-    /// effect on the next load.
+    /// host layout has reclaimed would make the layout jump, so such a view is remembered for a load
+    /// that starts the cycle anew, never for the silent retry a return to the screen brings.
     public var errorView: UIView? {
         didSet {
             guard errorView !== oldValue else { return }
@@ -430,8 +430,15 @@ public final class MindboxEmbeddedBlockView: UIView {
             // there is nothing left to draw, so the block collapses.
             return shownAppearance == .error && errorView == nil ? .collapsed : shownAppearance
         case .ready: return .content
-        // A failure is shown only to those who opted in explicitly; for the rest the block collapses.
-        case .failed: return errorView == nil ? .collapsed : .error
+        case .failed:
+            // A failure is shown only to those who opted in explicitly; for the rest the block collapses.
+            guard hasSettled else { return errorView == nil ? .collapsed : .error }
+
+            // A settled block keeps what it shows when the retry fails too: an error view assigned
+            // after the collapse must not reopen space the host layout has reclaimed. The exception
+            // is the loading branch's one — an error screen the host has taken away leaves nothing
+            // to draw, so the block collapses.
+            return shownAppearance == .error && errorView == nil ? .collapsed : shownAppearance
         case .empty: return .collapsed
         }
     }

@@ -471,6 +471,74 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(appearance.values.allSatisfy { $0 == .error })
     }
 
+    /// Once settled on a collapse, a block keeps that state through retries: an error view assigned
+    /// after collapse does not expand it until the next explicit reload.
+    @Test("A collapsed settled block stays collapsed on retry even if errorView is assigned after collapse")
+    func collapsedSettledBlockStaysCollapsedEvenWithLateErrorView() {
+        let block = BlockFixture()
+        block.attachToWindow()
+        block.page?.failLoad()
+        #expect(block.view.intrinsicContentSize.height == 0)
+
+        // Error view assigned after the block has settled on collapse
+        let errorView = UIView()
+        block.view.errorView = errorView
+
+        // Retry: leaving and returning to window
+        block.removeFromWindow()
+        block.attachToWindow()
+
+        // The block stays collapsed and the error view stays off-screen
+        #expect(block.view.intrinsicContentSize.height == 0)
+        #expect(errorView.superview == nil)
+    }
+
+    /// Once settled on an error screen, if the error view is removed, the block collapses and stays
+    /// collapsed through retries rather than reopening.
+    @Test("A failed settled block with error screen stays collapsed on retry when errorView is removed")
+    func failedSettledBlockStaysCollapsedWhenErrorViewRemoved() {
+        let block = BlockFixture()
+        let errorView = UIView()
+        block.view.errorView = errorView
+        block.attachToWindow()
+        block.page?.failLoad()
+        #expect(block.view.intrinsicContentSize.height == 120)
+
+        // Error view removed while showing the failure
+        block.view.errorView = nil
+        #expect(block.view.intrinsicContentSize.height == 0)
+
+        // Retry: leaving and returning to window
+        block.removeFromWindow()
+        block.attachToWindow()
+
+        // The block stays collapsed
+        #expect(block.view.intrinsicContentSize.height == 0)
+        #expect(block.view.subviews.isEmpty)
+    }
+
+    /// A reload resets the settled state: the block is entitled to its full cycle anew, including
+    /// placeholder and error screen if the host opts in again.
+    @Test("A reload resets the settled state and allows error view to show on the next failure")
+    func reloadResetsSettledStateAndAllowsErrorViewAgain() {
+        let block = BlockFixture()
+        block.attachToWindow()
+        block.page?.failLoad()
+        #expect(block.view.intrinsicContentSize.height == 0)
+
+        // Error view assigned after the block collapsed
+        let errorView = UIView()
+        block.view.errorView = errorView
+
+        // Reload: the host's explicit consent to the full cycle anew
+        block.view.reload()
+        block.page?.failLoad()
+
+        // Now the error view is shown
+        #expect(block.view.intrinsicContentSize.height == 120)
+        #expect(errorView.superview === block.view)
+    }
+
     /// A reload is the one thing that reopens the cycle: only then does the error screen give way to
     /// the placeholder, because the block really is loading again.
     @Test("Reload after a failure with an error view shows the placeholder")
