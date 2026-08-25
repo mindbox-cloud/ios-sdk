@@ -38,6 +38,10 @@ protocol InappFilterProtocol {
     /// step swapped: "is this addressed to this place" instead of "can this be shown over the screen".
     func filter(place: String, in candidates: ConfigCandidates) -> [InApp]
 
+    /// Every valid in-app with a variant for `place` — the A/B pool and the frequency not applied. The
+    /// place is a compatibility filter, and the funnel wants everyone who could have shown here.
+    func inapps(addressedTo place: String, in candidates: ConfigCandidates) -> [InApp]
+
     /// The in-apps out of `ids` a feed may draw, before targeting. The trigger chain minus the
     /// direct-call cut — that one would drop exactly the in-apps a feed is made of.
     func filter(feedIds ids: [String], in candidates: ConfigCandidates) -> [InApp]
@@ -107,6 +111,10 @@ final class InappsFilterService: InappFilterProtocol {
 
     func filter(place: String, in candidates: ConfigCandidates) -> [InApp] {
         filterInappsForPlace(place, inapps: candidates.inPool)
+    }
+
+    func inapps(addressedTo place: String, in candidates: ConfigCandidates) -> [InApp] {
+        filterInappsByPlace(place, inapps: candidates.renderable)
     }
 
     func filter(feedIds ids: [String], in candidates: ConfigCandidates) -> [InApp] {

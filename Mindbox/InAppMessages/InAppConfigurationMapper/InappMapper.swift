@@ -75,24 +75,28 @@ class InappMapper: InappMapperProtocol {
                              _ completion: @escaping (InAppTransitionData?) -> Void) {
         runPass("place '\(place)'", event: trigger) { finish in
             self.evaluate(self.placeQuery(place, candidates), event: trigger) { verdict in
-                finish()
+                self.evaluate(self.placeTargetingQuery(place, candidates), event: trigger) { targeted in
+                    finish()
 
-                guard let winner = verdict.suitable.first else {
-                    completion(nil)
-                    return
+                    let winner = verdict.suitable.first
+                    self.vouch(targeted.suitable, winner: winner, at: place)
+
+                    guard let winner else {
+                        completion(nil)
+                        return
+                    }
+
+                    guard self.presentationValidator.isWithinShowBudgets(isPriority: winner.isPriority,
+                                                                        frequency: winner.frequency,
+                                                                        id: winner.inAppId) else {
+                        Logger.common(message: "[InappMapper] In-app \(winner.inAppId) won place '\(place)' but the show budgets are spent, the place stays empty",
+                                      level: .debug, category: .inAppMessages)
+                        completion(nil)
+                        return
+                    }
+
+                    completion(winner)
                 }
-
-                guard self.presentationValidator.isWithinShowBudgets(isPriority: winner.isPriority,
-                                                                    frequency: winner.frequency,
-                                                                    id: winner.inAppId) else {
-                    Logger.common(message: "[InappMapper] In-app \(winner.inAppId) won place '\(place)' but the show budgets are spent, the place stays empty",
-                                  level: .debug, category: .inAppMessages)
-                    completion(nil)
-                    return
-                }
-
-                self.vouchOncePerSession(for: [winner])
-                completion(winner)
             }
         }
     }
@@ -335,6 +339,23 @@ class InappMapper: InappMapperProtocol {
         )
     }
 
+    /// Everyone the place could have shown: the A/B cut and the spent frequencies included, the
+    /// direct-call in-apps out — the overlay catch-up's rule applied to one place. Asked right after
+    /// the place's own question, so the fetch it needs has already happened.
+    private func placeTargetingQuery(_ place: String, _ candidates: ConfigCandidates) -> TargetingQuery {
+        TargetingQuery(
+            label: "targeting at place '\(place)'",
+            prepares: { [] },
+            candidates: { _, _ in
+                self.inappFilterService.inapps(addressedTo: place, in: candidates)
+                    .filter { $0.displayConditions != .directCall }
+            },
+            fetchesDependencies: false,
+            collectsFailures: false,
+            pickVariant: { $0.form.variants.first { $0.placeSystemName == place } }
+        )
+    }
+
     private func pageQuery(_ ids: [String], _ candidates: ConfigCandidates) -> TargetingQuery {
         TargetingQuery(
             label: "a page asking about \(ids.count) in-app(s)",
@@ -385,8 +406,28 @@ class InappMapper: InappMapperProtocol {
         }
     }
 
-    /// Place path only: its resolves repeat without offering anything new, hence once per session —
-    /// unlike a feed, which vouches per delivered answer. The split is an open question with Android.
+    /// Everyone the place could have shown hears its `Inapp.Targeting`: the losers once per session,
+    /// the winner by the place's slot — showing another in-app and coming back is a new offer.
+    private func vouch(_ targeted: [InAppTransitionData], winner: InAppTransitionData?, at place: String) {
+        for inapp in targeted {
+            guard inapp.inAppId == winner?.inAppId else {
+                vouchOncePerSession(for: [inapp])
+                continue
+            }
+
+            guard SessionTemporaryStorage.shared.placeTargetedInappId[place] != inapp.inAppId else {
+                Logger.common(message: "[InappMapper] In-app \(inapp.inAppId) is still what place '\(place)' vouched for last, no second Inapp.Targeting",
+                              level: .debug, category: .inAppMessages)
+                continue
+            }
+
+            SessionTemporaryStorage.shared.$placeTargetedInappId.mutate { $0[place] = inapp.inAppId }
+            SessionTemporaryStorage.shared.$vouchedInappIds.mutate { $0.insert(inapp.inAppId) }
+            dataFacade.trackTargeting(id: inapp.inAppId, tags: inapp.tags)
+        }
+    }
+
+    /// The losers at a place: their resolves repeat without offering anything new, hence once per session.
     private func vouchOncePerSession(for inapps: [InAppTransitionData]) {
         for inapp in inapps {
             guard !SessionTemporaryStorage.shared.vouchedInappIds.contains(inapp.inAppId) else {

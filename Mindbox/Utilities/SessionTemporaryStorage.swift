@@ -37,6 +37,10 @@ final class SessionTemporaryStorage {
 
     @Locked var vouchedInappIds: Set<String> = []
 
+    /// The in-app each place last vouched for as its winner: its `Inapp.Targeting` pairs with the show,
+    /// so it goes out again when the place changes what it shows and then changes back.
+    @Locked var placeTargetedInappId: [String: String] = [:]
+
     /// `Inapp.Show` dedup for blocks, in sync with Android down to the name: a rebuilt page re-draws
     /// what the user saw. Local show history deliberately stays per rendered page on both platforms.
     @Locked var blockShowsReportedInSession: Set<String> = []
@@ -66,6 +70,7 @@ final class SessionTemporaryStorage {
         isUserVisitSaved = false
         lastInappClickedID = nil
         vouchedInappIds = []
+        placeTargetedInappId = [:]
         blockShowsReportedInSession = []
         lastTrackVisit = nil
         inAppSettings = nil
