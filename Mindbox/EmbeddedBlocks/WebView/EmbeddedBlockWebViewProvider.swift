@@ -351,7 +351,6 @@ final class EmbeddedBlockWebViewProvider {
         report(.presentationFailed, "The block's page reported contentRendered without a readable count")
     }
 
-    /// The cooldown between overlay shows is deliberately left alone — a block interrupts nothing.
     private func accountForShow() {
         guard let content = content, !didAccountForShow else { return }
 

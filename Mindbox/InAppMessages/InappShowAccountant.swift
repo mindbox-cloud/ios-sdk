@@ -19,7 +19,7 @@ struct InappShow {
 
 protocol InappShowAccounting: AnyObject {
 
-    /// `Inapp.Show` to the backend, then the local show history when the frequency counts shows.
+    /// `Inapp.Show` to the backend, then the local show history and the cooldown when the frequency counts shows.
     func recordShow(_ show: InappShow)
 
     /// The moment `minIntervalBetweenShows` counts from — written when the frequency counts shows.
@@ -47,6 +47,7 @@ final class InappShowAccountant: InappShowAccounting {
         guard InappFrequency.countsShows(show.frequency) else { return }
 
         trackingService.trackInAppShown(id: show.inAppId)
+        trackingService.saveInappStateChange()
     }
 
     func recordCooldown(frequency: InappFrequency?) {

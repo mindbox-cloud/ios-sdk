@@ -124,7 +124,6 @@ internal extension InappScheduleManager {
                                         frequency: inapp.frequency,
                                         tags: inapp.tags,
                                         timeToDisplay: timeToDisplay))
-        accountant.recordCooldown(frequency: inapp.frequency)
     }
 
     /// The cooldown is written a second time on dismissal, so that an app killed while the in-app was
