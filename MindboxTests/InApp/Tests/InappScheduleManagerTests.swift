@@ -618,6 +618,7 @@ final class InappShowFailureManagerMock: InappShowFailureManagerProtocol {
     // @Locked: production calls these from its queues while the test reads from its own context.
     @Locked private(set) var addFailureCallCount = 0
     @Locked private(set) var sendFailuresCallCount = 0
+    @Locked private(set) var unattributedFailureCount = 0
     @Locked private(set) var addFailureCalls: [AddFailureCall] = []
     @Locked private(set) var sentAtOnce: [AddFailureCall] = []
 
@@ -632,5 +633,9 @@ final class InappShowFailureManagerMock: InappShowFailureManagerProtocol {
 
     func sendFailures() {
         sendFailuresCallCount += 1
+    }
+
+    func sendUnattributedFailure() {
+        unattributedFailureCount += 1
     }
 }

@@ -65,6 +65,26 @@ struct EmbeddedBlockContentProviderFactoryTests {
         #expect(manager.sentAtOnce.first?.tags == ["campaign": "stories"])
     }
 
+    @Test("A block's unanswered wait is sent as a failure without an in-app")
+    func unansweredWaitIsSentUnattributed() {
+        let manager = InappShowFailureManagerMock()
+        let registry = EmbeddedBlockPlaceRegistry(resolver: EmbeddedBlockResolverMock(resolution: .empty),
+                                                  notificationCenter: NotificationCenter(),
+                                                  fetchEmbeddedPlaces: { $0(nil) })
+        let factory = EmbeddedBlockContentProviderFactory(registry: registry,
+                                                          feed: EmbeddedBlockFeedServiceMock(),
+                                                          failureManager: manager,
+                                                          accounting: InappShowAccountingMock())
+
+        let provider = factory.makeProvider(placeSystemName: "factory-silent-place")
+        withExtendedLifetime(provider) {
+            provider.reportAnswerTimedOut()
+        }
+
+        #expect(manager.unattributedFailureCount == 1)
+        #expect(manager.sentAtOnce.isEmpty)
+    }
+
     // MARK: - Helpers
 
     /// The resolver answers "empty": no page is created for such a block, so the factory's tests

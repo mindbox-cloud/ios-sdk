@@ -586,6 +586,8 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.view.intrinsicContentSize.height == 0)
         #expect(block.view.subviews.isEmpty)
         #expect(delegate.events == [.failed])
+        #expect(block.bed.failureReporter.unansweredWaits == 1)
+        #expect(block.bed.failureReporter.reported.isEmpty)
     }
 
     @Test("A page that was built and stayed silent fails")
@@ -603,6 +605,8 @@ struct MindboxEmbeddedBlockViewTests {
 
         #expect(block.view.subviews.contains(errorView))
         #expect(delegate.events == [.failed])
+        #expect(block.bed.failureReporter.reasons == [.presentationFailed])
+        #expect(block.bed.failureReporter.unansweredWaits == 0)
     }
 
     @Test("The answer restarts the waiting budget")

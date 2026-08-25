@@ -311,6 +311,42 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.failureReporter.reasons == [.presentationFailed])
     }
 
+    @Test("A block the SDK never answered reports one failure without an in-app")
+    func unansweredBlockReportsOneUnattributedFailure() {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.isDeferred = true
+        bed.provider.start()
+
+        bed.provider.reportAnswerTimedOut()
+
+        #expect(bed.failureReporter.unansweredWaits == 1)
+        #expect(bed.failureReporter.reported.isEmpty)
+    }
+
+    @Test("A second unanswered wait at the same place in one session reports nothing")
+    func secondUnansweredWaitIsSilent() {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.isDeferred = true
+        bed.provider.start()
+
+        bed.provider.reportAnswerTimedOut()
+        bed.provider.reportAnswerTimedOut()
+
+        #expect(bed.failureReporter.unansweredWaits == 1)
+    }
+
+    @Test("Another place's unanswered wait is reported on its own")
+    func anotherPlacesUnansweredWaitIsReported() {
+        let first = EmbeddedBlockTestBed(placeSystemName: "first-place")
+        let second = EmbeddedBlockTestBed(placeSystemName: "second-place")
+
+        first.provider.reportAnswerTimedOut()
+        second.provider.reportAnswerTimedOut()
+
+        #expect(first.failureReporter.unansweredWaits == 1)
+        #expect(second.failureReporter.unansweredWaits == 1)
+    }
+
     @Test("An empty place reports nothing")
     func emptyPlaceReportsNothing() {
         let bed = EmbeddedBlockTestBed(resolution: .empty)

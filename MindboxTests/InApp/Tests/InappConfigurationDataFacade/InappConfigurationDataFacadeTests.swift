@@ -52,6 +52,8 @@ final class MockInappShowFailureManager: InappShowFailureManagerProtocol {
     func sendFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?) {}
 
     func sendFailures() {}
+
+    func sendUnattributedFailure() {}
 }
 
 final class InAppConfigurationDataFacadeTests: XCTestCase {

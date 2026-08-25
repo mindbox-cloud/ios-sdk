@@ -69,8 +69,15 @@ final class EmbeddedBlockFailureReporterMock {
 
     var reasons: [InAppShowFailureReason] { reported.map(\.reason) }
 
+    /// Failures with no in-app behind them: the SDK never answered the block.
+    private(set) var unansweredWaits = 0
+
     func report(_ content: EmbeddedBlockWebContent, _ reason: InAppShowFailureReason, _ details: String) {
         reported.append((content.inAppId, reason, details, content.tags))
+    }
+
+    func reportUnansweredWait() {
+        unansweredWaits += 1
     }
 }
 
@@ -508,6 +515,9 @@ final class EmbeddedBlockTestBed {
 
     init(placeSystemName: String = "block-id",
          resolution: EmbeddedBlockResolution = .content(.stub)) {
+        // Once-per-session state lives on the shared singleton — reset, or beds would see each other's silence.
+        SessionTemporaryStorage.shared.placesReportedUnanswered = []
+
         let resolver = EmbeddedBlockResolverMock(resolution: resolution)
         let feed = EmbeddedBlockFeedServiceMock()
         let pageFactory = EmbeddedBlockPageFactoryMock()
@@ -533,6 +543,7 @@ final class EmbeddedBlockTestBed {
                                                      makePage: { pageFactory.make($0) },
                                                      accounting: accounting,
                                                      reportFailure: { failureReporter.report($0, $1, $2) },
+                                                     reportUnansweredWait: { failureReporter.reportUnansweredWait() },
                                                      scheduleAckTimeout: { ackScheduler.schedule($0, $1) })
     }
 

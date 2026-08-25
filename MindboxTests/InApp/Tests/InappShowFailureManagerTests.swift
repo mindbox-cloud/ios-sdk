@@ -54,6 +54,15 @@ final class InappShowFailureManagerTests: XCTestCase {
         XCTAssertEqual(failures[0].errorDetails, "No window available")
     }
 
+    func testSendUnattributedFailure_sendsAnEmptyFailuresArray() throws {
+        manager.sendUnattributedFailure()
+
+        assertCreatedEventsCountEventually(1)
+        let event = try XCTUnwrap(databaseRepository.createdEvents.first)
+        XCTAssertEqual(event.type, .inAppShowFailureEvent)
+        XCTAssertTrue(try XCTUnwrap(decodeFailures(from: event)).isEmpty)
+    }
+
     func testAddFailure_setsDateTimeUtcInsideMethod() throws {
         manager.addFailure(
             inappId: "inapp-2",

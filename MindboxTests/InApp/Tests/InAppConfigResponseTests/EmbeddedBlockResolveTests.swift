@@ -213,6 +213,13 @@ struct EmbeddedBlockResolveTests {
         #expect(dataFacade.sendCollectedFailuresCalls == 1)
     }
 
+    @Test("A place resolve hands the in-apps its targeting cut to the failure collection")
+    func placeResolveCollectsFailuresForTheCut() async {
+        _ = await resolvePlace(Constants.place)
+
+        #expect(dataFacade.collectedTargetingFailureIds == [Set([Constants.operationBlockId])])
+    }
+
     @Test("Spent show limits do not stop an unlimited block")
     func showLimitsDoNotStopAnUnlimitedBlock() async throws {
         spendEveryShowBudget()
