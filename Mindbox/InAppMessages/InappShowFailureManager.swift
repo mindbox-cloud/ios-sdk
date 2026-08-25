@@ -11,7 +11,11 @@ import MindboxLogger
 
 protocol InappShowFailureManagerProtocol {
     func addFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?)
+
+    /// The buffer answers "why was nothing shown": a pass that picked nothing sends it, a pass that
+    /// picked something drops it (in sync with Android).
     func sendFailures()
+    func clearFailures()
 
     /// The SDK never answered a block within its wait budget — a failure with no in-app to pin it on, so
     /// it names the place instead. Sent at once, past the buffer, like the other block failures.
@@ -147,6 +151,16 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
         }
     }
     
+    func clearFailures() {
+        queue.async { [self] in
+            guard !failures.isEmpty else { return }
+
+            Logger.common(message: "[InappShowFailureManager] Dropping \(failures.count) buffered failure(s): the pass showed something",
+                          level: .debug, category: .inAppMessages)
+            failures.removeAll()
+        }
+    }
+
     func sendWaitBudgetExceeded(place: String, waited: TimeInterval, phase: EmbeddedBlockShowFailure.Phase) {
         guard featureToggleManager.isFeatureEnabled(.shouldSendInAppShowError) else {
             Logger.common(message: "[InappShowFailureManager] sendWaitBudgetExceeded ignored, feature is disabled", category: .inAppMessages)

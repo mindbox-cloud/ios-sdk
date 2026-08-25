@@ -64,7 +64,7 @@ class InappMapper: InappMapperProtocol {
                 self.buildFirstShowable(verdict.suitable, event: event) { formData in
                     self.evaluate(self.catchUpQuery(event, candidates), event: event) { catchUp in
                         self.vouchCatchUp(catchUp.suitable, event: event)
-                        finish()
+                        finish(formData != nil)
                         completion(formData)
                     }
                 }
@@ -79,12 +79,11 @@ class InappMapper: InappMapperProtocol {
         runPass("place '\(place)'", event: trigger) { finish in
             self.evaluate(self.placeQuery(place, candidates), event: trigger) { verdict in
                 self.evaluate(self.placeTargetingQuery(place, candidates), event: trigger) { targeted in
-                    finish()
-
                     let winner = verdict.suitable.first
                     self.vouch(targeted.suitable, winner: winner, at: place)
 
                     guard let winner else {
+                        finish(false)
                         completion(nil)
                         return
                     }
@@ -94,10 +93,12 @@ class InappMapper: InappMapperProtocol {
                                                                         id: winner.inAppId) else {
                         Logger.common(message: "[InappMapper] In-app \(winner.inAppId) won place '\(place)' but the show budgets are spent, the place stays empty",
                                       level: .debug, category: .inAppMessages)
+                        finish(false)
                         completion(nil)
                         return
                     }
 
+                    finish(true)
                     completion(winner)
                 }
             }
@@ -113,7 +114,7 @@ class InappMapper: InappMapperProtocol {
                              _ completion: @escaping ([String]) -> Void) {
         runPass("a page of in-app \(blockInappId) asking about \(ids.count) in-app(s)", event: nil) { finish in
             self.evaluate(self.pageQuery(ids, candidates), event: nil) { verdict in
-                finish()
+                finish(false)
                 self.vouchOffers(verdict.suitable, by: blockInappId)
                 completion(verdict.suitable.map(\.inAppId))
             }
@@ -177,11 +178,12 @@ class InappMapper: InappMapperProtocol {
     /// so two passes never answer each other's questions — a place resolve landing between a trigger's
     /// selection and its catch-up would swap the event under the catch-up.
     ///
-    /// The failures a pass buffered leave with it: the winner never has one, and clearing them on a show
-    /// would lose the cut in-apps' failures behind it.
+    /// The failures a pass buffered answer "why was nothing shown": a pass that selected nothing sends
+    /// them as one event, a pass that selected something drops them — the same rule for the trigger and
+    /// for a place, as the overlay has always worked.
     private func runPass(_ label: String,
                          event: ApplicationEvent?,
-                         _ body: @escaping (_ finish: @escaping () -> Void) -> Void) {
+                         _ body: @escaping (_ finish: @escaping (_ selected: Bool) -> Void) -> Void) {
         processingQueue.async {
             let group = DispatchGroup()
             group.enter()
@@ -190,8 +192,12 @@ class InappMapper: InappMapperProtocol {
                           level: .debug, category: .inAppMessages)
             self.targetingChecker.event = event
 
-            body {
-                self.dataFacade.sendCollectedFailures()
+            body { selected in
+                if selected {
+                    self.dataFacade.discardCollectedFailures()
+                } else {
+                    self.dataFacade.sendCollectedFailures()
+                }
                 group.leave()
             }
 
