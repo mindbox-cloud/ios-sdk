@@ -237,15 +237,17 @@ struct EmbeddedBlockWebViewProviderTests {
                                             EmbeddedBlockWebContent.other.inAppId])
     }
 
-    @Test("The accounted show carries the time the page took")
-    func accountedShowCarriesTimeToDisplay() throws {
+    @Test("The block's timeToDisplay is the selection's processing plus the page's rendering")
+    func timeToDisplayAddsProcessingToRendering() throws {
         let bed = EmbeddedBlockTestBed()
+        bed.resolver.processingDuration = 2
 
         bed.provider.start()
         bed.page?.reportRendered(3)
 
         let show = try #require(bed.accounting.shows.first)
-        #expect(show.timeToDisplay >= 0)
+        #expect(show.timeToDisplay >= 2)
+        #expect(show.timeToDisplay < 2.5)
     }
 
     // MARK: - Load failure
@@ -848,7 +850,7 @@ struct EmbeddedBlockWebViewProviderTests {
                                              frequency: .unlimited,
                                              tags: EmbeddedBlockWebContent.stub.tags,
                                              params: ["fresh": .bool(true)])
-        bed.provider.apply(.content(sameId))
+        bed.provider.apply(.content(sameId), processingDuration: 0)
 
         #expect(bed.pageFactory.pages.count == 1)
         #expect(bed.page?.initDataPushes == [["fresh": .bool(true)]])

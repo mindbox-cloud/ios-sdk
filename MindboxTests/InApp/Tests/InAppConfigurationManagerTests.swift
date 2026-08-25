@@ -274,11 +274,28 @@ struct InAppConfigurationManagerTests {
         try await waitUntil(api.isFetchPending)
 
         let answers = Answers<InAppTransitionData?>()
-        manager.selectInappForPlace("stories-list-container", trigger: nil) { answers.append($0) }
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { inapp, _ in answers.append(inapp) }
         api.deliver(.data(try fixtureData()))
 
         try await waitUntil(!answers.isEmpty)
         #expect((answers.first ?? nil)?.inAppId == "11111111-1111-1111-1111-111111111111")
+    }
+
+    @Test("The place's processing time starts once the config is there, not when the block asked")
+    func placeProcessingTimeStartsAfterTheConfig() async throws {
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+
+        let durations = Answers<TimeInterval>()
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { _, processingDuration in
+            durations.append(processingDuration)
+        }
+        try await Task.sleep(nanoseconds: 300_000_000)
+        api.deliver(.data(try fixtureData()))
+
+        try await waitUntil(!durations.isEmpty)
+        let duration = try #require(durations.first)
+        #expect(duration < 0.2, "the wait for the config leaked into the processing time: \(duration)s")
     }
 
     @Test("One applied config is prepared once, however many blocks and feeds ask")
@@ -302,9 +319,9 @@ struct InAppConfigurationManagerTests {
         let feeds = Answers<[String]>()
         let places = Answers<InAppTransitionData?>()
         manager.getShowableInappIds([Constants.liveStoryId], askedBy: "a-block") { feeds.append($0) }
-        manager.selectInappForPlace("stories-list-container", trigger: nil) { places.append($0) }
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { inapp, _ in places.append(inapp) }
         manager.getShowableInappIds([Constants.liveStoryId], askedBy: "a-block") { feeds.append($0) }
-        manager.selectInappForPlace("stories-list-container", trigger: nil) { places.append($0) }
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { inapp, _ in places.append(inapp) }
 
         try await waitUntil(feeds.all.count == 2 && places.all.count == 2)
         #expect(counting.prepareCount == 1)
@@ -317,7 +334,7 @@ struct InAppConfigurationManagerTests {
         api.deliver(.data(try fixtureData()))
 
         let withBlock = Answers<InAppTransitionData?>()
-        manager.selectInappForPlace("stories-list-container", trigger: nil) { withBlock.append($0) }
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { inapp, _ in withBlock.append(inapp) }
         try await waitUntil(!withBlock.isEmpty)
         #expect((withBlock.first ?? nil)?.inAppId == "11111111-1111-1111-1111-111111111111")
 
@@ -326,7 +343,7 @@ struct InAppConfigurationManagerTests {
         api.deliver(.empty)
 
         let withoutBlock = Answers<InAppTransitionData?>()
-        manager.selectInappForPlace("stories-list-container", trigger: nil) { withoutBlock.append($0) }
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { inapp, _ in withoutBlock.append(inapp) }
         try await waitUntil(!withoutBlock.isEmpty)
         #expect((withoutBlock.first ?? nil)?.inAppId == nil)
     }

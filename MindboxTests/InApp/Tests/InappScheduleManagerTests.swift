@@ -438,8 +438,10 @@ struct InappScheduleManagerTests {
         )
     }
 
-    private func showNowAndAwaitMainQueue(_ manager: InappScheduleManager, _ inapp: InAppFormData) async {
-        manager.showInAppNow(inapp)
+    private func showNowAndAwaitMainQueue(_ manager: InappScheduleManager,
+                                          _ inapp: InAppFormData,
+                                          processingDuration: TimeInterval = 0) async {
+        manager.showInAppNow(inapp, processingDuration: processingDuration)
         // showInAppNow takes two main-queue turns: close the active overlay, then present.
         for _ in 0..<2 {
             await withCheckedContinuation { continuation in
@@ -512,6 +514,19 @@ struct InappScheduleManagerTests {
 
         #expect(trackerSpy.trackViewCallCount == 1)
         #expect(trackerSpy.trackTargetingCallCount == 0)
+    }
+
+    @Test("A show on request counts the time since the tap into timeToDisplay", .tags(.inAppSchedule))
+    func showInAppNow_countsTheTapsProcessingTime() async throws {
+        let trackerSpy = InAppMessagesTrackerSpyMock()
+        let manager = makeSpiedManager(tracker: trackerSpy)
+        let inapp = createInAppFormData(id: "direct-timed", isPriority: false, delayTime: nil)
+
+        await showNowAndAwaitMainQueue(manager, inapp, processingDuration: 3)
+        presentationManagerMock.receivedOnPresent?()
+
+        let timeToDisplay = try #require(trackerSpy.lastTimeToDisplay)
+        #expect(timeToDisplay.hasPrefix("0:00:03."), "expected at least the 3 s of processing, got \(timeToDisplay)")
     }
 
     @Test("A show on request closes the overlay already on screen", .tags(.inAppSchedule))

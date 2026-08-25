@@ -49,20 +49,21 @@ struct EmbeddedBlockFeedServiceTests {
     @Test("A tap fetches the in-app with its params and hands it to the scheduler")
     func tapHandsTheFetchedInappToTheScheduler() {
         var fetched: [(id: String, params: [String: JSONValue])] = []
-        var shown: [String] = []
+        var shown: [(id: String, processingDuration: TimeInterval)] = []
         let service = EmbeddedBlockFeedService(
             fetchInappToShow: { id, params, completion in
                 fetched.append((id, params))
                 completion(Self.formData(id: id))
             },
-            showNow: { shown.append($0.inAppId) }
+            showNow: { formData, processingDuration in shown.append((formData.inAppId, processingDuration)) }
         )
 
         service.showInapp(id: "story-1", params: ["formId": .string("160477")])
 
         #expect(fetched.map(\.id) == ["story-1"])
         #expect(fetched.map(\.params) == [["formId": .string("160477")]])
-        #expect(shown == ["story-1"])
+        #expect(shown.map(\.id) == ["story-1"])
+        #expect(shown.map(\.processingDuration).allSatisfy { $0 >= 0 })
     }
 
     @Test("A tap that resolves to nothing schedules nothing")
@@ -70,7 +71,7 @@ struct EmbeddedBlockFeedServiceTests {
         var shownCount = 0
         let service = EmbeddedBlockFeedService(
             fetchInappToShow: { _, _, completion in completion(nil) },
-            showNow: { _ in shownCount += 1 }
+            showNow: { _, _ in shownCount += 1 }
         )
 
         service.showInapp(id: "story-1", params: [:])

@@ -310,6 +310,9 @@ final class EmbeddedBlockResolverMock: EmbeddedBlockResolving {
 
     var resolution: EmbeddedBlockResolution
 
+    /// How long the selection is said to have worked on the answer.
+    var processingDuration: TimeInterval = 0
+
     /// `true` — the answer does not arrive until the test calls `flush()`: this is how a resolve
     /// that lands after the block was stopped or reloaded is checked.
     var isDeferred = false
@@ -320,7 +323,7 @@ final class EmbeddedBlockResolverMock: EmbeddedBlockResolving {
 
     var resolveCount: Int { resolvedPlaces.count }
 
-    private var pending: [(EmbeddedBlockResolution) -> Void] = []
+    private var pending: [(EmbeddedBlockResolution, TimeInterval) -> Void] = []
 
     init(resolution: EmbeddedBlockResolution = .content(.stub)) {
         self.resolution = resolution
@@ -328,21 +331,21 @@ final class EmbeddedBlockResolverMock: EmbeddedBlockResolving {
 
     func resolve(_ place: String,
                  trigger: ApplicationEvent?,
-                 completion: @escaping (EmbeddedBlockResolution) -> Void) {
+                 completion: @escaping (EmbeddedBlockResolution, TimeInterval) -> Void) {
         resolvedPlaces.append(place)
         triggers.append(trigger)
 
         if isDeferred {
             pending.append(completion)
         } else {
-            completion(resolution)
+            completion(resolution, processingDuration)
         }
     }
 
     func flush() {
         let completions = pending
         pending = []
-        completions.forEach { $0(resolution) }
+        completions.forEach { $0(resolution, processingDuration) }
     }
 }
 
@@ -589,7 +592,7 @@ final class EmbeddedBlockViewDelegateMock: MindboxEmbeddedBlockViewDelegate {
 
 extension EmbeddedBlockResolving {
 
-    func resolve(_ place: String, completion: @escaping (EmbeddedBlockResolution) -> Void) {
+    func resolve(_ place: String, completion: @escaping (EmbeddedBlockResolution, TimeInterval) -> Void) {
         resolve(place, trigger: nil, completion: completion)
     }
 }

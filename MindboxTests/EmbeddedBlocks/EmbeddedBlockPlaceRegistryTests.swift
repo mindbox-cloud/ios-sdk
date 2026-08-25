@@ -18,7 +18,7 @@ struct EmbeddedBlockPlaceRegistryTests {
         var isActive = true
         private(set) var applied: [EmbeddedBlockResolution] = []
 
-        func apply(_ resolution: EmbeddedBlockResolution) {
+        func apply(_ resolution: EmbeddedBlockResolution, processingDuration: TimeInterval) {
             applied.append(resolution)
         }
     }

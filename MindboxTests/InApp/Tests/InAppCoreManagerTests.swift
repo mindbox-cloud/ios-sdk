@@ -20,8 +20,10 @@ struct InAppCoreManagerTests {
         func handleInapps(event: ApplicationEvent?, _ completion: @escaping (InAppFormData?) -> Void) {
             completion(nil)
         }
-        func selectInappForPlace(_ place: String, trigger: ApplicationEvent?, _ completion: @escaping (InAppTransitionData?) -> Void) {
-            completion(nil)
+        func selectInappForPlace(_ place: String,
+                                 trigger: ApplicationEvent?,
+                                 _ completion: @escaping (InAppTransitionData?, TimeInterval) -> Void) {
+            completion(nil, 0)
         }
         func getInAppById(_ id: String, _ completion: @escaping (InAppTransitionData?) -> Void) {
             completion(nil)
@@ -42,7 +44,7 @@ struct InAppCoreManagerTests {
         weak var delegate: InAppMessagesDelegate?
 
         func scheduleInApp(_ inAppFormData: InAppFormData, processingDuration: TimeInterval) {}
-        func showInAppNow(_ inAppFormData: InAppFormData) {}
+        func showInAppNow(_ inAppFormData: InAppFormData, processingDuration: TimeInterval) {}
     }
 
     private let queue = DispatchQueue(label: "test.core-manager.events")
