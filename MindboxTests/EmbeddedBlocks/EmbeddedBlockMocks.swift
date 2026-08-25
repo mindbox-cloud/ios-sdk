@@ -175,7 +175,7 @@ final class EmbeddedBlockPageMock: EmbeddedBlockPageHosting {
     }
 }
 
-private final class EmbeddedBlockPageMockHost: WebBridgeHost, WebBridgeContentHosting, WebBridgeFeedHosting {
+private final class EmbeddedBlockPageMockHost: WebBridgeHost, WebBridgeContentHosting, WebBridgeInappRequestHosting {
 
     unowned let page: EmbeddedBlockPageMock
 
@@ -360,7 +360,7 @@ final class EmbeddedBlockResolverMock: EmbeddedBlockResolving {
     }
 }
 
-final class EmbeddedBlockFeedServiceMock: EmbeddedBlockFeedServing {
+final class EmbeddedBlockInappServiceMock: EmbeddedBlockInappServing {
 
     var allowed: [String] = []
 
@@ -515,7 +515,7 @@ final class EmbeddedBlockAckSchedulerMock {
 final class EmbeddedBlockTestBed {
 
     let resolver: EmbeddedBlockResolverMock
-    let feed: EmbeddedBlockFeedServiceMock
+    let inappService: EmbeddedBlockInappServiceMock
     let pageFactory: EmbeddedBlockPageFactoryMock
     let provider: EmbeddedBlockWebViewProvider
     let accounting: InappShowAccountingMock
@@ -533,7 +533,7 @@ final class EmbeddedBlockTestBed {
         SessionTemporaryStorage.shared.placesReportedUnanswered = []
 
         let resolver = EmbeddedBlockResolverMock(resolution: resolution)
-        let feed = EmbeddedBlockFeedServiceMock()
+        let inappService = EmbeddedBlockInappServiceMock()
         let pageFactory = EmbeddedBlockPageFactoryMock()
         let embeddedPlaces = EmbeddedPlacesStub()
         let center = NotificationCenter()
@@ -549,11 +549,11 @@ final class EmbeddedBlockTestBed {
         self.failureReporter = failureReporter
         self.center = center
         self.resolver = resolver
-        self.feed = feed
+        self.inappService = inappService
         self.pageFactory = pageFactory
         self.provider = EmbeddedBlockWebViewProvider(placeSystemName: placeSystemName,
                                                      registry: registry,
-                                                     feed: feed,
+                                                     inappService: inappService,
                                                      makePage: { pageFactory.make($0) },
                                                      accounting: accounting,
                                                      reportFailure: { failureReporter.report($0, $1, $2) },

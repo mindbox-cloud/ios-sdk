@@ -428,7 +428,7 @@ struct EmbeddedBlockWebViewProviderTests {
 
     // MARK: - The data push's confirmation
 
-    /// A feed silently showing yesterday's stories is the failure nobody files a report about — same remedy as Android's.
+    /// A page silently showing yesterday's stories is the failure nobody files a report about — same remedy as Android's.
     @Test("A page that never confirms the data push is rebuilt")
     func silentDataPushRebuildsThePage() {
         let bed = EmbeddedBlockTestBed()
@@ -658,17 +658,17 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.resolver.resolveCount == resolvesBefore)
     }
 
-    // MARK: - Which in-apps the feed may draw
+    // MARK: - Which in-apps the page may draw
 
     @Test("A loading block answers which in-apps it may draw")
     func loadingBlockAnswersTargeting() {
         let bed = EmbeddedBlockTestBed()
-        bed.feed.allowed = ["story-1"]
+        bed.inappService.allowed = ["story-1"]
         bed.provider.start()
 
         bed.page?.send(.filterShowableInapps, ["inappIds": .array([.string("story-1"), .string("story-2")])])
 
-        #expect(bed.feed.askedIds == [["story-1", "story-2"]])
+        #expect(bed.inappService.askedIds == [["story-1", "story-2"]])
         #expect(bed.page?.responses.map(\.payload) == [.object(["inappIds": .array([.string("story-1")])])])
     }
 
@@ -679,18 +679,18 @@ struct EmbeddedBlockWebViewProviderTests {
 
         bed.page?.send(.filterShowableInapps, ["inappIds": .array([.string("story-1")])])
 
-        #expect(bed.feed.askedBy == [EmbeddedBlockWebContent.stub.inAppId])
+        #expect(bed.inappService.askedBy == [EmbeddedBlockWebContent.stub.inAppId])
     }
 
     @Test("An answer landing after a stop is dropped")
     func answerAfterStopIsDropped() {
         let bed = EmbeddedBlockTestBed()
-        bed.feed.isDeferred = true
+        bed.inappService.isDeferred = true
         bed.provider.start()
 
         bed.page?.send(.filterShowableInapps, ["inappIds": .array([.string("story-1")])])
         bed.provider.stop()
-        bed.feed.flush()
+        bed.inappService.flush()
 
         #expect(bed.page?.responses.isEmpty == true)
     }
@@ -707,7 +707,7 @@ struct EmbeddedBlockWebViewProviderTests {
 
         bed.page?.send(.showInApp, ["inappId": .string("story-id")])
 
-        #expect(bed.feed.shown.map(\.id) == ["story-id"])
+        #expect(bed.inappService.shown.map(\.id) == ["story-id"])
         #expect(states.isEmpty)
     }
 
@@ -720,7 +720,7 @@ struct EmbeddedBlockWebViewProviderTests {
                                            "lastContentUpdateDateTimeUtc": .string("2026-08-13T09:00:00.000000Z")]
         bed.page?.send(.showInApp, ["inappId": .string("story-id"), "params": .object(params)])
 
-        #expect(bed.feed.shown.first?.params == params)
+        #expect(bed.inappService.shown.first?.params == params)
     }
 
     @Test("A stopped block does not answer at all")
@@ -731,7 +731,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.stop()
         bed.page?.send(.showInApp, ["inappId": .string("story-id")])
 
-        #expect(bed.feed.shown.isEmpty)
+        #expect(bed.inappService.shown.isEmpty)
     }
 
     @Test("A block collapsed as empty does not act on a show request")
@@ -742,7 +742,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.page?.reportRendered(0)
         bed.page?.send(.showInApp, ["inappId": .string("story-id")])
 
-        #expect(bed.feed.shown.isEmpty)
+        #expect(bed.inappService.shown.isEmpty)
     }
 
     @Test("A failed block does not act on a show request")
@@ -753,7 +753,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.page?.failLoad()
         bed.page?.send(.showInApp, ["inappId": .string("story-id")])
 
-        #expect(bed.feed.shown.isEmpty)
+        #expect(bed.inappService.shown.isEmpty)
     }
 
     @Test("A block broken by an unreadable report does not act on a show request")
@@ -764,7 +764,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.page?.reportRenderedWithoutCount()
         bed.page?.send(.showInApp, ["inappId": .string("story-id")])
 
-        #expect(bed.feed.shown.isEmpty)
+        #expect(bed.inappService.shown.isEmpty)
     }
 
     @Test("A new attempt after a failure acts again")
@@ -777,7 +777,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.start()
         bed.page?.send(.showInApp, ["inappId": .string("story-id")])
 
-        #expect(bed.feed.shown.map(\.id) == ["story-id"])
+        #expect(bed.inappService.shown.map(\.id) == ["story-id"])
     }
 
     @Test("A message the block does not own leaves its state alone")

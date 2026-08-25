@@ -1,5 +1,5 @@
 //
-//  EmbeddedBlockFeedService.swift
+//  EmbeddedBlockInappService.swift
 //  Mindbox
 //
 //  Created by Sergei Semko on 8/13/26.
@@ -9,7 +9,7 @@
 import Foundation
 import MindboxLogger
 
-protocol EmbeddedBlockFeedServing: AnyObject {
+protocol EmbeddedBlockInappServing: AnyObject {
 
     /// Which of `ids` the page of in-app `blockInappId` may draw: the SDK checks each one's targeting,
     /// fetching what that needs like a place resolve, and vouches for the allowed ones as it answers.
@@ -20,7 +20,7 @@ protocol EmbeddedBlockFeedServing: AnyObject {
     func showInapp(id: String, params: [String: JSONValue])
 }
 
-final class EmbeddedBlockFeedService: EmbeddedBlockFeedServing {
+final class EmbeddedBlockInappService: EmbeddedBlockInappServing {
 
     private let ask: (_ ids: [String], _ blockInappId: String, _ completion: @escaping ([String]) -> Void) -> Void
     private let fetchInappToShow: (_ id: String, _ params: [String: JSONValue], _ completion: @escaping (InAppFormData?) -> Void) -> Void

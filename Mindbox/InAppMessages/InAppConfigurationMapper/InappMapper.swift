@@ -130,7 +130,7 @@ class InappMapper: InappMapperProtocol {
                 return
             }
 
-            // The same variant a feed offers: it keeps an in-app that has any overlay variant, so
+            // The same variant a page offers: it keeps an in-app that has any overlay variant, so
             // taking the first one would refuse a mixed form whose embedded variant comes first.
             guard let variant = inapp.form.variants.first(where: { $0.isOverlayPresentable })
                     ?? inapp.form.variants.first else {
@@ -359,7 +359,7 @@ class InappMapper: InappMapperProtocol {
     private func pageQuery(_ ids: [String], _ candidates: ConfigCandidates) -> TargetingQuery {
         TargetingQuery(
             label: "a page asking about \(ids.count) in-app(s)",
-            prepares: { self.inappFilterService.filter(feedIds: ids, in: candidates) },
+            prepares: { self.inappFilterService.filter(requestedIds: ids, in: candidates) },
             candidates: { prepared, _ in prepared },
             fetchesDependencies: true,
             collectsFailures: false,

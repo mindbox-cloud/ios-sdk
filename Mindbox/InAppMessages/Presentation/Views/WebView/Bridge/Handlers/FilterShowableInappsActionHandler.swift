@@ -32,16 +32,16 @@ final class FilterShowableInappsActionHandler: WebBridgeActionHandler {
                           category: host.logCategory)
         }
 
-        guard let feedHost = host as? WebBridgeFeedHosting else {
-            // Left unanswered, not refused: feedless surfaces may conform later, and a refusal
+        guard let inappHost = host as? WebBridgeInappRequestHosting else {
+            // Left unanswered, not refused: surfaces without an in-app service may conform later, and a refusal
             // would have to be unlearned by every page that starts relying on it.
-            Logger.common(message: "[WebView] Bridge: filterShowableInapps from '\(host.contentId)' has no feed to ask here, ignoring",
+            Logger.common(message: "[WebView] Bridge: filterShowableInapps from '\(host.contentId)' has no in-app service to ask here, ignoring",
                           level: .error,
                           category: host.logCategory)
             return
         }
 
-        feedHost.bridgeDidAskShowableInapps(ids) { [weak host] allowed in
+        inappHost.bridgeDidAskShowableInapps(ids) { [weak host] allowed in
             host?.respond(to: message, payload: .object(["inappIds": .array(allowed.map { .string($0) })]))
         }
     }

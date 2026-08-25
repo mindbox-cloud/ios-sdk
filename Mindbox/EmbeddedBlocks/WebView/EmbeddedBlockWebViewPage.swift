@@ -102,7 +102,7 @@ final class EmbeddedBlockWebViewPage: NSObject, EmbeddedBlockPageHosting {
 
         // The container height equals the content height, so there is nothing to scroll vertically —
         // otherwise the block would bounce under the finger on every horizontal swipe. Horizontal
-        // scrolling stays on, unlike an overlay's: a feed is a row the user swipes through.
+        // scrolling stays on, unlike an overlay's: a block is a row the user swipes through.
         webView.scrollView.bounces = false
         webView.scrollView.alwaysBounceVertical = false
         webView.scrollView.showsVerticalScrollIndicator = false
@@ -157,9 +157,9 @@ extension EmbeddedBlockWebViewPage: WebBridgeContentHosting {
     }
 }
 
-// MARK: - WebBridgeFeedHosting
+// MARK: - WebBridgeInappRequestHosting
 
-extension EmbeddedBlockWebViewPage: WebBridgeFeedHosting {
+extension EmbeddedBlockWebViewPage: WebBridgeInappRequestHosting {
 
     func bridgeDidAskShowableInapps(_ ids: [String], completion: @escaping ([String]) -> Void) {
         onShowableQuestion?(ids, completion)

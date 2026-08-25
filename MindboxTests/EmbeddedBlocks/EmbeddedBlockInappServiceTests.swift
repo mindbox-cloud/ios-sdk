@@ -1,5 +1,5 @@
 //
-//  EmbeddedBlockFeedServiceTests.swift
+//  EmbeddedBlockInappServiceTests.swift
 //  MindboxTests
 //
 //  Created by Sergei Semko on 8/13/26.
@@ -10,13 +10,13 @@ import Foundation
 import Testing
 @_spi(Internal) @testable import Mindbox
 
-@Suite("Embedded block feed service", .tags(.embeddedBlocks))
+@Suite("Embedded block in-app service", .tags(.embeddedBlocks))
 @MainActor
-struct EmbeddedBlockFeedServiceTests {
+struct EmbeddedBlockInappServiceTests {
 
     @Test("The selection's answer is passed through")
     func selectionAnswerIsPassedThrough() {
-        let bed = FeedBed(allowed: ["story-1", "story-3"])
+        let bed = ServiceBed(allowed: ["story-1", "story-3"])
 
         bed.ask(["story-1", "story-2", "story-3"])
 
@@ -26,7 +26,7 @@ struct EmbeddedBlockFeedServiceTests {
 
     @Test("An empty question is answered without asking the selection")
     func emptyQuestionIsAnsweredWithoutAsking() {
-        let bed = FeedBed()
+        let bed = ServiceBed()
 
         bed.ask([])
 
@@ -36,7 +36,7 @@ struct EmbeddedBlockFeedServiceTests {
 
     @Test("A slow selection still answers when it comes back")
     func slowSelectionStillAnswers() {
-        let bed = FeedBed(allowed: ["story-1"], isDeferred: true)
+        let bed = ServiceBed(allowed: ["story-1"], isDeferred: true)
 
         bed.ask(["story-1"])
         #expect(bed.answers.isEmpty)
@@ -50,7 +50,7 @@ struct EmbeddedBlockFeedServiceTests {
     func tapHandsTheFetchedInappToTheScheduler() {
         var fetched: [(id: String, params: [String: JSONValue])] = []
         var shown: [(id: String, processingDuration: TimeInterval)] = []
-        let service = EmbeddedBlockFeedService(
+        let service = EmbeddedBlockInappService(
             fetchInappToShow: { id, params, completion in
                 fetched.append((id, params))
                 completion(Self.formData(id: id))
@@ -69,7 +69,7 @@ struct EmbeddedBlockFeedServiceTests {
     @Test("A tap that resolves to nothing schedules nothing")
     func tapResolvingToNothingSchedulesNothing() {
         var shownCount = 0
-        let service = EmbeddedBlockFeedService(
+        let service = EmbeddedBlockInappService(
             fetchInappToShow: { _, _, completion in completion(nil) },
             showNow: { _, _ in shownCount += 1 }
         )
@@ -92,7 +92,7 @@ struct EmbeddedBlockFeedServiceTests {
 
     @Test("An answer from a background thread is delivered on the main thread")
     func backgroundAnswerIsDeliveredOnTheMainThread() async {
-        let service = EmbeddedBlockFeedService(ask: { _, _, completion in
+        let service = EmbeddedBlockInappService(ask: { _, _, completion in
             DispatchQueue.global().async { completion(["story-1"]) }
         })
 
@@ -107,7 +107,7 @@ struct EmbeddedBlockFeedServiceTests {
 
     @Test("The block's in-app travels with the question")
     func blockInappTravelsWithTheQuestion() {
-        let bed = FeedBed(allowed: ["story-1"])
+        let bed = ServiceBed(allowed: ["story-1"])
 
         bed.ask(["story-1"], askedBy: "block-1")
 
@@ -116,13 +116,13 @@ struct EmbeddedBlockFeedServiceTests {
 }
 
 @MainActor
-private final class FeedBed {
+private final class ServiceBed {
 
     private(set) var answers: [[String]] = []
     private(set) var askedIds: [[String]] = []
     private(set) var askedBy: [String] = []
 
-    private let service: EmbeddedBlockFeedService
+    private let service: EmbeddedBlockInappService
     private let allowed: [String]
     private let isDeferred: Bool
 
@@ -135,7 +135,7 @@ private final class FeedBed {
         var asked: (([String], String) -> Void)?
         var ask: ((@escaping ([String]) -> Void) -> Void)?
 
-        service = EmbeddedBlockFeedService(
+        service = EmbeddedBlockInappService(
             ask: { ids, blockInappId, completion in
                 asked?(ids, blockInappId)
                 ask?(completion)

@@ -130,7 +130,7 @@ struct EmbeddedBlockWebViewPageTests {
         #expect(registry.count == 1)
     }
 
-    @Test("The feed's question reaches the block and the answer goes back to the page")
+    @Test("The page's question reaches the block and the answer goes back to it")
     func feedQuestionReachesTheBlock() throws {
         let bed = PageBed()
 

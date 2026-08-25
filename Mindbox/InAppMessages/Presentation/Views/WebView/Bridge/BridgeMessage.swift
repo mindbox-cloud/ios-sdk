@@ -548,14 +548,14 @@ public struct BridgeMessage: Codable {
         ///   ```
         case navigationIntercepted
 
-        // MARK: JS → Native: Feeds
+        // MARK: JS → Native: Embedded pages
         //
         // Bridge payloads say `inappId`/`inappIds` throughout, the start payload included. Feed list
         // entries carry whatever the config spells — forwarded untouched, never corrected.
 
         /// JS asks which of these in-apps are showable — the page draws only those.
         ///
-        /// The page gives up after 3 seconds and renders an empty feed; the SDK does not race that
+        /// The page gives up after 3 seconds and renders an empty list; the SDK does not race that
         /// deadline — it answers when the selection answers.
         ///
         /// - Payload:
@@ -583,9 +583,9 @@ public struct BridgeMessage: Codable {
         ///   ```
         case contentRendered
 
-        /// JS asks to show one in-app from the feed, by id.
+        /// JS asks to show one in-app from a block's page, by id.
         ///
-        /// `sourceInappId` is the feed the tap came from. `params` is forwarded untouched and merged
+        /// `sourceInappId` is the block's in-app the tap came from. `params` is forwarded untouched and merged
         /// flat into the shown in-app's start payload, where an incoming key overwrites.
         ///
         /// - Payload:
@@ -598,7 +598,7 @@ public struct BridgeMessage: Codable {
         ///   ```
         case showInApp
 
-        // MARK: Native → JS: Feeds
+        // MARK: Native → JS: Embedded pages
 
         /// SDK hands JS fresh initialization data, without reloading the page.
         ///
@@ -686,7 +686,7 @@ public struct BridgeMessage: Codable {
             case .navigationIntercepted:
                 return false
 
-            // Native → JS: Feeds and storage
+            // Native → JS: Embedded pages and storage
             case .initDataUpdated, .localStateChanged:
                 return false
             }

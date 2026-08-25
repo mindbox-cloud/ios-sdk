@@ -20,16 +20,16 @@ protocol EmbeddedBlockContentProviderMaking {
 final class EmbeddedBlockContentProviderFactory: EmbeddedBlockContentProviderMaking {
 
     private let registry: EmbeddedBlockPlaceRegistering
-    private let feed: EmbeddedBlockFeedServing
+    private let inappService: EmbeddedBlockInappServing
     private let failureManager: InappShowFailureManagerProtocol
     private let accounting: InappShowAccounting
 
     init(registry: EmbeddedBlockPlaceRegistering,
-         feed: EmbeddedBlockFeedServing,
+         inappService: EmbeddedBlockInappServing,
          failureManager: InappShowFailureManagerProtocol,
          accounting: InappShowAccounting) {
         self.registry = registry
-        self.feed = feed
+        self.inappService = inappService
         self.failureManager = failureManager
         self.accounting = accounting
     }
@@ -37,7 +37,7 @@ final class EmbeddedBlockContentProviderFactory: EmbeddedBlockContentProviderMak
     func makeProvider(placeSystemName: String) -> EmbeddedBlockWebViewProvider {
         EmbeddedBlockWebViewProvider(placeSystemName: placeSystemName,
                                      registry: registry,
-                                     feed: feed,
+                                     inappService: inappService,
                                      makePage: { EmbeddedBlockWebViewPage(content: $0) },
                                      accounting: accounting,
                                      reportFailure: { [failureManager] content, reason, details in

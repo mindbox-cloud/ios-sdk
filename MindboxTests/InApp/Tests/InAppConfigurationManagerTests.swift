@@ -92,8 +92,8 @@ struct InAppConfigurationManagerTests {
             wrapped.inapps(addressedTo: place, in: candidates)
         }
 
-        func filter(feedIds ids: [String], in candidates: ConfigCandidates) -> [InApp] {
-            wrapped.filter(feedIds: ids, in: candidates)
+        func filter(requestedIds ids: [String], in candidates: ConfigCandidates) -> [InApp] {
+            wrapped.filter(requestedIds: ids, in: candidates)
         }
 
         func filter(id: String, in candidates: ConfigCandidates) -> InApp? {
@@ -298,7 +298,7 @@ struct InAppConfigurationManagerTests {
         #expect(duration < 0.2, "the wait for the config leaked into the processing time: \(duration)s")
     }
 
-    @Test("One applied config is prepared once, however many blocks and feeds ask")
+    @Test("One applied config is prepared once, however many blocks and pages ask")
     func configIsPreparedOncePerDownload() async throws {
         let counting = CountingFilterService()
         let manager = InAppConfigurationManager(
@@ -316,14 +316,14 @@ struct InAppConfigurationManagerTests {
         try await waitUntil(api.isFetchPending)
         api.deliver(.data(try fixtureData()))
 
-        let feeds = Answers<[String]>()
+        let pages = Answers<[String]>()
         let places = Answers<InAppTransitionData?>()
-        manager.getShowableInappIds([Constants.liveStoryId], askedBy: "a-block") { feeds.append($0) }
+        manager.getShowableInappIds([Constants.liveStoryId], askedBy: "a-block") { pages.append($0) }
         manager.selectInappForPlace("stories-list-container", trigger: nil) { inapp, _ in places.append(inapp) }
-        manager.getShowableInappIds([Constants.liveStoryId], askedBy: "a-block") { feeds.append($0) }
+        manager.getShowableInappIds([Constants.liveStoryId], askedBy: "a-block") { pages.append($0) }
         manager.selectInappForPlace("stories-list-container", trigger: nil) { inapp, _ in places.append(inapp) }
 
-        try await waitUntil(feeds.all.count == 2 && places.all.count == 2)
+        try await waitUntil(pages.all.count == 2 && places.all.count == 2)
         #expect(counting.prepareCount == 1)
     }
 

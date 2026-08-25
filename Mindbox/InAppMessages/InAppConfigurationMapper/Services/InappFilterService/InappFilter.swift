@@ -22,7 +22,7 @@ struct ConfigCandidates {
 }
 
 /// The selection's view of the config: which in-apps are valid at all, and which of them a given
-/// path — trigger, place, feed, direct call — may consider. Every path starts from the same
+/// path — trigger, place, page, direct call — may consider. Every path starts from the same
 /// `ConfigCandidates`, built once per applied config, and narrows it by what changes at runtime.
 protocol InappFilterProtocol {
 
@@ -45,7 +45,7 @@ protocol InappFilterProtocol {
     /// The in-apps out of `ids` a page may draw, before targeting. The trigger chain minus the
     /// direct-call cut — that one would drop exactly the in-apps a page is made of. In the order asked,
     /// duplicates kept: the page gets back exactly what it asked about.
-    func filter(feedIds ids: [String], in candidates: ConfigCandidates) -> [InApp]
+    func filter(requestedIds ids: [String], in candidates: ConfigCandidates) -> [InApp]
 
     /// The in-app behind `id`, with no restriction checked — not the frequency, not the display
     /// conditions, not the A/B pool: an in-app the page has already offered has to open, and every
@@ -76,7 +76,7 @@ protocol InappFilterProtocol {
 
     /// The same targeting pass for callers that render something else: `pickVariant` names the
     /// variant the caller is going to draw, `nil` skips the candidate. One check, however many
-    /// paths ask it — a feed and a trigger disagreeing about who is targeted would be a defect
+    /// paths ask it — a page and a trigger disagreeing about who is targeted would be a defect
     /// nobody could explain.
     func filterInappsByTargeting(inapps: [InApp],
                                  targetingChecker: InAppTargetingCheckerProtocol,
@@ -118,12 +118,12 @@ final class InappsFilterService: InappFilterProtocol {
         filterInappsByPlace(place, inapps: candidates.renderable)
     }
 
-    func filter(feedIds ids: [String], in candidates: ConfigCandidates) -> [InApp] {
+    func filter(requestedIds ids: [String], in candidates: ConfigCandidates) -> [InApp] {
         let asked = Set(ids)
 
         let missing = asked.subtracting(candidates.renderable.map(\.id))
         if !missing.isEmpty {
-            Logger.common(message: "[InappsFilterService] The feed asked about in-app(s) this SDK cannot render: [\(missing.sorted().joined(separator: ", "))]",
+            Logger.common(message: "[InappsFilterService] The page asked about in-app(s) this SDK cannot render: [\(missing.sorted().joined(separator: ", "))]",
                           level: .debug, category: .inAppMessages)
         }
 

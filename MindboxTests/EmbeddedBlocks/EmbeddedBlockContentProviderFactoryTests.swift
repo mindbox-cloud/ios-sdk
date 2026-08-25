@@ -31,7 +31,7 @@ struct EmbeddedBlockContentProviderFactoryTests {
                                                   notificationCenter: NotificationCenter(),
                                                   fetchEmbeddedPlaces: { $0(nil) })
         let factory = EmbeddedBlockContentProviderFactory(registry: registry,
-                                                          feed: EmbeddedBlockFeedServiceMock(),
+                                                          inappService: EmbeddedBlockInappServiceMock(),
                                                           failureManager: InappShowFailureManagerMock(),
                                                           accounting: InappShowAccountingMock())
 
@@ -72,7 +72,7 @@ struct EmbeddedBlockContentProviderFactoryTests {
                                                   notificationCenter: NotificationCenter(),
                                                   fetchEmbeddedPlaces: { $0(nil) })
         let factory = EmbeddedBlockContentProviderFactory(registry: registry,
-                                                          feed: EmbeddedBlockFeedServiceMock(),
+                                                          inappService: EmbeddedBlockInappServiceMock(),
                                                           failureManager: manager,
                                                           accounting: InappShowAccountingMock())
 
@@ -94,7 +94,7 @@ struct EmbeddedBlockContentProviderFactoryTests {
                                                   notificationCenter: NotificationCenter(),
                                                   fetchEmbeddedPlaces: { $0(nil) })
         return EmbeddedBlockContentProviderFactory(registry: registry,
-                                                   feed: EmbeddedBlockFeedServiceMock(),
+                                                   inappService: EmbeddedBlockInappServiceMock(),
                                                    failureManager: InappShowFailureManagerMock(),
                                                    accounting: InappShowAccountingMock())
     }

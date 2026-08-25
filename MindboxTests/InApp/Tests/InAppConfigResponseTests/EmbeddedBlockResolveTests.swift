@@ -366,9 +366,9 @@ struct EmbeddedBlockResolveTests {
         #expect(await resolveId("44444444-4444-4444-4444-444444444444") == nil)
     }
 
-    // MARK: - What a feed may draw
+    // MARK: - What a page may draw
 
-    @Test("A feed may draw the stories and the modal, but not the block")
+    @Test("A page may draw the stories and the modal, but not the block")
     func feedKeepsDirectCallAndDropsTheBlock() async {
         #expect(await showable(everyId) == [Constants.unlimitedStoryId, Constants.modalId, Constants.onceStoryId].sorted())
     }
@@ -394,7 +394,7 @@ struct EmbeddedBlockResolveTests {
         #expect(await showable(["44444444-4444-4444-4444-444444444444"]).isEmpty)
     }
 
-    @Test("A feed vouches for every story it allows and for nothing it cuts")
+    @Test("A page vouches for every story it allows and for nothing it cuts")
     func feedVouchesForWhatItAllows() async {
         let allowed = await showable(everyId)
         let vouched = Set(dataFacade.trackTargetingCalls.compactMap(\.id))
@@ -403,12 +403,12 @@ struct EmbeddedBlockResolveTests {
         #expect(!vouched.contains(Constants.blockId))
     }
 
-    @Test("A story only an operation targets is not drawn for a feed")
+    @Test("A story only an operation targets is not drawn for a page")
     func feedDropsAnOperationTargetedStory() async {
         #expect(await showable([Constants.operationStoryId]).isEmpty)
     }
 
-    // MARK: - The feed answers without the network
+    // MARK: - The page's question and the network
 
     @Test("A page's question fetches the pass's dependencies like a place resolve")
     func pageQuestionFetchesLikeAPlace() async {
@@ -441,8 +441,8 @@ struct EmbeddedBlockResolveTests {
         #expect(await showable([Constants.segmentStoryId]) == [Constants.segmentStoryId])
     }
 
-    @Test("Spent show limits do not shrink a feed's answer")
-    func showLimitsDoNotShrinkTheFeedAnswer() async {
+    @Test("Spent show limits do not shrink a page's answer")
+    func showLimitsDoNotShrinkThePagesAnswer() async {
         spendEveryShowBudget()
 
         #expect(await showable([Constants.unlimitedStoryId]) == [Constants.unlimitedStoryId])
@@ -453,7 +453,7 @@ struct EmbeddedBlockResolveTests {
         #expect(await showable([]).isEmpty)
     }
 
-    @Test("Answering a feed writes nothing to the show history")
+    @Test("Answering a page writes nothing to the show history")
     func feedAnswerWritesNothingToShowHistory() async {
         _ = await showable(everyId)
 
@@ -506,7 +506,7 @@ struct EmbeddedBlockResolveTests {
         #expect(formData.inAppId == Constants.onceStoryId)
     }
 
-    /// The feed offers a mixed form because it has an overlay variant; the tap has to open that one
+    /// The page offers a mixed form because it has an overlay variant; the tap has to open that one
     /// even though the embedded variant comes first in the config.
     @Test("A tap on a mixed form opens its overlay variant")
     func mixedFormTapOpensTheOverlayVariant() async throws {
@@ -559,7 +559,7 @@ struct EmbeddedBlockResolveTests {
         #expect(dataFacade.targetingArray.contains(Constants.mixedId))
     }
 
-    @Test("A feed keeps a mixed in-app — its overlay half can be drawn")
+    @Test("A page keeps a mixed in-app — its overlay half can be drawn")
     func feedKeepsAMixedInapp() async {
         #expect(await showable([Constants.mixedId]) == [Constants.mixedId])
     }

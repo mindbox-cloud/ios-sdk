@@ -33,7 +33,7 @@ final class EmbeddedBlockWebViewProvider {
 
     private let placeSystemName: String
     private let registry: EmbeddedBlockPlaceRegistering
-    private let feed: EmbeddedBlockFeedServing
+    private let inappService: EmbeddedBlockInappServing
     private let makePage: (EmbeddedBlockWebContent) -> EmbeddedBlockPageHosting
 
     private let accounting: InappShowAccounting
@@ -68,7 +68,7 @@ final class EmbeddedBlockWebViewProvider {
 
     init(placeSystemName: String,
          registry: EmbeddedBlockPlaceRegistering,
-         feed: EmbeddedBlockFeedServing,
+         inappService: EmbeddedBlockInappServing,
          makePage: @escaping (EmbeddedBlockWebContent) -> EmbeddedBlockPageHosting,
          accounting: InappShowAccounting,
          reportFailure: @escaping (EmbeddedBlockWebContent, InAppShowFailureReason, String) -> Void,
@@ -78,7 +78,7 @@ final class EmbeddedBlockWebViewProvider {
          }) {
         self.placeSystemName = placeSystemName
         self.registry = registry
-        self.feed = feed
+        self.inappService = inappService
         self.makePage = makePage
         self.accounting = accounting
         self.reportFailure = reportFailure
@@ -349,7 +349,7 @@ final class EmbeddedBlockWebViewProvider {
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': showing in-app \(inappId) with \(params.count) param(s)",
                       category: .embeddedBlocks)
 
-        feed.showInapp(id: inappId, params: params)
+        inappService.showInapp(id: inappId, params: params)
     }
 
     /// A question shows nothing, so it is answered for as long as the block is running — including
@@ -358,7 +358,7 @@ final class EmbeddedBlockWebViewProvider {
         guard isStarted, let content else { return }
 
         let generation = loadGeneration
-        feed.showableInappIds(among: ids, askedBy: content.inAppId) { [weak self] allowed in
+        inappService.showableInappIds(among: ids, askedBy: content.inAppId) { [weak self] allowed in
             guard let self, self.isStarted, self.loadGeneration == generation else { return }
 
             completion(allowed)
