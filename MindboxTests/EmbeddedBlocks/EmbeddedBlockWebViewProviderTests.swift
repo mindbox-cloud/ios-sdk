@@ -117,7 +117,6 @@ struct EmbeddedBlockWebViewProviderTests {
 
     // MARK: - Accounting for the show
 
-    /// Whether a show sends the event, writes history or moves the cooldown is the accountant's rule; the block hands it what was shown.
     @Test("A block that drew its page hands the show to the accounting")
     func renderedBlockIsAccountedFor() throws {
         let bed = EmbeddedBlockTestBed(resolution: .content(.counted()))
@@ -132,7 +131,6 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(show.tags == EmbeddedBlockWebContent.stub.tags)
     }
 
-    /// The snapshot the place resolved to is what the user saw; the config may have moved on since.
     @Test("A show is accounted from the content the block was given, whatever the place resolves to later")
     func showIsAccountedFromTheSnapshot() throws {
         let bed = EmbeddedBlockTestBed(resolution: .content(.counted()))
@@ -203,7 +201,6 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.accounting.shows.count == 1)
     }
 
-    /// Whether a rebuilt page is a new show is the accountant's call — the block reports every page it drew.
     @Test("A page rebuilt for the same content hands its show to the accounting again")
     func rebuiltPageIsHandedToAccountingAgain() {
         let bed = EmbeddedBlockTestBed(resolution: .content(.counted()))
@@ -238,8 +235,8 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.accounting.shows.count == 1)
     }
 
-    @Test("Another in-app at the place is accounted on its own")
-    func anotherInappAtThePlaceIsAccounted() {
+    @Test("A page rebuilt for another in-app hands its show to the accounting again")
+    func pageForAnotherInappIsHandedToAccountingAgain() {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
         bed.page?.reportRendered(1)
@@ -428,7 +425,6 @@ struct EmbeddedBlockWebViewProviderTests {
 
     // MARK: - The data push's confirmation
 
-    /// A page silently showing yesterday's stories is the failure nobody files a report about — same remedy as Android's.
     @Test("A page that never confirms the data push is rebuilt")
     func silentDataPushRebuildsThePage() {
         let bed = EmbeddedBlockTestBed()
