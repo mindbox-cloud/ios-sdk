@@ -215,19 +215,6 @@ final class InappShowFailureManagerTests: XCTestCase {
         XCTAssertEqual(failures[0].errorDetails?.utf8.count, InappShowFailureManager.errorDetailsLimit)
     }
 
-    func testClearFailures_removesBufferedFailures() {
-        manager.addFailure(
-            inappId: "inapp-clear",
-            reason: .presentationFailed,
-            details: "clear me",
-            tags: nil
-        )
-        manager.clearFailures()
-        manager.sendFailures()
-
-        assertCreatedEventsCountEventually(0)
-    }
-
     func testSendFailures_success_clearsBufferedFailures() {
         manager.addFailure(
             inappId: "inapp-send-success",

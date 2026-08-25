@@ -51,10 +51,6 @@ final class MockInappShowFailureManager: InappShowFailureManagerProtocol {
 
     func sendFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?) {}
 
-    func clearFailures() {
-        failures.removeAll()
-    }
-
     func sendFailures() {}
 }
 

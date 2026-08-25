@@ -166,6 +166,13 @@ struct EmbeddedBlockResolveTests {
         #expect(persistenceStorage.lastInappStateChangeDate == nil)
     }
 
+    @Test("A place resolve sends its buffered failures when the pass ends")
+    func placeResolveSendsBufferedFailures() async {
+        _ = await resolvePlace(Constants.place)
+
+        #expect(dataFacade.sendCollectedFailuresCalls == 1)
+    }
+
     @Test("Spent show limits do not stop an unlimited block")
     func showLimitsDoNotStopAnUnlimitedBlock() async throws {
         spendEveryShowBudget()

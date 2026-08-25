@@ -169,6 +169,17 @@ struct InappRemainingTargetingTests {
         ])
     }
 
+    @Test("A pass that found a winner still sends the failures of the in-apps it cut", .tags(.remainingTargeting))
+    func passWithWinner_sendsTheCutInappsFailures() async throws {
+        let config = try InappTargetingConfig.tagsFailedTargeting.getConfig()
+
+        await handleInapps(event: nil, config: config)
+
+        assertTargetingShows(id: "2")
+        #expect(mockDataFacade.collectedTargetingFailureIds == [Set(["1", "3"])])
+        #expect(mockDataFacade.sendCollectedFailuresCalls == 1)
+    }
+
     @Test("Shown in-app propagates its tags into trackTargeting and downloadImage", .tags(.remainingTargeting, .inAppTags))
     func shownInapp_propagatesTagsToTrackTargetingAndDownloadImage() async throws {
         let config = try InappTargetingConfig.tagsFailedTargeting.getConfig()

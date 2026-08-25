@@ -179,11 +179,10 @@ struct InappScheduleManagerTests {
         }
     }
 
-    /// The delay keeps the manager's own timer out of the test: with no delay it fires at once and
-    /// clears the failures itself, which races the "not cleared yet" check below.
-    @Test("Eligible in-app cleanup clears buffered failures", .tags(.inAppSchedule))
-    func showEligibleInapp_clearsFailuresAfterCleanup() {
-        let inapp = createInAppFormData(id: "clear-on-show", isPriority: false, delayTime: "00:01:00")
+    /// The delay keeps the manager's own timer out of the test.
+    @Test("Eligible in-app cleanup leaves the failure buffer alone", .tags(.inAppSchedule))
+    func showEligibleInapp_leavesFailuresAlone() {
+        let inapp = createInAppFormData(id: "keep-failures", isPriority: false, delayTime: "00:01:00")
         scheduleManager.scheduleInApp(inapp, processingDuration: 0)
 
         var presentationTime: TimeInterval?
@@ -196,11 +195,10 @@ struct InappScheduleManagerTests {
             return
         }
 
-        #expect(failureManagerMock.clearFailuresCallCount == 0)
         scheduleManager.showEligibleInapp(presentationTime)
 
         scheduleManager.queue.sync {
-            #expect(self.failureManagerMock.clearFailuresCallCount == 1)
+            #expect(self.failureManagerMock.sendFailuresCallCount == 0)
             #expect(self.scheduleManager.inappsByPresentationTime.isEmpty)
         }
     }
@@ -342,16 +340,16 @@ struct InappScheduleManagerTests {
         }
     }
     
-    @Test("In-app success callback clears buffered failures", .tags(.inAppSchedule))
-    func presentInapp_onPresented_clearsFailures() {
+    @Test("In-app success callback leaves the failure buffer alone", .tags(.inAppSchedule))
+    func presentInapp_onPresented_leavesFailuresAlone() {
         let inapp = createInAppFormData(id: "success-id", isPriority: false, delayTime: nil)
 
         scheduleManager.presentInapp(inapp, stopwatch: ForegroundStopwatch())
         #expect(presentationManagerMock.presentCallsCount == 1)
-        #expect(failureManagerMock.clearFailuresCallCount == 0)
 
         presentationManagerMock.receivedOnPresent?()
-        #expect(failureManagerMock.clearFailuresCallCount == 1)
+        #expect(failureManagerMock.sendFailuresCallCount == 0)
+        #expect(failureManagerMock.addFailureCallCount == 0)
     }
     
     @Test("In-app error callback sends buffered failures", .tags(.inAppSchedule))
@@ -619,7 +617,6 @@ final class InappShowFailureManagerMock: InappShowFailureManagerProtocol {
 
     // @Locked: production calls these from its queues while the test reads from its own context.
     @Locked private(set) var addFailureCallCount = 0
-    @Locked private(set) var clearFailuresCallCount = 0
     @Locked private(set) var sendFailuresCallCount = 0
     @Locked private(set) var addFailureCalls: [AddFailureCall] = []
     @Locked private(set) var sentAtOnce: [AddFailureCall] = []
@@ -631,10 +628,6 @@ final class InappShowFailureManagerMock: InappShowFailureManagerProtocol {
 
     func sendFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?) {
         sentAtOnce.append(AddFailureCall(inappId: inappId, reason: reason, details: details, tags: tags))
-    }
-
-    func clearFailures() {
-        clearFailuresCallCount += 1
     }
 
     func sendFailures() {
