@@ -36,6 +36,17 @@ extension EmbeddedBlockWebContent {
                                 tags: stub.tags,
                                 params: [:])
     }
+
+    /// Content with a `delayTime`: the registry holds it before the block may draw it.
+    static func delayed(_ timeSpan: String = "00:00:05", params: [String: JSONValue] = [:]) -> EmbeddedBlockWebContent {
+        EmbeddedBlockWebContent(inAppId: "delayed-inapp-id",
+                                baseUrl: stub.baseUrl,
+                                contentUrl: stub.contentUrl,
+                                frequency: .unlimited,
+                                tags: stub.tags,
+                                params: params,
+                                delayTime: timeSpan)
+    }
 }
 
 final class InappShowAccountingMock: InappShowAccounting {

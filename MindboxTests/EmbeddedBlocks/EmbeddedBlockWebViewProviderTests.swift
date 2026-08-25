@@ -313,6 +313,27 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.failureReporter.reasons == [.presentationFailed])
     }
 
+    @Test("A delayed answer keeps the block loading and tells the container")
+    func delayedAnswerKeepsTheBlockLoading() {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.isDeferred = true
+        var delayedCalls = 0
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onContentDelayed = { delayedCalls += 1 }
+        bed.provider.onStateChange = { states.append($0) }
+        bed.provider.start()
+
+        bed.provider.contentIsDelayed()
+
+        #expect(bed.provider.isAwaitingDelayedContent)
+        #expect(delayedCalls == 1)
+        #expect(states == [.loading])
+
+        bed.provider.apply(.content(.stub), processingDuration: 0)
+
+        #expect(!bed.provider.isAwaitingDelayedContent)
+    }
+
     @Test("A block the SDK never answered reports one failure without an in-app")
     func unansweredBlockReportsOneUnattributedFailure() {
         let bed = EmbeddedBlockTestBed()

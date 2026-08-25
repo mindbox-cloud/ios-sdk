@@ -609,6 +609,24 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.bed.failureReporter.unansweredWaits == 0)
     }
 
+    @Test("A delayed answer stands the wait budget down and keeps the placeholder")
+    func delayedAnswerStandsTheBudgetDown() async {
+        let block = BlockFixture(resolution: .content(.delayed()))
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.attachToWindow()
+        await mainQueueTurn()
+
+        #expect(!block.waitBudgetBed.budget.isRunning)
+        #expect(block.view.intrinsicContentSize.height == 120)
+
+        block.expireTimeout()
+        await mainQueueTurn()
+
+        #expect(delegate.events.isEmpty)
+        #expect(block.bed.failureReporter.unansweredWaits == 0)
+    }
+
     @Test("The answer restarts the waiting budget")
     func answerRestartsTheBudget() async {
         let block = BlockFixture()

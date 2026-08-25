@@ -17,9 +17,14 @@ struct EmbeddedBlockPlaceRegistryTests {
     private final class BlockFake: EmbeddedBlockPlaceHandling {
         var isActive = true
         private(set) var applied: [EmbeddedBlockResolution] = []
+        private(set) var delayedCount = 0
 
         func apply(_ resolution: EmbeddedBlockResolution, processingDuration: TimeInterval) {
             applied.append(resolution)
+        }
+
+        func contentIsDelayed() {
+            delayedCount += 1
         }
     }
 
@@ -27,18 +32,27 @@ struct EmbeddedBlockPlaceRegistryTests {
         let resolver: EmbeddedBlockResolverMock
         let center: NotificationCenter
         let embeddedPlaces: EmbeddedPlacesStub
+        let delayScheduler: TestScheduler
         let registry: EmbeddedBlockPlaceRegistry
 
         init() {
+            // Served delays live on the shared session singleton — reset, or rigs would see each other's.
+            SessionTemporaryStorage.shared.servedPlaceDelays = []
+
             let resolver = EmbeddedBlockResolverMock()
             let center = NotificationCenter()
             let embeddedPlaces = EmbeddedPlacesStub()
+            let delayScheduler = TestScheduler()
             self.resolver = resolver
             self.center = center
             self.embeddedPlaces = embeddedPlaces
+            self.delayScheduler = delayScheduler
             registry = EmbeddedBlockPlaceRegistry(resolver: resolver,
                                                   notificationCenter: center,
-                                                  fetchEmbeddedPlaces: { embeddedPlaces.fetch($0) })
+                                                  fetchEmbeddedPlaces: { embeddedPlaces.fetch($0) },
+                                                  delayedDelivery: EmbeddedBlockDelayedDelivery(isInBackground: { false },
+                                                                                                notificationCenter: center,
+                                                                                                schedule: { delayScheduler.schedule($0, $1) }))
         }
 
         func announceNewConfig() {
@@ -349,6 +363,77 @@ struct EmbeddedBlockPlaceRegistryTests {
         #expect(rig.resolver.resolveCount == 1)
         let carried = rig.resolver.triggers.last ?? nil
         #expect(carried == nil)
+    }
+
+    // MARK: - delayTime
+
+    @Test("A winner with delayTime is delivered when the delay runs out")
+    func delayedWinnerIsDeliveredAfterTheDelay() {
+        let rig = Rig()
+        rig.resolver.resolution = .content(.delayed("00:00:05"))
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+
+        rig.registry.blockAppeared("stories")
+
+        #expect(block.applied.isEmpty)
+        #expect(block.delayedCount == 1)
+        #expect(rig.delayScheduler.lastDelay == 5)
+
+        rig.delayScheduler.fireAll()
+
+        #expect(block.applied == [.content(.delayed("00:00:05"))])
+    }
+
+    @Test("A different answer during the delay replaces the waiting one")
+    func newAnswerDuringTheDelayReplacesIt() {
+        let rig = Rig()
+        rig.resolver.resolution = .content(.delayed())
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+
+        rig.resolver.resolution = .content(.stub)
+        rig.announceNewConfig()
+        rig.delayScheduler.fireAll()
+
+        #expect(block.applied == [.content(.stub)])
+    }
+
+    @Test("The same winner resolved again keeps its delay running and arrives with the newest content")
+    func sameWinnerKeepsItsDelay() {
+        let rig = Rig()
+        rig.resolver.resolution = .content(.delayed())
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+
+        rig.resolver.resolution = .content(.delayed(params: ["fresh": .bool(true)]))
+        rig.announceNewConfig()
+
+        #expect(block.delayedCount == 1)
+        #expect(block.applied.isEmpty)
+
+        rig.delayScheduler.fireAll()
+
+        #expect(block.applied == [.content(.delayed(params: ["fresh": .bool(true)]))])
+    }
+
+    @Test("A block that comes back after its delay ran out gets the content at once")
+    func returningBlockAfterTheDelayIsAnsweredAtOnce() {
+        let rig = Rig()
+        rig.resolver.resolution = .content(.delayed())
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+        block.isActive = false
+        rig.delayScheduler.fireAll()
+
+        block.isActive = true
+        rig.registry.blockAppeared("stories")
+
+        #expect(block.applied.count == 2)
+        #expect(block.delayedCount == 1)
     }
 
     // MARK: - Lifetime
