@@ -54,13 +54,53 @@ final class InappShowFailureManagerTests: XCTestCase {
         XCTAssertEqual(failures[0].errorDetails, "No window available")
     }
 
-    func testSendUnattributedFailure_sendsAnEmptyFailuresArray() throws {
-        manager.sendUnattributedFailure()
+    func testEveryInappFailure_goesOutInErrorsTypedInappShowFailure_neverInFailures() throws {
+        manager.addFailure(inappId: "inapp-1", reason: .geoRequestFailed, details: nil, tags: nil)
+        manager.addFailure(inappId: "inapp-2", reason: .imageDownloadFailed, details: nil, tags: ["a": "b"])
+
+        manager.sendFailures()
+
+        assertCreatedEventsCountEventually(1)
+        let event = try XCTUnwrap(databaseRepository.createdEvents.first)
+        XCTAssertFalse(event.body.contains("\"failures\""))
+        let errors = try XCTUnwrap(decodeFailures(from: event))
+        XCTAssertEqual(errors.map(\.type), ["inappShowFailure", "inappShowFailure"])
+        XCTAssertEqual(errors.map(\.inappId), ["inapp-1", "inapp-2"])
+        XCTAssertEqual(errors.map(\.placeSystemName), [nil, nil])
+        XCTAssertEqual(errors[1].tags, ["a": "b"])
+    }
+
+    func testSendWaitBudgetExceeded_namesThePlaceInAnEmbeddedBlockShowFailure() throws {
+        manager.sendWaitBudgetExceeded(place: "silent-place", waited: 30, phase: .configMissing)
 
         assertCreatedEventsCountEventually(1)
         let event = try XCTUnwrap(databaseRepository.createdEvents.first)
         XCTAssertEqual(event.type, .inAppShowFailureEvent)
-        XCTAssertTrue(try XCTUnwrap(decodeFailures(from: event)).isEmpty)
+        XCTAssertFalse(event.body.contains("\"failures\""))
+        let error = try XCTUnwrap(decodeFailures(from: event)?.first)
+        XCTAssertEqual(error.type, "embeddedBlockShowFailure")
+        XCTAssertEqual(error.placeSystemName, "silent-place")
+        XCTAssertEqual(error.failureReason, .waitBudgetExceeded)
+        XCTAssertEqual(error.errorDetails, "phase=config_missing; waited=0:00:30.0000000")
+        XCTAssertNil(error.inappId)
+        XCTAssertNil(error.tags)
+        XCTAssertFalse(error.dateTimeUtc.isEmpty)
+    }
+
+    func testSendWaitBudgetExceeded_saysWhatTheSDKWasBusyWith() throws {
+        manager.sendWaitBudgetExceeded(place: "silent-place", waited: 12.5, phase: .resolvePending)
+
+        assertCreatedEventsCountEventually(1)
+        let error = try XCTUnwrap(decodeFailures(from: try XCTUnwrap(databaseRepository.createdEvents.first))?.first)
+        XCTAssertEqual(error.errorDetails, "phase=resolve_pending; waited=0:00:12.5000000")
+    }
+
+    func testSendWaitBudgetExceeded_whenFeatureDisabled_sendsNothing() {
+        applyFeatureToggle(shouldSendInAppShowError: false)
+
+        manager.sendWaitBudgetExceeded(place: "silent-place", waited: 30, phase: .configMissing)
+
+        assertCreatedEventsCountEventually(0)
     }
 
     func testAddFailure_setsDateTimeUtcInsideMethod() throws {
@@ -477,12 +517,28 @@ final class InappShowFailureManagerTests: XCTestCase {
 }
 
 private extension InappShowFailureManagerTests {
-    struct InAppShowFailuresBody: Decodable {
-        let failures: [InAppShowFailure]
+    /// The wire shape, every `$type` flattened into one record: what the backend reads, not what the SDK built it from.
+    struct ShowError: Decodable {
+        let type: String
+        let inappId: String?
+        let placeSystemName: String?
+        let failureReason: InAppShowFailureReason
+        let errorDetails: String?
+        let dateTimeUtc: String
+        let tags: [String: String]?
+
+        private enum CodingKeys: String, CodingKey {
+            case type = "$type"
+            case inappId, placeSystemName, failureReason, errorDetails, dateTimeUtc, tags
+        }
     }
 
-    func decodeFailures(from event: Event) -> [InAppShowFailure]? {
-        BodyDecoder<InAppShowFailuresBody>(decodable: event.body)?.body.failures
+    struct InAppShowErrorsBody: Decodable {
+        let errors: [ShowError]
+    }
+
+    func decodeFailures(from event: Event) -> [ShowError]? {
+        BodyDecoder<InAppShowErrorsBody>(decodable: event.body)?.body.errors
     }
 
     func applyFeatureToggle(shouldSendInAppShowError: Bool) {

@@ -355,9 +355,9 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.resolver.isDeferred = true
         bed.provider.start()
 
-        bed.provider.reportAnswerTimedOut()
+        bed.provider.reportAnswerTimedOut(waited: 30)
 
-        #expect(bed.failureReporter.unansweredWaits == 1)
+        #expect(bed.failureReporter.unansweredWaits == [30])
         #expect(bed.failureReporter.reported.isEmpty)
     }
 
@@ -367,10 +367,10 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.resolver.isDeferred = true
         bed.provider.start()
 
-        bed.provider.reportAnswerTimedOut()
-        bed.provider.reportAnswerTimedOut()
+        bed.provider.reportAnswerTimedOut(waited: 30)
+        bed.provider.reportAnswerTimedOut(waited: 30)
 
-        #expect(bed.failureReporter.unansweredWaits == 1)
+        #expect(bed.failureReporter.unansweredWaits.count == 1)
     }
 
     @Test("Another place's unanswered wait is reported on its own")
@@ -378,11 +378,11 @@ struct EmbeddedBlockWebViewProviderTests {
         let first = EmbeddedBlockTestBed(placeSystemName: "first-place")
         let second = EmbeddedBlockTestBed(placeSystemName: "second-place")
 
-        first.provider.reportAnswerTimedOut()
-        second.provider.reportAnswerTimedOut()
+        first.provider.reportAnswerTimedOut(waited: 30)
+        second.provider.reportAnswerTimedOut(waited: 30)
 
-        #expect(first.failureReporter.unansweredWaits == 1)
-        #expect(second.failureReporter.unansweredWaits == 1)
+        #expect(first.failureReporter.unansweredWaits.count == 1)
+        #expect(second.failureReporter.unansweredWaits.count == 1)
     }
 
     @Test("An empty place reports nothing")

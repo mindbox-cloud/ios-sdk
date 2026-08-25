@@ -53,7 +53,7 @@ final class MockInappShowFailureManager: InappShowFailureManagerProtocol {
 
     func sendFailures() {}
 
-    func sendUnattributedFailure() {}
+    func sendWaitBudgetExceeded(place: String, waited: TimeInterval, phase: EmbeddedBlockShowFailure.Phase) {}
 }
 
 final class InAppConfigurationDataFacadeTests: XCTestCase {

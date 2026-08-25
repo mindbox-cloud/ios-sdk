@@ -586,7 +586,7 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.view.intrinsicContentSize.height == 0)
         #expect(block.view.subviews.isEmpty)
         #expect(delegate.events == [.failed])
-        #expect(block.bed.failureReporter.unansweredWaits == 1)
+        #expect(block.bed.failureReporter.unansweredWaits == [block.waitBudgetBed.duration])
         #expect(block.bed.failureReporter.reported.isEmpty)
     }
 
@@ -606,7 +606,7 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.view.subviews.contains(errorView))
         #expect(delegate.events == [.failed])
         #expect(block.bed.failureReporter.reasons == [.presentationFailed])
-        #expect(block.bed.failureReporter.unansweredWaits == 0)
+        #expect(block.bed.failureReporter.unansweredWaits.isEmpty)
     }
 
     @Test("A delayed answer stands the wait budget down and keeps the placeholder")
@@ -624,7 +624,7 @@ struct MindboxEmbeddedBlockViewTests {
         await mainQueueTurn()
 
         #expect(delegate.events.isEmpty)
-        #expect(block.bed.failureReporter.unansweredWaits == 0)
+        #expect(block.bed.failureReporter.unansweredWaits.isEmpty)
     }
 
     @Test("The answer restarts the waiting budget")

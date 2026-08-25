@@ -65,23 +65,32 @@ struct EmbeddedBlockContentProviderFactoryTests {
         #expect(manager.sentAtOnce.first?.tags == ["campaign": "stories"])
     }
 
-    @Test("A block's unanswered wait is sent as a failure without an in-app")
-    func unansweredWaitIsSentUnattributed() {
+    @Test("A block's unanswered wait names the place, how long it waited and what the SDK was still missing",
+          arguments: [(hasConfig: false, phase: EmbeddedBlockShowFailure.Phase.configMissing),
+                      (hasConfig: true, phase: .resolvePending)])
+    func unansweredWaitNamesThePlaceAndThePhase(hasConfig: Bool, phase: EmbeddedBlockShowFailure.Phase) {
         let manager = InappShowFailureManagerMock()
+        let inappService = EmbeddedBlockInappServiceMock()
+        inappService.hasConfig = hasConfig
         let registry = EmbeddedBlockPlaceRegistry(resolver: EmbeddedBlockResolverMock(resolution: .empty),
                                                   notificationCenter: NotificationCenter(),
                                                   fetchEmbeddedPlaces: { $0(nil) })
         let factory = EmbeddedBlockContentProviderFactory(registry: registry,
-                                                          inappService: EmbeddedBlockInappServiceMock(),
+                                                          inappService: inappService,
                                                           failureManager: manager,
                                                           accounting: InappShowAccountingMock())
 
-        let provider = factory.makeProvider(placeSystemName: "factory-silent-place")
+        // Reported once per place per session, so each case gets its own place.
+        let place = "factory-silent-place-\(phase.rawValue)"
+        let provider = factory.makeProvider(placeSystemName: place)
         withExtendedLifetime(provider) {
-            provider.reportAnswerTimedOut()
+            provider.reportAnswerTimedOut(waited: 30)
         }
 
-        #expect(manager.unattributedFailureCount == 1)
+        #expect(manager.waitBudgetExceeded.count == 1)
+        #expect(manager.waitBudgetExceeded.first?.place == place)
+        #expect(manager.waitBudgetExceeded.first?.waited == 30)
+        #expect(manager.waitBudgetExceeded.first?.phase == phase)
         #expect(manager.sentAtOnce.isEmpty)
     }
 

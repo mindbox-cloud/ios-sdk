@@ -46,6 +46,18 @@ struct EmbeddedBlockInappServiceTests {
         #expect(bed.answers == [["story-1"]])
     }
 
+    @Test("Whether a config is in hand is asked of the configuration every time")
+    func hasConfigIsAskedOfTheConfiguration() {
+        var known = false
+        let service = EmbeddedBlockInappService(hasConfig: { known })
+
+        #expect(!service.hasConfig)
+
+        known = true
+
+        #expect(service.hasConfig)
+    }
+
     @Test("A tap fetches the in-app with its params and hands it to the scheduler")
     func tapHandsTheFetchedInappToTheScheduler() {
         var fetched: [(id: String, params: [String: JSONValue])] = []

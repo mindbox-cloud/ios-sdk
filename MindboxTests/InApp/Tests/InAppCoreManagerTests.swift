@@ -15,6 +15,7 @@ struct InAppCoreManagerTests {
 
     private final class ConfigManagerStub: InAppConfigurationManagerProtocol {
         weak var delegate: InAppConfigurationDelegate?
+        var hasConfig = false
 
         func prepareConfiguration() {}
         func handleInapps(event: ApplicationEvent?, _ completion: @escaping (InAppFormData?) -> Void) {

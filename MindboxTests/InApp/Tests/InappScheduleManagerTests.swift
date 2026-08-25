@@ -633,7 +633,7 @@ final class InappShowFailureManagerMock: InappShowFailureManagerProtocol {
     // @Locked: production calls these from its queues while the test reads from its own context.
     @Locked private(set) var addFailureCallCount = 0
     @Locked private(set) var sendFailuresCallCount = 0
-    @Locked private(set) var unattributedFailureCount = 0
+    @Locked private(set) var waitBudgetExceeded: [(place: String, waited: TimeInterval, phase: EmbeddedBlockShowFailure.Phase)] = []
     @Locked private(set) var addFailureCalls: [AddFailureCall] = []
     @Locked private(set) var sentAtOnce: [AddFailureCall] = []
 
@@ -650,7 +650,7 @@ final class InappShowFailureManagerMock: InappShowFailureManagerProtocol {
         sendFailuresCallCount += 1
     }
 
-    func sendUnattributedFailure() {
-        unattributedFailureCount += 1
+    func sendWaitBudgetExceeded(place: String, waited: TimeInterval, phase: EmbeddedBlockShowFailure.Phase) {
+        waitBudgetExceeded.append((place, waited, phase))
     }
 }

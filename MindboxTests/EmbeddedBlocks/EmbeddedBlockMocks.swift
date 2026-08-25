@@ -80,15 +80,15 @@ final class EmbeddedBlockFailureReporterMock {
 
     var reasons: [InAppShowFailureReason] { reported.map(\.reason) }
 
-    /// Failures with no in-app behind them: the SDK never answered the block.
-    private(set) var unansweredWaits = 0
+    /// Failures with no in-app behind them — the SDK never answered the block — by how long it waited.
+    private(set) var unansweredWaits: [TimeInterval] = []
 
     func report(_ content: EmbeddedBlockWebContent, _ reason: InAppShowFailureReason, _ details: String) {
         reported.append((content.inAppId, reason, details, content.tags))
     }
 
-    func reportUnansweredWait() {
-        unansweredWaits += 1
+    func reportUnansweredWait(_ waited: TimeInterval) {
+        unansweredWaits.append(waited)
     }
 }
 
@@ -362,6 +362,8 @@ final class EmbeddedBlockResolverMock: EmbeddedBlockResolving {
 
 final class EmbeddedBlockInappServiceMock: EmbeddedBlockInappServing {
 
+    var hasConfig = false
+
     var allowed: [String] = []
 
     var isDeferred = false
@@ -557,7 +559,7 @@ final class EmbeddedBlockTestBed {
                                                      makePage: { pageFactory.make($0) },
                                                      accounting: accounting,
                                                      reportFailure: { failureReporter.report($0, $1, $2) },
-                                                     reportUnansweredWait: { failureReporter.reportUnansweredWait() },
+                                                     reportUnansweredWait: { failureReporter.reportUnansweredWait($0) },
                                                      scheduleAckTimeout: { ackScheduler.schedule($0, $1) })
     }
 

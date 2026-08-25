@@ -207,6 +207,18 @@ struct InAppConfigurationManagerTests {
         #expect(answers.all == [[]])
     }
 
+    @Test("A config is in hand only once the download concluded with one")
+    func hasConfigFollowsTheDownload() async throws {
+        #expect(!manager.hasConfig)
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        #expect(!manager.hasConfig)
+
+        api.deliver(.data(try fixtureData()))
+
+        try await waitUntil(manager.hasConfig)
+    }
+
     @Test("A failed download with no cache answers with nothing at once")
     func failedDownloadAnswersWithoutWaitingOutTheBudget() async throws {
         let slowBudgetManager = InAppConfigurationManager(
