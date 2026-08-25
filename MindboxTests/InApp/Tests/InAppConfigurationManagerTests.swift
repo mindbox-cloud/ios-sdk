@@ -139,15 +139,21 @@ struct InAppConfigurationManagerTests {
         persistenceStorage.shownDatesByInApp = [:]
         persistenceStorage.deviceUUID = "00000000-0000-0000-0000-000000000000"
 
-        manager = InAppConfigurationManager(
+        manager = Self.makeManager(api: api, configWaitBudget: 0.2)
+    }
+
+    private static func makeManager(api: InAppConfigurationAPI,
+                                    configWaitBudget: TimeInterval,
+                                    inappFilterService: InappFilterProtocol = DI.injectOrFail(InappFilterProtocol.self)) -> InAppConfigurationManager {
+        InAppConfigurationManager(
             inAppConfigAPI: api,
             inAppConfigRepository: EmptyConfigRepository(),
             inappMapper: DI.injectOrFail(InappMapperProtocol.self),
-            persistenceStorage: persistenceStorage,
+            persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
             featureToggleManager: DI.injectOrFail(FeatureToggleManager.self),
             webViewPrewarmService: DI.injectOrFail(InAppWebViewPrewarmServiceProtocol.self),
-            inappFilterService: DI.injectOrFail(InappFilterProtocol.self),
-            configWaitBudget: 0.2
+            inappFilterService: inappFilterService,
+            configWaitBudget: configWaitBudget
         )
     }
 
@@ -221,16 +227,7 @@ struct InAppConfigurationManagerTests {
 
     @Test("A failed download with no cache answers with nothing at once")
     func failedDownloadAnswersWithoutWaitingOutTheBudget() async throws {
-        let slowBudgetManager = InAppConfigurationManager(
-            inAppConfigAPI: api,
-            inAppConfigRepository: EmptyConfigRepository(),
-            inappMapper: DI.injectOrFail(InappMapperProtocol.self),
-            persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
-            featureToggleManager: DI.injectOrFail(FeatureToggleManager.self),
-            webViewPrewarmService: DI.injectOrFail(InAppWebViewPrewarmServiceProtocol.self),
-            inappFilterService: DI.injectOrFail(InappFilterProtocol.self),
-            configWaitBudget: 60
-        )
+        let slowBudgetManager = Self.makeManager(api: api, configWaitBudget: 60)
         slowBudgetManager.prepareConfiguration()
         try await waitUntil(api.isFetchPending)
 
@@ -259,16 +256,7 @@ struct InAppConfigurationManagerTests {
 
     @Test("A caller arriving after a failed download is answered with nothing at once")
     func callerAfterFailedDownloadDoesNotWaitOutTheBudget() async throws {
-        let slowBudgetManager = InAppConfigurationManager(
-            inAppConfigAPI: api,
-            inAppConfigRepository: EmptyConfigRepository(),
-            inappMapper: DI.injectOrFail(InappMapperProtocol.self),
-            persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
-            featureToggleManager: DI.injectOrFail(FeatureToggleManager.self),
-            webViewPrewarmService: DI.injectOrFail(InAppWebViewPrewarmServiceProtocol.self),
-            inappFilterService: DI.injectOrFail(InappFilterProtocol.self),
-            configWaitBudget: 60
-        )
+        let slowBudgetManager = Self.makeManager(api: api, configWaitBudget: 60)
         slowBudgetManager.prepareConfiguration()
         try await waitUntil(api.isFetchPending)
         api.deliver(.error(MindboxError.connectionError))
@@ -293,36 +281,29 @@ struct InAppConfigurationManagerTests {
         #expect((answers.first ?? nil)?.inAppId == "11111111-1111-1111-1111-111111111111")
     }
 
-    @Test("The place's processing time starts once the config is there, not when the block asked")
-    func placeProcessingTimeStartsAfterTheConfig() async throws {
-        manager.prepareConfiguration()
+    @Test("The place's processing time runs from the block's request, the wait for the config included")
+    func placeProcessingTimeIncludesTheWaitForTheConfig() async throws {
+        let patientManager = Self.makeManager(api: api, configWaitBudget: 60)
+        patientManager.prepareConfiguration()
         try await waitUntil(api.isFetchPending)
 
-        let durations = Answers<TimeInterval>()
-        manager.selectInappForPlace("stories-list-container", trigger: nil) { _, processingDuration in
-            durations.append(processingDuration)
+        let answers = Answers<(inapp: InAppTransitionData?, duration: TimeInterval)>()
+        patientManager.selectInappForPlace("stories-list-container", trigger: nil) { inapp, processingDuration in
+            answers.append((inapp, processingDuration))
         }
         try await Task.sleep(nanoseconds: 300_000_000)
         api.deliver(.data(try fixtureData()))
 
-        try await waitUntil(!durations.isEmpty)
-        let duration = try #require(durations.first)
-        #expect(duration < 0.2, "the wait for the config leaked into the processing time: \(duration)s")
+        try await waitUntil(!answers.isEmpty)
+        let answer = try #require(answers.first)
+        #expect(answer.inapp != nil, "the place was not answered from the config")
+        #expect(answer.duration >= 0.3, "the wait for the config is missing from the processing time: \(answer.duration)s")
     }
 
     @Test("One applied config is prepared once, however many blocks and pages ask")
     func configIsPreparedOncePerDownload() async throws {
         let counting = CountingFilterService()
-        let manager = InAppConfigurationManager(
-            inAppConfigAPI: api,
-            inAppConfigRepository: EmptyConfigRepository(),
-            inappMapper: DI.injectOrFail(InappMapperProtocol.self),
-            persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
-            featureToggleManager: DI.injectOrFail(FeatureToggleManager.self),
-            webViewPrewarmService: DI.injectOrFail(InAppWebViewPrewarmServiceProtocol.self),
-            inappFilterService: counting,
-            configWaitBudget: 0.2
-        )
+        let manager = Self.makeManager(api: api, configWaitBudget: 0.2, inappFilterService: counting)
 
         manager.prepareConfiguration()
         try await waitUntil(api.isFetchPending)

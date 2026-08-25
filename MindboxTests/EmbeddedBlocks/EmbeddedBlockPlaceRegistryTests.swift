@@ -17,10 +17,12 @@ struct EmbeddedBlockPlaceRegistryTests {
     private final class BlockFake: EmbeddedBlockPlaceHandling {
         var isActive = true
         private(set) var applied: [EmbeddedBlockResolution] = []
+        private(set) var processingDurations: [TimeInterval] = []
         private(set) var delayedCount = 0
 
         func apply(_ resolution: EmbeddedBlockResolution, processingDuration: TimeInterval) {
             applied.append(resolution)
+            processingDurations.append(processingDuration)
         }
 
         func contentIsDelayed() {
@@ -383,6 +385,20 @@ struct EmbeddedBlockPlaceRegistryTests {
         rig.delayScheduler.fireAll()
 
         #expect(block.applied == [.content(.delayed("00:00:05"))])
+    }
+
+    @Test("The delay a winner waited out is not added to the selection's time")
+    func delayIsNotAddedToTheProcessingTime() {
+        let rig = Rig()
+        rig.resolver.resolution = .content(.delayed("00:00:05"))
+        rig.resolver.processingDuration = 2
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+
+        rig.registry.blockAppeared("stories")
+        rig.delayScheduler.fireAll()
+
+        #expect(block.processingDurations == [2])
     }
 
     @Test("A different answer during the delay replaces the waiting one")
