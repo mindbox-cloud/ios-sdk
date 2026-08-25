@@ -598,29 +598,14 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.page?.responses.map(\.payload) == [.object(["inappIds": .array([.string("story-1")])])])
     }
 
-    @Test("A delivered answer is vouched for once")
-    func deliveredAnswerIsVouchedFor() {
+    @Test("The question names the block's own in-app")
+    func questionNamesTheBlocksInapp() {
         let bed = EmbeddedBlockTestBed()
-        bed.feed.allowed = ["story-1", "story-2"]
-        bed.provider.start()
-
-        bed.page?.send(.filterShowableInapps, ["inappIds": .array([.string("story-1"), .string("story-2")])])
-
-        #expect(bed.feed.vouchCount == 1)
-    }
-
-    @Test("An answer landing after a stop is not vouched for")
-    func droppedAnswerIsNotVouchedFor() {
-        let bed = EmbeddedBlockTestBed()
-        bed.feed.allowed = ["story-1"]
-        bed.feed.isDeferred = true
         bed.provider.start()
 
         bed.page?.send(.filterShowableInapps, ["inappIds": .array([.string("story-1")])])
-        bed.provider.stop()
-        bed.feed.flush()
 
-        #expect(bed.feed.vouchCount == 0)
+        #expect(bed.feed.askedBy == [EmbeddedBlockWebContent.stub.inAppId])
     }
 
     @Test("An answer landing after a stop is dropped")

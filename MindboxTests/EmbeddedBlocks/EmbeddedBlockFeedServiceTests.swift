@@ -91,17 +91,26 @@ struct EmbeddedBlockFeedServiceTests {
 
     @Test("An answer from a background thread is delivered on the main thread")
     func backgroundAnswerIsDeliveredOnTheMainThread() async {
-        let service = EmbeddedBlockFeedService(ask: { _, completion in
-            DispatchQueue.global().async { completion(FeedAnswer(inappIds: ["story-1"], vouch: {})) }
+        let service = EmbeddedBlockFeedService(ask: { _, _, completion in
+            DispatchQueue.global().async { completion(["story-1"]) }
         })
 
         let deliveredOnMainThread: Bool = await withCheckedContinuation { continuation in
-            service.showableInappIds(among: ["story-1"]) { _ in
+            service.showableInappIds(among: ["story-1"], askedBy: "block") { _ in
                 continuation.resume(returning: Thread.isMainThread)
             }
         }
 
         #expect(deliveredOnMainThread)
+    }
+
+    @Test("The block's in-app travels with the question")
+    func blockInappTravelsWithTheQuestion() {
+        let bed = FeedBed(allowed: ["story-1"])
+
+        bed.ask(["story-1"], askedBy: "block-1")
+
+        #expect(bed.askedBy == ["block-1"])
     }
 }
 
@@ -110,48 +119,52 @@ private final class FeedBed {
 
     private(set) var answers: [[String]] = []
     private(set) var askedIds: [[String]] = []
+    private(set) var askedBy: [String] = []
 
     private let service: EmbeddedBlockFeedService
     private let allowed: [String]
     private let isDeferred: Bool
 
-    private var pending: [(FeedAnswer) -> Void] = []
+    private var pending: [([String]) -> Void] = []
 
     init(allowed: [String] = [], isDeferred: Bool = false) {
         self.allowed = allowed
         self.isDeferred = isDeferred
 
-        var askedIds: (([String]) -> Void)?
-        var ask: ((@escaping (FeedAnswer) -> Void) -> Void)?
+        var asked: (([String], String) -> Void)?
+        var ask: ((@escaping ([String]) -> Void) -> Void)?
 
         service = EmbeddedBlockFeedService(
-            ask: { ids, completion in
-                askedIds?(ids)
+            ask: { ids, blockInappId, completion in
+                asked?(ids, blockInappId)
                 ask?(completion)
             }
         )
 
-        askedIds = { [weak self] ids in self?.askedIds.append(ids) }
+        asked = { [weak self] ids, blockInappId in
+            self?.askedIds.append(ids)
+            self?.askedBy.append(blockInappId)
+        }
         ask = { [weak self] completion in
             guard let self else { return }
 
             if self.isDeferred {
                 self.pending.append(completion)
             } else {
-                completion(FeedAnswer(inappIds: self.allowed, vouch: {}))
+                completion(self.allowed)
             }
         }
     }
 
-    func ask(_ ids: [String]) {
-        service.showableInappIds(among: ids) { [weak self] answer in
-            self?.answers.append(answer.inappIds)
+    func ask(_ ids: [String], askedBy blockInappId: String = "block") {
+        service.showableInappIds(among: ids, askedBy: blockInappId) { [weak self] allowed in
+            self?.answers.append(allowed)
         }
     }
 
     func flushSelection() {
         let completions = pending
         pending = []
-        completions.forEach { $0(FeedAnswer(inappIds: allowed, vouch: {})) }
+        completions.forEach { $0(allowed) }
     }
 }

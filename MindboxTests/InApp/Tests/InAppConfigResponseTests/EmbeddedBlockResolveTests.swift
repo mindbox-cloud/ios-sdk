@@ -76,13 +76,13 @@ struct EmbeddedBlockResolveTests {
         }
     }
 
-    private func showable(_ ids: [String]) async -> [String] {
+    private func showable(_ ids: [String], askedBy blockInappId: String = Constants.blockId) async -> [String] {
+        await showableInOrder(ids, askedBy: blockInappId).sorted()
+    }
+
+    private func showableInOrder(_ ids: [String], askedBy blockInappId: String = Constants.blockId) async -> [String] {
         await withCheckedContinuation { continuation in
-            mapper.getShowableInappIds(ids, candidates) { answer in
-                // Delivering the answer, as a block does, is what sends targeting — the selection does not vouch by itself.
-                answer.vouch()
-                continuation.resume(returning: answer.inappIds.sorted())
-            }
+            mapper.getShowableInappIds(ids, askedBy: blockInappId, candidates) { continuation.resume(returning: $0) }
         }
     }
 
@@ -144,14 +144,46 @@ struct EmbeddedBlockResolveTests {
         #expect(vouched.count == 1)
     }
 
-    /// Every delivered answer is a new offer — the rule operation targeting lives by (in sync with Android).
-    @Test("A feed asking again vouches for the same in-apps again")
-    func feedVouchesPerDeliveredAnswer() async {
+    @Test("A page asking again vouches for nothing it was already told about")
+    func pageVouchesOncePerSession() async {
         _ = await showable(everyId)
         _ = await showable(everyId)
 
         let vouched = dataFacade.trackTargetingCalls.filter { $0.id == Constants.unlimitedStoryId }
+        #expect(vouched.count == 1)
+    }
+
+    @Test("Another block asking about the same in-app vouches for it again")
+    func anotherBlockVouchesAgain() async {
+        _ = await showable(everyId, askedBy: Constants.blockId)
+        _ = await showable(everyId, askedBy: Constants.mixedId)
+
+        let vouched = dataFacade.trackTargetingCalls.filter { $0.id == Constants.unlimitedStoryId }
         #expect(vouched.count == 2)
+    }
+
+    @Test("A new session vouches for the page's in-apps again")
+    func newSessionVouchesForThePageAgain() async {
+        _ = await showable(everyId)
+        SessionTemporaryStorage.shared.erase()
+        _ = await showable(everyId)
+
+        let vouched = dataFacade.trackTargetingCalls.filter { $0.id == Constants.unlimitedStoryId }
+        #expect(vouched.count == 2)
+    }
+
+    @Test("An id asked twice is answered twice and vouched for once")
+    func duplicateIdIsMirroredAndVouchedOnce() async {
+        let answer = await showableInOrder([Constants.unlimitedStoryId, Constants.unlimitedStoryId])
+
+        #expect(answer == [Constants.unlimitedStoryId, Constants.unlimitedStoryId])
+        #expect(dataFacade.trackTargetingCalls.filter { $0.id == Constants.unlimitedStoryId }.count == 1)
+    }
+
+    @Test("The answer keeps the order the page asked in")
+    func answerKeepsTheAskedOrder() async {
+        #expect(await showableInOrder([Constants.modalId, Constants.unlimitedStoryId]) == [Constants.modalId, Constants.unlimitedStoryId])
+        #expect(await showableInOrder([Constants.unlimitedStoryId, Constants.modalId]) == [Constants.unlimitedStoryId, Constants.modalId])
     }
 
     @Test("A new session vouches for the in-app again")
@@ -365,12 +397,11 @@ struct EmbeddedBlockResolveTests {
 
     // MARK: - The feed answers without the network
 
-    /// The wire contract gives the page three seconds: the feed is answered from what the session already fetched — fail closed, in sync with Android.
-    @Test("A feed's question asks nothing of the network")
-    func feedAsksNothingOfTheNetwork() async {
+    @Test("A page's question fetches the pass's dependencies like a place resolve")
+    func pageQuestionFetchesLikeAPlace() async {
         _ = await showable(everyId)
 
-        #expect(dataFacade.fetchDependenciesCalls == 0)
+        #expect(dataFacade.fetchDependenciesCalls == 1)
     }
 
     @Test("A place resolve still fetches its dependencies")
@@ -380,14 +411,14 @@ struct EmbeddedBlockResolveTests {
         #expect(dataFacade.fetchDependenciesCalls == 1)
     }
 
-    @Test("A segment story on a cold cache is cut from the feed")
+    @Test("A segment story is cut when the fetch brings no segmentations")
     func coldCacheCutsASegmentStory() async {
         dataFacade.targetingChecker.checkedSegmentations = nil
 
         #expect(await showable([Constants.segmentStoryId]).isEmpty)
     }
 
-    @Test("A segment story on a warm cache is drawn without a fetch")
+    @Test("A segment story on a warm cache is drawn")
     func warmCacheKeepsASegmentStory() async {
         dataFacade.targetingChecker.checkedSegmentations = [
             .init(segmentation: .init(ids: .init(externalId: "feed-segmentation")),
@@ -395,7 +426,6 @@ struct EmbeddedBlockResolveTests {
         ]
 
         #expect(await showable([Constants.segmentStoryId]) == [Constants.segmentStoryId])
-        #expect(dataFacade.fetchDependenciesCalls == 0)
     }
 
     @Test("Spent show limits do not shrink a feed's answer")

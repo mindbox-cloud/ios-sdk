@@ -346,36 +346,30 @@ final class EmbeddedBlockFeedServiceMock: EmbeddedBlockFeedServing {
     var isDeferred = false
 
     private(set) var askedIds: [[String]] = []
+    private(set) var askedBy: [String] = []
     private(set) var shown: [(id: String, params: [String: JSONValue])] = []
 
-    private var pending: [(FeedAnswer) -> Void] = []
-
-    private(set) var vouchCount = 0
+    private var pending: [([String]) -> Void] = []
 
     func showInapp(id: String, params: [String: JSONValue]) {
         shown.append((id, params))
     }
 
-    func showableInappIds(among ids: [String], completion: @escaping (FeedAnswer) -> Void) {
+    func showableInappIds(among ids: [String], askedBy blockInappId: String, completion: @escaping ([String]) -> Void) {
         askedIds.append(ids)
+        askedBy.append(blockInappId)
 
         if isDeferred {
             pending.append(completion)
         } else {
-            completion(answer)
+            completion(allowed)
         }
     }
 
     func flush() {
         let completions = pending
         pending = []
-        completions.forEach { $0(answer) }
-    }
-
-    private var answer: FeedAnswer {
-        FeedAnswer(inappIds: allowed) { [weak self] in
-            self?.vouchCount += 1
-        }
+        completions.forEach { $0(allowed) }
     }
 }
 
