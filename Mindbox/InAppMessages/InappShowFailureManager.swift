@@ -11,7 +11,6 @@ import MindboxLogger
 
 protocol InappShowFailureManagerProtocol {
     func addFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?)
-    func clearFailures()
     func sendFailures()
 
     /// Sends one failure at once, without joining the buffer the selection pass fills.
@@ -123,12 +122,6 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
         }
     }
 
-    func clearFailures() {
-        queue.async { [self] in
-            failures.removeAll()
-        }
-    }
-    
     func sendFailures() {
         guard featureToggleManager.isFeatureEnabled(.shouldSendInAppShowError) else {
             Logger.common(

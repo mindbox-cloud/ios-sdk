@@ -61,8 +61,8 @@ class InappMapper: InappMapperProtocol {
                 self.buildFirstShowable(verdict.suitable, event: event) { formData in
                     self.evaluate(self.catchUpQuery(event, candidates), event: event) { catchUp in
                         self.vouchCatchUp(catchUp.suitable, event: event)
-                        completion(formData)
                         finish()
+                        completion(formData)
                     }
                 }
             }
@@ -75,7 +75,7 @@ class InappMapper: InappMapperProtocol {
                              _ completion: @escaping (InAppTransitionData?) -> Void) {
         runPass("place '\(place)'", event: trigger) { finish in
             self.evaluate(self.placeQuery(place, candidates), event: trigger) { verdict in
-                defer { finish() }
+                finish()
 
                 guard let winner = verdict.suitable.first else {
                     completion(nil)
@@ -113,8 +113,8 @@ class InappMapper: InappMapperProtocol {
                     }
                 }
 
-                completion(answer)
                 finish()
+                completion(answer)
             }
         }
     }
@@ -176,6 +176,9 @@ class InappMapper: InappMapperProtocol {
     /// One serial queue and one shared checker for every path: a pass holds the queue until `finish`,
     /// so two passes never answer each other's questions — a place resolve landing between a trigger's
     /// selection and its catch-up would swap the event under the catch-up.
+    ///
+    /// The failures a pass buffered leave with it. A show clears nothing any more: the winner never has
+    /// a buffered failure, and the cut in-apps' failures used to get lost behind it (develop still loses them).
     private func runPass(_ label: String,
                          event: ApplicationEvent?,
                          _ body: @escaping (_ finish: @escaping () -> Void) -> Void) {
@@ -187,7 +190,10 @@ class InappMapper: InappMapperProtocol {
                           level: .debug, category: .inAppMessages)
             self.targetingChecker.event = event
 
-            body { group.leave() }
+            body {
+                self.dataFacade.sendCollectedFailures()
+                group.leave()
+            }
 
             group.wait()
         }

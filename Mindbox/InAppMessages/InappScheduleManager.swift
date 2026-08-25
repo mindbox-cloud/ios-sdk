@@ -115,7 +115,6 @@ internal extension InappScheduleManager {
                 scheduledInapp.timer.cancel()
             }
             
-            self.failureManager.clearFailures()
             self.inappsByPresentationTime.removeValue(forKey: presentationTime)
         }
     }
@@ -162,7 +161,6 @@ internal extension InappScheduleManager {
                 Logger.common(message: "[InAppMetric] inappId=\(inapp.inAppId) processingTime=\(processingDuration.toTimeSpan()) "
                     + "presentationTime=\(presentationTime.toTimeSpan()) timeToDisplay=\(timeToDisplay.toTimeSpan())")
                 self.trackShow(inapp, timeToDisplay: timeToDisplay)
-                self.failureManager.clearFailures()
             },
             onDismissed: {
                 self.trackDismissal(inapp)
