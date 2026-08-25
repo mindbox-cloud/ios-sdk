@@ -608,6 +608,7 @@
 		F34A45AE2B7628B700634C8B /* MBPushNotification.swift in Sources */ = {isa = PBXBuildFile; fileRef = F34A45AD2B7628B700634C8B /* MBPushNotification.swift */; };
 		F34A45B02B762A6100634C8B /* MindboxPushValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F34A45AF2B762A6100634C8B /* MindboxPushValidator.swift */; };
 		F351F1C02CE380A40053423E /* InappMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = F351F1BF2CE380A40053423E /* InappMapper.swift */; };
+		D449F3534453BD50D93B5E72 /* InappFormBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4761BB2323EB5B1C72894561 /* InappFormBuilder.swift */; };
 		F351F1C22CE5F23A0053423E /* InappMapperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F351F1C12CE5F23A0053423E /* InappMapperTests.swift */; };
 		F351F1C42CE60CA90053423E /* 1-Targeting.json in Resources */ = {isa = PBXBuildFile; fileRef = F351F1C32CE60CA90053423E /* 1-Targeting.json */; };
 		F351F1C62CE626450053423E /* 15-Targeting.json in Resources */ = {isa = PBXBuildFile; fileRef = F351F1C52CE626450053423E /* 15-Targeting.json */; };
@@ -1389,6 +1390,7 @@
 		F34A45AD2B7628B700634C8B /* MBPushNotification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBPushNotification.swift; sourceTree = "<group>"; };
 		F34A45AF2B762A6100634C8B /* MindboxPushValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxPushValidator.swift; sourceTree = "<group>"; };
 		F351F1BF2CE380A40053423E /* InappMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappMapper.swift; sourceTree = "<group>"; };
+		4761BB2323EB5B1C72894561 /* InappFormBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappFormBuilder.swift; sourceTree = "<group>"; };
 		F351F1C12CE5F23A0053423E /* InappMapperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappMapperTests.swift; sourceTree = "<group>"; };
 		F351F1C32CE60CA90053423E /* 1-Targeting.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "1-Targeting.json"; sourceTree = "<group>"; };
 		F351F1C52CE626450053423E /* 15-Targeting.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "15-Targeting.json"; sourceTree = "<group>"; };
@@ -3819,6 +3821,7 @@
 			children = (
 				F3A8B9562A389D9300E9C055 /* Services */,
 				F351F1BF2CE380A40053423E /* InappMapper.swift */,
+				4761BB2323EB5B1C72894561 /* InappFormBuilder.swift */,
 			);
 			path = InAppConfigurationMapper;
 			sourceTree = "<group>";
@@ -4576,6 +4579,7 @@
 				A1D017E92976CC1C00CD9F99 /* TargetingChecker.swift in Sources */,
 				F397EEB52A44573600D48CEC /* Status.swift in Sources */,
 				F351F1C02CE380A40053423E /* InappMapper.swift in Sources */,
+				D449F3534453BD50D93B5E72 /* InappFormBuilder.swift in Sources */,
 				6FDD1455266F7C9A00A50C35 /* PromotionTypeResponse.swift in Sources */,
 				334F3AEB264C199900A6AC00 /* DiscountCardRequest.swift in Sources */,
 				31A20D4E25B6EFB600AAA0A3 /* MindboxDelegate.swift in Sources */,

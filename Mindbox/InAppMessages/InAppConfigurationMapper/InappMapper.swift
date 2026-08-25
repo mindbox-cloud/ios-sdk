@@ -36,6 +36,7 @@ class InappMapper: InappMapperProtocol {
     private let inappFilterService: InappFilterProtocol
     private let dataFacade: InAppConfigurationDataFacadeProtocol
     private let presentationValidator: InAppPresentationValidatorProtocol
+    private let formBuilder: InappFormBuilder
 
     @Locked private var shownInappIDWithHashValue: [String: Int] = [:]
 
@@ -49,6 +50,7 @@ class InappMapper: InappMapperProtocol {
         self.inappFilterService = inappFilterService
         self.dataFacade = dataFacade
         self.presentationValidator = presentationValidator
+        self.formBuilder = InappFormBuilder(dataFacade: dataFacade)
     }
 
     // MARK: - Entry points
@@ -382,7 +384,7 @@ class InappMapper: InappMapperProtocol {
         DispatchQueue.global().async {
             let operation = Self.operation(from: event)
             for inapp in inapps where formData == nil {
-                formData = self.makeFormData(inapp, extraParams: nil, operation: operation)
+                formData = self.formBuilder.makeFormData(inapp, extraParams: nil, operation: operation)
             }
 
             DispatchQueue.main.async { [weak self] in
@@ -462,77 +464,11 @@ class InappMapper: InappMapperProtocol {
 
     // MARK: - Building the form
 
-    /// Blocking by design — callers walk a list and stop at the first buildable in-app. Must not run
-    /// on `processingQueue`: a download wait there would stall every targeting question behind it.
-    private func makeFormData(_ inapp: InAppTransitionData,
-                              extraParams: [String: JSONValue]?,
-                              operation: (name: String, body: String)?) -> InAppFormData? {
-        Logger.common(message: "[InappMapper] Starting in-app processing. [ID]: \(inapp.inAppId)", level: .debug, category: .inAppMessages)
-
-        if case .modal(let modal) = inapp.content,
-           modal.content.background.layers.contains(where: { $0.layerType == .webview }) {
-            return InAppFormData(inAppId: inapp.inAppId,
-                                 isPriority: inapp.isPriority,
-                                 delayTime: inapp.delayTime,
-                                 imagesDict: [:],
-                                 firstImageValue: "",
-                                 content: inapp.content,
-                                 frequency: inapp.frequency,
-                                 tags: inapp.tags,
-                                 operation: operation,
-                                 extraParams: extraParams)
-        }
-
-        let urlExtractorService = DI.injectOrFail(VariantImageUrlExtractorServiceProtocol.self)
-        let imageValues = urlExtractorService.extractImageURL(from: inapp.content)
-
-        let group = DispatchGroup()
-        let imageDictQueue = DispatchQueue(label: "com.mindbox.imagedict.queue", attributes: .concurrent)
-        var imageDict: [String: UIImage] = [:]
-        var gotError = false
-
-        for imageValue in imageValues {
-            group.enter()
-            Logger.common(message: "[InappMapper] Initiating the process of image loading from the URL: \(imageValue)", level: .debug, category: .inAppMessages)
-            dataFacade.downloadImage(withUrl: imageValue, inappId: inapp.inAppId, tags: inapp.tags) { result in
-                defer {
-                    group.leave()
-                }
-
-                switch result {
-                case .success(let image):
-                    imageDictQueue.async(flags: .barrier) {
-                        imageDict[imageValue] = image
-                    }
-                case .failure:
-                    gotError = true
-                }
-            }
-        }
-
-        group.wait()
-
-        return imageDictQueue.sync {
-            guard !imageDict.isEmpty, !gotError else { return nil }
-
-            return InAppFormData(inAppId: inapp.inAppId,
-                                 isPriority: inapp.isPriority,
-                                 delayTime: inapp.delayTime,
-                                 imagesDict: imageDict,
-                                 firstImageValue: imageValues.first ?? "",
-                                 content: inapp.content,
-                                 frequency: inapp.frequency,
-                                 tags: inapp.tags,
-                                 operation: operation,
-                                 extraParams: extraParams)
-        }
-    }
-
     private func buildInApp(_ inapp: InAppTransitionData,
                             extraParams: [String: JSONValue],
                             completion: @escaping (InAppFormData?) -> Void) {
         DispatchQueue.global().async {
-            let formData = self.makeFormData(inapp, extraParams: extraParams, operation: nil)
+            let formData = self.formBuilder.makeFormData(inapp, extraParams: extraParams, operation: nil)
 
             DispatchQueue.main.async {
                 completion(formData)
