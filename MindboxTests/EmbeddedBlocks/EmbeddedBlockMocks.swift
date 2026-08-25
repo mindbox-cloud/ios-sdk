@@ -416,10 +416,13 @@ final class TestScheduler {
     /// The delay of the last arm — which is the remainder of the budget given to the countdown.
     private(set) var lastDelay: TimeInterval?
 
+    private(set) var armCount = 0
+
     private var pending: [DispatchWorkItem] = []
 
     func schedule(_ delay: TimeInterval, _ work: DispatchWorkItem) {
         lastDelay = delay
+        armCount += 1
         pending.append(work)
     }
 

@@ -427,12 +427,32 @@ struct EmbeddedBlockPlaceRegistryTests {
         rig.resolver.resolution = .content(.delayed(params: ["fresh": .bool(true)]))
         rig.announceNewConfig()
 
-        #expect(block.delayedCount == 1)
+        #expect(rig.delayScheduler.armCount == 1)
         #expect(block.applied.isEmpty)
 
         rig.delayScheduler.fireAll()
 
         #expect(block.applied == [.content(.delayed(params: ["fresh": .bool(true)]))])
+    }
+
+    @Test("A block appearing while the place waits out its delay is told content is coming")
+    func blockAppearingMidDelayHearsOfTheDelay() {
+        let rig = Rig()
+        rig.resolver.resolution = .content(.delayed("00:00:05"))
+        let first = BlockFake()
+        rig.registry.register(first, place: "stories")
+        rig.registry.blockAppeared("stories")
+
+        let newcomer = BlockFake()
+        rig.registry.register(newcomer, place: "stories")
+        rig.registry.blockAppeared("stories")
+
+        #expect(newcomer.delayedCount == 1)
+        #expect(newcomer.applied.isEmpty)
+
+        rig.delayScheduler.fireAll()
+
+        #expect(newcomer.applied == [.content(.delayed("00:00:05"))])
     }
 
     @Test("A block that comes back after its delay ran out gets the content at once")
