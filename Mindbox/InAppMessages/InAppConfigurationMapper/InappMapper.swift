@@ -130,8 +130,7 @@ class InappMapper: InappMapperProtocol {
                 return
             }
 
-            // The same variant a page offers: it keeps an in-app that has any overlay variant, so
-            // taking the first one would refuse a mixed form whose embedded variant comes first.
+            // The variant the page's question picks, so a tap opens what the page offered.
             guard let variant = inapp.form.variants.first(where: { $0.isOverlayPresentable })
                     ?? inapp.form.variants.first else {
                 Logger.common(message: "[InappMapper] In-app \(id) has no variant left to render.",
@@ -178,8 +177,8 @@ class InappMapper: InappMapperProtocol {
     /// so two passes never answer each other's questions — a place resolve landing between a trigger's
     /// selection and its catch-up would swap the event under the catch-up.
     ///
-    /// The failures a pass buffered leave with it. A show clears nothing any more: the winner never has
-    /// a buffered failure, and the cut in-apps' failures used to get lost behind it (develop still loses them).
+    /// The failures a pass buffered leave with it: the winner never has one, and clearing them on a show
+    /// would lose the cut in-apps' failures behind it.
     private func runPass(_ label: String,
                          event: ApplicationEvent?,
                          _ body: @escaping (_ finish: @escaping () -> Void) -> Void) {
@@ -299,7 +298,7 @@ class InappMapper: InappMapperProtocol {
     }
 
     /// The trigger's second question: everyone the event could have targeted, so the funnel hears
-    /// about the in-apps a show would never pick — the A/B pool included, in sync with develop.
+    /// about the in-apps a show would never pick — the A/B pool included.
     private func catchUpQuery(_ event: ApplicationEvent?, _ candidates: ConfigCandidates) -> TargetingQuery {
         TargetingQuery(
             label: "the targeting catch-up",
@@ -314,7 +313,7 @@ class InappMapper: InappMapperProtocol {
                     listening = candidates.renderable
                 }
                 // A direct-call in-app answers no trigger, so the catch-up does not vouch for it either —
-                // otherwise every start would pump the story funnel with every user.
+                // otherwise every start would offer every direct-call in-app to every user.
                 let triggerable = listening.filter { $0.displayConditions != .directCall }
                 // A pure-embedded in-app is vouched by its place resolve — speaking here too would double
                 // the funnel (in sync with Android).

@@ -550,8 +550,8 @@ public struct BridgeMessage: Codable {
 
         // MARK: JS → Native: Embedded pages
         //
-        // Bridge payloads say `inappId`/`inappIds` throughout, the start payload included. Feed list
-        // entries carry whatever the config spells — forwarded untouched, never corrected.
+        // Bridge payloads say `inappId`/`inappIds` throughout, the start payload included. The ids a page
+        // lists carry whatever the config spells — forwarded untouched, never corrected.
 
         /// JS asks which of these in-apps are showable — the page draws only those.
         ///
