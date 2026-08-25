@@ -41,9 +41,9 @@ final class SessionTemporaryStorage {
     /// so it goes out again when the place changes what it shows and then changes back.
     @Locked var placeTargetedInappId: [String: String] = [:]
 
-    /// `Inapp.Show` dedup for blocks, in sync with Android down to the name: a rebuilt page re-draws
-    /// what the user saw. Local show history deliberately stays per rendered page on both platforms.
-    @Locked var blockShowsReportedInSession: Set<String> = []
+    /// The in-app each place showed last: a block's show is accounted when this changes, so a rebuilt
+    /// page stays silent while 1 → 2 → 1 speaks three times (agreed with the backend, in sync with Android).
+    @Locked var placeShownInappId: [String: String] = [:]
 
     /// Last track-visit data (source and requestUrl only)
     @Locked var lastTrackVisit: (source: TrackVisitSource?, requestUrl: String?)?
@@ -71,7 +71,7 @@ final class SessionTemporaryStorage {
         lastInappClickedID = nil
         vouchedInappIds = []
         placeTargetedInappId = [:]
-        blockShowsReportedInSession = []
+        placeShownInappId = [:]
         lastTrackVisit = nil
         inAppSettings = nil
         configSessionExpirationTime = nil

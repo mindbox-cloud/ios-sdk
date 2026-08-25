@@ -359,21 +359,13 @@ final class EmbeddedBlockWebViewProvider {
         let timeToDisplay = attemptStopwatch.elapsed
         attemptStopwatch.stop()
 
-        // Deduplicated per session by the in-app, in sync with Android: a page rebuilt within a
-        // session re-draws what the user already saw.
-        guard !SessionTemporaryStorage.shared.blockShowsReportedInSession.contains(content.inAppId) else {
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': in-app \(content.inAppId) is shown again this session — already accounted for",
-                          category: .embeddedBlocks)
-            return
-        }
-
-        SessionTemporaryStorage.shared.$blockShowsReportedInSession.mutate { $0.insert(content.inAppId) }
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': in-app \(content.inAppId) is shown, timeToDisplay=\(timeToDisplay.toTimeSpan())",
                       category: .embeddedBlocks)
-        accounting.recordShow(InappShow(inAppId: content.inAppId,
-                                        frequency: content.frequency,
-                                        tags: content.tags,
-                                        timeToDisplay: timeToDisplay))
+        accounting.recordBlockShow(InappShow(inAppId: content.inAppId,
+                                             frequency: content.frequency,
+                                             tags: content.tags,
+                                             timeToDisplay: timeToDisplay),
+                                   at: placeSystemName)
     }
 }
 
