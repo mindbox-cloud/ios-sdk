@@ -220,6 +220,12 @@ struct EmbeddedBlockResolveTests {
         #expect(dataFacade.collectedTargetingFailureIds == [Set([Constants.operationBlockId])])
     }
 
+    /// Logged as a mistake at config mapping, but kept: a direct call still has to open it.
+    @Test("A direct-call in-app targeted by an operation is still a valid in-app")
+    func directCallWithOperationTargetingStaysValid() {
+        #expect(candidates.renderable.contains { $0.id == Constants.operationStoryId })
+    }
+
     @Test("Spent show limits do not stop an unlimited block")
     func showLimitsDoNotStopAnUnlimitedBlock() async throws {
         spendEveryShowBudget()
