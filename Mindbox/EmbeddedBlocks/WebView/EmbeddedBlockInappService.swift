@@ -17,7 +17,8 @@ protocol EmbeddedBlockInappServing: AnyObject {
     var hasConfig: Bool { get }
 
     /// Which of `ids` the page of in-app `blockInappId` may draw: the SDK checks each one's targeting,
-    /// fetching what that needs like a place resolve, and vouches for the allowed ones as it answers.
+    /// fetching what that needs like a place resolve. The funnel hears about every targeted id as the
+    /// answer is made — the A/B cut and the spent frequencies included, like a place resolve vouches.
     /// The answer mirrors the question — order and duplicates kept.
     func showableInappIds(among ids: [String], askedBy blockInappId: String, completion: @escaping ([String]) -> Void)
 

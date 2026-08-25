@@ -114,9 +114,11 @@ class InappMapper: InappMapperProtocol {
                              _ completion: @escaping ([String]) -> Void) {
         runPass("a page of in-app \(blockInappId) asking about \(ids.count) in-app(s)", event: nil) { finish in
             self.evaluate(self.pageQuery(ids, candidates), event: nil) { verdict in
-                finish(false)
-                self.vouchOffers(verdict.suitable, by: blockInappId)
-                completion(verdict.suitable.map(\.inAppId))
+                self.evaluate(self.pageTargetingQuery(ids, candidates), event: nil) { offered in
+                    finish(false)
+                    self.vouchOffers(offered.suitable, by: blockInappId)
+                    completion(verdict.suitable.map(\.inAppId))
+                }
             }
         }
     }
@@ -367,6 +369,21 @@ class InappMapper: InappMapperProtocol {
             prepares: { self.inappFilterService.filter(requestedIds: ids, in: candidates) },
             candidates: { prepared, _ in prepared },
             fetchesDependencies: true,
+            collectsFailures: false,
+            pickVariant: Self.overlayVariant
+        )
+    }
+
+    /// Everyone the page could have drawn: the A/B cut and the spent frequencies included — the
+    /// place's second question applied to a page's list, so an A/B test on a story hears from both
+    /// branches (in sync with Android). Asked right after the page's own question, so the fetch it
+    /// needs has already happened.
+    private func pageTargetingQuery(_ ids: [String], _ candidates: ConfigCandidates) -> TargetingQuery {
+        TargetingQuery(
+            label: "targeting for the page's \(ids.count) in-app(s)",
+            prepares: { [] },
+            candidates: { _, _ in self.inappFilterService.inapps(askedAbout: ids, in: candidates) },
+            fetchesDependencies: false,
             collectsFailures: false,
             pickVariant: Self.overlayVariant
         )

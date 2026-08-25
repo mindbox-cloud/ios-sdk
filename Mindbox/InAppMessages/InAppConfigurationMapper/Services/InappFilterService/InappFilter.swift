@@ -42,6 +42,11 @@ protocol InappFilterProtocol {
     /// place is a compatibility filter, and the funnel wants everyone who could have shown here.
     func inapps(addressedTo place: String, in candidates: ConfigCandidates) -> [InApp]
 
+    /// Every valid in-app out of `ids` — the A/B pool and the frequency not applied, duplicates
+    /// collapsed. The page's twin of `inapps(addressedTo:)`: the funnel wants everyone the page
+    /// could have drawn.
+    func inapps(askedAbout ids: [String], in candidates: ConfigCandidates) -> [InApp]
+
     /// The in-apps out of `ids` a page may draw, before targeting. The trigger chain minus the
     /// direct-call cut — that one would drop exactly the in-apps a page is made of. In the order asked,
     /// duplicates kept: the page gets back exactly what it asked about.
@@ -116,6 +121,14 @@ final class InappsFilterService: InappFilterProtocol {
 
     func inapps(addressedTo place: String, in candidates: ConfigCandidates) -> [InApp] {
         filterInappsByPlace(place, inapps: candidates.renderable)
+    }
+
+    func inapps(askedAbout ids: [String], in candidates: ConfigCandidates) -> [InApp] {
+        var seen = Set<String>()
+        return ids.compactMap { id in
+            guard seen.insert(id).inserted else { return nil }
+            return candidates.renderable.first { $0.id == id }
+        }
     }
 
     func filter(requestedIds ids: [String], in candidates: ConfigCandidates) -> [InApp] {
