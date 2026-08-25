@@ -22,8 +22,9 @@ protocol InappMapperProtocol {
                       _ candidates: ConfigCandidates,
                       _ completion: @escaping (InAppTransitionData?) -> Void)
     func getShowableInappIds(_ ids: [String],
+                             askedBy blockInappId: String,
                              _ candidates: ConfigCandidates,
-                             _ completion: @escaping (FeedAnswer) -> Void)
+                             _ completion: @escaping ([String]) -> Void)
     func getInAppToShowById(_ id: String,
                             params: [String: JSONValue],
                             _ candidates: ConfigCandidates,
@@ -103,24 +104,18 @@ class InappMapper: InappMapperProtocol {
         }
     }
 
-    /// Never goes to the network: answers from what the session already fetched, and an id whose
-    /// targeting lacks data is cut — fail closed, in sync with Android.
+    /// Vouches as it answers: what was offered does not depend on the answer reaching the page — the
+    /// rule the overlay's selection lives by. An id whose targeting still lacks data after the fetch is
+    /// cut: fail closed, in sync with Android.
     func getShowableInappIds(_ ids: [String],
+                             askedBy blockInappId: String,
                              _ candidates: ConfigCandidates,
-                             _ completion: @escaping (FeedAnswer) -> Void) {
-        runPass("a page asking about \(ids.count) in-app(s)", event: nil) { finish in
+                             _ completion: @escaping ([String]) -> Void) {
+        runPass("a page of in-app \(blockInappId) asking about \(ids.count) in-app(s)", event: nil) { finish in
             self.evaluate(self.pageQuery(ids, candidates), event: nil) { verdict in
-                let allowed = verdict.suitable
-                // Vouching travels with the answer — only the caller knows it reached the page — and
-                // repeats per delivered answer with no session dedup, in sync with Android.
-                let answer = FeedAnswer(inappIds: allowed.map(\.inAppId)) { [weak self] in
-                    for inapp in allowed {
-                        self?.dataFacade.trackTargeting(id: inapp.inAppId, tags: inapp.tags)
-                    }
-                }
-
                 finish()
-                completion(answer)
+                self.vouchOffers(verdict.suitable, by: blockInappId)
+                completion(verdict.suitable.map(\.inAppId))
             }
         }
     }
@@ -216,8 +211,8 @@ class InappMapper: InappMapperProtocol {
         /// The pass's candidates, narrowed from the prepared list once the checker knows it.
         let candidates: (_ prepared: [InApp], _ context: PreparationContext) -> [InApp]
 
-        /// A place resolve may fetch geo/segmentations; a page's question may not — its page holds a
-        /// three-second deadline, and a checker asked without data says "not targeted".
+        /// Whether the question fetches geo/segmentations first. Off for a follow-up question in a pass
+        /// whose first question already did.
         let fetchesDependencies: Bool
 
         /// A failed geo/segmentation fetch becomes a buffered `Inapp.ShowFailure` for every candidate
@@ -358,12 +353,14 @@ class InappMapper: InappMapperProtocol {
         )
     }
 
+    /// Fetches like a place resolve — a cold cache may then miss the page's deadline, an accepted cost.
+    /// The failures of what it cut are not reported in this iteration.
     private func pageQuery(_ ids: [String], _ candidates: ConfigCandidates) -> TargetingQuery {
         TargetingQuery(
             label: "a page asking about \(ids.count) in-app(s)",
             prepares: { self.inappFilterService.filter(feedIds: ids, in: candidates) },
             candidates: { prepared, _ in prepared },
-            fetchesDependencies: false,
+            fetchesDependencies: true,
             collectsFailures: false,
             pickVariant: Self.overlayVariant
         )
@@ -425,6 +422,17 @@ class InappMapper: InappMapperProtocol {
 
             SessionTemporaryStorage.shared.$placeTargetedInappId.mutate { $0[place] = inapp.inAppId }
             SessionTemporaryStorage.shared.$vouchedInappIds.mutate { $0.insert(inapp.inAppId) }
+            dataFacade.trackTargeting(id: inapp.inAppId, tags: inapp.tags)
+        }
+    }
+
+    /// Once per session per block and in-app: the same in-app offered by another block is a new offer.
+    private func vouchOffers(_ offered: [InAppTransitionData], by blockInappId: String) {
+        for inapp in offered {
+            let offer = BlockOffer(blockInappId: blockInappId, inappId: inapp.inAppId)
+            guard !SessionTemporaryStorage.shared.vouchedBlockOffers.contains(offer) else { continue }
+
+            SessionTemporaryStorage.shared.$vouchedBlockOffers.mutate { $0.insert(offer) }
             dataFacade.trackTargeting(id: inapp.inAppId, tags: inapp.tags)
         }
     }

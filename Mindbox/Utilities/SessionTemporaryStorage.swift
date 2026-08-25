@@ -10,6 +10,13 @@ import Foundation
 import UserNotifications
 import MindboxLogger
 
+/// One in-app a block's page was allowed to draw — what `Inapp.Targeting` for a page's question is
+/// deduplicated by: once per session, per block and in-app.
+struct BlockOffer: Hashable {
+    let blockInappId: String
+    let inappId: String
+}
+
 /// Touched from every queue the SDK runs on. `@Locked` makes each access atomic; the single writer
 /// per property is what keeps compound mutations (`append`, `insert`) safe without a wider transaction.
 final class SessionTemporaryStorage {
@@ -41,6 +48,8 @@ final class SessionTemporaryStorage {
     /// so it goes out again when the place changes what it shows and then changes back.
     @Locked var placeTargetedInappId: [String: String] = [:]
 
+    @Locked var vouchedBlockOffers: Set<BlockOffer> = []
+
     /// The in-app each place showed last: a block's show is accounted when this changes, so a rebuilt
     /// page stays silent while 1 → 2 → 1 speaks three times (agreed with the backend, in sync with Android).
     @Locked var placeShownInappId: [String: String] = [:]
@@ -71,6 +80,7 @@ final class SessionTemporaryStorage {
         lastInappClickedID = nil
         vouchedInappIds = []
         placeTargetedInappId = [:]
+        vouchedBlockOffers = []
         placeShownInappId = [:]
         lastTrackVisit = nil
         inAppSettings = nil

@@ -312,16 +312,15 @@ final class EmbeddedBlockWebViewProvider {
     }
 
     /// A question shows nothing, so it is answered for as long as the block is running — including
-    /// while it is still loading, which is exactly when a feed asks.
+    /// while it is still loading, which is exactly when a page asks.
     private func answerShowableQuestion(_ ids: [String], completion: @escaping ([String]) -> Void) {
-        guard isStarted else { return }
+        guard isStarted, let content else { return }
 
         let generation = loadGeneration
-        feed.showableInappIds(among: ids) { [weak self] answer in
+        feed.showableInappIds(among: ids, askedBy: content.inAppId) { [weak self] allowed in
             guard let self, self.isStarted, self.loadGeneration == generation else { return }
 
-            completion(answer.inappIds)
-            answer.vouch()
+            completion(allowed)
         }
     }
 

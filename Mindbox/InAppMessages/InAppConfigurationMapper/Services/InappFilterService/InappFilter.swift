@@ -42,8 +42,9 @@ protocol InappFilterProtocol {
     /// place is a compatibility filter, and the funnel wants everyone who could have shown here.
     func inapps(addressedTo place: String, in candidates: ConfigCandidates) -> [InApp]
 
-    /// The in-apps out of `ids` a feed may draw, before targeting. The trigger chain minus the
-    /// direct-call cut — that one would drop exactly the in-apps a feed is made of.
+    /// The in-apps out of `ids` a page may draw, before targeting. The trigger chain minus the
+    /// direct-call cut — that one would drop exactly the in-apps a page is made of. In the order asked,
+    /// duplicates kept: the page gets back exactly what it asked about.
     func filter(feedIds ids: [String], in candidates: ConfigCandidates) -> [InApp]
 
     /// The in-app behind `id`, with no restriction checked — not the frequency, not the display
@@ -126,7 +127,7 @@ final class InappsFilterService: InappFilterProtocol {
                           level: .debug, category: .inAppMessages)
         }
 
-        let requested = candidates.inPool.filter { asked.contains($0.id) }
+        let requested = ids.compactMap { id in candidates.inPool.first { $0.id == id } }
         return applyShowabilityFilters(filterOutNonOverlayInapps(requested))
     }
 

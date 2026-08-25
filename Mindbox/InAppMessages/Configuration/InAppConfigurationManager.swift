@@ -19,7 +19,7 @@ protocol InAppConfigurationManagerProtocol: AnyObject {
     func prepareConfiguration()
     func handleInapps(event: ApplicationEvent?, _ completion: @escaping (InAppFormData?) -> Void)
     func selectInappForPlace(_ place: String, trigger: ApplicationEvent?, _ completion: @escaping (InAppTransitionData?) -> Void)
-    func getShowableInappIds(_ ids: [String], _ completion: @escaping (FeedAnswer) -> Void)
+    func getShowableInappIds(_ ids: [String], askedBy blockInappId: String, _ completion: @escaping ([String]) -> Void)
     func getInAppToShowById(_ id: String, params: [String: JSONValue], _ completion: @escaping (InAppFormData?) -> Void)
     func getEmbeddedPlaces(_ completion: @escaping ([String: Set<String>]?) -> Void)
     func resetInappManager()
@@ -114,14 +114,14 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         }
     }
 
-    func getShowableInappIds(_ ids: [String], _ completion: @escaping (FeedAnswer) -> Void) {
-        awaitConfig("a feed asking about \(ids.count) in-app(s)") { [weak self] candidates in
+    func getShowableInappIds(_ ids: [String], askedBy blockInappId: String, _ completion: @escaping ([String]) -> Void) {
+        awaitConfig("a page asking about \(ids.count) in-app(s)") { [weak self] candidates in
             guard let self = self, let inappMapper = self.inappMapper, let candidates = candidates else {
-                completion(.nothing)
+                completion([])
                 return
             }
 
-            inappMapper.getShowableInappIds(ids, candidates, completion)
+            inappMapper.getShowableInappIds(ids, askedBy: blockInappId, candidates, completion)
         }
     }
 
