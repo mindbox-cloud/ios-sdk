@@ -42,7 +42,6 @@ struct InappScheduleManagerTests {
     @Test("In-app without delay is presented exactly once and the queue is cleaned up", .tags(.inAppSchedule))
     func scheduleInapp_noDelay_schedulesCorrectly() {
         #expect(scheduleManager.inappsByPresentationTime.isEmpty)
-        #expect(scheduleManager.getDelay(nil) == 0)
 
         let inapp = createInAppFormData(id: "1", isPriority: false, delayTime: nil)
         scheduleManager.scheduleInApp(inapp, processingDuration: 0)
@@ -207,8 +206,6 @@ struct InappScheduleManagerTests {
 
     @Test("Invalid delay string falls back to zero and in-app is presented", .tags(.inAppSchedule))
     func scheduleInapp_withInvalidDelayTime_usesDefaultDelay() {
-        #expect(scheduleManager.getDelay("invalid_time") == 0)
-
         let inapp = createInAppFormData(id: "1", isPriority: false, delayTime: "invalid_time")
         scheduleManager.scheduleInApp(inapp, processingDuration: 0)
 
@@ -233,8 +230,6 @@ struct InappScheduleManagerTests {
 
     @Test("Zero delay is treated as immediate and in-app is presented", .tags(.inAppSchedule))
     func scheduleInapp_withZeroDelay_schedulesCorrectly() {
-        #expect(scheduleManager.getDelay("00:00:00") == 0)
-
         let inapp = createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:00")
         scheduleManager.scheduleInApp(inapp, processingDuration: 0)
 

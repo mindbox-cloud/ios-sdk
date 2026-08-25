@@ -11,6 +11,22 @@ import XCTest
 
 final class TimeIntervalTimeSpanTests: XCTestCase {
 
+    func test_delayFromTimeSpan_missingOrUnreadableIsNoDelay() {
+        let cases: [(String?, TimeInterval)] = [
+            (nil,            0),
+            ("invalid_time", 0),
+            ("00:00:00",     0),
+            ("00:00:05",     5),
+            ("00:01:30",     90),
+        ]
+
+        for (input, expected) in cases {
+            XCTContext.runActivity(named: "delay(fromTimeSpan: \(input ?? "nil")) == \(expected)") { _ in
+                XCTAssertEqual(TimeInterval.delay(fromTimeSpan: input), expected)
+            }
+        }
+    }
+
     func test_toTimeSpan_zero() {
         let result = TimeInterval(0).toTimeSpan()
         XCTAssertEqual(result, "0:00:00.0000000")
