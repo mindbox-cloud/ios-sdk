@@ -283,7 +283,7 @@ public final class MindboxEmbeddedBlockView: UIView {
         if hadContentToLoad {
             contentProvider.reportPageTimedOut()
         } else {
-            contentProvider.reportAnswerTimedOut()
+            contentProvider.reportAnswerTimedOut(waited: waitBudget.consumed)
         }
         // The provider must not resurrect content the container has already given up on.
         contentProvider.stop()

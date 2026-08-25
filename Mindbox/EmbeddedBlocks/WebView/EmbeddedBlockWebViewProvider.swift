@@ -40,7 +40,7 @@ final class EmbeddedBlockWebViewProvider {
 
     private let reportFailure: (EmbeddedBlockWebContent, InAppShowFailureReason, String) -> Void
 
-    private let reportUnansweredWait: () -> Void
+    private let reportUnansweredWait: (_ waited: TimeInterval) -> Void
 
     private var page: EmbeddedBlockPageHosting?
 
@@ -72,7 +72,7 @@ final class EmbeddedBlockWebViewProvider {
          makePage: @escaping (EmbeddedBlockWebContent) -> EmbeddedBlockPageHosting,
          accounting: InappShowAccounting,
          reportFailure: @escaping (EmbeddedBlockWebContent, InAppShowFailureReason, String) -> Void,
-         reportUnansweredWait: @escaping () -> Void,
+         reportUnansweredWait: @escaping (_ waited: TimeInterval) -> Void,
          scheduleAckTimeout: @escaping EmbeddedBlockWaitScheduling = { delay, work in
              DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
          }) {
@@ -312,7 +312,7 @@ final class EmbeddedBlockWebViewProvider {
 
     /// The SDK never answered within the block's budget — a failure with no in-app to pin it on, once
     /// per place per session. Any answer, "nothing" included, would have disarmed the budget instead.
-    func reportAnswerTimedOut() {
+    func reportAnswerTimedOut(waited: TimeInterval) {
         guard !SessionTemporaryStorage.shared.placesReportedUnanswered.contains(placeSystemName) else {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the SDK stayed silent again this session — already reported",
                           category: .embeddedBlocks)
@@ -320,9 +320,9 @@ final class EmbeddedBlockWebViewProvider {
         }
 
         SessionTemporaryStorage.shared.$placesReportedUnanswered.mutate { $0.insert(placeSystemName) }
-        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the SDK never answered within the budget — reporting a failure without an in-app",
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the SDK never answered within \(waited.toTimeSpan()) — reporting a failure without an in-app",
                       level: .error, category: .embeddedBlocks)
-        reportUnansweredWait()
+        reportUnansweredWait(waited)
     }
 
     private func report(_ reason: InAppShowFailureReason, _ details: String) {

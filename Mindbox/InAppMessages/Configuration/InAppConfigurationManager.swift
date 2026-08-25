@@ -16,6 +16,9 @@ protocol InAppConfigurationDelegate: AnyObject {
 protocol InAppConfigurationManagerProtocol: AnyObject {
     var delegate: InAppConfigurationDelegate? { get set }
 
+    /// Whether a config is in hand: what a caller still waiting for an answer is stuck on otherwise.
+    var hasConfig: Bool { get }
+
     func prepareConfiguration()
     func handleInapps(event: ApplicationEvent?, _ completion: @escaping (InAppFormData?) -> Void)
     /// `processingDuration` runs from the moment the config let the request through: the wait for a
@@ -39,6 +42,8 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
 
     /// Confined to `queue`, like `configResponse`.
     private var configCandidates: ConfigCandidates?
+
+    @Locked private(set) var hasConfig = false
 
     private static let defaultConfigWaitBudget: TimeInterval = 30
 
@@ -269,6 +274,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         }
 
         configCandidates = configResponse.map { inappFilterService.candidates(from: $0) }
+        hasConfig = configCandidates != nil
         hasConcludedDownload = true
 
         let waiters = configWaiters

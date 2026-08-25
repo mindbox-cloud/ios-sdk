@@ -45,8 +45,10 @@ final class EmbeddedBlockContentProviderFactory: EmbeddedBlockContentProviderMak
                                          // would otherwise drop the failure it is reporting.
                                          Self.report(failure: reason, details: details, for: content, to: failureManager)
                                      },
-                                     reportUnansweredWait: { [failureManager] in
-                                         failureManager.sendUnattributedFailure()
+                                     reportUnansweredWait: { [failureManager, inappService] waited in
+                                         failureManager.sendWaitBudgetExceeded(place: placeSystemName,
+                                                                               waited: waited,
+                                                                               phase: inappService.hasConfig ? .resolvePending : .configMissing)
                                      })
     }
 

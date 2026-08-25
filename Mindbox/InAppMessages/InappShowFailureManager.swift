@@ -13,9 +13,9 @@ protocol InappShowFailureManagerProtocol {
     func addFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?)
     func sendFailures()
 
-    /// A failure with no in-app to pin it on — a block whose place never got an answer. `failures` goes
-    /// out empty, which the backend reads as "the SDK stayed silent" (agreed 20.08, in sync with Android).
-    func sendUnattributedFailure()
+    /// The SDK never answered a block within its wait budget — a failure with no in-app to pin it on, so
+    /// it names the place instead. Sent at once, past the buffer, like the other block failures.
+    func sendWaitBudgetExceeded(place: String, waited: TimeInterval, phase: EmbeddedBlockShowFailure.Phase)
 
     /// Sends one failure at once, without joining the buffer the selection pass fills.
     ///
@@ -30,8 +30,8 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
     /// Backend payload limit for errorDetails.
     static let errorDetailsLimit = 1000
 
-    private struct InAppShowFailuresBody: Codable {
-        let failures: [InAppShowFailure]
+    private struct InAppShowErrorsBody: Encodable {
+        let errors: [InAppShowError]
     }
 
     private let databaseRepository: DatabaseRepositoryProtocol
@@ -87,7 +87,7 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
                                   tags: featureToggleManager.gatedTags(tags))
 
         queue.async { [self] in
-            guard enqueue([failure]) else { return }
+            guard enqueue([.inapp(failure)]) else { return }
 
             Logger.common(message: "[InappShowFailureManager] Inapp.ShowFailure event sent at once. inappId=\(inappId), reason=\(reason.rawValue)",
                           category: .inAppMessages)
@@ -109,8 +109,8 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
     }
 
     /// Must be called on `queue`.
-    private func enqueue(_ failures: [InAppShowFailure]) -> Bool {
-        let eventBody = InAppShowFailuresBody(failures: failures)
+    private func enqueue(_ errors: [InAppShowError]) -> Bool {
+        let eventBody = InAppShowErrorsBody(errors: errors)
         let event = Event(type: .inAppShowFailureEvent, body: BodyEncoder(encodable: eventBody).body)
 
         do {
@@ -137,7 +137,7 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
         }
         
         queue.async { [self] in
-            guard !failures.isEmpty, enqueue(failures) else {
+            guard !failures.isEmpty, enqueue(failures.map(InAppShowError.inapp)) else {
                 return
             }
 
@@ -147,16 +147,21 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
         }
     }
     
-    func sendUnattributedFailure() {
+    func sendWaitBudgetExceeded(place: String, waited: TimeInterval, phase: EmbeddedBlockShowFailure.Phase) {
         guard featureToggleManager.isFeatureEnabled(.shouldSendInAppShowError) else {
-            Logger.common(message: "[InappShowFailureManager] sendUnattributedFailure ignored, feature is disabled", category: .inAppMessages)
+            Logger.common(message: "[InappShowFailureManager] sendWaitBudgetExceeded ignored, feature is disabled", category: .inAppMessages)
             return
         }
 
-        queue.async { [self] in
-            guard enqueue([]) else { return }
+        let failure = EmbeddedBlockShowFailure(placeSystemName: place,
+                                               waited: waited,
+                                               phase: phase,
+                                               dateTimeUtc: Date().toString(withFormat: .utc))
 
-            Logger.common(message: "[InappShowFailureManager] Inapp.ShowFailure event sent with no in-app to attribute it to",
+        queue.async { [self] in
+            guard enqueue([.embeddedBlock(failure)]) else { return }
+
+            Logger.common(message: "[InappShowFailureManager] Inapp.ShowFailure event sent for place '\(place)': the SDK stayed silent for \(waited.toTimeSpan()) (\(phase.rawValue))",
                           category: .inAppMessages)
         }
     }
