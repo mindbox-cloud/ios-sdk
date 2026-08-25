@@ -321,6 +321,7 @@ extension InappsFilterService {
                                            displayConditions: inapp.displayConditions,
                                            form: formModel,
                                            tags: inapp.tags)
+                    warnIfNoPassCanReach(inappModel)
                     filteredInapps.append(inappModel)
                 }
             } catch {
@@ -330,6 +331,16 @@ extension InappsFilterService {
 
         Logger.common(message: "Filtering process completed. \(filteredInapps.count) valid in-app(s) found.", level: .debug, category: .inAppMessages)
         return filteredInapps
+    }
+
+    /// A direct-call in-app is cut from every pass before its targeting is asked, and a page's question
+    /// carries no event — so an event-only targeting on it never passes and never vouches. Only a direct
+    /// call opens such an in-app; the setting is almost certainly a mistake, in sync with Android.
+    private func warnIfNoPassCanReach(_ inapp: InApp) {
+        guard inapp.displayConditions == .directCall, inapp.targeting.requiresEvent else { return }
+
+        Logger.common(message: "[InappsFilterService] In-app \(inapp.id) is direct-call only but targeted by an event: no pass will show it or vouch for it, only a direct call opens it. Check the campaign.",
+                      level: .error, category: .inAppMessages)
     }
 
     private func createFrequencyValidator() -> InappFrequencyValidator {

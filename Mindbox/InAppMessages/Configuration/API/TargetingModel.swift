@@ -38,6 +38,24 @@ enum InAppTargetingType: String, Decodable {
     }
 }
 
+extension Targeting {
+
+    /// Whether the targeting cannot pass without an event — an operation, a viewed product or category.
+    /// `and` needs every node, so one such node is enough; `or` needs one node, so every node has to be one.
+    var requiresEvent: Bool {
+        switch self {
+        case .apiMethodCall, .viewProductId, .viewProductSegment, .viewProductCategoryId, .viewProductCategoryIdIn:
+            return true
+        case .and(let node):
+            return node.nodes.contains { $0.requiresEvent }
+        case .or(let node):
+            return !node.nodes.isEmpty && node.nodes.allSatisfy { $0.requiresEvent }
+        case .true, .segment, .city, .region, .country, .visit, .pushEnabled, .unknown:
+            return false
+        }
+    }
+}
+
 enum Targeting: Decodable, Hashable, Equatable {
     case `true`(TrueTargeting)
     case and(AndTargeting)
