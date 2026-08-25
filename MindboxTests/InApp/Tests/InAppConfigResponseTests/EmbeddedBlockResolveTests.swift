@@ -32,6 +32,12 @@ struct EmbeddedBlockResolveTests {
         static let operationName = "block.refresh.operation"
         static let segmentStoryId = "99999999-9999-9999-9999-999999999999"
         static let mixedId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+        static let abPlace = "ab-block-place"
+        static let abBlockId = "cccccccc-cccc-cccc-cccc-cccccccccccc"
+        static let directCallBlockId = "dddddddd-dddd-dddd-dddd-dddddddddddd"
+        // The fixture's A/B test shares its salt with the overlay A/B fixture; these devices hash into its first and second branch.
+        static let deviceKeepingAbBlock = "40909d27-4bef-4a8d-9164-6bfcf58ecc76"
+        static let deviceCuttingAbBlock = "b4e0f767-fe8f-4825-9772-f1162f2db52d"
     }
 
     private let mapper: InappMapperProtocol
@@ -56,9 +62,11 @@ struct EmbeddedBlockResolveTests {
         candidates = config.candidates
     }
 
-    private func resolvePlace(_ place: String, trigger: ApplicationEvent? = nil) async -> InAppTransitionData? {
+    private func resolvePlace(_ place: String,
+                              trigger: ApplicationEvent? = nil,
+                              candidates: ConfigCandidates? = nil) async -> InAppTransitionData? {
         await withCheckedContinuation { continuation in
-            mapper.selectInappForPlace(place, trigger: trigger, candidates) { continuation.resume(returning: $0) }
+            mapper.selectInappForPlace(place, trigger: trigger, candidates ?? self.candidates) { continuation.resume(returning: $0) }
         }
     }
 
@@ -194,13 +202,70 @@ struct EmbeddedBlockResolveTests {
         #expect(resolved.inAppId == Constants.cappedBlockId)
     }
 
-    @Test("A block stopped by the show limits is not vouched for")
-    func blockedByBudgetsIsNotVouchedFor() async {
+    @Test("A block stopped by the show limits is still vouched for")
+    func blockedByBudgetsIsStillVouchedFor() async {
         spendEveryShowBudget()
 
-        _ = await resolvePlace(Constants.cappedPlace)
+        #expect(await resolvePlace(Constants.cappedPlace) == nil)
+        #expect(dataFacade.trackTargetingCalls.contains { $0.id == Constants.cappedBlockId })
+    }
 
-        #expect(dataFacade.trackTargetingCalls.contains { $0.id == Constants.cappedBlockId } == false)
+    @Test("Resolving a place vouches for every targeted in-app set up for it, not only the winner")
+    func placeVouchesForTheLosersToo() async throws {
+        let event = ApplicationEvent(name: Constants.operationName, model: nil)
+
+        let resolved = try #require(await resolvePlace(Constants.place, trigger: event))
+
+        #expect(resolved.inAppId == Constants.operationBlockId)
+        #expect(Set(dataFacade.trackTargetingCalls.compactMap(\.id)) == [Constants.operationBlockId, Constants.blockId])
+    }
+
+    @Test("A place in-app spent by its frequency still gets its targeting")
+    func spentPlaceInappIsStillVouchedFor() async {
+        let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+        persistenceStorage.shownDatesByInApp = [Constants.cappedBlockId: [Date()]]
+
+        #expect(await resolvePlace(Constants.cappedPlace) == nil)
+        #expect(dataFacade.trackTargetingCalls.contains { $0.id == Constants.cappedBlockId })
+    }
+
+    @Test("A place in-app the A/B branch cut still gets its targeting")
+    func abCutPlaceInappIsStillVouchedFor() async {
+        let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+        persistenceStorage.deviceUUID = Constants.deviceCuttingAbBlock
+
+        #expect(await resolvePlace(Constants.abPlace, candidates: config.candidates) == nil)
+        #expect(dataFacade.trackTargetingCalls.contains { $0.id == Constants.abBlockId })
+    }
+
+    @Test("In the A/B branch that keeps it, the in-app wins its place")
+    func abKeptPlaceInappWins() async throws {
+        let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+        persistenceStorage.deviceUUID = Constants.deviceKeepingAbBlock
+
+        let resolved = try #require(await resolvePlace(Constants.abPlace, candidates: config.candidates))
+        #expect(resolved.inAppId == Constants.abBlockId)
+    }
+
+    @Test("A direct-call in-app at the place is not vouched for by the resolve")
+    func directCallPlaceInappIsNotVouchedFor() async throws {
+        let resolved = try #require(await resolvePlace(Constants.place))
+
+        #expect(resolved.inAppId == Constants.blockId)
+        #expect(dataFacade.trackTargetingCalls.contains { $0.id == Constants.directCallBlockId } == false)
+    }
+
+    @Test("A place that goes back to an earlier winner vouches for it again")
+    func returningWinnerIsVouchedForAgain() async {
+        let event = ApplicationEvent(name: Constants.operationName, model: nil)
+
+        _ = await resolvePlace(Constants.place)
+        _ = await resolvePlace(Constants.place, trigger: event)
+        _ = await resolvePlace(Constants.place)
+
+        let ids = dataFacade.trackTargetingCalls.compactMap(\.id)
+        #expect(ids.filter { $0 == Constants.blockId }.count == 2)
+        #expect(ids.filter { $0 == Constants.operationBlockId }.count == 1)
     }
 
     private func spendEveryShowBudget() {

@@ -519,6 +519,166 @@
       "tags": {
         "templateType": "Mixed"
       }
+    },
+    {
+      "id": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+      "isPriority": false,
+      "delayTime": null,
+      "sdkVersion": {
+        "min": 13,
+        "max": null
+      },
+      "frequency": {
+        "$type": "unlimited"
+      },
+      "validityPeriod": {
+        "dateTimeUtc": "2020-01-01T00:00:00.000000Z",
+        "$type": "dateTime"
+      },
+      "displayConditions": null,
+      "targeting": {
+        "nodes": [
+          {
+            "$type": "true"
+          }
+        ],
+        "$type": "and"
+      },
+      "form": {
+        "variants": [
+          {
+            "$type": "embedded",
+            "placeSystemName": "ab-block-place",
+            "content": {
+              "background": {
+                "layers": [
+                  {
+                    "$type": "webview",
+                    "baseUrl": "https://inapp.local/stories",
+                    "contentUrl": "https://mobile-static-staging.mindbox.ru/inapps/webview/content/stories.html",
+                    "params": {
+                      "stories": []
+                    }
+                  }
+                ]
+              },
+              "elements": null
+            }
+          }
+        ]
+      },
+      "tags": {
+        "templateType": "Embedded"
+      }
+    },
+    {
+      "id": "dddddddd-dddd-dddd-dddd-dddddddddddd",
+      "isPriority": false,
+      "delayTime": null,
+      "sdkVersion": {
+        "min": 13,
+        "max": null
+      },
+      "frequency": {
+        "$type": "unlimited"
+      },
+      "validityPeriod": {
+        "dateTimeUtc": "2020-01-01T00:00:00.000000Z",
+        "$type": "dateTime"
+      },
+      "displayConditions": {
+        "$type": "directCall"
+      },
+      "targeting": {
+        "nodes": [
+          {
+            "$type": "true"
+          }
+        ],
+        "$type": "and"
+      },
+      "form": {
+        "variants": [
+          {
+            "$type": "embedded",
+            "placeSystemName": "stories-list-container",
+            "content": {
+              "background": {
+                "layers": [
+                  {
+                    "$type": "webview",
+                    "baseUrl": "https://inapp.local/stories",
+                    "contentUrl": "https://mobile-static-staging.mindbox.ru/inapps/webview/content/stories.html",
+                    "params": {
+                      "stories": []
+                    }
+                  }
+                ]
+              },
+              "elements": null
+            }
+          }
+        ]
+      },
+      "tags": {
+        "templateType": "Embedded"
+      }
+    }
+  ],
+  "abtests": [
+    {
+      "id": "0ec6be6b-421f-464b-9ee4-348a5292a5fd",
+      "sdkVersion": {
+        "min": 6,
+        "max": null
+      },
+      "salt": "BBBC2BA1-0B5B-4C9E-AB0E-95C54775B4F5",
+      "variants": [
+        {
+          "id": "AA9DBF50-67C5-4376-8ABF-A93B3D460550",
+          "modulus": {
+            "lower": 0,
+            "upper": 30
+          },
+          "objects": [
+            {
+              "$type": "inapps",
+              "kind": "concrete",
+              "inapps": [
+                "cccccccc-cccc-cccc-cccc-cccccccccccc"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "C5130E69-19E5-4F51-B737-F8A697326BA3",
+          "modulus": {
+            "lower": 30,
+            "upper": 65
+          },
+          "objects": [
+            {
+              "$type": "inapps",
+              "kind": "concrete",
+              "inapps": []
+            }
+          ]
+        },
+        {
+          "id": "AC0110BA-C861-4CB4-8B2B-5310BA87E318",
+          "modulus": {
+            "lower": 65,
+            "upper": 100
+          },
+          "objects": [
+            {
+              "$type": "inapps",
+              "kind": "concrete",
+              "inapps": []
+            }
+          ]
+        }
+      ]
     }
   ]
 }
