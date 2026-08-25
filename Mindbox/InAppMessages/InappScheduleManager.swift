@@ -56,7 +56,7 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
     weak var delegate: InAppMessagesDelegate?
     
     func scheduleInApp(_ inapp: InAppFormData, processingDuration: TimeInterval) {
-        let delay = getDelay(inapp.delayTime)
+        let delay = TimeInterval.delay(fromTimeSpan: inapp.delayTime)
         let presentationTime = Date().addingTimeInterval(delay).timeIntervalSince1970
         
         let timer = DispatchSource.makeTimerSource(flags: .strict, queue: queue)
@@ -136,22 +136,7 @@ internal extension InappScheduleManager {
 
     private func presentRequestedInapp(_ inapp: InAppFormData, processingDuration: TimeInterval) {
         Logger.common(message: "[InappScheduleManager] Showing \(inapp.inAppId) on request, past the queue and its limits")
-
-        let stopwatch = ForegroundStopwatch()
-        present(
-            inapp,
-            onPresented: {
-                let presentationTime = stopwatch.elapsed
-                stopwatch.stop()
-                let timeToDisplay = processingDuration + presentationTime
-                Logger.common(message: "[InAppMetric] inappId=\(inapp.inAppId) processingTime=\(processingDuration.toTimeSpan()) "
-                    + "presentationTime=\(presentationTime.toTimeSpan()) timeToDisplay=\(timeToDisplay.toTimeSpan())")
-                self.trackShow(inapp, timeToDisplay: timeToDisplay)
-            },
-            onDismissed: {
-                self.trackDismissal(inapp)
-            }
-        )
+        presentInapp(inapp, stopwatch: ForegroundStopwatch(), processingDuration: processingDuration)
     }
 
     func presentInapp(_ inapp: InAppFormData, stopwatch: ForegroundStopwatch, processingDuration: TimeInterval = 0) {
@@ -211,10 +196,6 @@ internal extension InappScheduleManager {
                 self.failureManager.sendFailures()
             }
         )
-    }
-    
-    func getDelay(_ time: String?) -> TimeInterval {
-        TimeInterval.delay(fromTimeSpan: time)
     }
     
     func addObserver() {
