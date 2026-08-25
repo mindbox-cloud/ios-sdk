@@ -51,11 +51,11 @@ struct InappShowAccountantTests {
         #expect(trackingService.saveInappStateChangeCallCount == 0)
     }
 
-    @Test("A show does not move the cooldown by itself")
-    func showLeavesCooldownAlone() {
+    @Test("A counted show moves the cooldown")
+    func countedShowMovesTheCooldown() {
         accountant.recordShow(show(.once(OnceFrequency(kind: .session))))
 
-        #expect(trackingService.saveInappStateChangeCallCount == 0)
+        #expect(trackingService.saveInappStateChangeCallCount == 1)
     }
 
     @Test("A counted cooldown is written, an unlimited one is not")
