@@ -18,6 +18,7 @@ struct InappShowAccountantTests {
     private let accountant: InappShowAccountant
 
     init() {
+        SessionTemporaryStorage.shared.erase()
         accountant = InappShowAccountant(tracker: tracker, trackingService: trackingService)
     }
 
@@ -56,6 +57,48 @@ struct InappShowAccountantTests {
         accountant.recordShow(show(.once(OnceFrequency(kind: .session))))
 
         #expect(trackingService.saveInappStateChangeCallCount == 1)
+    }
+
+    @Test("The same in-app at a place is accounted once")
+    func sameInappAtPlaceIsAccountedOnce() {
+        accountant.recordBlockShow(show(.unlimited), at: "place")
+        accountant.recordBlockShow(show(.unlimited), at: "place")
+
+        #expect(tracker.trackViewCallCount == 1)
+    }
+
+    @Test("Another in-app at the place is accounted")
+    func anotherInappAtPlaceIsAccounted() {
+        accountant.recordBlockShow(show(.unlimited, id: "inapp-1"), at: "place")
+        accountant.recordBlockShow(show(.unlimited, id: "inapp-2"), at: "place")
+
+        #expect(tracker.trackViewCallCount == 2)
+    }
+
+    @Test("Returning to the first in-app at the place is accounted again")
+    func returningInappAtPlaceIsAccountedAgain() {
+        accountant.recordBlockShow(show(.unlimited, id: "inapp-1"), at: "place")
+        accountant.recordBlockShow(show(.unlimited, id: "inapp-2"), at: "place")
+        accountant.recordBlockShow(show(.unlimited, id: "inapp-1"), at: "place")
+
+        #expect(tracker.trackViewCallCount == 3)
+    }
+
+    @Test("Two places showing the same in-app are accounted independently")
+    func twoPlacesAreAccountedIndependently() {
+        accountant.recordBlockShow(show(.unlimited), at: "first-place")
+        accountant.recordBlockShow(show(.unlimited), at: "second-place")
+
+        #expect(tracker.trackViewCallCount == 2)
+    }
+
+    @Test("A new session accounts the same in-app at the place again")
+    func newSessionAccountsThePlaceAgain() {
+        accountant.recordBlockShow(show(.unlimited), at: "place")
+        SessionTemporaryStorage.shared.erase()
+        accountant.recordBlockShow(show(.unlimited), at: "place")
+
+        #expect(tracker.trackViewCallCount == 2)
     }
 
     @Test("A counted cooldown is written, an unlimited one is not")

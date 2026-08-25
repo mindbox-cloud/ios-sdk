@@ -44,6 +44,9 @@ final class InappShowAccountingMock: InappShowAccounting {
 
     private(set) var cooldowns: [InappFrequency?] = []
 
+    /// The place of every block show, in the order the shows came.
+    private(set) var places: [String] = []
+
     var shownIds: [String] { shows.map(\.inAppId) }
 
     func recordShow(_ show: InappShow) {
@@ -52,6 +55,11 @@ final class InappShowAccountingMock: InappShowAccounting {
 
     func recordCooldown(frequency: InappFrequency?) {
         cooldowns.append(frequency)
+    }
+
+    func recordBlockShow(_ show: InappShow, at place: String) {
+        places.append(place)
+        shows.append(show)
     }
 }
 
@@ -506,9 +514,6 @@ final class EmbeddedBlockTestBed {
 
     init(placeSystemName: String = "block-id",
          resolution: EmbeddedBlockResolution = .content(.stub)) {
-        // The show-event dedup lives on the shared session singleton — reset, or beds would see each other's shows.
-        SessionTemporaryStorage.shared.blockShowsReportedInSession = []
-
         let resolver = EmbeddedBlockResolverMock(resolution: resolution)
         let feed = EmbeddedBlockFeedServiceMock()
         let pageFactory = EmbeddedBlockPageFactoryMock()

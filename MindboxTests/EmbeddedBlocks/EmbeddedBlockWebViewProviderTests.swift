@@ -188,9 +188,9 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.accounting.shows.count == 1)
     }
 
-    /// In sync with Android: one show per in-app per session — a rebuilt page re-draws what the user already saw.
-    @Test("A page rebuilt in the same session is accounted once")
-    func rebuiltPageInSessionIsAccountedOnce() {
+    /// Whether a rebuilt page is a new show is the accountant's call — the block reports every page it drew.
+    @Test("A page rebuilt for the same content hands its show to the accounting again")
+    func rebuiltPageIsHandedToAccountingAgain() {
         let bed = EmbeddedBlockTestBed(resolution: .content(.counted()))
         bed.provider.start()
         bed.page?.reportRendered(3)
@@ -198,7 +198,17 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.reload()
         bed.page?.reportRendered(3)
 
-        #expect(bed.accounting.shows.count == 1)
+        #expect(bed.accounting.shows.count == 2)
+    }
+
+    @Test("A block show is accounted at the block's place")
+    func showIsAccountedAtThePlace() {
+        let bed = EmbeddedBlockTestBed(placeSystemName: "the-place")
+
+        bed.provider.start()
+        bed.page?.reportRendered(3)
+
+        #expect(bed.accounting.places == ["the-place"])
     }
 
     @Test("A page shown again on return is accounted once")
@@ -225,19 +235,6 @@ struct EmbeddedBlockWebViewProviderTests {
 
         #expect(bed.accounting.shownIds == [EmbeddedBlockWebContent.stub.inAppId,
                                             EmbeddedBlockWebContent.other.inAppId])
-    }
-
-    @Test("A new session accounts the show again")
-    func newSessionAccountsTheShowAgain() {
-        let bed = EmbeddedBlockTestBed()
-        bed.provider.start()
-        bed.page?.reportRendered(1)
-
-        SessionTemporaryStorage.shared.blockShowsReportedInSession = []
-        bed.provider.reload()
-        bed.page?.reportRendered(1)
-
-        #expect(bed.accounting.shows.count == 2)
     }
 
     @Test("The accounted show carries the time the page took")
