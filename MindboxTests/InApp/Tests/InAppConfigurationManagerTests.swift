@@ -92,6 +92,10 @@ struct InAppConfigurationManagerTests {
             wrapped.inapps(addressedTo: place, in: candidates)
         }
 
+        func inapps(askedAbout ids: [String], in candidates: ConfigCandidates) -> [InApp] {
+            wrapped.inapps(askedAbout: ids, in: candidates)
+        }
+
         func filter(requestedIds ids: [String], in candidates: ConfigCandidates) -> [InApp] {
             wrapped.filter(requestedIds: ids, in: candidates)
         }

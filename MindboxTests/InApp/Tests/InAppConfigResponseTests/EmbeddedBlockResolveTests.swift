@@ -76,13 +76,17 @@ struct EmbeddedBlockResolveTests {
         }
     }
 
-    private func showable(_ ids: [String], askedBy blockInappId: String = Constants.blockId) async -> [String] {
-        await showableInOrder(ids, askedBy: blockInappId).sorted()
+    private func showable(_ ids: [String],
+                          askedBy blockInappId: String = Constants.blockId,
+                          candidates: ConfigCandidates? = nil) async -> [String] {
+        await showableInOrder(ids, askedBy: blockInappId, candidates: candidates).sorted()
     }
 
-    private func showableInOrder(_ ids: [String], askedBy blockInappId: String = Constants.blockId) async -> [String] {
+    private func showableInOrder(_ ids: [String],
+                                 askedBy blockInappId: String = Constants.blockId,
+                                 candidates: ConfigCandidates? = nil) async -> [String] {
         await withCheckedContinuation { continuation in
-            mapper.getShowableInappIds(ids, askedBy: blockInappId, candidates) { continuation.resume(returning: $0) }
+            mapper.getShowableInappIds(ids, askedBy: blockInappId, candidates ?? self.candidates) { continuation.resume(returning: $0) }
         }
     }
 
@@ -403,7 +407,7 @@ struct EmbeddedBlockResolveTests {
         #expect(await showable(["44444444-4444-4444-4444-444444444444"]).isEmpty)
     }
 
-    @Test("A page vouches for every story it allows and for nothing it cuts")
+    @Test("A page vouches for what it allows and never for a pure-embedded in-app")
     func feedVouchesForWhatItAllows() async {
         let allowed = await showable(everyId)
         let vouched = Set(dataFacade.trackTargetingCalls.compactMap(\.id))
@@ -412,9 +416,28 @@ struct EmbeddedBlockResolveTests {
         #expect(!vouched.contains(Constants.blockId))
     }
 
-    @Test("A story only an operation targets is not drawn for a page")
+    @Test("A story the A/B branch cut is vouched for but left out of the answer")
+    func abCutStoryIsVouchedForButNotDrawn() async {
+        let cut = ConfigCandidates(renderable: candidates.renderable,
+                                   inPool: candidates.inPool.filter { $0.id != Constants.unlimitedStoryId })
+
+        #expect(await showable([Constants.unlimitedStoryId], candidates: cut).isEmpty)
+        #expect(dataFacade.trackTargetingCalls.contains { $0.id == Constants.unlimitedStoryId })
+    }
+
+    @Test("A spent once story is vouched for but left out of the answer")
+    func spentOnceStoryIsVouchedForButNotDrawn() async {
+        let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+        persistenceStorage.shownDatesByInApp = [Constants.onceStoryId: [Date()]]
+
+        #expect(await showable([Constants.onceStoryId]).isEmpty)
+        #expect(dataFacade.trackTargetingCalls.contains { $0.id == Constants.onceStoryId })
+    }
+
+    @Test("A story only an operation targets is not drawn for a page and not vouched for")
     func feedDropsAnOperationTargetedStory() async {
         #expect(await showable([Constants.operationStoryId]).isEmpty)
+        #expect(!dataFacade.trackTargetingCalls.contains { $0.id == Constants.operationStoryId })
     }
 
     // MARK: - The page's question and the network
