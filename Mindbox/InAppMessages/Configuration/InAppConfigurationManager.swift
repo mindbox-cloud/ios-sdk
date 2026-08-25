@@ -21,8 +21,9 @@ protocol InAppConfigurationManagerProtocol: AnyObject {
 
     func prepareConfiguration()
     func handleInapps(event: ApplicationEvent?, _ completion: @escaping (InAppFormData?) -> Void)
-    /// `processingDuration` runs from the moment the config let the request through: the wait for a
-    /// config is nobody's `timeToDisplay` — the overlay's clock starts past its own config gate too.
+    /// `processingDuration` runs from this call — the wait for a config included: a block's
+    /// `timeToDisplay` counts from the moment the block asked for content, whatever the SDK was
+    /// still missing (in sync with Android).
     func selectInappForPlace(_ place: String,
                              trigger: ApplicationEvent?,
                              _ completion: @escaping (InAppTransitionData?, _ processingDuration: TimeInterval) -> Void)
@@ -115,13 +116,14 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     func selectInappForPlace(_ place: String,
                              trigger: ApplicationEvent?,
                              _ completion: @escaping (InAppTransitionData?, _ processingDuration: TimeInterval) -> Void) {
+        let stopwatch = ForegroundStopwatch()
         awaitConfig("place '\(place)'") { [weak self] candidates in
             guard let self = self, let inappMapper = self.inappMapper, let candidates = candidates else {
+                stopwatch.stop()
                 completion(nil, 0)
                 return
             }
 
-            let stopwatch = ForegroundStopwatch()
             inappMapper.selectInappForPlace(place, trigger: trigger, candidates) { inapp in
                 let processingDuration = stopwatch.elapsed
                 stopwatch.stop()
