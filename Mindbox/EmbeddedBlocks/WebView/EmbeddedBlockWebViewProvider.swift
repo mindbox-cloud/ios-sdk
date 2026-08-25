@@ -42,6 +42,10 @@ final class EmbeddedBlockWebViewProvider {
 
     private var isStarted = false
 
+    /// Whether the stopped state is a pause the next `start()` resumes — as opposed to an attempt
+    /// abandoned or torn down, where the next `start()` begins a cycle anew.
+    private var isPaused = false
+
     private var outcome: EmbeddedBlockState = .loading
 
     private var isReady: Bool { outcome == .ready }
@@ -110,6 +114,7 @@ final class EmbeddedBlockWebViewProvider {
         guard !isStarted else { return }
 
         isStarted = true
+        isPaused = false
         page?.isUserPresent = true
 
         let pending = pendingResolution
@@ -166,6 +171,7 @@ final class EmbeddedBlockWebViewProvider {
         guard isStarted else { return }
 
         isStarted = false
+        isPaused = true
         // A pause, not an end: the outcome stands and the page keeps living — leaving the screen must
         // not cost the attempt, and `cancel()` closes a page for good, so a cancelled one could never
         // be resumed. What ends an attempt is `abandonAttempt()`; what ends the block is `teardown()`.
@@ -183,6 +189,7 @@ final class EmbeddedBlockWebViewProvider {
     /// block is looked at it starts a cycle anew rather than resuming this one.
     func abandonAttempt() {
         isStarted = false
+        isPaused = false
         outcome = .failed
         pendingResolution = nil
         dropPage()
@@ -191,6 +198,7 @@ final class EmbeddedBlockWebViewProvider {
     /// The block is gone for good. Unlike `stop()`, this closes the page: nothing is coming back.
     func teardown() {
         isStarted = false
+        isPaused = false
         pendingResolution = nil
         pendingFailureReport = nil
         dropPage()
@@ -205,6 +213,7 @@ final class EmbeddedBlockWebViewProvider {
         pendingResolution = nil
         loadGeneration += 1
         isStarted = true
+        isPaused = false
 
         beginAttempt()
     }
@@ -227,7 +236,12 @@ final class EmbeddedBlockWebViewProvider {
 
     func apply(_ resolution: EmbeddedBlockResolution) {
         guard isStarted else {
-            pendingResolution = resolution
+            // Only a pause keeps the answer: a paused block resumes and announces it. An attempt
+            // abandoned or torn down is not coming back — its next `start()` asks the place itself,
+            // and a late answer kept here would build the stale page before the fresh one arrived.
+            if isPaused {
+                pendingResolution = resolution
+            }
             return
         }
 
@@ -369,9 +383,11 @@ final class EmbeddedBlockWebViewProvider {
         armDataPushAck()
     }
 
+    /// Judged by the standing wait, not by the timer or the pause: a page kept alive off screen can
+    /// confirm from there, and an ignored confirmation would re-arm the timeout on return and
+    /// rebuild a page that did answer.
     private func acknowledgeDataPush() {
-        guard isStarted else { return }
-        guard dataPushAck != nil else {
+        guard isAwaitingDataPushAck else {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the page confirmed a data push nobody was waiting on",
                           level: .debug, category: .embeddedBlocks)
             return

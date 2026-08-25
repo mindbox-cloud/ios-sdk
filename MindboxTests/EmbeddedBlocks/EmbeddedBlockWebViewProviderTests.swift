@@ -462,6 +462,30 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.pageFactory.pages.count == 1)
     }
 
+    /// A data push confirmation arriving while paused (provider stopped) clears the standing wait.
+    /// When the provider resumes, no new timeout is scheduled and the page is not rebuilt.
+    @Test("A data push confirmation arriving while paused clears the wait and prevents rebuild on return")
+    func dataPushConfirmationWhilePausedClearsTheWait() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData()
+        #expect(bed.ackScheduler.scheduled.count == 1)
+
+        bed.provider.stop()
+        // Confirmation arrives while paused
+        bed.page?.confirmInitData()
+
+        // The wait is now cleared
+        bed.provider.start()
+
+        // No new timeout was scheduled after start
+        #expect(bed.ackScheduler.scheduled.count == 1)
+        // Page was not rebuilt
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.page?.loadCount == 1)
+    }
+
     @Test("The confirmation wait uses the page budget")
     func ackWaitUsesThePageBudget() {
         let bed = EmbeddedBlockTestBed()
@@ -1010,6 +1034,24 @@ struct EmbeddedBlockWebViewProviderTests {
 
         #expect(bed.pageFactory.contents.last == .stub)
         #expect(bed.pageFactory.pages.count == 2)
+    }
+
+    /// Only a pause keeps an answer for the return — an abandoned attempt is not coming back, so a
+    /// late answer to it is discarded rather than parked: kept, it would have the next `start()`
+    /// build the stale page before the fresh answer arrived.
+    @Test("A resolution arriving after abandonAttempt is discarded, not parked")
+    func resolutionAfterAbandonAttemptIsDiscarded() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.provider.abandonAttempt()
+
+        bed.provider.apply(.content(.other))
+        bed.provider.start()
+
+        // The next start began a cycle anew: the place was asked again and its own answer was
+        // built — the answer left over from the abandoned attempt never was.
+        #expect(bed.resolver.resolveCount == 2)
+        #expect(bed.pageFactory.contents == [.stub, .stub])
     }
 
     /// The backend hears about blocks the user was shown: a page that failed behind another screen is
