@@ -23,7 +23,9 @@ protocol InappScheduleManagerProtocol {
 
     /// Past the queue and every limit — a direct call is invited, and a tap that does nothing is a
     /// defect. Only `Inapp.Show` goes out: targeting was sent when the selection offered the in-app.
-    func showInAppNow(_ inAppFormData: InAppFormData)
+    /// `processingDuration` is the caller's time since the tap — fetching and building the form counts
+    /// into `timeToDisplay`, like the overlay's pass does.
+    func showInAppNow(_ inAppFormData: InAppFormData, processingDuration: TimeInterval)
 }
 
 final class InappScheduleManager: InappScheduleManagerProtocol {
@@ -79,14 +81,14 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
         }
     }
 
-    func showInAppNow(_ inapp: InAppFormData) {
+    func showInAppNow(_ inapp: InAppFormData, processingDuration: TimeInterval) {
         DispatchQueue.main.async {
             // Dismissal completes the closed show on the next main-queue turn; presenting is deferred
             // behind it so the lock is released before the new show takes it.
             self.presentationManager.dismissActiveInApp()
 
             DispatchQueue.main.async {
-                self.presentRequestedInapp(inapp)
+                self.presentRequestedInapp(inapp, processingDuration: processingDuration)
             }
         }
     }
@@ -132,7 +134,7 @@ internal extension InappScheduleManager {
         accountant.recordCooldown(frequency: inapp.frequency)
     }
 
-    private func presentRequestedInapp(_ inapp: InAppFormData) {
+    private func presentRequestedInapp(_ inapp: InAppFormData, processingDuration: TimeInterval) {
         Logger.common(message: "[InappScheduleManager] Showing \(inapp.inAppId) on request, past the queue and its limits")
 
         let stopwatch = ForegroundStopwatch()
@@ -141,8 +143,10 @@ internal extension InappScheduleManager {
             onPresented: {
                 let presentationTime = stopwatch.elapsed
                 stopwatch.stop()
-                Logger.common(message: "[InAppMetric] inappId=\(inapp.inAppId) presentationTime=\(presentationTime.toTimeSpan()) timeToDisplay=\(presentationTime.toTimeSpan())")
-                self.trackShow(inapp, timeToDisplay: presentationTime)
+                let timeToDisplay = processingDuration + presentationTime
+                Logger.common(message: "[InAppMetric] inappId=\(inapp.inAppId) processingTime=\(processingDuration.toTimeSpan()) "
+                    + "presentationTime=\(presentationTime.toTimeSpan()) timeToDisplay=\(timeToDisplay.toTimeSpan())")
+                self.trackShow(inapp, timeToDisplay: timeToDisplay)
             },
             onDismissed: {
                 self.trackDismissal(inapp)

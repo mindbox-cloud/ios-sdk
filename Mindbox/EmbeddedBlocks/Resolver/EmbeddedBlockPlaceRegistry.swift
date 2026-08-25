@@ -13,8 +13,8 @@ protocol EmbeddedBlockPlaceHandling: AnyObject {
 
     var isActive: Bool { get }
 
-    /// The place's fresh answer, on the main thread.
-    func apply(_ resolution: EmbeddedBlockResolution)
+    /// The place's fresh answer, on the main thread, with how long the selection worked on it.
+    func apply(_ resolution: EmbeddedBlockResolution, processingDuration: TimeInterval)
 }
 
 /// Called on the main thread: the registry's state is confined to it.
@@ -207,11 +207,11 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
 
         resolvingPlaces.insert(place)
 
-        resolver.resolve(place, trigger: cause.trigger) { [weak self] resolution in
+        resolver.resolve(place, trigger: cause.trigger) { [weak self] resolution, processingDuration in
             guard let self else { return }
 
             self.resolvingPlaces.remove(place)
-            self.deliver(place: place, resolution: resolution)
+            self.deliver(place: place, resolution: resolution, processingDuration: processingDuration)
 
             if let queued = self.queuedInvalidations.removeValue(forKey: place) {
                 self.requestResolve(place: place, cause: .queued(queued.trigger))
@@ -219,9 +219,9 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         }
     }
 
-    private func deliver(place: String, resolution: EmbeddedBlockResolution) {
+    private func deliver(place: String, resolution: EmbeddedBlockResolution, processingDuration: TimeInterval) {
         for weakBlock in blocksByPlace[place] ?? [] {
-            weakBlock.block?.apply(resolution)
+            weakBlock.block?.apply(resolution, processingDuration: processingDuration)
         }
     }
 

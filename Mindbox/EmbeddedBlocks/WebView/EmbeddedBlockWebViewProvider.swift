@@ -50,7 +50,11 @@ final class EmbeddedBlockWebViewProvider {
 
     private var didAccountForShow = false
 
-    private var attemptStopwatch = ForegroundStopwatch()
+    /// The selection's part of `timeToDisplay`, handed over with the content; the page's part runs on
+    /// `presentationStopwatch` from the moment the page is built.
+    private var processingDuration: TimeInterval = 0
+
+    private var presentationStopwatch = ForegroundStopwatch()
 
     private let scheduleAckTimeout: EmbeddedBlockWaitScheduling
 
@@ -124,7 +128,6 @@ final class EmbeddedBlockWebViewProvider {
     private func beginAttempt() {
         onStateChange?(.loading)
         outcome = .loading
-        attemptStopwatch = ForegroundStopwatch()
 
         if page != nil {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the page from the previous attempt cannot be resumed, dropping it",
@@ -137,7 +140,7 @@ final class EmbeddedBlockWebViewProvider {
 
     // MARK: - The registry's answer
 
-    func apply(_ resolution: EmbeddedBlockResolution) {
+    func apply(_ resolution: EmbeddedBlockResolution, processingDuration: TimeInterval) {
         guard isStarted else { return }
 
         switch resolution {
@@ -150,11 +153,11 @@ final class EmbeddedBlockWebViewProvider {
             onStateChange?(.empty)
 
         case .content(let fresh):
-            applyContent(fresh)
+            applyContent(fresh, processingDuration: processingDuration)
         }
     }
 
-    private func applyContent(_ fresh: EmbeddedBlockWebContent) {
+    private func applyContent(_ fresh: EmbeddedBlockWebContent, processingDuration: TimeInterval) {
         if let current = content, let page = page, outcome != .failed {
             // A collapsed page is deliberately not deduplicated: for it the same answer is news —
             // re-sent data is what makes the page re-report itself and revive.
@@ -176,19 +179,20 @@ final class EmbeddedBlockWebViewProvider {
 
         let reason = page == nil ? "building its page" : "the place points at another page — rebuilding it"
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': \(reason)", category: .embeddedBlocks)
-        buildPage(with: fresh)
+        buildPage(with: fresh, processingDuration: processingDuration)
     }
 
-    private func buildPage(with fresh: EmbeddedBlockWebContent) {
+    private func buildPage(with fresh: EmbeddedBlockWebContent, processingDuration: TimeInterval) {
         dropPage()
 
         if outcome != .loading {
             onStateChange?(.loading)
-            attemptStopwatch = ForegroundStopwatch()
         }
         outcome = .loading
         loadGeneration += 1
         didAccountForShow = false
+        self.processingDuration = processingDuration
+        presentationStopwatch = ForegroundStopwatch()
 
         let page = makePage(fresh)
         page.isUserPresent = true
@@ -249,7 +253,7 @@ final class EmbeddedBlockWebViewProvider {
 
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the page never confirmed the data push — rebuilding it",
                           level: .error, category: .embeddedBlocks)
-            self.buildPage(with: content)
+            self.buildPage(with: content, processingDuration: self.processingDuration)
         }
 
         dataPushAck = work
@@ -374,8 +378,8 @@ final class EmbeddedBlockWebViewProvider {
 
         didAccountForShow = true
 
-        let timeToDisplay = attemptStopwatch.elapsed
-        attemptStopwatch.stop()
+        let timeToDisplay = processingDuration + presentationStopwatch.elapsed
+        presentationStopwatch.stop()
 
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': in-app \(content.inAppId) is shown, timeToDisplay=\(timeToDisplay.toTimeSpan())",
                       category: .embeddedBlocks)

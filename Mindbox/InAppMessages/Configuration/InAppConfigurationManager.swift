@@ -18,7 +18,11 @@ protocol InAppConfigurationManagerProtocol: AnyObject {
 
     func prepareConfiguration()
     func handleInapps(event: ApplicationEvent?, _ completion: @escaping (InAppFormData?) -> Void)
-    func selectInappForPlace(_ place: String, trigger: ApplicationEvent?, _ completion: @escaping (InAppTransitionData?) -> Void)
+    /// `processingDuration` runs from the moment the config let the request through: the wait for a
+    /// config is nobody's `timeToDisplay` — the overlay's clock starts past its own config gate too.
+    func selectInappForPlace(_ place: String,
+                             trigger: ApplicationEvent?,
+                             _ completion: @escaping (InAppTransitionData?, _ processingDuration: TimeInterval) -> Void)
     func getShowableInappIds(_ ids: [String], askedBy blockInappId: String, _ completion: @escaping ([String]) -> Void)
     func getInAppToShowById(_ id: String, params: [String: JSONValue], _ completion: @escaping (InAppFormData?) -> Void)
     func getEmbeddedPlaces(_ completion: @escaping ([String: Set<String>]?) -> Void)
@@ -103,14 +107,21 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     
     /// Waits for the first config rather than answering nil early: an early "nothing to show"
     /// collapses the block for the screen's whole life — nothing retries.
-    func selectInappForPlace(_ place: String, trigger: ApplicationEvent?, _ completion: @escaping (InAppTransitionData?) -> Void) {
+    func selectInappForPlace(_ place: String,
+                             trigger: ApplicationEvent?,
+                             _ completion: @escaping (InAppTransitionData?, _ processingDuration: TimeInterval) -> Void) {
         awaitConfig("place '\(place)'") { [weak self] candidates in
             guard let self = self, let inappMapper = self.inappMapper, let candidates = candidates else {
-                completion(nil)
+                completion(nil, 0)
                 return
             }
 
-            inappMapper.selectInappForPlace(place, trigger: trigger, candidates, completion)
+            let stopwatch = ForegroundStopwatch()
+            inappMapper.selectInappForPlace(place, trigger: trigger, candidates) { inapp in
+                let processingDuration = stopwatch.elapsed
+                stopwatch.stop()
+                completion(inapp, processingDuration)
+            }
         }
     }
 

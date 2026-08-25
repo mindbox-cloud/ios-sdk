@@ -24,31 +24,36 @@ final class EmbeddedBlockFeedService: EmbeddedBlockFeedServing {
 
     private let ask: (_ ids: [String], _ blockInappId: String, _ completion: @escaping ([String]) -> Void) -> Void
     private let fetchInappToShow: (_ id: String, _ params: [String: JSONValue], _ completion: @escaping (InAppFormData?) -> Void) -> Void
-    private let showNow: (InAppFormData) -> Void
+    private let showNow: (InAppFormData, _ processingDuration: TimeInterval) -> Void
 
     init(ask: ((_ ids: [String], _ blockInappId: String, _ completion: @escaping ([String]) -> Void) -> Void)? = nil,
          fetchInappToShow: ((_ id: String, _ params: [String: JSONValue], _ completion: @escaping (InAppFormData?) -> Void) -> Void)? = nil,
-         showNow: ((InAppFormData) -> Void)? = nil) {
+         showNow: ((InAppFormData, _ processingDuration: TimeInterval) -> Void)? = nil) {
         self.ask = ask ?? { ids, blockInappId, completion in
             DI.injectOrFail(InAppConfigurationManagerProtocol.self).getShowableInappIds(ids, askedBy: blockInappId, completion)
         }
         self.fetchInappToShow = fetchInappToShow ?? { id, params, completion in
             DI.injectOrFail(InAppConfigurationManagerProtocol.self).getInAppToShowById(id, params: params, completion)
         }
-        self.showNow = showNow ?? { formData in
-            DI.injectOrFail(InappScheduleManagerProtocol.self).showInAppNow(formData)
+        self.showNow = showNow ?? { formData, processingDuration in
+            DI.injectOrFail(InappScheduleManagerProtocol.self).showInAppNow(formData, processingDuration: processingDuration)
         }
     }
 
     func showInapp(id: String, params: [String: JSONValue]) {
+        // The tap is the trigger: the fetch and the form build count into timeToDisplay, like the overlay's pass.
+        let stopwatch = ForegroundStopwatch()
         fetchInappToShow(id, params) { [showNow] formData in
+            let processingDuration = stopwatch.elapsed
+            stopwatch.stop()
+
             guard let formData = formData else {
                 Logger.common(message: "[EmbeddedBlock] Nothing to show for in-app \(id)",
                               level: .error, category: .embeddedBlocks)
                 return
             }
 
-            showNow(formData)
+            showNow(formData, processingDuration)
         }
     }
 
