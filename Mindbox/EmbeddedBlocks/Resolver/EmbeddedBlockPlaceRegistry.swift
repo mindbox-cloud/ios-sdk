@@ -231,9 +231,10 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
     }
 
     /// A winner with `delayTime` waits like an overlay in the schedule queue: the blocks hear that
-    /// content is coming and stand their wait budget down; a different answer for the place replaces
-    /// the waiting one, the same winner keeps its timer. Once a delay ran out for an in-app at a place,
-    /// a block coming back to the screen gets that content at once — the wait was already served.
+    /// content is coming and stand their wait budget down — a block appearing mid-delay too; a different
+    /// answer for the place replaces the waiting one, the same winner keeps its timer. Once a delay ran
+    /// out for an in-app at a place, a block coming back to the screen gets that content at once — the
+    /// wait was already served.
     private func handle(_ resolution: EmbeddedBlockResolution, at place: String, processingDuration: TimeInterval) {
         guard case .content(let content) = resolution else {
             delayedDelivery.cancel(place: place)
@@ -246,6 +247,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
             Logger.common(message: "[EmbeddedBlock] Place '\(place)': in-app \(content.inAppId) is still waiting out its delay",
                           category: .embeddedBlocks)
             waitingAnswers[place] = (resolution, processingDuration)
+            announceDelay(at: place)
             return
         }
 
@@ -261,9 +263,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
 
         Logger.common(message: "[EmbeddedBlock] Place '\(place)': in-app \(content.inAppId) waits \(delay)s before it is shown",
                       category: .embeddedBlocks)
-        for weakBlock in blocksByPlace[place] ?? [] {
-            weakBlock.block?.contentIsDelayed()
-        }
+        announceDelay(at: place)
 
         waitingAnswers[place] = (resolution, processingDuration)
         delayedDelivery.schedule(place: place, inappId: content.inAppId, after: delay) { [weak self] in
@@ -271,6 +271,12 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
 
             SessionTemporaryStorage.shared.$servedPlaceDelays.mutate { $0.insert(served) }
             self.deliver(place: place, resolution: answer.resolution, processingDuration: answer.processingDuration)
+        }
+    }
+
+    private func announceDelay(at place: String) {
+        for weakBlock in blocksByPlace[place] ?? [] {
+            weakBlock.block?.contentIsDelayed()
         }
     }
 
