@@ -26,7 +26,8 @@ extension MBContainer {
         register(EmbeddedBlockContentProviderMaking.self) {
             EmbeddedBlockContentProviderFactory(registry: DI.injectOrFail(EmbeddedBlockPlaceRegistering.self),
                                                 feed: DI.injectOrFail(EmbeddedBlockFeedServing.self),
-                                                failureManager: DI.injectOrFail(InappShowFailureManagerProtocol.self))
+                                                failureManager: DI.injectOrFail(InappShowFailureManagerProtocol.self),
+                                                accounting: DI.injectOrFail(InappShowAccounting.self))
         }
 
         return self

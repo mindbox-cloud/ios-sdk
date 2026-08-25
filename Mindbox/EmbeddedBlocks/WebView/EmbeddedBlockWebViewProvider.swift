@@ -30,9 +30,7 @@ final class EmbeddedBlockWebViewProvider {
     private let feed: EmbeddedBlockFeedServing
     private let makePage: (EmbeddedBlockWebContent) -> EmbeddedBlockPageHosting
 
-    private let recordShow: (String) -> Void
-
-    private let reportShow: (EmbeddedBlockWebContent, String) -> Void
+    private let accounting: InappShowAccounting
 
     private let reportFailure: (EmbeddedBlockWebContent, InAppShowFailureReason, String) -> Void
 
@@ -60,8 +58,7 @@ final class EmbeddedBlockWebViewProvider {
          registry: EmbeddedBlockPlaceRegistering,
          feed: EmbeddedBlockFeedServing,
          makePage: @escaping (EmbeddedBlockWebContent) -> EmbeddedBlockPageHosting,
-         recordShow: @escaping (String) -> Void,
-         reportShow: @escaping (EmbeddedBlockWebContent, String) -> Void,
+         accounting: InappShowAccounting,
          reportFailure: @escaping (EmbeddedBlockWebContent, InAppShowFailureReason, String) -> Void,
          scheduleAckTimeout: @escaping EmbeddedBlockWaitScheduling = { delay, work in
              DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
@@ -70,8 +67,7 @@ final class EmbeddedBlockWebViewProvider {
         self.registry = registry
         self.feed = feed
         self.makePage = makePage
-        self.recordShow = recordShow
-        self.reportShow = reportShow
+        self.accounting = accounting
         self.reportFailure = reportFailure
         self.scheduleAckTimeout = scheduleAckTimeout
 
@@ -355,37 +351,30 @@ final class EmbeddedBlockWebViewProvider {
         report(.presentationFailed, "The block's page reported contentRendered without a readable count")
     }
 
-    /// Blocks arrive `unlimited` by contract, so the backend is told even when the frequency writes
-    /// no history. The cooldown between overlay shows is deliberately left alone — a block interrupts nothing.
+    /// The cooldown between overlay shows is deliberately left alone — a block interrupts nothing.
     private func accountForShow() {
         guard let content = content, !didAccountForShow else { return }
 
         didAccountForShow = true
 
-        let timeToDisplay = attemptStopwatch.elapsed.toTimeSpan()
+        let timeToDisplay = attemptStopwatch.elapsed
         attemptStopwatch.stop()
 
         // Deduplicated per session by the in-app, in sync with Android: a page rebuilt within a
         // session re-draws what the user already saw.
-        if SessionTemporaryStorage.shared.blockShowsReportedInSession.contains(content.inAppId) {
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': in-app \(content.inAppId) is shown again this session — the event was already reported",
-                          category: .embeddedBlocks)
-        } else {
-            SessionTemporaryStorage.shared.$blockShowsReportedInSession.mutate { $0.insert(content.inAppId) }
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': in-app \(content.inAppId) is shown, timeToDisplay=\(timeToDisplay)",
-                          category: .embeddedBlocks)
-            reportShow(content, timeToDisplay)
-        }
-
-        guard InappFrequency.countsShows(content.frequency) else {
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': in-app \(content.inAppId) is shown without a limit — nothing to count",
+        guard !SessionTemporaryStorage.shared.blockShowsReportedInSession.contains(content.inAppId) else {
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': in-app \(content.inAppId) is shown again this session — already accounted for",
                           category: .embeddedBlocks)
             return
         }
 
-        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': counting a show of in-app \(content.inAppId)",
+        SessionTemporaryStorage.shared.$blockShowsReportedInSession.mutate { $0.insert(content.inAppId) }
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': in-app \(content.inAppId) is shown, timeToDisplay=\(timeToDisplay.toTimeSpan())",
                       category: .embeddedBlocks)
-        recordShow(content.inAppId)
+        accounting.recordShow(InappShow(inAppId: content.inAppId,
+                                        frequency: content.frequency,
+                                        tags: content.tags,
+                                        timeToDisplay: timeToDisplay))
     }
 }
 
