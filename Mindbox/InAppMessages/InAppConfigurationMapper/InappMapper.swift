@@ -335,11 +335,13 @@ class InappMapper: InappMapperProtocol {
         )
     }
 
+    /// Prepares everyone, like the trigger: the session's single segmentation fetch is shaped by whoever
+    /// asks first, and a block that waited for the config asks before the start pass does.
     private func placeQuery(_ place: String, _ candidates: ConfigCandidates) -> TargetingQuery {
         TargetingQuery(
             label: "place '\(place)'",
-            prepares: { self.inappFilterService.filter(place: place, in: candidates) },
-            candidates: { prepared, _ in prepared },
+            prepares: { candidates.renderable },
+            candidates: { _, _ in self.inappFilterService.filter(place: place, in: candidates) },
             fetchesDependencies: true,
             collectsFailures: true,
             pickVariant: { $0.form.variants.first { $0.placeSystemName == place } }
@@ -363,13 +365,13 @@ class InappMapper: InappMapperProtocol {
         )
     }
 
-    /// Fetches like a place resolve — a cold cache may then miss the page's deadline, an accepted cost.
-    /// The failures of what it cut are not reported in this iteration.
+    /// Prepares and fetches like a place resolve — a cold cache may then miss the page's deadline, an
+    /// accepted cost. The failures of what it cut are not reported in this iteration.
     private func pageQuery(_ ids: [String], _ candidates: ConfigCandidates) -> TargetingQuery {
         TargetingQuery(
             label: "a page asking about \(ids.count) in-app(s)",
-            prepares: { self.inappFilterService.filter(requestedIds: ids, in: candidates) },
-            candidates: { prepared, _ in prepared },
+            prepares: { candidates.renderable },
+            candidates: { _, _ in self.inappFilterService.filter(requestedIds: ids, in: candidates) },
             fetchesDependencies: true,
             collectsFailures: false,
             pickVariant: Self.overlayVariant
