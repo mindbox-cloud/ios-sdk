@@ -253,7 +253,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
 
         let delay = TimeInterval.delay(fromTimeSpan: content.delayTime)
         let served = ServedPlaceDelay(place: place, inappId: content.inAppId)
-        guard delay > 0, !SessionTemporaryStorage.shared.servedPlaceDelays.contains(served) else {
+        guard delay > 0, !SessionTemporaryStorage.shared.ledger.servedPlaceDelays.contains(served) else {
             deliver(place: place, resolution: resolution, processingDuration: processingDuration)
             return
         }
@@ -266,7 +266,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         delayedDelivery.schedule(place: place, inappId: content.inAppId, after: delay) { [weak self] in
             guard let self, let answer = self.waitingAnswers.removeValue(forKey: place) else { return }
 
-            SessionTemporaryStorage.shared.$servedPlaceDelays.mutate { $0.insert(served) }
+            SessionTemporaryStorage.shared.$ledger.mutate { $0.servedPlaceDelays.insert(served) }
             self.deliver(place: place, resolution: answer.resolution, processingDuration: answer.processingDuration)
         }
     }

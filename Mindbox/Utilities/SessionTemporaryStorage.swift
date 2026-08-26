@@ -10,20 +10,6 @@ import Foundation
 import UserNotifications
 import MindboxLogger
 
-/// One in-app a block's page was allowed to draw — what `Inapp.Targeting` for a page's question is
-/// deduplicated by: once per session, per block and in-app.
-struct BlockOffer: Hashable {
-    let blockInappId: String
-    let inappId: String
-}
-
-/// A `delayTime` that ran out for an in-app at a place: a block coming back to the screen gets that
-/// content at once instead of waiting again.
-struct ServedPlaceDelay: Hashable {
-    let place: String
-    let inappId: String
-}
-
 /// Touched from every queue the SDK runs on. `@Locked` makes each access atomic; the single writer
 /// per property is what keeps compound mutations (`append`, `insert`) safe without a wider transaction.
 final class SessionTemporaryStorage {
@@ -49,21 +35,7 @@ final class SessionTemporaryStorage {
 
     @Locked var lastInappClickedID: String?
 
-    @Locked var vouchedInappIds: Set<String> = []
-
-    /// The in-app each place last vouched for as its winner: its `Inapp.Targeting` pairs with the show,
-    /// so it goes out again when the place changes what it shows and then changes back.
-    @Locked var placeTargetedInappId: [String: String] = [:]
-
-    @Locked var vouchedBlockOffers: Set<BlockOffer> = []
-
-    /// Places whose block already reported that the SDK never answered — once per place per session.
-    @Locked var placesReportedUnanswered: Set<String> = []
-
-    @Locked var servedPlaceDelays: Set<ServedPlaceDelay> = []
-
-    /// The in-app each place showed last — a block's show is accounted when this changes.
-    @Locked var placeShownInappId: [String: String] = [:]
+    @Locked var ledger = InappSessionLedger()
 
     /// Last track-visit data (source and requestUrl only)
     @Locked var lastTrackVisit: (source: TrackVisitSource?, requestUrl: String?)?
@@ -89,12 +61,7 @@ final class SessionTemporaryStorage {
         sessionShownInApps = []
         isUserVisitSaved = false
         lastInappClickedID = nil
-        vouchedInappIds = []
-        placeTargetedInappId = [:]
-        vouchedBlockOffers = []
-        placesReportedUnanswered = []
-        servedPlaceDelays = []
-        placeShownInappId = [:]
+        ledger = InappSessionLedger()
         lastTrackVisit = nil
         inAppSettings = nil
         configSessionExpirationTime = nil

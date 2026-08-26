@@ -535,7 +535,7 @@ final class EmbeddedBlockTestBed {
     init(placeSystemName: String = "block-id",
          resolution: EmbeddedBlockResolution = .content(.stub)) {
         // Once-per-session state lives on the shared singleton — reset, or beds would see each other's silence.
-        SessionTemporaryStorage.shared.placesReportedUnanswered = []
+        SessionTemporaryStorage.shared.$ledger.mutate { $0.placesReportedUnanswered = [] }
 
         let resolver = EmbeddedBlockResolverMock(resolution: resolution)
         let inappService = EmbeddedBlockInappServiceMock()

@@ -392,6 +392,7 @@
 		A153E03B29BAFE01003C34D4 /* CustomOperationTargeting.swift in Sources */ = {isa = PBXBuildFile; fileRef = A153E03A29BAFE01003C34D4 /* CustomOperationTargeting.swift */; };
 		A153E03D29BAFEC1003C34D4 /* CustomOperationChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = A153E03C29BAFEC0003C34D4 /* CustomOperationChecker.swift */; };
 		A153E03F29BB002A003C34D4 /* SessionTemporaryStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A153E03E29BB002A003C34D4 /* SessionTemporaryStorage.swift */; };
+		DC36B591F6608E7D1196C936 /* InappSessionLedger.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4ADBBEBCF7E68E56565FEA9 /* InappSessionLedger.swift */; };
 		A153E04129BB0A8B003C34D4 /* InAppConfigurationWithOperations.json in Resources */ = {isa = PBXBuildFile; fileRef = A153E04029BB0A8B003C34D4 /* InAppConfigurationWithOperations.json */; };
 		A154E32E299E0D8900F8F074 /* SDKLogManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E32D299E0D8900F8F074 /* SDKLogManagerTests.swift */; };
 		A154E330299E0F1600F8F074 /* InAppGeoResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E32F299E0F1600F8F074 /* InAppGeoResponse.swift */; };
@@ -1171,6 +1172,7 @@
 		A153E03A29BAFE01003C34D4 /* CustomOperationTargeting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomOperationTargeting.swift; sourceTree = "<group>"; };
 		A153E03C29BAFEC0003C34D4 /* CustomOperationChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomOperationChecker.swift; sourceTree = "<group>"; };
 		A153E03E29BB002A003C34D4 /* SessionTemporaryStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionTemporaryStorage.swift; sourceTree = "<group>"; };
+		E4ADBBEBCF7E68E56565FEA9 /* InappSessionLedger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappSessionLedger.swift; sourceTree = "<group>"; };
 		A153E04029BB0A8B003C34D4 /* InAppConfigurationWithOperations.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = InAppConfigurationWithOperations.json; sourceTree = "<group>"; };
 		A154E32D299E0D8900F8F074 /* SDKLogManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SDKLogManagerTests.swift; sourceTree = "<group>"; };
 		A154E32F299E0F1600F8F074 /* InAppGeoResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InAppGeoResponse.swift; sourceTree = "<group>"; };
@@ -1792,6 +1794,7 @@
 				3328FE4326303F30000A30D0 /* TimeInterval+TimeSpan.swift */,
 				F78E92EE282E63320003B4A3 /* DispatchSemaphore.swift */,
 				A153E03E29BB002A003C34D4 /* SessionTemporaryStorage.swift */,
+				E4ADBBEBCF7E68E56565FEA9 /* InappSessionLedger.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -4571,6 +4574,7 @@
 				317AF8FC25B844DB006348FA /* UtilitiesFetcher.swift in Sources */,
 				B36D57852696E59400FEDFD6 /* RetailOrderStatisticsResponse.swift in Sources */,
 				A153E03F29BB002A003C34D4 /* SessionTemporaryStorage.swift in Sources */,
+				DC36B591F6608E7D1196C936 /* InappSessionLedger.swift in Sources */,
 				840C387325CC1AF200D50183 /* CDEvent+CoreDataProperties.swift in Sources */,
 				F3482F1D2A65DC11002A41EC /* CompositeInappMessageDelegate.swift in Sources */,
 				33072F3C2664C713001F1AB2 /* CustomerSegmentationsResponse.swift in Sources */,

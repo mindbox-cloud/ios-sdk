@@ -312,13 +312,13 @@ final class EmbeddedBlockWebViewProvider {
     /// The SDK never answered within the block's budget — a failure with no in-app to pin it on, once
     /// per place per session. Any answer, "nothing" included, would have disarmed the budget instead.
     func reportAnswerTimedOut(waited: TimeInterval) {
-        guard !SessionTemporaryStorage.shared.placesReportedUnanswered.contains(placeSystemName) else {
+        guard !SessionTemporaryStorage.shared.ledger.placesReportedUnanswered.contains(placeSystemName) else {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the SDK stayed silent again this session — already reported",
                           category: .embeddedBlocks)
             return
         }
 
-        SessionTemporaryStorage.shared.$placesReportedUnanswered.mutate { $0.insert(placeSystemName) }
+        SessionTemporaryStorage.shared.$ledger.mutate { $0.placesReportedUnanswered.insert(placeSystemName) }
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the SDK never answered within \(waited.toTimeSpan()) — reporting a failure without an in-app",
                       level: .error, category: .embeddedBlocks)
         reportUnansweredWait(waited)

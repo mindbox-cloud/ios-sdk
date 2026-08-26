@@ -39,7 +39,7 @@ struct EmbeddedBlockPlaceRegistryTests {
 
         init() {
             // Served delays live on the shared session singleton — reset, or rigs would see each other's.
-            SessionTemporaryStorage.shared.servedPlaceDelays = []
+            SessionTemporaryStorage.shared.$ledger.mutate { $0.servedPlaceDelays = [] }
 
             let resolver = EmbeddedBlockResolverMock()
             let center = NotificationCenter()
