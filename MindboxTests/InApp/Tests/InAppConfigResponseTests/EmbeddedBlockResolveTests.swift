@@ -184,7 +184,7 @@ struct EmbeddedBlockResolveTests {
         #expect(dataFacade.trackTargetingCalls.filter { $0.id == Constants.unlimitedStoryId }.count == 1)
     }
 
-    @Test("The answer keeps the order the page asked in")
+    @Test("The answer keeps the order the page asked in, a priority in-app included")
     func answerKeepsTheAskedOrder() async {
         #expect(await showableInOrder([Constants.modalId, Constants.unlimitedStoryId]) == [Constants.modalId, Constants.unlimitedStoryId])
         #expect(await showableInOrder([Constants.unlimitedStoryId, Constants.modalId]) == [Constants.unlimitedStoryId, Constants.modalId])
