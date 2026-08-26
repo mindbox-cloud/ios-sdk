@@ -121,11 +121,6 @@ struct InAppConfigurationManagerTests {
         }
 
         func filterInappsByTargeting(inapps: [InApp],
-                                     targetingChecker: InAppTargetingCheckerProtocol) -> [InAppTransitionData] {
-            wrapped.filterInappsByTargeting(inapps: inapps, targetingChecker: targetingChecker)
-        }
-
-        func filterInappsByTargeting(inapps: [InApp],
                                      targetingChecker: InAppTargetingCheckerProtocol,
                                      pickVariant: (InApp) -> MindboxFormVariant?) -> [InAppTransitionData] {
             wrapped.filterInappsByTargeting(inapps: inapps, targetingChecker: targetingChecker, pickVariant: pickVariant)

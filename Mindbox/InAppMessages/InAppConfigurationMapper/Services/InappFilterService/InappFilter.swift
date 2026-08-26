@@ -70,12 +70,8 @@ protocol InappFilterProtocol {
                                         operationInapps: [String: Set<String>],
                                         in candidates: ConfigCandidates) -> [InApp]
 
-    /// The overlay path's targeting pass: keeps the targeted in-apps, each paired with its first
-    /// overlay-presentable variant.
-    func filterInappsByTargeting(inapps: [InApp], targetingChecker: InAppTargetingCheckerProtocol) -> [InAppTransitionData]
-
-    /// The same targeting pass for callers drawing something else: `pickVariant` names the variant, `nil` skips
-    /// the candidate. One check for every path.
+    /// The targeting pass: keeps the targeted in-apps, each paired with the variant `pickVariant` names for
+    /// it — `nil` skips the candidate. One check for every path.
     func filterInappsByTargeting(inapps: [InApp],
                                  targetingChecker: InAppTargetingCheckerProtocol,
                                  pickVariant: (InApp) -> MindboxFormVariant?) -> [InAppTransitionData]
@@ -184,12 +180,6 @@ final class InappsFilterService: InappFilterProtocol {
         }
 
         return inapps.filter { inappIDS.contains($0.id) }
-    }
-
-    func filterInappsByTargeting(inapps: [InApp], targetingChecker: InAppTargetingCheckerProtocol) -> [InAppTransitionData] {
-        filterInappsByTargeting(inapps: inapps, targetingChecker: targetingChecker) { inapp in
-            inapp.form.variants.first(where: { $0.isOverlayPresentable })
-        }
     }
 
     func filterInappsByTargeting(inapps: [InApp],
