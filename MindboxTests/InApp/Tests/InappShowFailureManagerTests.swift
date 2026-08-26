@@ -81,7 +81,7 @@ final class InappShowFailureManagerTests: XCTestCase {
         XCTAssertEqual(error.type, "embeddedBlockShowFailure")
         XCTAssertEqual(error.placeSystemName, "silent-place")
         XCTAssertEqual(error.failureReason, .waitBudgetExceeded)
-        XCTAssertEqual(error.errorDetails, "phase=config_missing; waited=0:00:30.0000000")
+        XCTAssertEqual(error.errorDetails, "phase=config_missing; waited=00:00:30.0000000")
         XCTAssertNil(error.inappId)
         XCTAssertNil(error.tags)
         XCTAssertFalse(error.dateTimeUtc.isEmpty)
@@ -92,7 +92,7 @@ final class InappShowFailureManagerTests: XCTestCase {
 
         assertCreatedEventsCountEventually(1)
         let error = try XCTUnwrap(decodeFailures(from: try XCTUnwrap(databaseRepository.createdEvents.first))?.first)
-        XCTAssertEqual(error.errorDetails, "phase=resolve_pending; waited=0:00:12.5000000")
+        XCTAssertEqual(error.errorDetails, "phase=resolve_pending; waited=00:00:12.5000000")
     }
 
     func testSendWaitBudgetExceeded_whenFeatureDisabled_sendsNothing() {

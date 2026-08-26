@@ -32,7 +32,7 @@ struct InappShowAccountantTests {
 
         #expect(tracker.trackViewCallCount == 1)
         #expect(tracker.lastTrackedId == "inapp-1")
-        #expect(tracker.lastTimeToDisplay == "0:00:01.5000000")
+        #expect(tracker.lastTimeToDisplay == "00:00:01.5000000")
     }
 
     @Test("A counted show writes the history")

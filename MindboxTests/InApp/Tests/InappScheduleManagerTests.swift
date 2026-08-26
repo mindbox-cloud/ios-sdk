@@ -521,7 +521,7 @@ struct InappScheduleManagerTests {
         presentationManagerMock.receivedOnPresent?()
 
         let timeToDisplay = try #require(trackerSpy.lastTimeToDisplay)
-        #expect(timeToDisplay.hasPrefix("0:00:03."), "expected at least the 3 s of processing, got \(timeToDisplay)")
+        #expect(timeToDisplay.hasPrefix("00:00:03."), "expected at least the 3 s of processing, got \(timeToDisplay)")
     }
 
     @Test("A show on request closes the overlay already on screen", .tags(.inAppSchedule))
