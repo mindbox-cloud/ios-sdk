@@ -48,6 +48,10 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
 
     private enum Constants {
         static let defaultAlphaBackgroundColor: CGFloat = 0.0
+
+        /// The window reveal once the page reports `init`. Short on purpose: the page is already
+        /// drawn by then, and every millisecond here is added to the wait after the tap.
+        static let revealDuration: TimeInterval = 0.15
     }
 
     private var transparentWebView: TransparentView?
@@ -262,7 +266,7 @@ extension WebViewController: WebViewAction {
         DispatchQueue.main.async {
             if let window = self.windowProvider() {
                 window.isUserInteractionEnabled = true
-                UIView.animate(withDuration: 0.3) {
+                UIView.animate(withDuration: Constants.revealDuration) {
                     window.alpha = 1.0
                 }
                 window.makeKeyAndVisible()
