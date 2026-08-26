@@ -70,7 +70,9 @@ struct InappOverlayFilterTests {
 
         let checker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
         checker.prepare(id: "1", targeting: .true(TrueTargeting()))
-        let transitions = sut.filterInappsByTargeting(inapps: inapps, targetingChecker: checker)
+        let transitions = sut.filterInappsByTargeting(inapps: inapps, targetingChecker: checker) { candidate in
+            candidate.form.variants.first { $0.isOverlayPresentable }
+        }
         #expect(transitions.first?.content == modal())
     }
 
