@@ -115,8 +115,6 @@ private struct EmbeddedBlockBody: View {
     let placeholder: (() -> AnyView)?
     let errorContent: (() -> AnyView)?
 
-    /// Starts from the same point the container starts from: the space is taken, the placeholder
-    /// is shown. The block occupies its height right away, not from the container's first report.
     @State private var appearance: MindboxEmbeddedBlockAppearance
 
     init(placeSystemName: String,
@@ -148,8 +146,6 @@ private struct EmbeddedBlockBody: View {
                                        hasErrorView: errorContent != nil)
             hostLayer
         }
-        // The container gives the height to a UIKit host through `intrinsicContentSize`, which SwiftUI
-        // does not read: here the same rule is applied to the frame instead.
         .frame(height: appearance == .collapsed ? 0 : max(0, height))
     }
 

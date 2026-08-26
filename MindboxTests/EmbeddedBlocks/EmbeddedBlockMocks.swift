@@ -504,7 +504,6 @@ final class EmbeddedBlockTestBed {
     let failureReporter: EmbeddedBlockFailureReporterMock
     let ackScheduler: EmbeddedBlockAckSchedulerMock
 
-    /// The provider's monotonic clock, so a test can spend part of the confirmation wait.
     let clock: TestClock
 
     /// One per bed: a new config must reach only this provider.
@@ -573,14 +572,12 @@ final class EmbeddedBlockTestBed {
     }
 }
 
-/// Collects what the container tells a wrapper through `setAppearanceObserver`.
 final class EmbeddedBlockAppearanceSpy {
 
     private(set) var values: [MindboxEmbeddedBlockAppearance] = []
 
     var last: MindboxEmbeddedBlockAppearance? { values.last }
 
-    /// Whether the block took space in every report — the question a wrapper asks about its layout.
     var wasAlwaysVisible: Bool { !values.contains(.collapsed) }
 
     func record(_ appearance: MindboxEmbeddedBlockAppearance) {

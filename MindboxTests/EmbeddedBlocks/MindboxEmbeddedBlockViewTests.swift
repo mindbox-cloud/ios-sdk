@@ -94,15 +94,10 @@ struct MindboxEmbeddedBlockViewTests {
 
         block.view.errorView = nil
 
-        // Whether a failure is shown at all is this view's doing, so taking it away is not a swap of
-        // screens — the block goes back to the collapse it would have had without one.
         #expect(block.view.intrinsicContentSize.height == 0)
         #expect(errorView.superview == nil)
     }
 
-    /// A failed block goes on showing its error screen while the attempt it gets on the way back
-    /// loads: the state has moved on from `failed`, what is on screen has not, and the host taking
-    /// that screen away has to be obeyed there too.
     @Test("Taking the error view away collapses a failure still shown after a return")
     func errorViewRemovedAfterReturnCollapsesTheBlock() {
         let block = BlockFixture()
@@ -389,9 +384,6 @@ struct MindboxEmbeddedBlockViewTests {
 
     // MARK: - Presentation for the SwiftUI wrapper
 
-    /// A wrapper lays the block out itself, so it is told what the container shows — and what it
-    /// hears must match what the container actually did. The first report is the snapshot handed out
-    /// on subscribing.
     @Test("Every change is reported to the wrapper")
     func everyChangeIsReportedToTheWrapper() {
         let block = BlockFixture()
@@ -405,8 +397,6 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(appearance.values == [.placeholder, .content, .collapsed])
     }
 
-    /// A failure without an error screen is, for the wrapper, the same collapsed block as an empty
-    /// one: there is nothing to draw and no space to hold.
     @Test("Failed block without an error view reports a collapsed block")
     func failedBlockReportsCollapsed() {
         let block = BlockFixture()
@@ -419,8 +409,6 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(appearance.last == .collapsed)
     }
 
-    /// The container reads the host's consent to show a failure off the assigned `errorView` — and
-    /// only then asks the wrapper to draw its own error screen.
     @Test("Failed block with an error view reports the error appearance")
     func failedBlockWithErrorViewReportsError() {
         let block = BlockFixture()
@@ -434,9 +422,6 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(appearance.last == .error)
     }
 
-    /// A reload returns the block to loading, and the wrapper must show the placeholder again. This
-    /// is what an outcome cannot express: the last outcome is still the old one, and only what the
-    /// container shows has changed.
     @Test("Reload reports the placeholder appearance again")
     func reloadReportsPlaceholderAgain() {
         let block = BlockFixture()
@@ -450,9 +435,6 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(appearance.values == [.content, .placeholder])
     }
 
-    /// The same case without a reload: a shown error screen stays. Returning to the window is not a
-    /// reload — the page that failed is still the page — so replacing the host's screen with a
-    /// placeholder would only flash it away and put it straight back.
     @Test("Block that failed with an error view keeps it on a retry")
     func failedBlockWithErrorViewKeepsIt() {
         let block = BlockFixture()
@@ -465,14 +447,9 @@ struct MindboxEmbeddedBlockViewTests {
         block.removeFromWindow()
         block.attachToWindow()
 
-        // Not an exact list: the same value legitimately arrives more than once — subscribing hands
-        // out a snapshot, and every state change reports where the block stands, changed or not. The
-        // rule is that the error screen is never swapped for a placeholder.
         #expect(appearance.values.allSatisfy { $0 == .error })
     }
 
-    /// Once settled on a collapse, a block keeps that state through retries: an error view assigned
-    /// after collapse does not expand it until the next explicit reload.
     @Test("A collapsed settled block stays collapsed on retry even if errorView is assigned after collapse")
     func collapsedSettledBlockStaysCollapsedEvenWithLateErrorView() {
         let block = BlockFixture()
@@ -480,21 +457,16 @@ struct MindboxEmbeddedBlockViewTests {
         block.page?.failLoad()
         #expect(block.view.intrinsicContentSize.height == 0)
 
-        // Error view assigned after the block has settled on collapse
         let errorView = UIView()
         block.view.errorView = errorView
 
-        // Retry: leaving and returning to window
         block.removeFromWindow()
         block.attachToWindow()
 
-        // The block stays collapsed and the error view stays off-screen
         #expect(block.view.intrinsicContentSize.height == 0)
         #expect(errorView.superview == nil)
     }
 
-    /// Once settled on an error screen, if the error view is removed, the block collapses and stays
-    /// collapsed through retries rather than reopening.
     @Test("A failed settled block with error screen stays collapsed on retry when errorView is removed")
     func failedSettledBlockStaysCollapsedWhenErrorViewRemoved() {
         let block = BlockFixture()
@@ -504,21 +476,16 @@ struct MindboxEmbeddedBlockViewTests {
         block.page?.failLoad()
         #expect(block.view.intrinsicContentSize.height == 120)
 
-        // Error view removed while showing the failure
         block.view.errorView = nil
         #expect(block.view.intrinsicContentSize.height == 0)
 
-        // Retry: leaving and returning to window
         block.removeFromWindow()
         block.attachToWindow()
 
-        // The block stays collapsed
         #expect(block.view.intrinsicContentSize.height == 0)
         #expect(block.view.subviews.isEmpty)
     }
 
-    /// A reload resets the settled state: the block is entitled to its full cycle anew, including
-    /// placeholder and error screen if the host opts in again.
     @Test("A reload resets the settled state and allows error view to show on the next failure")
     func reloadResetsSettledStateAndAllowsErrorViewAgain() {
         let block = BlockFixture()
@@ -526,21 +493,16 @@ struct MindboxEmbeddedBlockViewTests {
         block.page?.failLoad()
         #expect(block.view.intrinsicContentSize.height == 0)
 
-        // Error view assigned after the block collapsed
         let errorView = UIView()
         block.view.errorView = errorView
 
-        // Reload: the host's explicit consent to the full cycle anew
         block.view.reload()
         block.page?.failLoad()
 
-        // Now the error view is shown
         #expect(block.view.intrinsicContentSize.height == 120)
         #expect(errorView.superview === block.view)
     }
 
-    /// A reload is the one thing that reopens the cycle: only then does the error screen give way to
-    /// the placeholder, because the block really is loading again.
     @Test("Reload after a failure with an error view shows the placeholder")
     func reloadAfterErrorViewShowsThePlaceholder() {
         let block = BlockFixture()
@@ -568,8 +530,6 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.page?.cancelCount == 0)
 
         block.removeFromWindow()
-        // Leaving is a pause: the page is told nobody is looking, not closed — closing it would make
-        // the return a new attempt.
         #expect(block.page?.cancelCount == 0)
         #expect(block.page?.isUserPresent == false)
     }
@@ -882,8 +842,6 @@ struct MindboxEmbeddedBlockViewTests {
 
     // MARK: - Appearance observer
 
-    /// The current value arrives on subscribing, so a wrapper that comes after the outcome cannot
-    /// miss what the container already decided.
     @Test("Appearance observer reports the current value on subscribe")
     func appearanceObserverReportsCurrentValueOnSubscribe() {
         let block = BlockFixture()
@@ -908,8 +866,6 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(appearance.last == .collapsed)
     }
 
-    /// A shown block keeps the space it was given, and the wrapper must not collapse it anywhere on
-    /// the way from the placeholder to the content.
     @Test("Block that loads and shows content never reports a collapse")
     func shownBlockNeverReportsCollapse() {
         let block = BlockFixture()
@@ -923,9 +879,6 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(appearance.wasAlwaysVisible)
     }
 
-    /// The rule "an `errorView` keeps the place through a failure, an empty place collapses anyway"
-    /// is applied by the container, and the wrapper sees only the answer — which is the whole point
-    /// of reporting what to show instead of what happened.
     @Test("Appearance observer follows the error view opt-in")
     func appearanceObserverFollowsTheErrorViewOptIn() {
         let failed = BlockFixture()
@@ -950,8 +903,6 @@ struct MindboxEmbeddedBlockViewTests {
 
     // MARK: - Host visibility
 
-    /// The whole reason the hook exists: a block on a screen nobody is looking at must not spend its
-    /// waiting budget — and must not even start, so no content is requested for it.
     @Test("Host-hidden block does not start when it enters a window")
     func hostHiddenBlockDoesNotStartInWindow() {
         let block = BlockFixture()
@@ -961,11 +912,9 @@ struct MindboxEmbeddedBlockViewTests {
 
         #expect(block.bed.resolver.resolveCount == 0)
         #expect(block.bed.pageFactory.pages.isEmpty)
-        // Not armed at all, so there is no budget to run out while the screen is out of sight.
         #expect(block.waitBudgetBed.scheduler.lastDelay == nil)
     }
 
-    /// Being shown again by the wrapper is the same event as entering a window: the block starts.
     @Test("Host-shown block in a window starts its content")
     func hostShownBlockStartsContent() {
         let block = BlockFixture()
@@ -978,8 +927,6 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.page?.loadCount == 1)
     }
 
-    /// Both sources have to agree: the wrapper saying "shown" cannot start a block that is not in a
-    /// window in the first place.
     @Test("Host visibility alone does not start a block outside a window")
     func hostVisibilityAloneStartsNothing() {
         let block = BlockFixture()
@@ -1002,8 +949,6 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.page?.cancelCount == 0)
     }
 
-    /// Three sources drive one switch, and they repeat each other freely — the same value twice must
-    /// not stop the content twice.
     @Test("Repeated host visibility changes nothing")
     func repeatedHostVisibilityIsIdempotent() {
         let block = BlockFixture()
@@ -1017,9 +962,6 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.bed.pageFactory.pages.count == 1)
     }
 
-    /// A pause, not a reset — the same as leaving a window: the page that was already loaded is kept
-    /// instead of being built anew. The place is asked again, as it is on any return, and an
-    /// unchanged answer keeps that page.
     @Test("Block hidden and shown again keeps its page")
     func hostHiddenBlockKeepsItsPage() {
         let block = BlockFixture()
@@ -1032,8 +974,6 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.bed.pageFactory.pages.count == 1)
     }
 
-    /// And the budget is paused, not handed back: what the block spent before it was hidden stays
-    /// spent, so a wrapper toggling visibility cannot extend the wait indefinitely.
     @Test("Host visibility pauses the budget and resumes it from the remainder")
     func hostVisibilityResumesTheBudgetFromTheRemainder() async {
         let block = BlockFixture()
@@ -1046,13 +986,11 @@ struct MindboxEmbeddedBlockViewTests {
         block.expireTimeout()
         await mainQueueTurn()
 
-        // Nobody was looking, so the block did not give up while it was hidden.
         #expect(delegate.events.isEmpty)
         #expect(block.view.intrinsicContentSize.height == 120)
 
         block.view.setHostVisible(true)
 
-        // Five seconds of budget, two of them already spent on screen.
         #expect(block.waitBudgetBed.scheduler.lastDelay == 3)
 
         block.expireTimeout()
@@ -1062,8 +1000,6 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.view.intrinsicContentSize.height == 0)
     }
 
-    /// A block that is already shown costs nothing to hide and show: the content is there, and the
-    /// host hears no second outcome for it.
     @Test("Shown block hidden and shown again keeps its content and reports nothing twice")
     func hostVisibilityKeepsShownContent() async {
         let block = BlockFixture()
@@ -1082,8 +1018,6 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.bed.resolver.resolveCount == 2)
     }
 
-    /// A reload needs somebody to look at the block, and the window is no longer the only one who
-    /// knows whether anybody does.
     @Test("Reload on a host-hidden block does nothing")
     func reloadOnHostHiddenBlockDoesNothing() {
         let block = BlockFixture()
@@ -1108,8 +1042,6 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.page?.cancelCount == 1)
     }
 
-    /// Release is final: the wrapper holds the view for as long as the platform sees fit, and a
-    /// block whose screen is gone must not come back to life with it.
     @Test("Released block does not start again in a window")
     func releasedBlockDoesNotStartAgain() {
         let block = BlockFixture()
@@ -1123,7 +1055,6 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.bed.resolver.resolveCount == 1)
     }
 
-    /// Nothing reaches the wrapper after it let the block go — neither outcomes nor appearances.
     @Test("Release silences the delegate and the appearance observer")
     func releaseSilencesTheWrapper() async {
         let block = BlockFixture()

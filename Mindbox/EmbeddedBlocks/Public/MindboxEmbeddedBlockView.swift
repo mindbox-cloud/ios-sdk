@@ -38,7 +38,6 @@ public final class MindboxEmbeddedBlockView: UIView {
         didSet {
             // The same delegate is not a new subscriber: the host rebuilds its layout on the
             // outcome, and the rebuild reassigns the delegate again — answering that would loop.
-            // Nor is a released block's own teardown one: it drops the delegate on its way out.
             guard delegate !== oldValue, !isReleased else { return }
 
             deliveredEvent = nil
@@ -127,8 +126,6 @@ public final class MindboxEmbeddedBlockView: UIView {
         delegate = nil
         appearanceObserver = nil
         updateContentActivity(reason: "was released by the host wrapper")
-        // Stopping is only a pause now, and a released block is not coming back: the page is closed
-        // here rather than waiting for the container's own deallocation.
         contentProvider.teardown()
     }
 
@@ -151,36 +148,18 @@ public final class MindboxEmbeddedBlockView: UIView {
         }
     }
 
-    /// Whether the block has already settled on a place without content — collapsed, or showing the
-    /// host's error view.
-    ///
-    /// A settled block keeps what it shows. A retry — and the block gets one on every return to a
-    /// window — is not a reload: the page behind the place is the one that already failed, so it
-    /// answers the same way, while the host watches its layout jerk by the block's height and a
-    /// placeholder flash on every pass across the screen, to show nothing in the end. That holds for
-    /// the error view just as much as for a collapse: a screen replaced by a placeholder and then by
-    /// itself again is the same flicker.
-    ///
-    /// Two things end it: content that actually appeared, and an explicit reload — which is precisely
-    /// consent to the full cycle anew.
+    /// Space once ceded to the host is not taken back: a retry does not reopen the container for
+    /// its placeholder — only shown content expands it back, or an explicit reload.
     private var hasSettled = false
 
-    /// What the container shows right now. Stored, not computed on the fly: it is the one source for
-    /// both the height and the report to the wrapper — otherwise they could diverge. It also tells a
-    /// shown error screen from one merely assigned: an `errorView` given after collapse is not shown.
     private var shownAppearance: MindboxEmbeddedBlockAppearance = .placeholder
 
     private var appearanceObserver: ((MindboxEmbeddedBlockAppearance) -> Void)?
 
-    /// Whether the wrapper's host still shows the block. Nobody says otherwise until a wrapper does.
     private var isHostVisible = true
 
-    /// Whether a wrapper has released the block: then it stays stopped whatever the window says.
     private var isReleased = false
 
-    /// Whether the content is running right now. Three sources drive one decision — the window, the
-    /// wrapper's host, a release — and each of them can repeat what another has already said, so the
-    /// switch needs to know its own position.
     private var isContentRunning = false
 
     private enum BlockEvent {
@@ -295,8 +274,6 @@ public final class MindboxEmbeddedBlockView: UIView {
             self?.handleTimeout()
         }
 
-        // The block reserves its space right away, before any loading starts, and reserved space
-        // must not look blank.
         layers.show(view(for: shownAppearance))
     }
 
@@ -317,23 +294,16 @@ public final class MindboxEmbeddedBlockView: UIView {
 
     // MARK: - Visibility
 
-    /// Whether anybody is looking at the block. The window answers that for a UIKit host; a wrapper
-    /// whose app has a single window answers the rest through `setHostVisible(_:)`, and a released
-    /// block is not looked at by definition.
     private var isEffectivelyVisible: Bool {
         window != nil && isHostVisible && !isReleased
     }
 
-    /// Visibility drives the content: there is no reason to hold content for a block nobody is
-    /// looking at, and no public way for the host to start or stop it by hand.
     override public func didMoveToWindow() {
         super.didMoveToWindow()
 
         updateContentActivity(reason: window == nil ? "left the window" : "entered the window")
     }
 
-    /// - Parameter reason: What changed, for the log. The three sources of visibility lead here, and
-    ///   a log line saying only "stopped" leaves the interesting half out.
     private func updateContentActivity(reason: String) {
         let shouldRun = isEffectivelyVisible
 
@@ -349,8 +319,7 @@ public final class MindboxEmbeddedBlockView: UIView {
         } else {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' \(reason), stopping content",
                           category: .embeddedBlocks)
-            // A pause, not a reset: nobody waits for a block that is not on screen, but that does
-            // not cancel an attempt already started — once back, it counts down its remainder.
+            // A pause, not a reset: leaving the window does not cancel an attempt already started.
             waitBudget.pause()
             contentProvider.stop()
         }
@@ -360,8 +329,6 @@ public final class MindboxEmbeddedBlockView: UIView {
     /// app — will be built on this method.
     func reload() {
         guard isEffectivelyVisible else {
-            // Content lives only while somebody is looking at the block; reloading an invisible
-            // block is pointless — it loads anew by itself once it is back on screen.
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' reload skipped: the block is not on screen",
                           category: .embeddedBlocks)
             return
@@ -371,8 +338,7 @@ public final class MindboxEmbeddedBlockView: UIView {
         waitBudget.reset()
         // A new attempt means a new outcome: the host must hear it even if it matches the previous one.
         deliveredEvent = nil
-        // And a new attempt is entitled to the full cycle again: a reload is the host's explicit
-        // consent to it, placeholder included, unlike the block's silent return to a window.
+        // A reload is the host's explicit consent to the full cycle with the placeholder.
         hasSettled = false
         contentProvider.reload()
         waitBudget.armIfNeeded()
@@ -384,8 +350,7 @@ public final class MindboxEmbeddedBlockView: UIView {
         let hadContentToLoad = !contentProvider.isAwaitingAnswer
 
         contentProvider.reportPageTimedOut()
-        // The provider must not resurrect content the container has already given up on — and a stop
-        // no longer guarantees that, since a paused attempt is meant to resume.
+        // The provider must not resurrect content the container has already given up on.
         contentProvider.abandonAttempt()
         state = hadContentToLoad ? .failed : .empty
     }
@@ -404,10 +369,7 @@ public final class MindboxEmbeddedBlockView: UIView {
         shownAppearance = appearance(for: state)
 
         switch shownAppearance {
-        // A place without content, however it is drawn, is what the block settles on.
         case .collapsed, .error: hasSettled = true
-        // And content that actually appeared ends it: from here the block is an ordinary one again,
-        // and the next load it really starts is entitled to its placeholder.
         case .content: hasSettled = false
         case .placeholder: break
         }
@@ -424,20 +386,11 @@ public final class MindboxEmbeddedBlockView: UIView {
         case .loading:
             guard hasSettled else { return .placeholder }
 
-            // A block that already settled keeps what it shows even while it loads anew: a retry
-            // earns neither the space the host has reclaimed nor a placeholder over the error screen.
-            // What it does not keep is an error screen the host has taken away in the meantime —
-            // there is nothing left to draw, so the block collapses.
             return shownAppearance == .error && errorView == nil ? .collapsed : shownAppearance
         case .ready: return .content
         case .failed:
-            // A failure is shown only to those who opted in explicitly; for the rest the block collapses.
             guard hasSettled else { return errorView == nil ? .collapsed : .error }
 
-            // A settled block keeps what it shows when the retry fails too: an error view assigned
-            // after the collapse must not reopen space the host layout has reclaimed. The exception
-            // is the loading branch's one — an error screen the host has taken away leaves nothing
-            // to draw, so the block collapses.
             return shownAppearance == .error && errorView == nil ? .collapsed : shownAppearance
         case .empty: return .collapsed
         }
@@ -457,10 +410,6 @@ public final class MindboxEmbeddedBlockView: UIView {
         layers.show(view(for: .placeholder))
     }
 
-    /// Not only a live failure: a block that settled on its error screen goes on showing it while the
-    /// next attempt loads, and a host swapping or taking that view away has to be obeyed there too.
-    /// What is shown is the subject — a block that has already collapsed is never expanded by a view
-    /// assigned afterwards.
     private func refreshErrorView() {
         guard shownAppearance == .error else { return }
 

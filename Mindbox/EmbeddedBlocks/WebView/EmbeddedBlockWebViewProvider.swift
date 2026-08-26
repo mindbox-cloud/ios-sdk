@@ -43,8 +43,6 @@ final class EmbeddedBlockWebViewProvider {
 
     private var isStarted = false
 
-    /// Whether the stopped state is a pause the next `start()` resumes — as opposed to an attempt
-    /// abandoned or torn down, where the next `start()` begins a cycle anew.
     private var isPaused = false
 
     private var outcome: EmbeddedBlockState = .loading
@@ -59,53 +57,26 @@ final class EmbeddedBlockWebViewProvider {
 
     private let scheduleAckTimeout: EmbeddedBlockWaitScheduling
 
-    /// Monotonic, the same clock the wait budget counts on: a clock correction must not make a spent
-    /// stretch negative and stretch the wait past its interval.
     private let now: () -> TimeInterval
 
     private var dataPushAck: DispatchWorkItem?
 
-    /// Whether the page still owes a confirmation for the data it was sent. Outlives the timer: the
-    /// wait pauses with the block and is armed again by the return.
     private var isAwaitingDataPushAck = false
 
-    /// How much of that wait is already spent, kept the way `EmbeddedBlockWaitBudget` keeps its own:
-    /// a return resumes the countdown where it stopped instead of starting the interval over.
-    ///
-    /// A host that cycles the block off and on screen would otherwise hand the page a full interval
-    /// every time — and a wrapper does exactly that on every route push — so a page that never
-    /// confirms would never be rebuilt.
     private var ackConsumed: TimeInterval = 0
 
-    /// When the armed countdown last started, `nil` while it is not running.
     private var ackResumedAt: TimeInterval?
 
     private var ackRemaining: TimeInterval {
         max(0, TimeInterval(Constants.EmbeddedBlock.readyTimeoutSeconds) - ackConsumed)
     }
 
-    /// A failure that happened behind another screen, held until somebody looks at the block.
-    ///
-    /// The backend hears about blocks the user was shown, and a page that failed off screen was not
-    /// one — the same rule the show already follows. The content travels with the report: the attempt
-    /// it belonged to may be dropped by the time the block comes back.
     private var pendingFailureReport: (content: EmbeddedBlockWebContent,
                                        reason: InAppShowFailureReason,
                                        details: String)?
 
-    /// How long the page took to render, frozen where the render was reported.
-    ///
-    /// The show can be counted much later — a page that finished behind another screen is counted by
-    /// the `start()` that brings it back — and `timeToDisplay` measures the wait for the page, not
-    /// the user's absence from the screen.
     private var renderedElapsed: TimeInterval?
 
-    /// The registry's answer that arrived while nobody was looking.
-    ///
-    /// Dropping it was harmless while every return re-resolved; now that a return resumes instead,
-    /// this is the only way a block hears that its place changed behind another screen. Applying it
-    /// right away is not: swapping the page under a container that is not showing it is work for
-    /// nothing, and the newest answer is the only one worth keeping.
     private var pendingResolution: EmbeddedBlockResolution?
 
     init(placeSystemName: String,
@@ -144,32 +115,23 @@ final class EmbeddedBlockWebViewProvider {
 
         flushPendingFailureReport()
 
-        // Coming back to the screen resumes the attempt that was already running: the page it built
-        // stands and whatever it reported while nobody was looking is announced now. Only a block
-        // with nothing to resume — no page at all, or one whose attempt failed — starts a new cycle.
         if page != nil, outcome != .failed {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': back on screen, resuming its attempt at \(outcome)",
                           category: .embeddedBlocks)
             onStateChange?(outcome)
-            // A page that rendered off screen is only shown now, so this is where the show is counted.
             if outcome == .ready {
                 accountForShow()
             }
 
-            // And only then what changed while nobody was looking, so the block is seen where it was
-            // left before it moves on.
             if let pending = pending {
                 apply(pending)
             }
 
-            // The page's own wait for a confirmation paused with the block; it did not end.
             rearmDataPushAckIfAwaited()
             askThePlaceAgain()
             return
         }
 
-        // The answer already in hand is applied first, so the block is seen where it was left, and
-        // the place is asked right after: that answer may itself have gone stale off screen.
         if let pending = pending {
             apply(pending)
             askThePlaceAgain()
@@ -179,12 +141,6 @@ final class EmbeddedBlockWebViewProvider {
         beginAttempt()
     }
 
-    /// Every return asks the place again, in sync with Android, where `start()` always does.
-    ///
-    /// An invalidation landing on a place with no block on screen is dropped where it happens — the
-    /// registry has nowhere to draw it — so a return is the only chance to hear that the place has
-    /// moved on. Asking costs nothing when it has not: the same answer is deduplicated against the
-    /// page that already stands.
     private func askThePlaceAgain() {
         registry.blockAppeared(placeSystemName)
     }
@@ -194,21 +150,13 @@ final class EmbeddedBlockWebViewProvider {
 
         isStarted = false
         isPaused = true
-        // A pause, not an end: the outcome stands and the page keeps living — leaving the screen must
-        // not cost the attempt, and `cancel()` closes a page for good, so a cancelled one could never
-        // be resumed. What ends an attempt is `abandonAttempt()`; what ends the block is `teardown()`.
-        //
-        // The page's wait for a confirmation pauses with it: a timer that fired off screen would
-        // rebuild a page nobody is looking at, and one dropped for good would leave the block holding
-        // data the page never acknowledged.
+        // The outcome is deliberately not reset: otherwise every pass of the block across the screen
+        // would cost a full reload.
         suspendDataPushAck()
         // The page stays alive off screen, so it has to be told that nobody is looking.
         page?.isUserPresent = false
     }
 
-    /// The container gave up on this attempt — it ran out of patience. The page is closed so it
-    /// cannot report its way back into a block that has already collapsed, and the next time the
-    /// block is looked at it starts a cycle anew rather than resuming this one.
     func abandonAttempt() {
         isStarted = false
         isPaused = false
@@ -217,7 +165,6 @@ final class EmbeddedBlockWebViewProvider {
         dropPage()
     }
 
-    /// The block is gone for good. Unlike `stop()`, this closes the page: nothing is coming back.
     func teardown() {
         isStarted = false
         isPaused = false
@@ -230,8 +177,6 @@ final class EmbeddedBlockWebViewProvider {
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' is reloading", category: .embeddedBlocks)
 
         dropPage()
-        // The attempt that answer belonged to is over: applying it later would put the older page
-        // back over the one the reload is about to build.
         pendingResolution = nil
         loadGeneration += 1
         isStarted = true
@@ -258,9 +203,6 @@ final class EmbeddedBlockWebViewProvider {
 
     func apply(_ resolution: EmbeddedBlockResolution) {
         guard isStarted else {
-            // Only a pause keeps the answer: a paused block resumes and announces it. An attempt
-            // abandoned or torn down is not coming back — its next `start()` asks the place itself,
-            // and a late answer kept here would build the stale page before the fresh one arrived.
             if isPaused {
                 pendingResolution = resolution
             }
@@ -364,8 +306,6 @@ final class EmbeddedBlockWebViewProvider {
 
     /// A page that misses the ack is rebuilt from scratch, in sync with Android. An error answer
     /// counts as silence — the web layer drops error envelopes before they arrive.
-    ///
-    /// A fresh push, so the whole interval: what a return resumes is `resumeDataPushAck()`.
     private func armDataPushAck() {
         cancelDataPushAck()
 
@@ -373,7 +313,6 @@ final class EmbeddedBlockWebViewProvider {
         resumeDataPushAck()
     }
 
-    /// Arms the countdown for whatever is left of the wait.
     private func resumeDataPushAck() {
         let generation = loadGeneration
         let work = DispatchWorkItem { [weak self] in
@@ -391,15 +330,11 @@ final class EmbeddedBlockWebViewProvider {
             self.buildPage(with: content)
         }
 
-        // Stored before it is scheduled, the order the wait budget arms in: the scheduler is free to
-        // run the work right away, and it must find the wait in a consistent state.
         ackResumedAt = now()
         dataPushAck = work
         scheduleAckTimeout(ackRemaining, work)
     }
 
-    /// The timer only: the wait itself stands, and the block arms it again when it comes back. What
-    /// is frozen is the remainder — the stretch already spent is not handed back.
     private func suspendDataPushAck() {
         if let ackResumedAt {
             ackConsumed += max(0, now() - ackResumedAt)
@@ -423,9 +358,6 @@ final class EmbeddedBlockWebViewProvider {
         resumeDataPushAck()
     }
 
-    /// Judged by the standing wait, not by the timer or the pause: a page kept alive off screen can
-    /// confirm from there, and an ignored confirmation would re-arm the timeout on return and
-    /// rebuild a page that did answer.
     private func acknowledgeDataPush() {
         guard isAwaitingDataPushAck else {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the page confirmed a data push nobody was waiting on",
@@ -440,11 +372,6 @@ final class EmbeddedBlockWebViewProvider {
 
     // MARK: - The page's reports
 
-    /// Where the attempt got to, recorded whether or not anybody is looking.
-    ///
-    /// A page that finishes behind another screen is not a page that has to load again: the outcome
-    /// is kept and announced by the next `start()`. Announcing it right away would push a state into
-    /// a container that has already paused.
     private func settle(_ newOutcome: EmbeddedBlockState) {
         outcome = newOutcome
 
@@ -531,8 +458,6 @@ final class EmbeddedBlockWebViewProvider {
         renderedElapsed = attemptStopwatch.elapsed
         settle(.ready)
 
-        // Only what somebody is looking at counts as shown; a page that rendered off screen is
-        // counted by the `start()` that brings it back.
         guard isStarted else { return }
 
         accountForShow()
