@@ -390,12 +390,12 @@ struct EmbeddedBlockResolveTests {
     // MARK: - What a page may draw
 
     @Test("A page may draw the stories and the modal, but not the block")
-    func feedKeepsDirectCallAndDropsTheBlock() async {
+    func pageKeepsDirectCallAndDropsTheBlock() async {
         #expect(await showable(everyId) == [Constants.unlimitedStoryId, Constants.modalId, Constants.onceStoryId].sorted())
     }
 
     @Test("A watched unlimited story is still drawn")
-    func feedKeepsAWatchedUnlimitedStory() async {
+    func pageKeepsAWatchedUnlimitedStory() async {
         let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         persistenceStorage.shownDatesByInApp = [Constants.unlimitedStoryId: [Date()]]
 
@@ -403,7 +403,7 @@ struct EmbeddedBlockResolveTests {
     }
 
     @Test("A once story that was already shown is not drawn")
-    func feedDropsASpentOnceStory() async {
+    func pageDropsASpentOnceStory() async {
         let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         persistenceStorage.shownDatesByInApp = [Constants.onceStoryId: [Date()]]
 
@@ -411,12 +411,12 @@ struct EmbeddedBlockResolveTests {
     }
 
     @Test("An id no config knows is not drawn")
-    func feedDropsUnknownId() async {
+    func pageDropsUnknownId() async {
         #expect(await showable(["44444444-4444-4444-4444-444444444444"]).isEmpty)
     }
 
     @Test("A page vouches for what it allows and never for a pure-embedded in-app")
-    func feedVouchesForWhatItAllows() async {
+    func pageVouchesForWhatItAllows() async {
         let allowed = await showable(everyId)
         let vouched = Set(dataFacade.trackTargetingCalls.compactMap(\.id))
 
@@ -443,7 +443,7 @@ struct EmbeddedBlockResolveTests {
     }
 
     @Test("A story only an operation targets is not drawn for a page and not vouched for")
-    func feedDropsAnOperationTargetedStory() async {
+    func pageDropsAnOperationTargetedStory() async {
         #expect(await showable([Constants.operationStoryId]).isEmpty)
         #expect(!dataFacade.trackTargetingCalls.contains { $0.id == Constants.operationStoryId })
     }
@@ -503,12 +503,12 @@ struct EmbeddedBlockResolveTests {
     }
 
     @Test("An empty question gets an empty answer")
-    func feedAnswersNothingToNothing() async {
+    func pageAnswersNothingToNothing() async {
         #expect(await showable([]).isEmpty)
     }
 
     @Test("Answering a page writes nothing to the show history")
-    func feedAnswerWritesNothingToShowHistory() async {
+    func pageAnswerWritesNothingToShowHistory() async {
         _ = await showable(everyId)
 
         let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
@@ -612,7 +612,7 @@ struct EmbeddedBlockResolveTests {
     }
 
     @Test("A page keeps a mixed in-app — its overlay half can be drawn")
-    func feedKeepsAMixedInapp() async {
+    func pageKeepsAMixedInapp() async {
         #expect(await showable([Constants.mixedId]) == [Constants.mixedId])
     }
 }

@@ -37,7 +37,6 @@ extension EmbeddedBlockWebContent {
                                 params: [:])
     }
 
-    /// Content with a `delayTime`: the registry holds it before the block may draw it.
     static func delayed(_ timeSpan: String = "00:00:05", params: [String: JSONValue] = [:]) -> EmbeddedBlockWebContent {
         EmbeddedBlockWebContent(inAppId: "delayed-inapp-id",
                                 baseUrl: stub.baseUrl,
@@ -55,7 +54,6 @@ final class InappShowAccountingMock: InappShowAccounting {
 
     private(set) var cooldowns: [InappFrequency?] = []
 
-    /// The place of every block show, in the order the shows came.
     private(set) var places: [String] = []
 
     var shownIds: [String] { shows.map(\.inAppId) }
@@ -321,7 +319,6 @@ final class EmbeddedBlockResolverMock: EmbeddedBlockResolving {
 
     var resolution: EmbeddedBlockResolution
 
-    /// How long the selection is said to have worked on the answer.
     var processingDuration: TimeInterval = 0
 
     /// `true` — the answer does not arrive until the test calls `flush()`: this is how a resolve

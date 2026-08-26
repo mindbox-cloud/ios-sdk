@@ -80,8 +80,8 @@ struct EmbeddedBlockContentProviderFactoryTests {
                                                           failureManager: manager,
                                                           accounting: InappShowAccountingMock())
 
-        // Reported once per place per session, so each case gets its own place.
-        let place = "factory-silent-place-\(phase.rawValue)"
+        SessionTemporaryStorage.shared.$ledger.mutate { $0.placesReportedUnanswered = [] }
+        let place = "factory-silent-place"
         let provider = factory.makeProvider(placeSystemName: place)
         withExtendedLifetime(provider) {
             provider.reportAnswerTimedOut(waited: 30)

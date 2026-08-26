@@ -18,7 +18,7 @@ struct FilterShowableInappsActionHandlerTests {
     }
 
     @Test("The in-app service's answer travels back in the response")
-    func feedAnswerTravelsBack() throws {
+    func serviceAnswerTravelsBack() throws {
         let host = InappRequestHostSpy()
         host.allowed = ["id-1", "id-3"]
         let message = BridgeMessage.request(.filterShowableInapps,
@@ -123,7 +123,7 @@ struct ShowInAppActionHandlerTests {
     }
 
     @Test("A well-formed request reaches the service and is acknowledged")
-    func requestReachesTheFeed() throws {
+    func requestReachesTheService() throws {
         let host = InappRequestHostSpy()
         let message = BridgeMessage.request(.showInApp, payload: .object([
             "inappId": .string("11111111-1111-1111-1111-111111111111"),
