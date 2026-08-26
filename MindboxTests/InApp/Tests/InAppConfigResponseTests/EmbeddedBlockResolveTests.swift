@@ -465,6 +465,20 @@ struct EmbeddedBlockResolveTests {
         #expect(dataFacade.fetchDependenciesCalls == 1)
     }
 
+    @Test("A place resolve prepares every renderable in-app's segmentations, not only its own place's")
+    func placeResolvePreparesEveryRenderableInapp() async {
+        _ = await resolvePlace(Constants.place)
+
+        #expect(dataFacade.targetingChecker.context.segmentInapps.contains(Constants.segmentStoryId))
+    }
+
+    @Test("A page's question prepares every renderable in-app's segmentations, not only the asked ones")
+    func pageQuestionPreparesEveryRenderableInapp() async {
+        _ = await showable([Constants.unlimitedStoryId])
+
+        #expect(dataFacade.targetingChecker.context.segmentInapps.contains(Constants.segmentStoryId))
+    }
+
     @Test("A segment story is cut when the fetch brings no segmentations")
     func coldCacheCutsASegmentStory() async {
         dataFacade.targetingChecker.checkedSegmentations = nil
