@@ -10,18 +10,23 @@ import UIKit
 
 /// Holds a place's answer for its `delayTime`, like the schedule queue holds an overlay: one answer per
 /// place, the newest replaces the waiting one, nothing is delivered in the background. Main thread only.
-final class EmbeddedBlockDelayedDelivery {
+final class EmbeddedBlockDelayedDelivery<Answer> {
 
-    typealias Delivery = () -> Void
+    typealias Delivery = (Answer) -> Void
 
     private struct Waiting {
         let inappId: String
-        let work: DispatchWorkItem
+        var answer: Answer
+        let deliver: Delivery
+        var state: State
+    }
+
+    private enum State {
+        case ticking(DispatchWorkItem)
+        case due
     }
 
     private var waiting: [String: Waiting] = [:]
-
-    private var due: [String: Delivery] = [:]
 
     private let schedule: EmbeddedBlockWaitScheduling
     private let isInBackground: () -> Bool
@@ -48,41 +53,56 @@ final class EmbeddedBlockDelayedDelivery {
         if let observer {
             notificationCenter.removeObserver(observer)
         }
-        waiting.values.forEach { $0.work.cancel() }
+        waiting.keys.forEach(stopTicking)
     }
 
     func isWaiting(place: String, for inappId: String) -> Bool {
         waiting[place]?.inappId == inappId
     }
 
-    func schedule(place: String, inappId: String, after delay: TimeInterval, _ deliver: @escaping Delivery) {
+    func schedule(place: String, inappId: String, answer: Answer, after delay: TimeInterval, _ deliver: @escaping Delivery) {
         cancel(place: place)
 
-        let work = DispatchWorkItem { [weak self] in
+        let timer = DispatchWorkItem { [weak self] in
             guard let self, self.waiting[place]?.inappId == inappId else { return }
 
-            self.waiting[place] = nil
-
             if self.isInBackground() {
-                self.due[place] = deliver
+                self.waiting[place]?.state = .due
             } else {
-                deliver()
+                self.deliver(place)
             }
         }
 
-        waiting[place] = Waiting(inappId: inappId, work: work)
-        schedule(delay, work)
+        waiting[place] = Waiting(inappId: inappId, answer: answer, deliver: deliver, state: .ticking(timer))
+        schedule(delay, timer)
+    }
+
+    /// The newest answer for the in-app already waiting at the place; its delay keeps running.
+    func refresh(place: String, answer: Answer) {
+        waiting[place]?.answer = answer
     }
 
     func cancel(place: String) {
-        waiting[place]?.work.cancel()
+        stopTicking(place)
         waiting[place] = nil
-        due[place] = nil
+    }
+
+    private func stopTicking(_ place: String) {
+        if case .ticking(let timer)? = waiting[place]?.state {
+            timer.cancel()
+        }
     }
 
     private func deliverDue() {
-        let deliveries = due
-        due = [:]
-        deliveries.values.forEach { $0() }
+        let due = waiting.compactMap { place, entry -> String? in
+            if case .due = entry.state { return place }
+            return nil
+        }
+        due.forEach(deliver)
+    }
+
+    private func deliver(_ place: String) {
+        guard let entry = waiting.removeValue(forKey: place) else { return }
+        entry.deliver(entry.answer)
     }
 }

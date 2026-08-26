@@ -18,7 +18,7 @@ struct EmbeddedBlockDelayedDeliveryTests {
         let scheduler = TestScheduler()
         let center = NotificationCenter()
         var isInBackground = false
-        let delivery: EmbeddedBlockDelayedDelivery
+        let delivery: EmbeddedBlockDelayedDelivery<String>
 
         init() {
             var background = { false }
@@ -38,7 +38,7 @@ struct EmbeddedBlockDelayedDeliveryTests {
         let rig = Rig()
         var delivered = 0
 
-        rig.delivery.schedule(place: "stories", inappId: "a", after: 5) { delivered += 1 }
+        rig.delivery.schedule(place: "stories", inappId: "a", answer: "a", after: 5) { _ in delivered += 1 }
 
         #expect(delivered == 0)
         #expect(rig.scheduler.lastDelay == 5)
@@ -53,8 +53,8 @@ struct EmbeddedBlockDelayedDeliveryTests {
         let rig = Rig()
         var delivered: [String] = []
 
-        rig.delivery.schedule(place: "stories", inappId: "a", after: 5) { delivered.append("a") }
-        rig.delivery.schedule(place: "stories", inappId: "b", after: 5) { delivered.append("b") }
+        rig.delivery.schedule(place: "stories", inappId: "a", answer: "a", after: 5) { delivered.append($0) }
+        rig.delivery.schedule(place: "stories", inappId: "b", answer: "b", after: 5) { delivered.append($0) }
         rig.scheduler.fireAll()
 
         #expect(delivered == ["b"])
@@ -65,7 +65,7 @@ struct EmbeddedBlockDelayedDeliveryTests {
         let rig = Rig()
         var delivered = 0
 
-        rig.delivery.schedule(place: "stories", inappId: "a", after: 5) { delivered += 1 }
+        rig.delivery.schedule(place: "stories", inappId: "a", answer: "a", after: 5) { _ in delivered += 1 }
         rig.delivery.cancel(place: "stories")
         rig.scheduler.fireAll()
 
@@ -76,7 +76,7 @@ struct EmbeddedBlockDelayedDeliveryTests {
     func backgroundExpiryIsDeliveredOnReturn() {
         let rig = Rig()
         var delivered = 0
-        rig.delivery.schedule(place: "stories", inappId: "a", after: 5) { delivered += 1 }
+        rig.delivery.schedule(place: "stories", inappId: "a", answer: "a", after: 5) { _ in delivered += 1 }
         rig.isInBackground = true
 
         rig.scheduler.fireAll()
@@ -88,11 +88,21 @@ struct EmbeddedBlockDelayedDeliveryTests {
         #expect(delivered == 1)
     }
 
+    @Test("An answer parked in the background still counts as waiting")
+    func parkedAnswerStillCountsAsWaiting() {
+        let rig = Rig()
+        rig.delivery.schedule(place: "stories", inappId: "a", answer: "a", after: 5) { _ in }
+        rig.isInBackground = true
+        rig.scheduler.fireAll()
+
+        #expect(rig.delivery.isWaiting(place: "stories", for: "a"))
+    }
+
     @Test("Only the in-app that is waiting at the place counts as waiting")
     func waitingIsPerPlaceAndInapp() {
         let rig = Rig()
 
-        rig.delivery.schedule(place: "stories", inappId: "a", after: 5) {}
+        rig.delivery.schedule(place: "stories", inappId: "a", answer: "a", after: 5) { _ in }
 
         #expect(rig.delivery.isWaiting(place: "stories", for: "a"))
         #expect(!rig.delivery.isWaiting(place: "stories", for: "b"))

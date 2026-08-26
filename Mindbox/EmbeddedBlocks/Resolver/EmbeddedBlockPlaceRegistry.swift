@@ -35,6 +35,11 @@ protocol EmbeddedBlockPlaceRegistering: AnyObject {
 /// same component carries the same name and rules.
 final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
 
+    struct PlaceAnswer {
+        let resolution: EmbeddedBlockResolution
+        let processingDuration: TimeInterval
+    }
+
     typealias EmbeddedPlacesFetching = (@escaping ([String: Set<String>]?) -> Void) -> Void
 
     private struct WeakBlock {
@@ -88,18 +93,14 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
     private let resolver: EmbeddedBlockResolving
     private let fetchEmbeddedPlaces: EmbeddedPlacesFetching
     private let notificationCenter: NotificationCenter
-    private let delayedDelivery: EmbeddedBlockDelayedDelivery
-
-    /// What a place is holding for its `delayTime`; the same winner resolving again refreshes it in
-    /// place, so the timer keeps running and delivers the newest content.
-    private var waitingAnswers: [String: (resolution: EmbeddedBlockResolution, processingDuration: TimeInterval)] = [:]
+    private let delayedDelivery: EmbeddedBlockDelayedDelivery<PlaceAnswer>
 
     private var observers: [NSObjectProtocol] = []
 
     init(resolver: EmbeddedBlockResolving,
          notificationCenter: NotificationCenter = .default,
          fetchEmbeddedPlaces: @escaping EmbeddedPlacesFetching = EmbeddedBlockPlaceRegistry.fetchPlacesFromConfig,
-         delayedDelivery: EmbeddedBlockDelayedDelivery = EmbeddedBlockDelayedDelivery()) {
+         delayedDelivery: EmbeddedBlockDelayedDelivery<PlaceAnswer> = EmbeddedBlockDelayedDelivery()) {
         self.resolver = resolver
         self.notificationCenter = notificationCenter
         self.fetchEmbeddedPlaces = fetchEmbeddedPlaces
@@ -235,21 +236,21 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
     private func handle(_ resolution: EmbeddedBlockResolution, at place: String, processingDuration: TimeInterval) {
         guard case .content(let content) = resolution else {
             delayedDelivery.cancel(place: place)
-            waitingAnswers[place] = nil
             deliver(place: place, resolution: resolution, processingDuration: processingDuration)
             return
         }
 
+        let answer = PlaceAnswer(resolution: resolution, processingDuration: processingDuration)
+
         if delayedDelivery.isWaiting(place: place, for: content.inAppId) {
             Logger.common(message: "[EmbeddedBlock] Place '\(place)': in-app \(content.inAppId) is still waiting out its delay",
                           category: .embeddedBlocks)
-            waitingAnswers[place] = (resolution, processingDuration)
+            delayedDelivery.refresh(place: place, answer: answer)
             announceDelay(at: place)
             return
         }
 
         delayedDelivery.cancel(place: place)
-        waitingAnswers[place] = nil
 
         let delay = TimeInterval.delay(fromTimeSpan: content.delayTime)
         let served = ServedPlaceDelay(place: place, inappId: content.inAppId)
@@ -262,12 +263,9 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
                       category: .embeddedBlocks)
         announceDelay(at: place)
 
-        waitingAnswers[place] = (resolution, processingDuration)
-        delayedDelivery.schedule(place: place, inappId: content.inAppId, after: delay) { [weak self] in
-            guard let self, let answer = self.waitingAnswers.removeValue(forKey: place) else { return }
-
+        delayedDelivery.schedule(place: place, inappId: content.inAppId, answer: answer, after: delay) { [weak self] answer in
             SessionTemporaryStorage.shared.$ledger.mutate { $0.servedPlaceDelays.insert(served) }
-            self.deliver(place: place, resolution: answer.resolution, processingDuration: answer.processingDuration)
+            self?.deliver(place: place, resolution: answer.resolution, processingDuration: answer.processingDuration)
         }
     }
 
