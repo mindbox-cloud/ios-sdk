@@ -117,6 +117,8 @@ internal extension InappScheduleManager {
                 scheduledInapp.timer.cancel()
             }
             
+            // Gone whether it showed or not: an in-app whose moment came while another was on screen
+            // is neither queued behind it nor re-armed — a missed moment is missed, by decision.
             self.inappsByPresentationTime.removeValue(forKey: presentationTime)
         }
     }
