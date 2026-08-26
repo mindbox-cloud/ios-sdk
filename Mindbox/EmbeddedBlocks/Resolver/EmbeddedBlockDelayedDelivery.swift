@@ -8,11 +8,8 @@
 
 import UIKit
 
-/// Holds a place's answer for its `delayTime`, the way the schedule queue holds an overlay: one answer
-/// per place, the newest replaces the one waiting, and nothing is delivered in the background — a delay
-/// that runs out there is delivered when the app comes back.
-///
-/// Called on the main thread, like the registry that owns it.
+/// Holds a place's answer for its `delayTime`, like the schedule queue holds an overlay: one answer per
+/// place, the newest replaces the waiting one, nothing is delivered in the background. Main thread only.
 final class EmbeddedBlockDelayedDelivery {
 
     typealias Delivery = () -> Void

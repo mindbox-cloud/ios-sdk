@@ -23,8 +23,7 @@ protocol InappScheduleManagerProtocol {
 
     /// Past the queue and every limit — a direct call is invited, and a tap that does nothing is a
     /// defect. Only `Inapp.Show` goes out: targeting was sent when the selection offered the in-app.
-    /// `processingDuration` is the caller's time since the tap — fetching and building the form counts
-    /// into `timeToDisplay`, like the overlay's pass does.
+    /// `processingDuration` is the caller's time since the tap; it counts into `timeToDisplay` like the overlay pass's.
     func showInAppNow(_ inAppFormData: InAppFormData, processingDuration: TimeInterval)
 }
 
@@ -117,8 +116,7 @@ internal extension InappScheduleManager {
                 scheduledInapp.timer.cancel()
             }
             
-            // Gone whether it showed or not: an in-app whose moment came while another was on screen
-            // is neither queued behind it nor re-armed — a missed moment is missed, by decision.
+            // Gone whether it showed or not: a moment missed behind another in-app is missed, by decision — no queue, no re-arm.
             self.inappsByPresentationTime.removeValue(forKey: presentationTime)
         }
     }

@@ -62,8 +62,7 @@ final class SessionTemporaryStorage {
 
     @Locked var servedPlaceDelays: Set<ServedPlaceDelay> = []
 
-    /// The in-app each place showed last: a block's show is accounted when this changes, so a rebuilt
-    /// page stays silent while 1 → 2 → 1 speaks three times (agreed with the backend, in sync with Android).
+    /// The in-app each place showed last — a block's show is accounted when this changes.
     @Locked var placeShownInappId: [String: String] = [:]
 
     /// Last track-visit data (source and requestUrl only)

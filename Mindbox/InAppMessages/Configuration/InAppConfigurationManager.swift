@@ -22,10 +22,8 @@ protocol InAppConfigurationManagerProtocol: AnyObject {
 
     func prepareConfiguration()
     func handleInapps(event: ApplicationEvent?, _ completion: @escaping (InAppFormData?) -> Void)
-    /// `processingDuration` runs from this call — the wait for a config included: a block's
-    /// `timeToDisplay` counts from the moment the block asked for content, whatever the SDK was
-    /// still missing (in sync with Android). On the overlay pass's clock; the page's rendering is
-    /// the foreground part, like the overlay's presentation.
+    /// `processingDuration` runs from this call, the wait for a config included: a block's `timeToDisplay`
+    /// counts from the moment it asked for content (in sync with Android).
     func selectInappForPlace(_ place: String,
                              trigger: ApplicationEvent?,
                              _ completion: @escaping (InAppTransitionData?, _ processingDuration: TimeInterval) -> Void)

@@ -12,14 +12,11 @@ import MindboxLogger
 
 protocol EmbeddedBlockInappServing: AnyObject {
 
-    /// Whether the SDK has a config to answer blocks from — a block the SDK never answered reports
-    /// which of the two it was waiting on.
+    /// Whether a config is in hand — what a never-answered block reports it was waiting on.
     var hasConfig: Bool { get }
 
-    /// Which of `ids` the page of in-app `blockInappId` may draw: the SDK checks each one's targeting,
-    /// fetching what that needs like a place resolve. The funnel hears about every targeted id as the
-    /// answer is made — the A/B cut and the spent frequencies included, like a place resolve vouches.
-    /// The answer mirrors the question — order and duplicates kept.
+    /// Which of `ids` the page of in-app `blockInappId` may draw, targeting checked and fetched like a place
+    /// resolve; vouches for every targeted id as it answers. The answer mirrors the question — order and duplicates kept.
     func showableInappIds(among ids: [String], askedBy blockInappId: String, completion: @escaping ([String]) -> Void)
 
     /// Deliberately unchecked: whether to offer the in-app was decided when the page drew it.

@@ -21,7 +21,7 @@ final class EmbeddedBlockWebViewProvider {
 
     var onContentArrived: (() -> Void)?
 
-    /// The place's answer is known and held back by its `delayTime`. Set by the container.
+    /// The place's answer is known and held back by its `delayTime`.
     var onContentDelayed: (() -> Void)?
 
     var contentView: UIView? { isReady ? page?.view : nil }
@@ -56,8 +56,7 @@ final class EmbeddedBlockWebViewProvider {
 
     private var didAccountForShow = false
 
-    /// The selection's part of `timeToDisplay`, handed over with the content; the page's part runs on
-    /// `presentationStopwatch` from the moment the page is built.
+    /// The selection's part of `timeToDisplay`; the page's part runs on `presentationStopwatch`.
     private var processingDuration: TimeInterval = 0
 
     private var presentationStopwatch = ForegroundStopwatch()

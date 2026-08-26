@@ -49,8 +49,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
     private enum Constants {
         static let defaultAlphaBackgroundColor: CGFloat = 0.0
 
-        /// The window reveal once the page reports `init`. Short on purpose: the page is already
-        /// drawn by then, and every millisecond here is added to the wait after the tap.
+        /// Short on purpose: the page is already drawn at `init`, and every millisecond here is added to the wait after the tap.
         static let revealDuration: TimeInterval = 0.15
     }
 

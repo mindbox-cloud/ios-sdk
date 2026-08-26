@@ -41,7 +41,6 @@ enum InAppTargetingType: String, Decodable {
 extension Targeting {
 
     /// Whether the targeting cannot pass without an event — an operation, a viewed product or category.
-    /// `and` needs every node, so one such node is enough; `or` needs one node, so every node has to be one.
     var requiresEvent: Bool {
         switch self {
         case .apiMethodCall, .viewProductId, .viewProductSegment, .viewProductCategoryId, .viewProductCategoryIdIn:

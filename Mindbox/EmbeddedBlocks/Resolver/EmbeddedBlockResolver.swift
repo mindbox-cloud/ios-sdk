@@ -23,8 +23,7 @@ protocol EmbeddedBlockResolving: AnyObject {
     /// - Parameters:
     ///   - trigger: The operation that caused this resolve, if any. Targeting runs in its context —
     ///     that is what lets an operation-targeted in-app reach the place.
-    ///   - completion: The answer, with how long it took from this call — the wait for a config
-    ///     included. The block's `timeToDisplay` starts from that, like the overlay's from its pass.
+    ///   - completion: The answer and how long it took from this call, the wait for a config included.
     func resolve(_ place: String,
                  trigger: ApplicationEvent?,
                  completion: @escaping (EmbeddedBlockResolution, _ processingDuration: TimeInterval) -> Void)

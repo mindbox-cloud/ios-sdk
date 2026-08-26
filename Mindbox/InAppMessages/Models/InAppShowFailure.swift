@@ -20,9 +20,8 @@ enum InAppShowFailureReason: String, Codable {
     case unknownError = "unknown_error"
 }
 
-/// One element of the `errors` array of `Inapp.ShowFailure`. Encodes flat, with `$type` naming the
-/// kind of error and so the fields that follow — in sync with Android and the server; a new kind of
-/// error is a new `$type`, never a change to an existing one.
+/// One element of `Inapp.ShowFailure.errors`, flat, `$type` naming the kind and so the fields that follow —
+/// in sync with Android and the server. A new kind of error is a new `$type`, never a change to an existing one.
 enum InAppShowError: Encodable {
     case inapp(InAppShowFailure)
     case embeddedBlock(EmbeddedBlockShowFailure)

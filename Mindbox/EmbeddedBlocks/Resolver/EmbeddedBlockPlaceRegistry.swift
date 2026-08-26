@@ -230,11 +230,8 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         }
     }
 
-    /// A winner with `delayTime` waits like an overlay in the schedule queue: the blocks hear that
-    /// content is coming and stand their wait budget down — a block appearing mid-delay too; a different
-    /// answer for the place replaces the waiting one, the same winner keeps its timer. Once a delay ran
-    /// out for an in-app at a place, a block coming back to the screen gets that content at once — the
-    /// wait was already served.
+    /// A winner with `delayTime` waits like an overlay in the schedule queue and the blocks stand their wait
+    /// budget down. A delay served once in the session is not waited again: a block coming back gets the content at once.
     private func handle(_ resolution: EmbeddedBlockResolution, at place: String, processingDuration: TimeInterval) {
         guard case .content(let content) = resolution else {
             delayedDelivery.cancel(place: place)
