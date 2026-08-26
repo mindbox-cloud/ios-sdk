@@ -109,7 +109,7 @@ final class InappsFilterService: InappFilterProtocol {
     }
 
     func filter(place: String, in candidates: ConfigCandidates) -> [InApp] {
-        filterInappsForPlace(place, inapps: candidates.inPool)
+        applyPostABFilters(filterInappsByPlace(place, inapps: candidates.inPool))
     }
 
     func inapps(addressedTo place: String, in candidates: ConfigCandidates) -> [InApp] {
@@ -354,16 +354,8 @@ extension InappsFilterService {
 
     /// The overlay lock and the delayed queue are never asked here; the shared show budgets are
     /// asked later, on the winner.
-    func filterInappsForPlace(_ place: String, inapps: [InApp]) -> [InApp] {
-        applyPostABFilters(filterInappsByPlace(place, inapps: inapps))
-    }
-
     private func applyPostABFilters(_ inapps: [InApp]) -> [InApp] {
-        applyShowabilityFilters(filterOutDirectCallInapps(inapps))
-    }
-
-    private func applyShowabilityFilters(_ inapps: [InApp]) -> [InApp] {
-        sortInappsByPriority(filterInappsByAlreadyShown(inapps))
+        sortInappsByPriority(filterInappsByAlreadyShown(filterOutDirectCallInapps(inapps)))
     }
 
     func filterInappsByPlace(_ place: String, inapps: [InApp]) -> [InApp] {
