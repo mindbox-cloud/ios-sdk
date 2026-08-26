@@ -6,6 +6,7 @@
 //  Copyright © 2026 Mindbox. All rights reserved.
 //
 
+import UIKit
 import Testing
 import Foundation
 @_spi(Internal) @testable import Mindbox
@@ -36,6 +37,7 @@ struct EmbeddedBlockPlaceRegistryTests {
         let embeddedPlaces: EmbeddedPlacesStub
         let delayScheduler: TestScheduler
         let registry: EmbeddedBlockPlaceRegistry
+        var isInBackground = false
 
         init() {
             // Served delays live on the shared session singleton — reset, or rigs would see each other's.
@@ -49,12 +51,18 @@ struct EmbeddedBlockPlaceRegistryTests {
             self.center = center
             self.embeddedPlaces = embeddedPlaces
             self.delayScheduler = delayScheduler
+            var background = { false }
             registry = EmbeddedBlockPlaceRegistry(resolver: resolver,
                                                   notificationCenter: center,
                                                   fetchEmbeddedPlaces: { embeddedPlaces.fetch($0) },
-                                                  delayedDelivery: EmbeddedBlockDelayedDelivery(isInBackground: { false },
+                                                  delayedDelivery: EmbeddedBlockDelayedDelivery(isInBackground: { background() },
                                                                                                 notificationCenter: center,
                                                                                                 schedule: { delayScheduler.schedule($0, $1) }))
+            background = { [weak self] in self?.isInBackground ?? false }
+        }
+
+        func enterForeground() {
+            center.post(name: UIApplication.willEnterForegroundNotification, object: nil)
         }
 
         func announceNewConfig() {
@@ -433,6 +441,27 @@ struct EmbeddedBlockPlaceRegistryTests {
         rig.delayScheduler.fireAll()
 
         #expect(block.applied == [.content(.delayed(params: ["fresh": .bool(true)]))])
+    }
+
+    @Test("The same winner resolved again after its delay ran out in the background is delivered on return, not delayed again")
+    func sameWinnerAfterBackgroundExpiryIsNotDelayedAgain() {
+        let rig = Rig()
+        rig.resolver.resolution = .content(.delayed())
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+        rig.isInBackground = true
+        rig.delayScheduler.fireAll()
+
+        rig.announceNewConfig()
+
+        #expect(rig.delayScheduler.armCount == 1)
+        #expect(block.applied.isEmpty)
+
+        rig.isInBackground = false
+        rig.enterForeground()
+
+        #expect(block.applied == [.content(.delayed())])
     }
 
     @Test("A block appearing while the place waits out its delay is told content is coming")
