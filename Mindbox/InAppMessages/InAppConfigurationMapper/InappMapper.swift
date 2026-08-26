@@ -93,7 +93,9 @@ class InappMapper: InappMapperProtocol {
                                                                         id: winner.inAppId) else {
                         Logger.common(message: "[InappMapper] In-app \(winner.inAppId) won place '\(place)' but the show budgets are spent, the place stays empty",
                                       level: .debug, category: .inAppMessages)
-                        finish(false)
+                        // Selected all the same: the budgets holding the winner back are no targeting failure,
+                        // so the buffer is dropped — as after the overlay's pass, whose budgets are checked later.
+                        finish(true)
                         completion(nil)
                         return
                     }
