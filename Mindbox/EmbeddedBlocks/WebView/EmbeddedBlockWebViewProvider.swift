@@ -21,7 +21,6 @@ final class EmbeddedBlockWebViewProvider {
 
     var onContentArrived: (() -> Void)?
 
-    /// The place's answer is known and held back by its `delayTime`.
     var onContentDelayed: (() -> Void)?
 
     var contentView: UIView? { isReady ? page?.view : nil }

@@ -61,9 +61,9 @@ class InappMapper: InappMapperProtocol {
                       _ completion: @escaping (InAppFormData?) -> Void) {
         runPass("the trigger", event: event) { finish in
             self.evaluate(self.triggerQuery(event, candidates), event: event) { verdict in
-                self.buildFirstShowable(verdict.suitable, event: event) { formData in
+                self.buildFirstShowable(verdict, event: event) { formData in
                     self.evaluate(self.catchUpQuery(event, candidates), event: event) { catchUp in
-                        self.vouchCatchUp(catchUp.suitable, event: event)
+                        self.vouchCatchUp(catchUp, event: event)
                         finish(formData != nil)
                         completion(formData)
                     }
@@ -79,8 +79,8 @@ class InappMapper: InappMapperProtocol {
         runPass("place '\(place)'", event: trigger) { finish in
             self.evaluate(self.placeQuery(place, candidates), event: trigger) { verdict in
                 self.evaluate(self.placeTargetingQuery(place, candidates), event: trigger) { targeted in
-                    let winner = verdict.suitable.first
-                    self.vouch(targeted.suitable, winner: winner, at: place)
+                    let winner = verdict.first
+                    self.vouch(targeted, winner: winner, at: place)
 
                     guard let winner else {
                         finish(false)
@@ -116,8 +116,8 @@ class InappMapper: InappMapperProtocol {
             self.evaluate(self.pageQuery(ids, candidates), event: nil) { verdict in
                 self.evaluate(self.pageTargetingQuery(ids, candidates), event: nil) { offered in
                     finish(false)
-                    self.vouchOffers(offered.suitable, by: blockInappId)
-                    completion(verdict.suitable.map(\.inAppId))
+                    self.vouchOffers(offered, by: blockInappId)
+                    completion(verdict.map(\.inAppId))
                 }
             }
         }
@@ -178,8 +178,7 @@ class InappMapper: InappMapperProtocol {
 
     /// One serial queue and one shared checker: a pass holds the queue until `finish`, so a place resolve
     /// cannot land between a trigger's selection and its catch-up and swap the event under it.
-    /// A pass that selected nothing sends its buffered failures as one event, one that selected something
-    /// drops them — trigger and place alike, as the overlay always has.
+    /// The buffered failures answer "why was nothing shown", so only a pass that selected nothing sends them.
     private func runPass(_ label: String,
                          event: ApplicationEvent?,
                          _ body: @escaping (_ finish: @escaping (_ selected: Bool) -> Void) -> Void) {
@@ -225,14 +224,9 @@ class InappMapper: InappMapperProtocol {
         let pickVariant: (InApp) -> MindboxFormVariant?
     }
 
-    private struct TargetingVerdict {
-        let candidates: [InApp]
-        let suitable: [InAppTransitionData]
-    }
-
     private func evaluate(_ query: TargetingQuery,
                           event: ApplicationEvent?,
-                          completion: @escaping (TargetingVerdict) -> Void) {
+                          completion: @escaping ([InAppTransitionData]) -> Void) {
         let prepared = query.prepares()
         prepared.forEach { targetingChecker.prepare(id: $0.id, targeting: $0.targeting) }
 
@@ -254,7 +248,7 @@ class InappMapper: InappMapperProtocol {
             answered in \(ms) ms.
             """, level: .debug, category: .inAppMessages)
 
-            completion(TargetingVerdict(candidates: candidates, suitable: suitable))
+            completion(suitable)
         }
 
         if query.fetchesDependencies {
@@ -366,8 +360,8 @@ class InappMapper: InappMapperProtocol {
         )
     }
 
-    /// Everyone the page could have drawn — the A/B cut and the spent frequencies in, so an A/B test on a
-    /// story hears from both branches (in sync with Android).
+    /// Everyone the page could have drawn — the A/B cut and the spent frequencies in, so an A/B test on an
+    /// in-app the page lists hears from both branches (in sync with Android).
     private func pageTargetingQuery(_ ids: [String], _ candidates: ConfigCandidates) -> TargetingQuery {
         TargetingQuery(
             label: "targeting for the page's \(ids.count) in-app(s)",
