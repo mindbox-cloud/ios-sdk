@@ -141,7 +141,7 @@ final class InappsFilterService: InappFilterProtocol {
         }
 
         let requested = ids.compactMap { id in candidates.inPool.first { $0.id == id } }
-        return applyShowabilityFilters(filterOutNonOverlayInapps(requested))
+        return filterInappsByAlreadyShown(filterOutNonOverlayInapps(requested))
     }
 
     func filter(id: String, in candidates: ConfigCandidates) -> InApp? {
