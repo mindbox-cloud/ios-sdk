@@ -27,6 +27,6 @@ extension TimeInterval {
         if days > 0 {
             return String(format: "%@%d.%02d:%02d:%02d.%@", prefix, days, hours, minutes, seconds, String(fractionDigits))
         }
-        return String(format: "%@%d:%02d:%02d.%@", prefix, hours, minutes, seconds, String(fractionDigits))
+        return String(format: "%@%02d:%02d:%02d.%@", prefix, hours, minutes, seconds, String(fractionDigits))
     }
 }
