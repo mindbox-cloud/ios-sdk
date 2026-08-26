@@ -150,6 +150,33 @@ struct InappScheduleManagerTests {
         }
     }
 
+    @Test("A delayed in-app whose time comes while another is on screen is dropped, closing that one does not show it", .tags(.inAppSchedule))
+    func scheduleInapp_missedMomentBehindAnotherInapp_isDropped() throws {
+        let onScreen = createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02")
+        let late = createInAppFormData(id: "2", isPriority: false, delayTime: "00:00:02")
+        scheduleManager.scheduleInApp(onScreen, processingDuration: 0)
+        let onScreenTime = try #require(scheduleManager.queue.sync { scheduleManager.inappsByPresentationTime.keys.first })
+        scheduleManager.showEligibleInapp(onScreenTime)
+        scheduleManager.queue.sync {
+            #expect(self.presentationManagerMock.receivedInAppUIModel?.inAppId == onScreen.inAppId)
+        }
+
+        scheduleManager.scheduleInApp(late, processingDuration: 0)
+        let lateTime = try #require(scheduleManager.queue.sync { scheduleManager.inappsByPresentationTime.keys.first })
+        scheduleManager.showEligibleInapp(lateTime)
+        scheduleManager.queue.sync {
+            #expect(self.presentationManagerMock.presentCallsCount == 1)
+            #expect(self.scheduleManager.inappsByPresentationTime.isEmpty)
+        }
+
+        presentationManagerMock.dismissActiveInApp()
+
+        scheduleManager.queue.sync {
+            #expect(self.presentationManagerMock.presentCallsCount == 1)
+        }
+        #expect(!SessionTemporaryStorage.shared.isPresentingInAppMessage)
+    }
+
     // MARK: - Records deletion
 
     @Test("Scheduled entries are removed after in-app is shown", .tags(.inAppSchedule))
