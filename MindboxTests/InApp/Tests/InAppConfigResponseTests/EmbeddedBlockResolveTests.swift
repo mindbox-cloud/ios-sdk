@@ -226,6 +226,15 @@ struct EmbeddedBlockResolveTests {
         #expect(dataFacade.discardCollectedFailuresCalls == 0)
     }
 
+    @Test("A place resolve whose winner the show limits hold back drops the pass's buffered failures too")
+    func placeResolveWithWinnerHeldByBudgetsDropsBufferedFailures() async {
+        spendEveryShowBudget()
+
+        #expect(await resolvePlace(Constants.cappedPlace) == nil)
+        #expect(dataFacade.discardCollectedFailuresCalls == 1)
+        #expect(dataFacade.sendCollectedFailuresCalls == 0)
+    }
+
     @Test("A place resolve hands the in-apps its targeting cut to the failure collection")
     func placeResolveCollectsFailuresForTheCut() async {
         _ = await resolvePlace(Constants.place)
