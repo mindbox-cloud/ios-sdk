@@ -504,6 +504,9 @@ final class EmbeddedBlockTestBed {
     let failureReporter: EmbeddedBlockFailureReporterMock
     let ackScheduler: EmbeddedBlockAckSchedulerMock
 
+    /// The provider's monotonic clock, so a test can spend part of the confirmation wait.
+    let clock: TestClock
+
     /// One per bed: a new config must reach only this provider.
     let center: NotificationCenter
 
@@ -523,6 +526,7 @@ final class EmbeddedBlockTestBed {
         let showReporter = EmbeddedBlockShowReporterMock()
         let failureReporter = EmbeddedBlockFailureReporterMock()
         let ackScheduler = EmbeddedBlockAckSchedulerMock()
+        let clock = TestClock()
         let registry = EmbeddedBlockPlaceRegistry(resolver: resolver,
                                                   notificationCenter: center,
                                                   fetchEmbeddedPlaces: { embeddedPlaces.fetch($0) })
@@ -530,6 +534,7 @@ final class EmbeddedBlockTestBed {
         self.showRecorder = showRecorder
         self.showReporter = showReporter
         self.ackScheduler = ackScheduler
+        self.clock = clock
         self.failureReporter = failureReporter
         self.center = center
         self.resolver = resolver
@@ -542,7 +547,8 @@ final class EmbeddedBlockTestBed {
                                                      recordShow: { showRecorder.record($0) },
                                                      reportShow: { showReporter.report($0, $1) },
                                                      reportFailure: { failureReporter.report($0, $1, $2) },
-                                                     scheduleAckTimeout: { ackScheduler.schedule($0, $1) })
+                                                     scheduleAckTimeout: { ackScheduler.schedule($0, $1) },
+                                                     now: { clock.now })
     }
 
     func announceNewConfig() {

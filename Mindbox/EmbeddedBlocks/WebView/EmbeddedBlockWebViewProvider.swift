@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import QuartzCore
 import MindboxLogger
 
 /// Embedded block content — a web page found by the block id.
@@ -58,11 +59,30 @@ final class EmbeddedBlockWebViewProvider {
 
     private let scheduleAckTimeout: EmbeddedBlockWaitScheduling
 
+    /// Monotonic, the same clock the wait budget counts on: a clock correction must not make a spent
+    /// stretch negative and stretch the wait past its interval.
+    private let now: () -> TimeInterval
+
     private var dataPushAck: DispatchWorkItem?
 
     /// Whether the page still owes a confirmation for the data it was sent. Outlives the timer: the
     /// wait pauses with the block and is armed again by the return.
     private var isAwaitingDataPushAck = false
+
+    /// How much of that wait is already spent, kept the way `EmbeddedBlockWaitBudget` keeps its own:
+    /// a return resumes the countdown where it stopped instead of starting the interval over.
+    ///
+    /// A host that cycles the block off and on screen would otherwise hand the page a full interval
+    /// every time — and a wrapper does exactly that on every route push — so a page that never
+    /// confirms would never be rebuilt.
+    private var ackConsumed: TimeInterval = 0
+
+    /// When the armed countdown last started, `nil` while it is not running.
+    private var ackResumedAt: TimeInterval?
+
+    private var ackRemaining: TimeInterval {
+        max(0, TimeInterval(Constants.EmbeddedBlock.readyTimeoutSeconds) - ackConsumed)
+    }
 
     /// A failure that happened behind another screen, held until somebody looks at the block.
     ///
@@ -97,7 +117,8 @@ final class EmbeddedBlockWebViewProvider {
          reportFailure: @escaping (EmbeddedBlockWebContent, InAppShowFailureReason, String) -> Void,
          scheduleAckTimeout: @escaping EmbeddedBlockWaitScheduling = { delay, work in
              DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
-         }) {
+         },
+         now: @escaping () -> TimeInterval = { CACurrentMediaTime() }) {
         self.placeSystemName = placeSystemName
         self.registry = registry
         self.feed = feed
@@ -106,6 +127,7 @@ final class EmbeddedBlockWebViewProvider {
         self.reportShow = reportShow
         self.reportFailure = reportFailure
         self.scheduleAckTimeout = scheduleAckTimeout
+        self.now = now
 
         registry.register(self, place: placeSystemName)
     }
@@ -342,14 +364,24 @@ final class EmbeddedBlockWebViewProvider {
 
     /// A page that misses the ack is rebuilt from scratch, in sync with Android. An error answer
     /// counts as silence — the web layer drops error envelopes before they arrive.
+    ///
+    /// A fresh push, so the whole interval: what a return resumes is `resumeDataPushAck()`.
     private func armDataPushAck() {
         cancelDataPushAck()
 
+        isAwaitingDataPushAck = true
+        resumeDataPushAck()
+    }
+
+    /// Arms the countdown for whatever is left of the wait.
+    private func resumeDataPushAck() {
         let generation = loadGeneration
         let work = DispatchWorkItem { [weak self] in
             guard let self, self.isStarted, self.loadGeneration == generation else { return }
 
             self.dataPushAck = nil
+            self.ackResumedAt = nil
+            self.ackConsumed = TimeInterval(Constants.EmbeddedBlock.readyTimeoutSeconds)
             self.isAwaitingDataPushAck = false
 
             guard let content = self.content else { return }
@@ -359,28 +391,36 @@ final class EmbeddedBlockWebViewProvider {
             self.buildPage(with: content)
         }
 
+        // Stored before it is scheduled, the order the wait budget arms in: the scheduler is free to
+        // run the work right away, and it must find the wait in a consistent state.
+        ackResumedAt = now()
         dataPushAck = work
-        isAwaitingDataPushAck = true
-        scheduleAckTimeout(TimeInterval(Constants.EmbeddedBlock.readyTimeoutSeconds), work)
+        scheduleAckTimeout(ackRemaining, work)
     }
 
-    /// The timer only: the wait itself stands, and the block arms it again when it comes back.
+    /// The timer only: the wait itself stands, and the block arms it again when it comes back. What
+    /// is frozen is the remainder — the stretch already spent is not handed back.
     private func suspendDataPushAck() {
+        if let ackResumedAt {
+            ackConsumed += max(0, now() - ackResumedAt)
+            self.ackResumedAt = nil
+        }
         dataPushAck?.cancel()
         dataPushAck = nil
     }
 
     private func cancelDataPushAck() {
         suspendDataPushAck()
+        ackConsumed = 0
         isAwaitingDataPushAck = false
     }
 
     private func rearmDataPushAckIfAwaited() {
         guard isAwaitingDataPushAck else { return }
 
-        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': back on screen with a data push still unconfirmed — waiting on it again",
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': back on screen with a data push still unconfirmed — waiting out the remaining \(ackRemaining)s",
                       category: .embeddedBlocks)
-        armDataPushAck()
+        resumeDataPushAck()
     }
 
     /// Judged by the standing wait, not by the timer or the pause: a page kept alive off screen can

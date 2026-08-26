@@ -1092,6 +1092,63 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.pageFactory.pages.count == 2)
     }
 
+    /// A pause, not a reset — the same rule the wait budget follows. A host that cycles the block
+    /// off and on screen (a wrapper does it on every route push) would otherwise hand the page a
+    /// full interval every time, and a page that never confirms would never be rebuilt.
+    @Test("The confirmation wait resumes on its remainder, not on a full interval")
+    func dataPushAckResumesOnTheRemainder() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData()
+
+        let whole = TimeInterval(Constants.EmbeddedBlock.readyTimeoutSeconds)
+        #expect(bed.ackScheduler.scheduled.map(\.delay) == [whole])
+
+        bed.clock.advance(1)
+        bed.provider.stop()
+        // Off screen the wait does not run down: the page is not being looked at either.
+        bed.clock.advance(100)
+        bed.provider.start()
+
+        #expect(bed.ackScheduler.scheduled.map(\.delay) == [whole, whole - 1])
+    }
+
+    @Test("A confirmation wait spent in full fires the moment the block comes back")
+    func dataPushAckSpentInFullFiresOnTheReturn() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData()
+
+        bed.clock.advance(TimeInterval(Constants.EmbeddedBlock.readyTimeoutSeconds) + 1)
+        bed.provider.stop()
+        bed.provider.start()
+
+        #expect(bed.ackScheduler.scheduled.last?.delay == 0)
+
+        bed.ackScheduler.fire()
+
+        #expect(bed.pageFactory.pages.count == 2)
+    }
+
+    /// The next push is a new question, so it gets the whole interval back — what a return resumes
+    /// is the wait that is still standing, not the one that was answered.
+    @Test("A fresh data push waits out the whole interval again")
+    func freshDataPushGetsTheWholeIntervalBack() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData("first")
+
+        bed.clock.advance(2)
+        bed.page?.confirmInitData()
+        bed.deliverSamePageWithNewData("second")
+
+        let whole = TimeInterval(Constants.EmbeddedBlock.readyTimeoutSeconds)
+        #expect(bed.ackScheduler.scheduled.map(\.delay) == [whole, whole])
+    }
+
     /// `timeToDisplay` measures the wait for the page, not the user's absence from the screen: the
     /// show is counted by the return, with the time the render itself took.
     @Test("The show reports the time the render took, not the time spent off screen")
