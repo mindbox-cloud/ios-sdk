@@ -578,6 +578,14 @@ struct EmbeddedBlockResolveTests {
         #expect(await inappToShow(Constants.blockId) == nil)
     }
 
+    @Test("A tap that opens its in-app drops the failure buffer, like a pass that showed")
+    func tapThatShowsDropsTheFailureBuffer() async throws {
+        _ = try #require(await inappToShow(Constants.onceStoryId))
+
+        #expect(dataFacade.discardCollectedFailuresCalls == 1)
+        #expect(dataFacade.sendCollectedFailuresCalls == 0)
+    }
+
     // MARK: - The trigger path on the same config
 
     @Test("The trigger path still picks the ordinary modal")
