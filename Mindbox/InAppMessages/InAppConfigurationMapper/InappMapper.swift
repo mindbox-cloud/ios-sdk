@@ -128,37 +128,20 @@ class InappMapper: InappMapperProtocol {
                       _ candidates: ConfigCandidates,
                       _ completion: @escaping (InAppTransitionData?) -> Void) {
         processingQueue.async {
-            guard let inapp = self.inappFilterService.filter(id: id, in: candidates) else {
-                completion(nil)
-                return
-            }
-
-            // The variant the page's question picks, so a tap opens what the page offered.
-            guard let variant = inapp.form.variants.first(where: { $0.isOverlayPresentable })
-                    ?? inapp.form.variants.first else {
-                Logger.common(message: "[InappMapper] In-app \(id) has no variant left to render.",
-                              level: .error, category: .inAppMessages)
-                completion(nil)
-                return
-            }
-
-            completion(InAppTransitionData(inAppId: inapp.id,
-                                           isPriority: inapp.isPriority,
-                                           delayTime: inapp.delayTime,
-                                           content: variant,
-                                           frequency: inapp.frequency,
-                                           tags: inapp.tags))
+            completion(self.transition(forId: id, in: candidates))
         }
     }
 
     /// Show history is deliberately not consulted: the page already offered this in-app, and a tap
-    /// has to open it however many times it opened before.
+    /// has to open it however many times it opened before. A pass of its own, so a form that could
+    /// not be built reports why at once instead of leaving that to whatever pass comes next.
     func getInAppToShowById(_ id: String,
                             params: [String: JSONValue],
                             _ candidates: ConfigCandidates,
                             _ completion: @escaping (InAppFormData?) -> Void) {
-        getInAppById(id, candidates) { transitionData in
-            guard let transitionData = transitionData else {
+        runPass("a tap on in-app \(id)", event: nil) { finish in
+            guard let transitionData = self.transition(forId: id, in: candidates) else {
+                finish(false)
                 completion(nil)
                 return
             }
@@ -166,12 +149,35 @@ class InappMapper: InappMapperProtocol {
             guard transitionData.content.isOverlayPresentable else {
                 Logger.common(message: "[InappMapper] In-app \(id) is drawn inside the host layout and cannot be shown over the screen.",
                               level: .error, category: .inAppMessages)
+                finish(false)
                 completion(nil)
                 return
             }
 
-            self.buildInApp(transitionData, extraParams: params, completion: completion)
+            self.buildInApp(transitionData, extraParams: params) { formData in
+                finish(formData != nil)
+                completion(formData)
+            }
         }
+    }
+
+    private func transition(forId id: String, in candidates: ConfigCandidates) -> InAppTransitionData? {
+        guard let inapp = inappFilterService.filter(id: id, in: candidates) else { return nil }
+
+        // The variant the page's question picks, so a tap opens what the page offered.
+        guard let variant = inapp.form.variants.first(where: { $0.isOverlayPresentable })
+                ?? inapp.form.variants.first else {
+            Logger.common(message: "[InappMapper] In-app \(id) has no variant left to render.",
+                          level: .error, category: .inAppMessages)
+            return nil
+        }
+
+        return InAppTransitionData(inAppId: inapp.id,
+                                   isPriority: inapp.isPriority,
+                                   delayTime: inapp.delayTime,
+                                   content: variant,
+                                   frequency: inapp.frequency,
+                                   tags: inapp.tags)
     }
 
     // MARK: - The pass
