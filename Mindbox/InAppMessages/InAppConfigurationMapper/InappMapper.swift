@@ -213,7 +213,7 @@ class InappMapper: InappMapperProtocol {
         let prepares: () -> [InApp]
 
         /// The pass's candidates, decided once the checker has been prepared.
-        let candidates: (_ prepared: [InApp], _ context: PreparationContext) -> [InApp]
+        let candidates: (PreparationContext) -> [InApp]
 
         /// Fetches geo/segmentations first; off for a follow-up question whose pass already did.
         let fetchesDependencies: Bool
@@ -237,7 +237,7 @@ class InappMapper: InappMapperProtocol {
         prepared.forEach { targetingChecker.prepare(id: $0.id, targeting: $0.targeting) }
 
         // Narrowed before the fetch: its completion answers on the main queue, where frequency reads have no business.
-        let candidates = query.candidates(prepared, targetingChecker.context)
+        let candidates = query.candidates(targetingChecker.context)
         let startedAt = Date()
 
         let check = {
@@ -284,7 +284,7 @@ class InappMapper: InappMapperProtocol {
         TargetingQuery(
             label: "the trigger",
             prepares: { candidates.renderable },
-            candidates: { _, context in
+            candidates: { context in
                 guard let event = event else {
                     return self.inappFilterService.filterForTrigger(in: candidates)
                 }
@@ -305,7 +305,7 @@ class InappMapper: InappMapperProtocol {
         TargetingQuery(
             label: "the targeting catch-up",
             prepares: { [] },
-            candidates: { _, context in
+            candidates: { context in
                 let listening: [InApp]
                 if let event = event {
                     listening = self.inappFilterService.filterInappsByOperation(event: event,
@@ -331,7 +331,7 @@ class InappMapper: InappMapperProtocol {
         TargetingQuery(
             label: "place '\(place)'",
             prepares: { candidates.renderable },
-            candidates: { _, _ in self.inappFilterService.filter(place: place, in: candidates) },
+            candidates: { _ in self.inappFilterService.filter(place: place, in: candidates) },
             fetchesDependencies: true,
             collectsFailures: true,
             pickVariant: { $0.form.variants.first { $0.placeSystemName == place } }
@@ -344,7 +344,7 @@ class InappMapper: InappMapperProtocol {
         TargetingQuery(
             label: "targeting at place '\(place)'",
             prepares: { [] },
-            candidates: { _, _ in
+            candidates: { _ in
                 self.inappFilterService.inapps(addressedTo: place, in: candidates)
                     .filter { $0.displayConditions != .directCall }
             },
@@ -359,7 +359,7 @@ class InappMapper: InappMapperProtocol {
         TargetingQuery(
             label: "a page asking about \(ids.count) in-app(s)",
             prepares: { candidates.renderable },
-            candidates: { _, _ in self.inappFilterService.filter(requestedIds: ids, in: candidates) },
+            candidates: { _ in self.inappFilterService.filter(requestedIds: ids, in: candidates) },
             fetchesDependencies: true,
             collectsFailures: false,
             pickVariant: Self.overlayVariant
@@ -372,7 +372,7 @@ class InappMapper: InappMapperProtocol {
         TargetingQuery(
             label: "targeting for the page's \(ids.count) in-app(s)",
             prepares: { [] },
-            candidates: { _, _ in self.inappFilterService.inapps(askedAbout: ids, in: candidates) },
+            candidates: { _ in self.inappFilterService.inapps(askedAbout: ids, in: candidates) },
             fetchesDependencies: false,
             collectsFailures: false,
             pickVariant: Self.overlayVariant
