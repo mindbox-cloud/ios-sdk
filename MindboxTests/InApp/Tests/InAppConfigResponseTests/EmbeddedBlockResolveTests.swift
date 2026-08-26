@@ -242,8 +242,7 @@ struct EmbeddedBlockResolveTests {
         #expect(dataFacade.collectedTargetingFailureIds == [Set([Constants.operationBlockId])])
     }
 
-    /// Logged as a mistake at config mapping, but kept: a direct call still has to open it.
-    @Test("A direct-call in-app targeted by an operation is still a valid in-app")
+    @Test("A direct-call in-app targeted by an operation stays valid, a direct call still has to open it")
     func directCallWithOperationTargetingStaysValid() {
         #expect(candidates.renderable.contains { $0.id == Constants.operationStoryId })
     }
@@ -561,8 +560,6 @@ struct EmbeddedBlockResolveTests {
         #expect(formData.inAppId == Constants.onceStoryId)
     }
 
-    /// The page offers a mixed form because it has an overlay variant; the tap has to open that one
-    /// even though the embedded variant comes first in the config.
     @Test("A tap on a mixed form opens its overlay variant")
     func mixedFormTapOpensTheOverlayVariant() async throws {
         let formData = try #require(await inappToShow(Constants.mixedId))
