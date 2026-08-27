@@ -55,6 +55,10 @@ final class EmbeddedBlockWebViewProvider {
 
     private var didAccountForShow = false
 
+    /// The page has drawn something and nothing has been asked of it since. A stray repeat must not
+    /// un-show a shown block; a rebuild and a data push both invite a fresh report.
+    private var didReportShownContent = false
+
     /// The selection's part of `timeToDisplay`; the page's part runs on `presentationStopwatch`.
     private var processingDuration: TimeInterval = 0
 
@@ -174,10 +178,11 @@ final class EmbeddedBlockWebViewProvider {
     }
 
     private func applyContent(_ fresh: EmbeddedBlockWebContent, processingDuration: TimeInterval) {
-        if let current = content, let page = page, outcome != .failed {
-            // A collapsed page is deliberately not deduplicated: for it the same answer is news —
-            // re-sent data is what makes the page re-report itself and revive.
-            if fresh == current, outcome == .ready || outcome == .loading {
+        // Only a block that shows something is talked to; one that shows nothing is rebuilt. A page
+        // confirms a data push and stays exactly as it was, so a collapsed block told about its content
+        // would sit waiting for a report that never comes. Rebuilding revives it, in sync with Android.
+        if let current = content, let page = page, isAttemptAlive {
+            if fresh == current {
                 Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the place resolved to the same content — nothing to change",
                               category: .embeddedBlocks)
                 return
@@ -187,15 +192,23 @@ final class EmbeddedBlockWebViewProvider {
                 Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': same page, new data — telling the page",
                               category: .embeddedBlocks)
                 content = fresh
+                didReportShownContent = false
                 page.sendInitData(params: fresh.params)
                 armDataPushAck()
                 return
             }
         }
 
-        let reason = page == nil ? "building its page" : "the place points at another page — rebuilding it"
-        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': \(reason)", category: .embeddedBlocks)
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': \(rebuildReason)", category: .embeddedBlocks)
         buildPage(with: fresh, processingDuration: processingDuration)
+    }
+
+    private var rebuildReason: String {
+        guard page != nil else { return "building its page" }
+
+        return isAttemptAlive
+            ? "the place points at another page — rebuilding it"
+            : "nothing is shown here — rebuilding its page to revive it"
     }
 
     private func buildPage(with fresh: EmbeddedBlockWebContent, processingDuration: TimeInterval) {
@@ -207,6 +220,7 @@ final class EmbeddedBlockWebViewProvider {
         outcome = .loading
         loadGeneration += 1
         didAccountForShow = false
+        didReportShownContent = false
         self.processingDuration = processingDuration
         presentationStopwatch = ForegroundStopwatch()
 
@@ -365,6 +379,11 @@ final class EmbeddedBlockWebViewProvider {
 
     private func applyContentRendered(_ count: Int) {
         guard isStarted else { return }
+        guard !didReportShownContent else {
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the page reported itself again with nothing asked of it — ignoring",
+                          category: .embeddedBlocks)
+            return
+        }
 
         guard count > 0 else {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': page rendered nothing", category: .embeddedBlocks)
@@ -375,12 +394,18 @@ final class EmbeddedBlockWebViewProvider {
 
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': page rendered \(count) item(s)", category: .embeddedBlocks)
         outcome = .ready
+        didReportShownContent = true
         onStateChange?(.ready)
         accountForShow()
     }
 
     private func handleUnreadableContentReport() {
         guard isStarted else { return }
+        guard !didReportShownContent else {
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the page repeated contentRendered without a readable count — ignoring, the block is already shown",
+                          category: .embeddedBlocks)
+            return
+        }
 
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': contentRendered without a readable count, treating as broken",
                       level: .error, category: .embeddedBlocks)
