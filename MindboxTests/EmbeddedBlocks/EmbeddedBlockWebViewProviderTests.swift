@@ -108,10 +108,9 @@ struct EmbeddedBlockWebViewProviderTests {
         var states: [EmbeddedBlockState] = []
         bed.provider.onStateChange = { states.append($0) }
 
-        bed.page?.reportRendered(1)
         bed.page?.reportRendered(0)
 
-        #expect(states == [.ready, .empty])
+        #expect(states == [.empty])
         #expect(bed.provider.contentView == nil)
     }
 
@@ -609,7 +608,9 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.pageFactory.pages.count == 1)
     }
 
-    @Test("The same answer revives a page that was collapsed by a dropped place")
+    /// A data push cannot revive a collapsed block: the page answers `initDataUpdated` and stays as it
+    /// is, so the block would wait for a report that never comes. It is rebuilt instead, like Android.
+    @Test("The same answer revives a page that was collapsed by a dropped place, by rebuilding it")
     func sameAnswerRevivesACollapsedPage() {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
@@ -622,10 +623,84 @@ struct EmbeddedBlockWebViewProviderTests {
         var states: [EmbeddedBlockState] = []
         bed.provider.onStateChange = { states.append($0) }
         bed.announceNewConfig()
+        bed.page?.reportRendered(1)
 
-        #expect(bed.page?.initDataPushes.count == 1)
-        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.pageFactory.pages.count == 2)
+        #expect(bed.pageFactory.pages.first?.initDataPushes.isEmpty == true)
+        #expect(states == [.loading, .ready])
+    }
+
+    @Test("A block collapsed by its own page is rebuilt for new data, not told about it")
+    func collapsedBlockIsRebuiltForNewData() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(0)
+
+        bed.deliverSamePageWithNewData()
+
+        #expect(bed.pageFactory.pages.count == 2)
+        #expect(bed.pageFactory.pages.first?.initDataPushes.isEmpty == true)
+    }
+
+    @Test("A shown block is not collapsed by a later report of nothing")
+    func shownBlockIgnoresALaterEmptyReport() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(2)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.page?.reportRendered(0)
+
         #expect(states.isEmpty)
+        #expect(bed.provider.contentView != nil)
+    }
+
+    /// One show must not carry both `Inapp.Show` and `Inapp.ShowFailure`: the show is already accounted
+    /// for when the repeat arrives.
+    @Test("A shown block is not failed by a later unreadable report")
+    func shownBlockIgnoresALaterUnreadableReport() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(2)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.page?.reportRenderedWithoutCount()
+
+        #expect(bed.failureReporter.reported.isEmpty)
+        #expect(bed.accounting.shows.count == 1)
+        #expect(states.isEmpty)
+    }
+
+    /// The latch closes on drawn content only: a page that reports nothing first and draws later — it was
+    /// still waiting for its answer about which in-apps it may draw — is still heard.
+    @Test("A page that drew nothing and then drew something is heard")
+    func pageThatDrawsAfterReportingNothingIsHeard() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.page?.reportRendered(0)
+        bed.page?.reportRendered(2)
+
+        #expect(states == [.empty, .ready])
+        #expect(bed.accounting.shownIds == [EmbeddedBlockWebContent.stub.inAppId])
+    }
+
+    @Test("A data push lets the page report itself again")
+    func dataPushReopensTheReport() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(2)
+        bed.deliverSamePageWithNewData()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.page?.reportRendered(0)
+
+        #expect(states == [.empty])
     }
 
     @Test("An operation revives a block that had settled as empty")

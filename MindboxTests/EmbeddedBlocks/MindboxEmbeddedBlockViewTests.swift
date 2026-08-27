@@ -165,7 +165,8 @@ struct MindboxEmbeddedBlockViewTests {
 
         block.page?.reportRendered(1)
         let content = try #require(block.page?.view)
-        block.page?.reportRendered(0)
+        block.bed.resolver.resolution = .empty
+        block.bed.announceNewConfig()
 
         #expect(content.superview == nil)
     }
@@ -340,7 +341,8 @@ struct MindboxEmbeddedBlockViewTests {
         block.view.onPresentationChange = { reported.append($0) }
 
         block.page?.reportRendered(1)
-        block.page?.reportRendered(0)
+        block.bed.resolver.resolution = .empty
+        block.bed.announceNewConfig()
 
         #expect(reported == [EmbeddedBlockPresentation(layer: .content, height: 120),
                              EmbeddedBlockPresentation(layer: .nothing, height: 0)])
