@@ -45,6 +45,27 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(fitted.width == 320)
     }
 
+    @Test("A new height resizes the container in place")
+    func newHeightResizesInPlace() {
+        let block = BlockFixture()
+
+        block.view.preferredHeight = 200
+
+        #expect(block.view.intrinsicContentSize.height == 200)
+        #expect(block.view.sizeThatFits(CGSize(width: 320, height: CGFloat.greatestFiniteMagnitude)).height == 200)
+    }
+
+    @Test("A collapsed block stays collapsed whatever height it is given")
+    func collapsedBlockStaysCollapsedOnNewHeight() {
+        let block = BlockFixture()
+        block.attachToWindow()
+        block.page?.failLoad()
+
+        block.view.preferredHeight = 200
+
+        #expect(block.view.intrinsicContentSize.height == 0)
+    }
+
     @Test("Failed block collapses the container")
     func failedBlockCollapses() {
         let block = BlockFixture()

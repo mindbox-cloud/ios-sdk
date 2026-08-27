@@ -8,7 +8,6 @@
 
 #if canImport(SwiftUI)
 import SwiftUI
-import MindboxLogger
 
 /// SwiftUI wrapper over `MindboxEmbeddedBlockView`.
 ///
@@ -18,9 +17,8 @@ import MindboxLogger
 /// keeps the given height while its content is loading and shown; a block with nothing to show
 /// collapses to zero height.
 ///
-/// Both values are fixed at creation. A different `placeSystemName` is a different block, built
-/// from scratch in place of the old one. A different `height` changes nothing: the block keeps the height it was
-/// created with and reports the ignored value to the log.
+/// A different `placeSystemName` is a different block, built from scratch in place of the old one.
+/// A different `height` resizes the block where it stands — the same content, no reload.
 ///
 /// Both outcomes can be customized the same way as in UIKit, through modifiers on the block
 /// itself: `placeholder` replaces the stock loading shimmer, and `errorView` opts into showing a
@@ -53,8 +51,8 @@ public struct MindboxEmbeddedBlock: View {
 
     /// - Parameters:
     ///   - placeSystemName: The system name of the place from the admin panel.
-    ///   - height: The height the block occupies while loading and shown. Fixed at creation:
-    ///     a new value given to a live block is ignored.
+    ///   - height: The height the block occupies while loading and shown. A new value resizes the
+    ///     block in place, without reloading its content.
     ///   - timeout: How long the block waits to learn what it shows before collapsing as
     ///     empty, in seconds. `nil` means the SDK default of 30. An answer that arrives after that
     ///     no longer expands the block; the next attempt starts when the block enters the window
@@ -182,7 +180,6 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
 
     func makeCoordinator() -> Coordinator {
         Coordinator(appearance: $appearance,
-                    creationHeight: height,
                     onLoad: onLoad,
                     onFail: onFail)
     }
@@ -203,7 +200,7 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
         coordinator.appearance = $appearance
         coordinator.onLoad = onLoad
         coordinator.onFail = onFail
-        coordinator.warnIfHeightIsIgnored(height, placeSystemName: placeSystemName)
+        uiView.preferredHeight = height
         syncStandIns(in: uiView)
     }
 
@@ -244,22 +241,16 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
         var onLoad: (() -> Void)?
         var onFail: (() -> Void)?
 
-        private let creationHeight: CGFloat
-
-        private var hasWarnedAboutIgnoredHeight = false
-
         private var isDetached = false
 
         /// `DispatchQueue.main` outside tests.
         private let schedule: (@escaping () -> Void) -> Void
 
         init(appearance: Binding<MindboxEmbeddedBlockAppearance>,
-             creationHeight: CGFloat,
              onLoad: (() -> Void)?,
              onFail: (() -> Void)?,
              schedule: @escaping (@escaping () -> Void) -> Void = { work in DispatchQueue.main.async { work() } }) {
             self.appearance = appearance
-            self.creationHeight = creationHeight
             self.onLoad = onLoad
             self.onFail = onFail
             self.schedule = schedule
@@ -271,16 +262,6 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
                       self.appearance.wrappedValue != newAppearance else { return }
                 self.appearance.wrappedValue = newAppearance
             }
-        }
-
-        /// An ignored height has no other symptom.
-        func warnIfHeightIsIgnored(_ newHeight: CGFloat, placeSystemName: String) {
-            guard !hasWarnedAboutIgnoredHeight, newHeight != creationHeight else { return }
-
-            hasWarnedAboutIgnoredHeight = true
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' was given height \(newHeight) after creation and keeps \(creationHeight): the height is fixed when the block is created.",
-                          level: .error,
-                          category: .embeddedBlocks)
         }
 
         /// Silences the write `update` has already queued: `weak self` is no guarantee — when

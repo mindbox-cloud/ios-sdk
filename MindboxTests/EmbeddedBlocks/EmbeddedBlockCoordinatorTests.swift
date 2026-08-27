@@ -32,7 +32,6 @@ struct EmbeddedBlockCoordinatorTests {
         var scheduled = [() -> Void]()
         let coordinator = EmbeddedBlockRepresentable.Coordinator(
             appearance: Binding(get: { .placeholder }, set: { written.append($0) }),
-            creationHeight: 104,
             onLoad: nil,
             onFail: nil,
             schedule: { scheduled.append($0) }
@@ -58,7 +57,6 @@ struct EmbeddedBlockCoordinatorTests {
         var scheduled = [() -> Void]()
         let coordinator = EmbeddedBlockRepresentable.Coordinator(
             appearance: Binding(get: { .placeholder }, set: { written.append($0) }),
-            creationHeight: 104,
             onLoad: nil,
             onFail: nil,
             schedule: { scheduled.append($0) }

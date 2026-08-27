@@ -133,7 +133,13 @@ public final class MindboxEmbeddedBlockView: UIView {
 
     private let contentProvider: EmbeddedBlockWebViewProvider
 
-    private let preferredHeight: CGFloat
+    var preferredHeight: CGFloat {
+        didSet {
+            guard preferredHeight != oldValue else { return }
+
+            invalidateIntrinsicContentSize()
+        }
+    }
 
     private let waitBudget: EmbeddedBlockWaitBudget
 
