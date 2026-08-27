@@ -221,6 +221,7 @@ public final class MindboxEmbeddedBlockView: UIView {
             }
         )
         super.init(frame: .zero)
+        warnIfPlaceIsMissing()
         warnIfHeightReservesNothing()
         setUpContainer()
     }
@@ -239,6 +240,16 @@ public final class MindboxEmbeddedBlockView: UIView {
         }
 
         return timeout
+    }
+
+    /// An empty name addresses no place, and the name is never normalized: whatever the host
+    /// passed is what the config is asked for.
+    private func warnIfPlaceIsMissing() {
+        guard placeSystemName.isEmpty else { return }
+
+        Logger.common(message: "[EmbeddedBlock] A block was created without a place system name: it has nothing to resolve and stays invisible.",
+                      level: .error,
+                      category: .embeddedBlocks)
     }
 
     /// Zero height is not a collapse: the block runs its whole cycle, it is simply never visible.
