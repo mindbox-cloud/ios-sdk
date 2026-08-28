@@ -422,6 +422,37 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.pageFactory.pages.count == 1)
     }
 
+    @Test("A config that changed only the frequency or tags leaves the page alone")
+    func metadataOnlyChangeIsNotPushedToThePage() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.resolver.resolution = .content(.counted())
+        bed.announceNewConfig()
+        bed.page?.reportRendered(0)
+
+        #expect(bed.page?.initDataPushes.isEmpty == true)
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(states.isEmpty)
+    }
+
+    @Test("A show is accounted with the frequency the config moved to while the page was loading")
+    func snapshotFollowsAMetadataOnlyChange() throws {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+
+        bed.resolver.resolution = .content(.counted())
+        bed.announceNewConfig()
+        bed.page?.reportRendered(1)
+
+        let show = try #require(bed.accounting.shows.first)
+        #expect(show.frequency == EmbeddedBlockWebContent.counted().frequency)
+        #expect(bed.page?.initDataPushes.isEmpty == true)
+    }
+
     // MARK: - The data push's confirmation
 
     @Test("A page that never confirms the data push is rebuilt")
