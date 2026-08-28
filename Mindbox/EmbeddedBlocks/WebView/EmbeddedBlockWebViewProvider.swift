@@ -189,9 +189,15 @@ final class EmbeddedBlockWebViewProvider {
             }
 
             if fresh.isSamePage(as: current) {
+                content = fresh
+                guard fresh.params != current.params else {
+                    Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': same page, only its frequency or tags moved — refreshing the snapshot, nothing to tell the page",
+                                  category: .embeddedBlocks)
+                    return
+                }
+
                 Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': same page, new data — telling the page",
                               category: .embeddedBlocks)
-                content = fresh
                 didReportShownContent = false
                 page.sendInitData(params: fresh.params)
                 armDataPushAck()
