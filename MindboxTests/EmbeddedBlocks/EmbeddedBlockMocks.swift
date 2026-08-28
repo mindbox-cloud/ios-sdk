@@ -514,6 +514,22 @@ final class EmbeddedBlockAckSchedulerMock {
 
 /// The provider with all dependencies substituted — the shared rig for the provider and container
 /// tests. The container runs through a real provider, the provider through a real place registry.
+final class EmbeddedBlockContentProviderFactoryMock: EmbeddedBlockContentProviderMaking {
+
+    private(set) var requestedPlaces: [String] = []
+
+    private let provider: EmbeddedBlockWebViewProvider
+
+    init(provider: EmbeddedBlockWebViewProvider) {
+        self.provider = provider
+    }
+
+    func makeProvider(placeSystemName: String) -> EmbeddedBlockWebViewProvider {
+        requestedPlaces.append(placeSystemName)
+        return provider
+    }
+}
+
 final class EmbeddedBlockTestBed {
 
     let resolver: EmbeddedBlockResolverMock

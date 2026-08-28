@@ -502,6 +502,43 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(MindboxEmbeddedBlockView.sanitizedTimeout(given, placeSystemName: "block") == effective)
     }
 
+    // MARK: - The place name
+
+    @Test("A place name with surrounding whitespace is normalized at the block's boundary")
+    func paddedPlaceNameIsNormalized() {
+        let bed = EmbeddedBlockTestBed()
+        let factory = EmbeddedBlockContentProviderFactoryMock(provider: bed.provider)
+        // The container is process-global and the mode swap rebuilds it: save and restore both.
+        let savedBuilder = MBInject.buildTestContainer
+        let savedMode = MBInject.mode
+        defer {
+            MBInject.buildTestContainer = savedBuilder
+            MBInject.mode = savedMode
+        }
+        MBInject.buildTestContainer = {
+            let container = MBContainer()
+            container.register(EmbeddedBlockContentProviderMaking.self) { factory }
+            return container
+        }
+        MBInject.mode = .test
+
+        let view = MindboxEmbeddedBlockView(placeSystemName: "  stories \n", height: 120)
+
+        #expect(view.placeSystemName == "stories")
+        #expect(factory.requestedPlaces == ["stories"])
+    }
+
+    @Test("Only the surrounding whitespace goes, the name itself is kept as it is",
+          arguments: [("stories", "stories"),
+                      (" stories ", "stories"),
+                      ("\tstories\n", "stories"),
+                      ("my place", "my place"),
+                      ("Stories", "Stories"),
+                      ("   ", "")])
+    func placeNameNormalizationKeepsTheName(given: String, expected: String) {
+        #expect(MindboxEmbeddedBlockView.normalizedPlaceSystemName(given) == expected)
+    }
+
     @Test("Silent block times out, collapses and reports didFail")
     func silentBlockTimesOut() async {
         let block = BlockFixture()
