@@ -8,6 +8,7 @@
 
 import Foundation
 import Testing
+import QuartzCore
 import class MindboxLogger.Locked
 @testable import Mindbox
 
@@ -143,7 +144,8 @@ struct InAppConfigurationManagerTests {
 
     private static func makeManager(api: InAppConfigurationAPI,
                                     configWaitBudget: TimeInterval,
-                                    inappFilterService: InappFilterProtocol = DI.injectOrFail(InappFilterProtocol.self)) -> InAppConfigurationManager {
+                                    inappFilterService: InappFilterProtocol = DI.injectOrFail(InappFilterProtocol.self),
+                                    now: @escaping () -> TimeInterval = { CACurrentMediaTime() }) -> InAppConfigurationManager {
         InAppConfigurationManager(
             inAppConfigAPI: api,
             inAppConfigRepository: EmptyConfigRepository(),
@@ -152,7 +154,8 @@ struct InAppConfigurationManagerTests {
             featureToggleManager: DI.injectOrFail(FeatureToggleManager.self),
             webViewPrewarmService: DI.injectOrFail(InAppWebViewPrewarmServiceProtocol.self),
             inappFilterService: inappFilterService,
-            configWaitBudget: configWaitBudget
+            configWaitBudget: configWaitBudget,
+            now: now
         )
     }
 
@@ -282,7 +285,8 @@ struct InAppConfigurationManagerTests {
 
     @Test("The place's processing time runs from the block's request, the wait for the config included")
     func placeProcessingTimeIncludesTheWaitForTheConfig() async throws {
-        let patientManager = Self.makeManager(api: api, configWaitBudget: 60)
+        let clock = TestClock()
+        let patientManager = Self.makeManager(api: api, configWaitBudget: 60, now: { clock.now })
         patientManager.prepareConfiguration()
         try await waitUntil(api.isFetchPending)
 
@@ -290,13 +294,13 @@ struct InAppConfigurationManagerTests {
         patientManager.selectInappForPlace("stories-list-container", trigger: nil) { inapp, processingDuration in
             answers.append((inapp, processingDuration))
         }
-        try await Task.sleep(nanoseconds: 300_000_000)
+        clock.advance(12.5)
         api.deliver(.data(try fixtureData()))
 
         try await waitUntil(!answers.isEmpty)
         let answer = try #require(answers.first)
         #expect(answer.inapp != nil, "the place was not answered from the config")
-        #expect(answer.duration >= 0.3, "the wait for the config is missing from the processing time: \(answer.duration)s")
+        #expect(answer.duration == 12.5)
     }
 
     @Test("One applied config is prepared once, however many blocks and pages ask")

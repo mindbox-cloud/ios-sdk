@@ -61,21 +61,35 @@ struct EmbeddedBlockInappServiceTests {
     @Test("A tap fetches the in-app with its params and hands it to the scheduler")
     func tapHandsTheFetchedInappToTheScheduler() {
         var fetched: [(id: String, params: [String: JSONValue])] = []
-        var shown: [(id: String, processingDuration: TimeInterval)] = []
+        var shown: [String] = []
         let service = EmbeddedBlockInappService(
             fetchInappToShow: { id, params, completion in
                 fetched.append((id, params))
                 completion(Self.formData(id: id))
             },
-            showNow: { formData, processingDuration in shown.append((formData.inAppId, processingDuration)) }
+            showNow: { formData, _ in shown.append(formData.inAppId) }
         )
 
         service.showInapp(id: "story-1", params: ["formId": .string("160477")])
 
         #expect(fetched.map(\.id) == ["story-1"])
         #expect(fetched.map(\.params) == [["formId": .string("160477")]])
-        #expect(shown.map(\.id) == ["story-1"])
-        #expect(shown.map(\.processingDuration).allSatisfy { $0 >= 0 })
+        #expect(shown == ["story-1"])
+    }
+
+    @Test("A tap's processing time runs from the tap to the form being ready")
+    func tapProcessingTimeRunsFromTheTap() {
+        var ticks: [TimeInterval] = [10, 10.25]
+        var durations: [TimeInterval] = []
+        let service = EmbeddedBlockInappService(
+            fetchInappToShow: { id, _, completion in completion(Self.formData(id: id)) },
+            showNow: { _, processingDuration in durations.append(processingDuration) },
+            now: { ticks.removeFirst() }
+        )
+
+        service.showInapp(id: "story-1", params: [:])
+
+        #expect(durations == [0.25])
     }
 
     @Test("A tap that resolves to nothing schedules nothing")
