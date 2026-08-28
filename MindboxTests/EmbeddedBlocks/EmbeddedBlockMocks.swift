@@ -543,6 +543,9 @@ final class EmbeddedBlockTestBed {
     /// One per bed: a new config must reach only this provider.
     let center: NotificationCenter
 
+    /// The page's rendering time runs on it: what the block's `timeToDisplay` adds to the selection's part.
+    let clock: TestClock
+
     var page: EmbeddedBlockPageMock? { pageFactory.page }
 
     init(placeSystemName: String = "block-id",
@@ -550,6 +553,7 @@ final class EmbeddedBlockTestBed {
         // Once-per-session state lives on the shared singleton — reset, or beds would see each other's silence.
         SessionTemporaryStorage.shared.$ledger.mutate { $0.placesReportedUnanswered = [] }
 
+        let clock = TestClock()
         let resolver = EmbeddedBlockResolverMock(resolution: resolution)
         let inappService = EmbeddedBlockInappServiceMock()
         let pageFactory = EmbeddedBlockPageFactoryMock()
@@ -562,6 +566,7 @@ final class EmbeddedBlockTestBed {
                                                   notificationCenter: center,
                                                   fetchEmbeddedPlaces: { embeddedPlaces.fetch($0) })
 
+        self.clock = clock
         self.accounting = accounting
         self.ackScheduler = ackScheduler
         self.failureReporter = failureReporter
@@ -576,7 +581,8 @@ final class EmbeddedBlockTestBed {
                                                      accounting: accounting,
                                                      reportFailure: { failureReporter.report($0, $1, $2) },
                                                      reportUnansweredWait: { failureReporter.reportUnansweredWait($0) },
-                                                     scheduleAckTimeout: { ackScheduler.schedule($0, $1) })
+                                                     scheduleAckTimeout: { ackScheduler.schedule($0, $1) },
+                                                     makeStopwatch: { ForegroundStopwatch(notificationCenter: center, now: { clock.now }) })
     }
 
     func announceNewConfig() {

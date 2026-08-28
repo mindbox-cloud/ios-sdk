@@ -11,89 +11,79 @@ import Foundation
 import UIKit
 @testable import Mindbox
 
+// The stopwatch listens on the main queue; posting from it keeps the delivery synchronous, so the
+// clock is read after the observer ran and not before.
 @Suite("ForegroundStopwatch tests")
+@MainActor
 struct ForegroundStopwatchTests {
 
-    @Test("Elapsed time increases while in foreground")
+    private let nc = NotificationCenter()
+    private let clock = TestClock()
+
+    private func makeStopwatch() -> ForegroundStopwatch {
+        ForegroundStopwatch(notificationCenter: nc, now: { clock.now })
+    }
+
+    private func enterBackground(for seconds: TimeInterval) {
+        nc.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
+        clock.advance(seconds)
+        nc.post(name: UIApplication.willEnterForegroundNotification, object: nil)
+    }
+
+    @Test("Elapsed time is the foreground time since the start")
     func elapsed_inForeground_increases() throws {
-        let stopwatch = ForegroundStopwatch()
-        let first = stopwatch.elapsed
-        Thread.sleep(forTimeInterval: 0.05)
-        let second = stopwatch.elapsed
-        #expect(second > first)
+        let stopwatch = makeStopwatch()
+        #expect(stopwatch.elapsed == 0)
+
+        clock.advance(0.5)
+
+        #expect(stopwatch.elapsed == 0.5)
         stopwatch.stop()
     }
 
     @Test("Background time is excluded from elapsed")
     func elapsed_excludesBackgroundTime() throws {
-        let nc = NotificationCenter()
-        let stopwatch = ForegroundStopwatch(notificationCenter: nc)
+        let stopwatch = makeStopwatch()
 
-        Thread.sleep(forTimeInterval: 0.05)
-        let beforeBackground = stopwatch.elapsed
+        clock.advance(0.25)
+        enterBackground(for: 2)
 
-        nc.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
-        Thread.sleep(forTimeInterval: 0.2)
-        nc.post(name: UIApplication.willEnterForegroundNotification, object: nil)
-
-        let afterForeground = stopwatch.elapsed
-
-        let delta = afterForeground - beforeBackground
-        #expect(delta < 0.1, "Expected background time (~0.2s) to be excluded, but delta was \(delta)")
+        #expect(stopwatch.elapsed == 0.25)
         stopwatch.stop()
     }
 
-    @Test("Elapsed during background does not count background time")
+    @Test("Elapsed during background does not count the background so far")
     func elapsed_duringBackground_excludesCurrentBackgroundTime() throws {
-        let nc = NotificationCenter()
-        let stopwatch = ForegroundStopwatch(notificationCenter: nc)
+        let stopwatch = makeStopwatch()
 
-        Thread.sleep(forTimeInterval: 0.05)
-        let beforeBackground = stopwatch.elapsed
-
+        clock.advance(0.25)
         nc.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
-        Thread.sleep(forTimeInterval: 0.2)
+        clock.advance(2)
 
-        let duringBackground = stopwatch.elapsed
-        let delta = duringBackground - beforeBackground
-        #expect(delta < 0.1, "Expected in-progress background time to be excluded, but delta was \(delta)")
+        #expect(stopwatch.elapsed == 0.25)
         stopwatch.stop()
     }
 
     @Test("Multiple background sessions are all excluded")
     func elapsed_multipleBackgroundSessions_allExcluded() throws {
-        let nc = NotificationCenter()
-        let stopwatch = ForegroundStopwatch(notificationCenter: nc)
+        let stopwatch = makeStopwatch()
 
-        let start = stopwatch.elapsed
+        enterBackground(for: 1)
+        clock.advance(0.25)
+        enterBackground(for: 1)
 
-        nc.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
-        Thread.sleep(forTimeInterval: 0.1)
-        nc.post(name: UIApplication.willEnterForegroundNotification, object: nil)
-
-        nc.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
-        Thread.sleep(forTimeInterval: 0.1)
-        nc.post(name: UIApplication.willEnterForegroundNotification, object: nil)
-
-        let end = stopwatch.elapsed
-        let delta = end - start
-        #expect(delta < 0.1, "Expected ~0.2s background time to be excluded, but delta was \(delta)")
+        #expect(stopwatch.elapsed == 0.25)
         stopwatch.stop()
     }
 
-    @Test("Stop removes observers and elapsed freezes behavior")
+    @Test("Stop removes the observers: a background after it is no longer excluded")
     func stop_removesObservers() throws {
-        let nc = NotificationCenter()
-        let stopwatch = ForegroundStopwatch(notificationCenter: nc)
+        let stopwatch = makeStopwatch()
 
-        Thread.sleep(forTimeInterval: 0.05)
+        clock.advance(0.25)
         stopwatch.stop()
+        enterBackground(for: 1)
 
-        nc.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
-        Thread.sleep(forTimeInterval: 0.1)
-        nc.post(name: UIApplication.willEnterForegroundNotification, object: nil)
-
-        let elapsed = stopwatch.elapsed
-        #expect(elapsed >= 0.05)
+        #expect(stopwatch.elapsed == 1.25)
     }
 }

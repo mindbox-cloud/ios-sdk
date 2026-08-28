@@ -254,11 +254,11 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.resolver.processingDuration = 2
 
         bed.provider.start()
+        bed.clock.advance(0.75)
         bed.page?.reportRendered(3)
 
         let show = try #require(bed.accounting.shows.first)
-        #expect(show.timeToDisplay >= 2)
-        #expect(show.timeToDisplay < 2.5)
+        #expect(show.timeToDisplay == 2.75)
     }
 
     // MARK: - Load failure
