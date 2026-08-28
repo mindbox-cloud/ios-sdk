@@ -29,13 +29,16 @@ final class EmbeddedBlockInappService: EmbeddedBlockInappServing {
     private let fetchInappToShow: (_ id: String, _ params: [String: JSONValue], _ completion: @escaping (InAppFormData?) -> Void) -> Void
     private let showNow: (InAppFormData, _ processingDuration: TimeInterval) -> Void
     private let configIsKnown: () -> Bool
+    private let now: () -> TimeInterval
 
     var hasConfig: Bool { configIsKnown() }
 
     init(ask: ((_ ids: [String], _ blockInappId: String, _ completion: @escaping ([String]) -> Void) -> Void)? = nil,
          fetchInappToShow: ((_ id: String, _ params: [String: JSONValue], _ completion: @escaping (InAppFormData?) -> Void) -> Void)? = nil,
          showNow: ((InAppFormData, _ processingDuration: TimeInterval) -> Void)? = nil,
-         hasConfig: (() -> Bool)? = nil) {
+         hasConfig: (() -> Bool)? = nil,
+         now: @escaping () -> TimeInterval = { CACurrentMediaTime() }) {
+        self.now = now
         self.configIsKnown = hasConfig ?? {
             DI.injectOrFail(InAppConfigurationManagerProtocol.self).hasConfig
         }
@@ -52,9 +55,9 @@ final class EmbeddedBlockInappService: EmbeddedBlockInappServing {
 
     func showInapp(id: String, params: [String: JSONValue]) {
         // The tap is the trigger: the fetch and the form build count into timeToDisplay, on the overlay pass's clock.
-        let tappedAt = CACurrentMediaTime()
-        fetchInappToShow(id, params) { [showNow] formData in
-            let processingDuration = CACurrentMediaTime() - tappedAt
+        let tappedAt = now()
+        fetchInappToShow(id, params) { [showNow, now] formData in
+            let processingDuration = now() - tappedAt
 
             guard let formData = formData else {
                 Logger.common(message: "[EmbeddedBlock] Nothing to show for in-app \(id)",

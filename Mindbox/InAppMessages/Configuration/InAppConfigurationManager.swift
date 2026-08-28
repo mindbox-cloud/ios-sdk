@@ -70,6 +70,8 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     private let webViewPrewarmService: InAppWebViewPrewarmServiceProtocol
     private let inappFilterService: InappFilterProtocol
 
+    private let now: () -> TimeInterval
+
     init(
         inAppConfigAPI: InAppConfigurationAPI,
         inAppConfigRepository: InAppConfigurationRepository,
@@ -78,7 +80,8 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         featureToggleManager: FeatureToggleManager,
         webViewPrewarmService: InAppWebViewPrewarmServiceProtocol,
         inappFilterService: InappFilterProtocol,
-        configWaitBudget: TimeInterval = InAppConfigurationManager.defaultConfigWaitBudget
+        configWaitBudget: TimeInterval = InAppConfigurationManager.defaultConfigWaitBudget,
+        now: @escaping () -> TimeInterval = { CACurrentMediaTime() }
     ) {
         self.inAppConfigRepository = inAppConfigRepository
         self.inappMapper = inappMapper
@@ -88,6 +91,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         self.webViewPrewarmService = webViewPrewarmService
         self.inappFilterService = inappFilterService
         self.configWaitBudget = configWaitBudget
+        self.now = now
     }
 
     weak var delegate: InAppConfigurationDelegate?
@@ -116,15 +120,15 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     func selectInappForPlace(_ place: String,
                              trigger: ApplicationEvent?,
                              _ completion: @escaping (InAppTransitionData?, _ processingDuration: TimeInterval) -> Void) {
-        let requestedAt = CACurrentMediaTime()
+        let requestedAt = now()
         awaitConfig("place '\(place)'") { [weak self] candidates in
             guard let self = self, let inappMapper = self.inappMapper, let candidates = candidates else {
                 completion(nil, 0)
                 return
             }
 
-            inappMapper.selectInappForPlace(place, trigger: trigger, candidates) { inapp in
-                completion(inapp, CACurrentMediaTime() - requestedAt)
+            inappMapper.selectInappForPlace(place, trigger: trigger, candidates) { [now] inapp in
+                completion(inapp, now() - requestedAt)
             }
         }
     }
