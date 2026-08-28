@@ -52,7 +52,8 @@ public struct MindboxEmbeddedBlock: View {
     private(set) var errorBuilder: (() -> AnyView)?
 
     /// - Parameters:
-    ///   - placeSystemName: The system name of the place from the admin panel.
+    ///   - placeSystemName: The system name of the place from the admin panel. Whitespace around
+    ///     it is ignored; the name itself is matched as it is, case included.
     ///   - height: The height the block occupies while loading and shown. Fixed at creation:
     ///     a new value given to a live block is ignored.
     ///   - timeout: How long the block waits to learn what it shows before collapsing as

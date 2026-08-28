@@ -28,8 +28,8 @@ public final class MindboxEmbeddedBlockView: UIView {
 
     // MARK: - Host API
 
-    /// The system name of the place from the admin panel, given at creation. Decides what content
-    /// the SDK puts inside.
+    /// The system name of the place from the admin panel, given at creation and stripped of the
+    /// whitespace around it. Decides what content the SDK puts inside.
     public let placeSystemName: String
 
     /// Receives the block events. Assigning a delegate after the content already resolved still
@@ -113,7 +113,8 @@ public final class MindboxEmbeddedBlockView: UIView {
     // MARK: - Life cycle
 
     /// - Parameters:
-    ///   - placeSystemName: The place system name from the admin panel.
+    ///   - placeSystemName: The place system name from the admin panel. Whitespace around it is
+    ///     ignored; the name itself is matched as it is, case included.
     ///   - height: The height the block occupies while loading and shown. Reserving it is the
     ///     host's job and there is no default: a height of 0 or less leaves the block invisible
     ///     whatever its content turns out to be, so the SDK reports it as an integration error.
@@ -123,10 +124,17 @@ public final class MindboxEmbeddedBlockView: UIView {
     ///     block; the next attempt starts when the block enters the window again. The separate
     ///     budget a loaded page gets to render itself is not affected.
     public convenience init(placeSystemName: String, height: CGFloat, timeout: TimeInterval? = nil) {
-        self.init(placeSystemName: placeSystemName,
+        let place = Self.normalizedPlaceSystemName(placeSystemName)
+        self.init(placeSystemName: place,
                   height: height,
-                  contentProvider: DI.injectOrFail(EmbeddedBlockContentProviderMaking.self).makeProvider(placeSystemName: placeSystemName),
+                  contentProvider: DI.injectOrFail(EmbeddedBlockContentProviderMaking.self).makeProvider(placeSystemName: place),
                   timeout: timeout)
+    }
+
+    /// Padding is not part of a name: a name pasted from the admin panel with a stray space still
+    /// finds its place, in sync with Android.
+    static func normalizedPlaceSystemName(_ given: String) -> String {
+        given.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     /// Blocks are not created from storyboards: the place system name and the height are required
