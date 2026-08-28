@@ -680,27 +680,21 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.waitBudgetBed.scheduler.lastDelay == block.waitBudgetBed.duration)
     }
 
-    /// The only test on real main-queue timing: the container builds the budget's duration itself
-    /// and no seam shows it. 50 ms is the answer timeout; the page's own budget is seconds long.
     @Test("A block waits the answer timeout for its answer and the page's own budget for the page")
-    func waitBudgetFollowsTheLoadingPhase() async throws {
-        let awaitingAnswer = RealBudgetBlockFixture(timeout: 0.05)
+    func waitBudgetFollowsTheLoadingPhase() {
+        let awaitingAnswer = OwnBudgetBlockFixture(timeout: 5)
         awaitingAnswer.bed.resolver.isDeferred = true
         awaitingAnswer.attachToWindow()
 
-        try await waitForCollapse(of: awaitingAnswer.view)
-
+        #expect(awaitingAnswer.scheduler.lastDelay == 5)
+        awaitingAnswer.scheduler.fireAll()
         #expect(awaitingAnswer.view.intrinsicContentSize.height == 0)
 
-        let withPage = RealBudgetBlockFixture(timeout: 0.05)
-        let delegate = EmbeddedBlockViewDelegateMock()
-        withPage.view.delegate = delegate
+        let withPage = OwnBudgetBlockFixture(timeout: 5)
         withPage.attachToWindow()
 
-        try await Task.sleep(nanoseconds: 300_000_000)
-
+        #expect(withPage.scheduler.lastDelay == 7)
         #expect(withPage.view.intrinsicContentSize.height == 120)
-        #expect(delegate.events.isEmpty)
     }
 
     @Test("Returning from the background does not arm a timeout outside a window")
@@ -778,15 +772,6 @@ struct MindboxEmbeddedBlockViewTests {
             }
         }
     }
-
-    /// Bounded, so a block that never gives up fails the test instead of hanging it.
-    private func waitForCollapse(of view: MindboxEmbeddedBlockView) async throws {
-        for _ in 0..<80 {
-            guard view.intrinsicContentSize.height != 0 else { return }
-
-            try await Task.sleep(nanoseconds: 25_000_000)
-        }
-    }
 }
 
 /// A block with every dependency substituted and a live window: the window must outlive the test,
@@ -815,7 +800,7 @@ private final class BlockFixture {
         self.view = MindboxEmbeddedBlockView(placeSystemName: "block-id",
                                              height: height,
                                              contentProvider: bed.provider,
-                                             waitBudget: waitBudgetBed.budget)
+                                             makeWaitBudget: { _, _ in waitBudgetBed.budget })
     }
 
     func attachToWindow() {
@@ -840,11 +825,14 @@ private final class BlockFixture {
     }
 }
 
-/// A block on the waiting budget the container builds for itself, counted down by the main queue.
+/// A block on the waiting budget the container builds for itself — its own switch between the answer
+/// timeout and the page's budget — counted down by a test scheduler.
 @MainActor
-private final class RealBudgetBlockFixture {
+private final class OwnBudgetBlockFixture {
 
     let bed: EmbeddedBlockTestBed
+
+    let scheduler: TestScheduler
 
     let view: MindboxEmbeddedBlockView
 
@@ -852,11 +840,20 @@ private final class RealBudgetBlockFixture {
 
     init(timeout: TimeInterval) {
         let bed = EmbeddedBlockTestBed()
+        let scheduler = TestScheduler()
         self.bed = bed
+        self.scheduler = scheduler
         self.view = MindboxEmbeddedBlockView(placeSystemName: "block-id",
                                              height: 120,
                                              contentProvider: bed.provider,
-                                             timeout: timeout)
+                                             timeout: timeout,
+                                             makeWaitBudget: { place, duration in
+                                                 EmbeddedBlockWaitBudget(placeSystemName: place,
+                                                                         duration: duration,
+                                                                         now: { bed.clock.now },
+                                                                         notificationCenter: bed.center,
+                                                                         schedule: { scheduler.schedule($0, $1) })
+                                             })
     }
 
     func attachToWindow() {
