@@ -148,19 +148,18 @@ public final class MindboxEmbeddedBlockView: UIView {
          height: CGFloat,
          contentProvider: EmbeddedBlockWebViewProvider,
          timeout: TimeInterval? = nil,
-         waitBudget: EmbeddedBlockWaitBudget? = nil) {
+         makeWaitBudget: ((_ placeSystemName: String, _ duration: @escaping () -> TimeInterval) -> EmbeddedBlockWaitBudget)? = nil) {
         self.placeSystemName = placeSystemName
         self.preferredHeight = height
         self.contentProvider = contentProvider
         let answerTimeout = Self.sanitizedTimeout(timeout, placeSystemName: placeSystemName)
-        self.waitBudget = waitBudget ?? EmbeddedBlockWaitBudget(
-            placeSystemName: placeSystemName,
-            duration: { [weak contentProvider] in
-                contentProvider?.isAwaitingAnswer == false
-                    ? TimeInterval(Constants.EmbeddedBlock.readyTimeoutSeconds)
-                    : answerTimeout
-            }
-        )
+        let duration: () -> TimeInterval = { [weak contentProvider] in
+            contentProvider?.isAwaitingAnswer == false
+                ? TimeInterval(Constants.EmbeddedBlock.readyTimeoutSeconds)
+                : answerTimeout
+        }
+        self.waitBudget = makeWaitBudget?(placeSystemName, duration)
+            ?? EmbeddedBlockWaitBudget(placeSystemName: placeSystemName, duration: duration)
         super.init(frame: .zero)
         warnIfHeightReservesNothing()
         setUpContainer()
