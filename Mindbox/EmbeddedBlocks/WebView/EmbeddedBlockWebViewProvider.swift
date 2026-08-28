@@ -62,7 +62,9 @@ final class EmbeddedBlockWebViewProvider {
     /// The selection's part of `timeToDisplay`; the page's part runs on `presentationStopwatch`.
     private var processingDuration: TimeInterval = 0
 
-    private var presentationStopwatch = ForegroundStopwatch()
+    private var presentationStopwatch: ForegroundStopwatch
+
+    private let makeStopwatch: () -> ForegroundStopwatch
 
     private let scheduleAckTimeout: EmbeddedBlockWaitScheduling
 
@@ -77,7 +79,8 @@ final class EmbeddedBlockWebViewProvider {
          reportUnansweredWait: @escaping (_ waited: TimeInterval) -> Void,
          scheduleAckTimeout: @escaping EmbeddedBlockWaitScheduling = { delay, work in
              DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
-         }) {
+         },
+         makeStopwatch: @escaping () -> ForegroundStopwatch = { ForegroundStopwatch() }) {
         self.placeSystemName = placeSystemName
         self.registry = registry
         self.inappService = inappService
@@ -86,6 +89,8 @@ final class EmbeddedBlockWebViewProvider {
         self.reportFailure = reportFailure
         self.reportUnansweredWait = reportUnansweredWait
         self.scheduleAckTimeout = scheduleAckTimeout
+        self.makeStopwatch = makeStopwatch
+        self.presentationStopwatch = makeStopwatch()
 
         registry.register(self, place: placeSystemName)
     }
@@ -228,7 +233,7 @@ final class EmbeddedBlockWebViewProvider {
         didAccountForShow = false
         didReportShownContent = false
         self.processingDuration = processingDuration
-        presentationStopwatch = ForegroundStopwatch()
+        presentationStopwatch = makeStopwatch()
 
         let page = makePage(fresh)
         page.isUserPresent = true
