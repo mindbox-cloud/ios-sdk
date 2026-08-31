@@ -1,5 +1,5 @@
 //
-//  FeedActionHandlersTests.swift
+//  InappRequestActionHandlersTests.swift
 //  MindboxTests
 //
 //  Created by Sergei Semko on 13.08.2026.
@@ -17,9 +17,9 @@ struct FilterShowableInappsActionHandlerTests {
         #expect(FilterShowableInappsActionHandler().actions == [.filterShowableInapps])
     }
 
-    @Test("The feed's answer travels back in the response")
-    func feedAnswerTravelsBack() throws {
-        let host = FeedHostSpy()
+    @Test("The in-app service's answer travels back in the response")
+    func serviceAnswerTravelsBack() throws {
+        let host = InappRequestHostSpy()
         host.allowed = ["id-1", "id-3"]
         let message = BridgeMessage.request(.filterShowableInapps,
                                             payload: .object(["inappIds": .array([.string("id-1"),
@@ -37,7 +37,7 @@ struct FilterShowableInappsActionHandlerTests {
 
     @Test("A late answer from the selection still becomes the response")
     func lateAnswerStillResponds() {
-        let host = FeedHostSpy()
+        let host = InappRequestHostSpy()
         host.isDeferred = true
 
         FilterShowableInappsActionHandler().handle(.request(.filterShowableInapps,
@@ -54,7 +54,7 @@ struct FilterShowableInappsActionHandlerTests {
 
     @Test("An empty question is asked and answered, not refused")
     func emptyRequestIsAnswered() {
-        let host = FeedHostSpy()
+        let host = InappRequestHostSpy()
 
         FilterShowableInappsActionHandler().handle(.request(.filterShowableInapps,
                                                             payload: .object(["inappIds": .array([])])),
@@ -66,7 +66,7 @@ struct FilterShowableInappsActionHandlerTests {
 
     @Test("Non-string entries are dropped instead of breaking the question")
     func nonStringEntriesAreDropped() {
-        let host = FeedHostSpy()
+        let host = InappRequestHostSpy()
         host.allowed = ["id-1"]
 
         FilterShowableInappsActionHandler().handle(
@@ -78,9 +78,9 @@ struct FilterShowableInappsActionHandlerTests {
         #expect(host.sent.first?.payload == .object(["inappIds": .array([.string("id-1")])]))
     }
 
-    @Test("A payload without the array is refused before the feed is asked")
+    @Test("A payload without the array is refused before the service is asked")
     func missingArrayIsRefused() throws {
-        let host = FeedHostSpy()
+        let host = InappRequestHostSpy()
 
         FilterShowableInappsActionHandler().handle(.request(.filterShowableInapps, payload: .object([:])), host: host)
 
@@ -92,7 +92,7 @@ struct FilterShowableInappsActionHandlerTests {
 
     @Test("A payload sent as a JSON string is understood too")
     func acceptsStringifiedPayload() {
-        let host = FeedHostSpy()
+        let host = InappRequestHostSpy()
         host.allowed = ["id-1"]
 
         FilterShowableInappsActionHandler().handle(.request(.filterShowableInapps,
@@ -102,8 +102,8 @@ struct FilterShowableInappsActionHandlerTests {
         #expect(host.sent.first?.payload == .object(["inappIds": .array([.string("id-1")])]))
     }
 
-    @Test("A host without a feed leaves the question unanswered")
-    func hostWithoutFeedStaysSilent() {
+    @Test("A host without an in-app service leaves the question unanswered")
+    func hostWithoutInappServiceStaysSilent() {
         let host = HostSpy()
 
         FilterShowableInappsActionHandler().handle(.request(.filterShowableInapps,
@@ -122,13 +122,13 @@ struct ShowInAppActionHandlerTests {
         #expect(ShowInAppActionHandler().actions == [.showInApp])
     }
 
-    @Test("A well-formed request reaches the feed and is acknowledged")
-    func requestReachesTheFeed() throws {
-        let host = FeedHostSpy()
+    @Test("A well-formed request reaches the service and is acknowledged")
+    func requestReachesTheService() throws {
+        let host = InappRequestHostSpy()
         let message = BridgeMessage.request(.showInApp, payload: .object([
             "inappId": .string("11111111-1111-1111-1111-111111111111"),
             "index": .int(0),
-            "sourceInappId": .string("feed"),
+            "sourceInappId": .string("block"),
             "params": .object(["title": .string("Сториз 1")])
         ]))
 
@@ -146,7 +146,7 @@ struct ShowInAppActionHandlerTests {
 
     @Test("Only the id is required")
     func onlyIdIsRequired() throws {
-        let host = FeedHostSpy()
+        let host = InappRequestHostSpy()
 
         ShowInAppActionHandler().handle(.request(.showInApp, payload: .object(["inappId": .string("some-id")])),
                                         host: host)
@@ -163,7 +163,7 @@ struct ShowInAppActionHandlerTests {
         .object(["inappId": .int(1)])
     ])
     func missingIdIsRefused(payload: JSONValue) throws {
-        let host = FeedHostSpy()
+        let host = InappRequestHostSpy()
 
         ShowInAppActionHandler().handle(.request(.showInApp, payload: payload), host: host)
 
@@ -173,8 +173,8 @@ struct ShowInAppActionHandlerTests {
         #expect(response.payload == .object(["error": .string("Invalid payload: missing or empty 'inappId'")]))
     }
 
-    @Test("A host without a feed leaves the request unanswered")
-    func hostWithoutFeedStaysSilent() {
+    @Test("A host without an in-app service leaves the request unanswered")
+    func hostWithoutInappServiceStaysSilent() {
         let host = HostSpy()
 
         ShowInAppActionHandler().handle(.request(.showInApp, payload: .object(["inappId": .string("some-id")])),
@@ -184,7 +184,7 @@ struct ShowInAppActionHandlerTests {
     }
 }
 
-private final class FeedHostSpy: HostSpy, WebBridgeFeedHosting {
+private final class InappRequestHostSpy: HostSpy, WebBridgeInappRequestHosting {
 
     var allowed: [String] = []
 

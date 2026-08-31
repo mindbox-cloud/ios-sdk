@@ -137,7 +137,7 @@ protocol WebBridgeContentHosting: AnyObject {
     func bridgeDidReportUnreadableContent()
 }
 
-protocol WebBridgeFeedHosting: AnyObject {
+protocol WebBridgeInappRequestHosting: AnyObject {
 
     /// Which of `ids` are showable. Answered asynchronously and possibly never: a host that
     /// stopped listening drops the question, and what a missing answer means is the page's call.

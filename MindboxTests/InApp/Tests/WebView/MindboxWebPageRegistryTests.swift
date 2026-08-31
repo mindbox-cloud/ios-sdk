@@ -18,15 +18,15 @@ struct MindboxWebPageRegistryTests {
     func broadcastReachesEveryoneButTheAuthor() {
         let registry = MindboxWebPageRegistry()
         let author = WebPageSpy()
-        let feed = WebPageSpy()
+        let block = WebPageSpy()
         let other = WebPageSpy()
 
-        [author, feed, other].forEach(registry.register)
+        [author, block, other].forEach(registry.register)
 
         registry.broadcast(.localStateChanged, payload: .object(["version": .int(1)]), excluding: author)
 
         #expect(author.received.isEmpty)
-        #expect(feed.received.map(\.action) == [.localStateChanged])
+        #expect(block.received.map(\.action) == [.localStateChanged])
         #expect(other.received.map(\.action) == [.localStateChanged])
     }
 

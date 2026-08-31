@@ -23,10 +23,10 @@ final class ShowInAppActionHandler: WebBridgeActionHandler {
             return
         }
 
-        guard let feedHost = host as? WebBridgeFeedHosting else {
-            // Journalled and dropped, not refused: feedless surfaces may conform later, and
+        guard let inappHost = host as? WebBridgeInappRequestHosting else {
+            // Journalled and dropped, not refused: surfaces without an in-app service may conform later, and
             // pages must not have learned that this errors here.
-            Logger.common(message: "[WebView] Bridge: showInApp from '\(host.contentId)' has no feed to serve it here, ignoring",
+            Logger.common(message: "[WebView] Bridge: showInApp from '\(host.contentId)' has no in-app service to serve it here, ignoring",
                           level: .error,
                           category: host.logCategory)
             return
@@ -50,7 +50,7 @@ final class ShowInAppActionHandler: WebBridgeActionHandler {
                       level: .info,
                       category: host.logCategory)
 
-        feedHost.bridgeDidRequestShowInApp(id: inAppId, params: params)
+        inappHost.bridgeDidRequestShowInApp(id: inAppId, params: params)
         host.respondSuccess(to: message)
     }
 }
