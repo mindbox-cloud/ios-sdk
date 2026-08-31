@@ -55,3 +55,15 @@ protocol EmbeddedBlockPageHosting: AnyObject {
     /// there — this is what re-evaluates targeting and an A/B re-flip on a live page.
     func sendInitData(params: [String: JSONValue])
 }
+
+extension EmbeddedBlockPageHosting {
+
+    func detachCallbacks() {
+        onContentRendered = nil
+        onUnreadableContentReport = nil
+        onShowableQuestion = nil
+        onShowInAppRequest = nil
+        onDataPushConfirmed = nil
+        onLoadFailure = nil
+    }
+}

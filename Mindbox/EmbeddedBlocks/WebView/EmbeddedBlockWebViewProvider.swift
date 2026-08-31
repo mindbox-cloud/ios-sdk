@@ -75,19 +75,11 @@ final class EmbeddedBlockWebViewProvider {
 
     private let scheduleAckTimeout: EmbeddedBlockWaitScheduling
 
-    private let now: () -> TimeInterval
-
     private var dataPushAck: DispatchWorkItem?
 
     private var isAwaitingDataPushAck = false
 
-    private var ackConsumed: TimeInterval = 0
-
-    private var ackResumedAt: TimeInterval?
-
-    private var ackRemaining: TimeInterval {
-        max(0, TimeInterval(Constants.EmbeddedBlock.readyTimeoutSeconds) - ackConsumed)
-    }
+    private var ackBudget: EmbeddedBlockAckBudget
 
     private var pendingFailureReport: (content: EmbeddedBlockWebContent,
                                        reason: InAppShowFailureReason,
@@ -117,7 +109,7 @@ final class EmbeddedBlockWebViewProvider {
         self.scheduleAckTimeout = scheduleAckTimeout
         self.makeStopwatch = makeStopwatch
         self.presentationStopwatch = makeStopwatch()
-        self.now = now
+        self.ackBudget = EmbeddedBlockAckBudget(now: now)
 
         registry.register(self, place: placeSystemName)
     }
@@ -338,12 +330,7 @@ final class EmbeddedBlockWebViewProvider {
     /// Detached from us first, so that its late messages do not end up in the new attempt.
     private func dropPage() {
         cancelDataPushAck()
-        page?.onContentRendered = nil
-        page?.onUnreadableContentReport = nil
-        page?.onShowableQuestion = nil
-        page?.onShowInAppRequest = nil
-        page?.onDataPushConfirmed = nil
-        page?.onLoadFailure = nil
+        page?.detachCallbacks()
         page?.cancel()
         page = nil
         content = nil
@@ -366,8 +353,7 @@ final class EmbeddedBlockWebViewProvider {
             guard let self, self.isStarted, self.loadGeneration == generation else { return }
 
             self.dataPushAck = nil
-            self.ackResumedAt = nil
-            self.ackConsumed = TimeInterval(Constants.EmbeddedBlock.readyTimeoutSeconds)
+            self.ackBudget.exhaust()
             self.isAwaitingDataPushAck = false
 
             guard let content = self.content else { return }
@@ -377,30 +363,27 @@ final class EmbeddedBlockWebViewProvider {
             self.buildPage(with: content, processingDuration: self.processingDuration)
         }
 
-        ackResumedAt = now()
+        ackBudget.resume()
         dataPushAck = work
-        scheduleAckTimeout(ackRemaining, work)
+        scheduleAckTimeout(ackBudget.remaining, work)
     }
 
     private func suspendDataPushAck() {
-        if let ackResumedAt {
-            ackConsumed += max(0, now() - ackResumedAt)
-            self.ackResumedAt = nil
-        }
+        ackBudget.suspend()
         dataPushAck?.cancel()
         dataPushAck = nil
     }
 
     private func cancelDataPushAck() {
         suspendDataPushAck()
-        ackConsumed = 0
+        ackBudget.reset()
         isAwaitingDataPushAck = false
     }
 
     private func rearmDataPushAckIfAwaited() {
         guard isAwaitingDataPushAck else { return }
 
-        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': back on screen with a data push still unconfirmed — waiting out the remaining \(ackRemaining)s",
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': back on screen with a data push still unconfirmed — waiting out the remaining \(ackBudget.remaining)s",
                       category: .embeddedBlocks)
         resumeDataPushAck()
     }
