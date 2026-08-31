@@ -13,6 +13,7 @@ import UIKit
 /// A stopwatch that only counts time while the app is in the foreground.
 /// Background time (between `didEnterBackground` and `willEnterForeground`) is excluded from `elapsed`.
 final class ForegroundStopwatch {
+    private let now: () -> CFTimeInterval
     private let startTime: CFTimeInterval
     private var totalBackgroundDuration: CFTimeInterval = 0
     private var backgroundEntryTime: CFTimeInterval?
@@ -22,16 +23,19 @@ final class ForegroundStopwatch {
 
     private let notificationCenter: NotificationCenter
 
-    init(notificationCenter: NotificationCenter = .default) {
+    init(notificationCenter: NotificationCenter = .default,
+         now: @escaping () -> CFTimeInterval = { CACurrentMediaTime() }) {
         self.notificationCenter = notificationCenter
-        self.startTime = CACurrentMediaTime()
+        self.now = now
+        self.startTime = now()
 
         bgObserver = notificationCenter.addObserver(
             forName: UIApplication.didEnterBackgroundNotification,
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.backgroundEntryTime = CACurrentMediaTime()
+            guard let self else { return }
+            self.backgroundEntryTime = self.now()
         }
 
         fgObserver = notificationCenter.addObserver(
@@ -40,7 +44,7 @@ final class ForegroundStopwatch {
             queue: .main
         ) { [weak self] _ in
             guard let self, let entryTime = self.backgroundEntryTime else { return }
-            self.totalBackgroundDuration += CACurrentMediaTime() - entryTime
+            self.totalBackgroundDuration += self.now() - entryTime
             self.backgroundEntryTime = nil
         }
     }
@@ -49,9 +53,9 @@ final class ForegroundStopwatch {
     var elapsed: TimeInterval {
         var currentBackgroundDuration = totalBackgroundDuration
         if let entryTime = backgroundEntryTime {
-            currentBackgroundDuration += CACurrentMediaTime() - entryTime
+            currentBackgroundDuration += now() - entryTime
         }
-        return CACurrentMediaTime() - startTime - currentBackgroundDuration
+        return now() - startTime - currentBackgroundDuration
     }
 
     /// Stops the stopwatch and removes notification observers.
