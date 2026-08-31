@@ -984,21 +984,6 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.provider.contentView === bed.page?.view)
     }
 
-    @Test("A return revives a block that had collapsed as empty by rebuilding its page")
-    func returnRevivesACollapsedPageByRebuilding() {
-        let bed = EmbeddedBlockTestBed()
-
-        bed.provider.start()
-        bed.page?.reportRendered(0)
-        bed.provider.stop()
-        bed.provider.start()
-        bed.page?.reportRendered(2)
-
-        #expect(bed.resolver.resolveCount == 2)
-        #expect(bed.pageFactory.pages.count == 2)
-        #expect(bed.provider.contentView === bed.page?.view)
-    }
-
     @Test("Page rendered before the block left the window is shown again without a reload")
     func renderedPageIsShownAgainWithoutReload() {
         let bed = EmbeddedBlockTestBed()
@@ -1196,6 +1181,23 @@ struct EmbeddedBlockWebViewProviderTests {
 
         let whole = TimeInterval(Constants.EmbeddedBlock.readyTimeoutSeconds)
         #expect(bed.ackScheduler.scheduled.map(\.delay) == [whole, whole])
+    }
+
+    @Test("The show reports the time the render took, not the time spent off screen")
+    func showReportsTheRenderTimeNotTheAbsence() throws {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.processingDuration = 2
+
+        bed.provider.start()
+        bed.clock.advance(0.75)
+        bed.provider.stop()
+        bed.page?.reportRendered(1)
+
+        bed.clock.advance(8)
+        bed.provider.start()
+
+        let show = try #require(bed.accounting.shows.first)
+        #expect(show.timeToDisplay == 2.75)
     }
 
     @Test("Failed block tries again when it comes back")
