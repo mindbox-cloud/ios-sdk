@@ -115,6 +115,8 @@ class InappMapper: InappMapperProtocol {
         runPass("a page of in-app \(blockInappId) asking about \(ids.count) in-app(s)", event: nil) { finish in
             self.evaluate(self.pageQuery(ids, candidates), event: nil) { verdict in
                 self.evaluate(self.pageTargetingQuery(ids, candidates), event: nil) { offered in
+                    // A page's question selects nothing; false only flushes a buffer this pass
+                    // keeps empty (collectsFailures: false).
                     finish(false)
                     self.vouchOffers(offered, by: blockInappId)
                     completion(verdict.map(\.inAppId))
@@ -196,7 +198,21 @@ class InappMapper: InappMapperProtocol {
                           level: .debug, category: .inAppMessages)
             self.targetingChecker.event = event
 
+            // A missed finish freezes the queue for good, a second one would crash the leave.
+            let finishLock = NSLock()
+            var finished = false
+
             body { selected in
+                finishLock.lock()
+                let alreadyFinished = finished
+                finished = true
+                finishLock.unlock()
+
+                guard !alreadyFinished else {
+                    assertionFailure("[InappMapper] The pass for \(label) tried to finish twice")
+                    return
+                }
+
                 if selected {
                     self.dataFacade.discardCollectedFailures()
                 } else {
