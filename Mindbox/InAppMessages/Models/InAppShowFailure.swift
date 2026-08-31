@@ -31,6 +31,9 @@ enum InAppShowError: Encodable {
     }
 
     func encode(to encoder: Encoder) throws {
+        // `$type` merges with the failure's own keys only while both encode into a keyed
+        // container on the same encoder; an unkeyed or single-value encoder in the failure
+        // would silently drop the tag.
         var container = encoder.container(keyedBy: CodingKeys.self)
 
         switch self {

@@ -266,6 +266,8 @@ final class EmbeddedBlockWebViewProvider {
 
                 Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': same page, new data — telling the page",
                               category: .embeddedBlocks)
+                // The stopwatch is deliberately not restarted: a re-render after a data push cannot
+                // account a show anyway (didAccountForShow holds), so its time goes nowhere.
                 didReportShownContent = false
                 page.sendInitData(params: fresh.params)
                 armDataPushAck()

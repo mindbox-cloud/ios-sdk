@@ -254,6 +254,8 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
 
         let delay = TimeInterval.delay(fromTimeSpan: content.delayTime)
         let served = ServedPlaceDelay(place: place, inappId: content.inAppId)
+        // Checked here, inserted when the delay fires — both on the main thread; the ledger's
+        // lock protects other readers, not this sequence.
         guard delay > 0, !SessionTemporaryStorage.shared.ledger.servedPlaceDelays.contains(served) else {
             deliver(place: place, resolution: resolution, processingDuration: processingDuration)
             return

@@ -65,7 +65,9 @@ public struct MindboxEmbeddedBlock: View {
                 timeout: TimeInterval? = nil,
                 onLoad: (() -> Void)? = nil,
                 onFail: (() -> Void)? = nil) {
-        self.placeSystemName = placeSystemName
+        // Normalized here too, so `.id(placeSystemName)` keeps one SwiftUI identity per place
+        // however the name was padded.
+        self.placeSystemName = MindboxEmbeddedBlockView.normalizedPlaceSystemName(placeSystemName)
         self.height = height
         self.timeout = timeout
         self.onLoad = onLoad

@@ -53,7 +53,11 @@ final class EmbeddedBlockDelayedDelivery<Answer> {
         if let observer {
             notificationCenter.removeObserver(observer)
         }
-        waiting.keys.forEach(stopTicking)
+        for entry in waiting.values {
+            if case .ticking(let timer) = entry.state {
+                timer.cancel()
+            }
+        }
     }
 
     func isWaiting(place: String, for inappId: String) -> Bool {
