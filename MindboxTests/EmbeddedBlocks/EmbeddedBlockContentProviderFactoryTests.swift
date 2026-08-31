@@ -31,8 +31,9 @@ struct EmbeddedBlockContentProviderFactoryTests {
                                                   notificationCenter: NotificationCenter(),
                                                   fetchEmbeddedPlaces: { $0(nil) })
         let factory = EmbeddedBlockContentProviderFactory(registry: registry,
-                                                          feed: EmbeddedBlockFeedServiceMock(),
-                                                          failureManager: InappShowFailureManagerMock())
+                                                          inappService: EmbeddedBlockInappServiceMock(),
+                                                          failureManager: InappShowFailureManagerMock(),
+                                                          accounting: InappShowAccountingMock())
 
         let provider = factory.makeProvider(placeSystemName: "factory-shared-registry")
         withExtendedLifetime(provider) {
@@ -64,6 +65,35 @@ struct EmbeddedBlockContentProviderFactoryTests {
         #expect(manager.sentAtOnce.first?.tags == ["campaign": "stories"])
     }
 
+    @Test("A block's unanswered wait names the place, how long it waited and what the SDK was still missing",
+          arguments: [(hasConfig: false, phase: EmbeddedBlockShowFailure.Phase.configMissing),
+                      (hasConfig: true, phase: .resolvePending)])
+    func unansweredWaitNamesThePlaceAndThePhase(hasConfig: Bool, phase: EmbeddedBlockShowFailure.Phase) {
+        let manager = InappShowFailureManagerMock()
+        let inappService = EmbeddedBlockInappServiceMock()
+        inappService.hasConfig = hasConfig
+        let registry = EmbeddedBlockPlaceRegistry(resolver: EmbeddedBlockResolverMock(resolution: .empty),
+                                                  notificationCenter: NotificationCenter(),
+                                                  fetchEmbeddedPlaces: { $0(nil) })
+        let factory = EmbeddedBlockContentProviderFactory(registry: registry,
+                                                          inappService: inappService,
+                                                          failureManager: manager,
+                                                          accounting: InappShowAccountingMock())
+
+        SessionTemporaryStorage.shared.$ledger.mutate { $0.placesReportedUnanswered = [] }
+        let place = "factory-silent-place"
+        let provider = factory.makeProvider(placeSystemName: place)
+        withExtendedLifetime(provider) {
+            provider.reportAnswerTimedOut(waited: 30)
+        }
+
+        #expect(manager.waitBudgetExceeded.count == 1)
+        #expect(manager.waitBudgetExceeded.first?.place == place)
+        #expect(manager.waitBudgetExceeded.first?.waited == 30)
+        #expect(manager.waitBudgetExceeded.first?.phase == phase)
+        #expect(manager.sentAtOnce.isEmpty)
+    }
+
     // MARK: - Helpers
 
     /// The resolver answers "empty": no page is created for such a block, so the factory's tests
@@ -73,7 +103,8 @@ struct EmbeddedBlockContentProviderFactoryTests {
                                                   notificationCenter: NotificationCenter(),
                                                   fetchEmbeddedPlaces: { $0(nil) })
         return EmbeddedBlockContentProviderFactory(registry: registry,
-                                                   feed: EmbeddedBlockFeedServiceMock(),
-                                                   failureManager: InappShowFailureManagerMock())
+                                                   inappService: EmbeddedBlockInappServiceMock(),
+                                                   failureManager: InappShowFailureManagerMock(),
+                                                   accounting: InappShowAccountingMock())
     }
 }

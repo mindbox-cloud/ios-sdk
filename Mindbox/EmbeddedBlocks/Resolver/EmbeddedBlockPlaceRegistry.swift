@@ -13,8 +13,11 @@ protocol EmbeddedBlockPlaceHandling: AnyObject {
 
     var isActive: Bool { get }
 
-    /// The place's fresh answer, on the main thread.
-    func apply(_ resolution: EmbeddedBlockResolution)
+    /// The place's fresh answer, on the main thread, with how long the selection worked on it.
+    func apply(_ resolution: EmbeddedBlockResolution, processingDuration: TimeInterval)
+
+    /// The place's answer is known and held back by its `delayTime`: content is coming, the SDK is not silent.
+    func contentIsDelayed()
 }
 
 /// Called on the main thread: the registry's state is confined to it.
@@ -31,6 +34,11 @@ protocol EmbeddedBlockPlaceRegistering: AnyObject {
 /// The place map and the router between blocks and the selection — in sync with Android, where the
 /// same component carries the same name and rules.
 final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
+
+    struct PlaceAnswer {
+        let resolution: EmbeddedBlockResolution
+        let processingDuration: TimeInterval
+    }
 
     typealias EmbeddedPlacesFetching = (@escaping ([String: Set<String>]?) -> Void) -> Void
 
@@ -85,14 +93,18 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
     private let resolver: EmbeddedBlockResolving
     private let fetchEmbeddedPlaces: EmbeddedPlacesFetching
     private let notificationCenter: NotificationCenter
+    private let delayedDelivery: EmbeddedBlockDelayedDelivery<PlaceAnswer>
+
     private var observers: [NSObjectProtocol] = []
 
     init(resolver: EmbeddedBlockResolving,
          notificationCenter: NotificationCenter = .default,
-         fetchEmbeddedPlaces: @escaping EmbeddedPlacesFetching = EmbeddedBlockPlaceRegistry.fetchPlacesFromConfig) {
+         fetchEmbeddedPlaces: @escaping EmbeddedPlacesFetching = EmbeddedBlockPlaceRegistry.fetchPlacesFromConfig,
+         delayedDelivery: EmbeddedBlockDelayedDelivery<PlaceAnswer> = EmbeddedBlockDelayedDelivery()) {
         self.resolver = resolver
         self.notificationCenter = notificationCenter
         self.fetchEmbeddedPlaces = fetchEmbeddedPlaces
+        self.delayedDelivery = delayedDelivery
 
         // The registry is created lazily, with the first block — a config may already be in memory,
         // and its notification is not coming again.
@@ -207,11 +219,11 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
 
         resolvingPlaces.insert(place)
 
-        resolver.resolve(place, trigger: cause.trigger) { [weak self] resolution in
+        resolver.resolve(place, trigger: cause.trigger) { [weak self] resolution, processingDuration in
             guard let self else { return }
 
             self.resolvingPlaces.remove(place)
-            self.deliver(place: place, resolution: resolution)
+            self.handle(resolution, at: place, processingDuration: processingDuration)
 
             if let queued = self.queuedInvalidations.removeValue(forKey: place) {
                 self.requestResolve(place: place, cause: .queued(queued.trigger))
@@ -219,9 +231,55 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         }
     }
 
-    private func deliver(place: String, resolution: EmbeddedBlockResolution) {
+    /// A winner with `delayTime` waits like an overlay in the schedule queue and the blocks stand their wait
+    /// budget down. A delay served once in the session is not waited again: a block coming back gets the content at once.
+    private func handle(_ resolution: EmbeddedBlockResolution, at place: String, processingDuration: TimeInterval) {
+        guard case .content(let content) = resolution else {
+            delayedDelivery.cancel(place: place)
+            deliver(place: place, resolution: resolution, processingDuration: processingDuration)
+            return
+        }
+
+        let answer = PlaceAnswer(resolution: resolution, processingDuration: processingDuration)
+
+        if delayedDelivery.isWaiting(place: place, for: content.inAppId) {
+            Logger.common(message: "[EmbeddedBlock] Place '\(place)': in-app \(content.inAppId) is still waiting out its delay",
+                          category: .embeddedBlocks)
+            delayedDelivery.refresh(place: place, answer: answer)
+            announceDelay(at: place)
+            return
+        }
+
+        delayedDelivery.cancel(place: place)
+
+        let delay = TimeInterval.delay(fromTimeSpan: content.delayTime)
+        let served = ServedPlaceDelay(place: place, inappId: content.inAppId)
+        // Checked here, inserted when the delay fires — both on the main thread; the ledger's
+        // lock protects other readers, not this sequence.
+        guard delay > 0, !SessionTemporaryStorage.shared.ledger.servedPlaceDelays.contains(served) else {
+            deliver(place: place, resolution: resolution, processingDuration: processingDuration)
+            return
+        }
+
+        Logger.common(message: "[EmbeddedBlock] Place '\(place)': in-app \(content.inAppId) waits \(delay)s before it is shown",
+                      category: .embeddedBlocks)
+        announceDelay(at: place)
+
+        delayedDelivery.schedule(place: place, inappId: content.inAppId, answer: answer, after: delay) { [weak self] answer in
+            SessionTemporaryStorage.shared.$ledger.mutate { $0.servedPlaceDelays.insert(served) }
+            self?.deliver(place: place, resolution: answer.resolution, processingDuration: answer.processingDuration)
+        }
+    }
+
+    private func announceDelay(at place: String) {
         for weakBlock in blocksByPlace[place] ?? [] {
-            weakBlock.block?.apply(resolution)
+            weakBlock.block?.contentIsDelayed()
+        }
+    }
+
+    private func deliver(place: String, resolution: EmbeddedBlockResolution, processingDuration: TimeInterval) {
+        for weakBlock in blocksByPlace[place] ?? [] {
+            weakBlock.block?.apply(resolution, processingDuration: processingDuration)
         }
     }
 

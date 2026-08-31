@@ -36,26 +36,39 @@ extension EmbeddedBlockWebContent {
                                 tags: stub.tags,
                                 params: [:])
     }
-}
 
-final class EmbeddedBlockShowRecorderMock {
-
-    private(set) var recorded: [String] = []
-
-    func record(_ inAppId: String) {
-        recorded.append(inAppId)
+    static func delayed(_ timeSpan: String = "00:00:05", params: [String: JSONValue] = [:]) -> EmbeddedBlockWebContent {
+        EmbeddedBlockWebContent(inAppId: "delayed-inapp-id",
+                                baseUrl: stub.baseUrl,
+                                contentUrl: stub.contentUrl,
+                                frequency: .unlimited,
+                                tags: stub.tags,
+                                params: params,
+                                delayTime: timeSpan)
     }
 }
 
-/// Unlike the recorder above: the backend hears every show, the history only the frequencies that count them.
-final class EmbeddedBlockShowReporterMock {
+final class InappShowAccountingMock: InappShowAccounting {
 
-    private(set) var reported: [(inAppId: String, timeToDisplay: String, tags: [String: String]?)] = []
+    private(set) var shows: [InappShow] = []
 
-    var inAppIds: [String] { reported.map(\.inAppId) }
+    private(set) var cooldowns: [InappFrequency?] = []
 
-    func report(_ content: EmbeddedBlockWebContent, _ timeToDisplay: String) {
-        reported.append((content.inAppId, timeToDisplay, content.tags))
+    private(set) var places: [String] = []
+
+    var shownIds: [String] { shows.map(\.inAppId) }
+
+    func recordShow(_ show: InappShow) {
+        shows.append(show)
+    }
+
+    func recordCooldown(frequency: InappFrequency?) {
+        cooldowns.append(frequency)
+    }
+
+    func recordBlockShow(_ show: InappShow, at place: String) {
+        places.append(place)
+        shows.append(show)
     }
 }
 
@@ -65,8 +78,15 @@ final class EmbeddedBlockFailureReporterMock {
 
     var reasons: [InAppShowFailureReason] { reported.map(\.reason) }
 
+    /// Failures with no in-app behind them — the SDK never answered the block — by how long it waited.
+    private(set) var unansweredWaits: [TimeInterval] = []
+
     func report(_ content: EmbeddedBlockWebContent, _ reason: InAppShowFailureReason, _ details: String) {
         reported.append((content.inAppId, reason, details, content.tags))
+    }
+
+    func reportUnansweredWait(_ waited: TimeInterval) {
+        unansweredWaits.append(waited)
     }
 }
 
@@ -153,7 +173,7 @@ final class EmbeddedBlockPageMock: EmbeddedBlockPageHosting {
     }
 }
 
-private final class EmbeddedBlockPageMockHost: WebBridgeHost, WebBridgeContentHosting, WebBridgeFeedHosting {
+private final class EmbeddedBlockPageMockHost: WebBridgeHost, WebBridgeContentHosting, WebBridgeInappRequestHosting {
 
     unowned let page: EmbeddedBlockPageMock
 
@@ -299,6 +319,8 @@ final class EmbeddedBlockResolverMock: EmbeddedBlockResolving {
 
     var resolution: EmbeddedBlockResolution
 
+    var processingDuration: TimeInterval = 0
+
     /// `true` — the answer does not arrive until the test calls `flush()`: this is how a resolve
     /// that lands after the block was stopped or reloaded is checked.
     var isDeferred = false
@@ -309,7 +331,7 @@ final class EmbeddedBlockResolverMock: EmbeddedBlockResolving {
 
     var resolveCount: Int { resolvedPlaces.count }
 
-    private var pending: [(EmbeddedBlockResolution) -> Void] = []
+    private var pending: [(EmbeddedBlockResolution, TimeInterval) -> Void] = []
 
     init(resolution: EmbeddedBlockResolution = .content(.stub)) {
         self.resolution = resolution
@@ -317,61 +339,57 @@ final class EmbeddedBlockResolverMock: EmbeddedBlockResolving {
 
     func resolve(_ place: String,
                  trigger: ApplicationEvent?,
-                 completion: @escaping (EmbeddedBlockResolution) -> Void) {
+                 completion: @escaping (EmbeddedBlockResolution, TimeInterval) -> Void) {
         resolvedPlaces.append(place)
         triggers.append(trigger)
 
         if isDeferred {
             pending.append(completion)
         } else {
-            completion(resolution)
+            completion(resolution, processingDuration)
         }
     }
 
     func flush() {
         let completions = pending
         pending = []
-        completions.forEach { $0(resolution) }
+        completions.forEach { $0(resolution, processingDuration) }
     }
 }
 
-final class EmbeddedBlockFeedServiceMock: EmbeddedBlockFeedServing {
+final class EmbeddedBlockInappServiceMock: EmbeddedBlockInappServing {
+
+    var hasConfig = false
 
     var allowed: [String] = []
 
     var isDeferred = false
 
     private(set) var askedIds: [[String]] = []
+    private(set) var askedBy: [String] = []
     private(set) var shown: [(id: String, params: [String: JSONValue])] = []
 
-    private var pending: [(FeedAnswer) -> Void] = []
-
-    private(set) var vouchCount = 0
+    private var pending: [([String]) -> Void] = []
 
     func showInapp(id: String, params: [String: JSONValue]) {
         shown.append((id, params))
     }
 
-    func showableInappIds(among ids: [String], completion: @escaping (FeedAnswer) -> Void) {
+    func showableInappIds(among ids: [String], askedBy blockInappId: String, completion: @escaping ([String]) -> Void) {
         askedIds.append(ids)
+        askedBy.append(blockInappId)
 
         if isDeferred {
             pending.append(completion)
         } else {
-            completion(answer)
+            completion(allowed)
         }
     }
 
     func flush() {
         let completions = pending
         pending = []
-        completions.forEach { $0(answer) }
-    }
-
-    private var answer: FeedAnswer {
-        FeedAnswer(inappIds: allowed) { [weak self] in
-            self?.vouchCount += 1
-        }
+        completions.forEach { $0(allowed) }
     }
 }
 
@@ -395,10 +413,13 @@ final class TestScheduler {
     /// The delay of the last arm — which is the remainder of the budget given to the countdown.
     private(set) var lastDelay: TimeInterval?
 
+    private(set) var armCount = 0
+
     private var pending: [DispatchWorkItem] = []
 
     func schedule(_ delay: TimeInterval, _ work: DispatchWorkItem) {
         lastDelay = delay
+        armCount += 1
         pending.append(work)
     }
 
@@ -493,60 +514,75 @@ final class EmbeddedBlockAckSchedulerMock {
 
 /// The provider with all dependencies substituted — the shared rig for the provider and container
 /// tests. The container runs through a real provider, the provider through a real place registry.
+final class EmbeddedBlockContentProviderFactoryMock: EmbeddedBlockContentProviderMaking {
+
+    private(set) var requestedPlaces: [String] = []
+
+    private let provider: EmbeddedBlockWebViewProvider
+
+    init(provider: EmbeddedBlockWebViewProvider) {
+        self.provider = provider
+    }
+
+    func makeProvider(placeSystemName: String) -> EmbeddedBlockWebViewProvider {
+        requestedPlaces.append(placeSystemName)
+        return provider
+    }
+}
+
 final class EmbeddedBlockTestBed {
 
     let resolver: EmbeddedBlockResolverMock
-    let feed: EmbeddedBlockFeedServiceMock
+    let inappService: EmbeddedBlockInappServiceMock
     let pageFactory: EmbeddedBlockPageFactoryMock
     let provider: EmbeddedBlockWebViewProvider
-    let showRecorder: EmbeddedBlockShowRecorderMock
-    let showReporter: EmbeddedBlockShowReporterMock
+    let accounting: InappShowAccountingMock
     let failureReporter: EmbeddedBlockFailureReporterMock
     let ackScheduler: EmbeddedBlockAckSchedulerMock
 
-    let clock: TestClock
-
     /// One per bed: a new config must reach only this provider.
     let center: NotificationCenter
+
+    /// One clock for both seams: the page's rendering time (the block's part of `timeToDisplay`) and the ack wait.
+    let clock: TestClock
 
     var page: EmbeddedBlockPageMock? { pageFactory.page }
 
     init(placeSystemName: String = "block-id",
          resolution: EmbeddedBlockResolution = .content(.stub)) {
-        // The show-event dedup lives on the shared session singleton — reset, or beds would see each other's shows.
-        SessionTemporaryStorage.shared.blockShowsReportedInSession = []
+        // Once-per-session state lives on the shared singleton — reset, or beds would see each other's silence.
+        SessionTemporaryStorage.shared.$ledger.mutate { $0.placesReportedUnanswered = [] }
 
+        let clock = TestClock()
         let resolver = EmbeddedBlockResolverMock(resolution: resolution)
-        let feed = EmbeddedBlockFeedServiceMock()
+        let inappService = EmbeddedBlockInappServiceMock()
         let pageFactory = EmbeddedBlockPageFactoryMock()
         let embeddedPlaces = EmbeddedPlacesStub()
         let center = NotificationCenter()
-        let showRecorder = EmbeddedBlockShowRecorderMock()
-        let showReporter = EmbeddedBlockShowReporterMock()
+        let accounting = InappShowAccountingMock()
         let failureReporter = EmbeddedBlockFailureReporterMock()
         let ackScheduler = EmbeddedBlockAckSchedulerMock()
-        let clock = TestClock()
         let registry = EmbeddedBlockPlaceRegistry(resolver: resolver,
                                                   notificationCenter: center,
                                                   fetchEmbeddedPlaces: { embeddedPlaces.fetch($0) })
 
-        self.showRecorder = showRecorder
-        self.showReporter = showReporter
-        self.ackScheduler = ackScheduler
         self.clock = clock
+        self.accounting = accounting
+        self.ackScheduler = ackScheduler
         self.failureReporter = failureReporter
         self.center = center
         self.resolver = resolver
-        self.feed = feed
+        self.inappService = inappService
         self.pageFactory = pageFactory
         self.provider = EmbeddedBlockWebViewProvider(placeSystemName: placeSystemName,
                                                      registry: registry,
-                                                     feed: feed,
+                                                     inappService: inappService,
                                                      makePage: { pageFactory.make($0) },
-                                                     recordShow: { showRecorder.record($0) },
-                                                     reportShow: { showReporter.report($0, $1) },
+                                                     accounting: accounting,
                                                      reportFailure: { failureReporter.report($0, $1, $2) },
+                                                     reportUnansweredWait: { failureReporter.reportUnansweredWait($0) },
                                                      scheduleAckTimeout: { ackScheduler.schedule($0, $1) },
+                                                     makeStopwatch: { ForegroundStopwatch(notificationCenter: center, now: { clock.now }) },
                                                      now: { clock.now })
     }
 
@@ -605,7 +641,7 @@ final class EmbeddedBlockViewDelegateMock: MindboxEmbeddedBlockViewDelegate {
 
 extension EmbeddedBlockResolving {
 
-    func resolve(_ place: String, completion: @escaping (EmbeddedBlockResolution) -> Void) {
+    func resolve(_ place: String, completion: @escaping (EmbeddedBlockResolution, TimeInterval) -> Void) {
         resolve(place, trigger: nil, completion: completion)
     }
 }

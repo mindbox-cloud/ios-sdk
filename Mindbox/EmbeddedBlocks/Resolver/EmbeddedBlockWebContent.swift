@@ -27,6 +27,25 @@ struct EmbeddedBlockWebContent: Equatable {
 
     let params: [String: JSONValue]
 
+    /// The config's delay before the content may be shown; the place registry holds the answer for it.
+    let delayTime: String?
+
+    init(inAppId: String,
+         baseUrl: String,
+         contentUrl: String,
+         frequency: InappFrequency?,
+         tags: [String: String]?,
+         params: [String: JSONValue],
+         delayTime: String? = nil) {
+        self.inAppId = inAppId
+        self.baseUrl = baseUrl
+        self.contentUrl = contentUrl
+        self.frequency = frequency
+        self.tags = tags
+        self.params = params
+        self.delayTime = delayTime
+    }
+
     /// The in-app id counts as the page's identity, not as its data: it goes into the start payload,
     /// so handing a page new params under a different in-app would describe something it is not.
     func isSamePage(as other: EmbeddedBlockWebContent) -> Bool {

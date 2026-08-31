@@ -19,14 +19,15 @@ extension MBContainer {
             EmbeddedBlockPlaceRegistry(resolver: DI.injectOrFail(EmbeddedBlockResolving.self))
         }
 
-        register(EmbeddedBlockFeedServing.self) {
-            EmbeddedBlockFeedService()
+        register(EmbeddedBlockInappServing.self) {
+            EmbeddedBlockInappService()
         }
 
         register(EmbeddedBlockContentProviderMaking.self) {
             EmbeddedBlockContentProviderFactory(registry: DI.injectOrFail(EmbeddedBlockPlaceRegistering.self),
-                                                feed: DI.injectOrFail(EmbeddedBlockFeedServing.self),
-                                                failureManager: DI.injectOrFail(InappShowFailureManagerProtocol.self))
+                                                inappService: DI.injectOrFail(EmbeddedBlockInappServing.self),
+                                                failureManager: DI.injectOrFail(InappShowFailureManagerProtocol.self),
+                                                accounting: DI.injectOrFail(InappShowAccounting.self))
         }
 
         return self
