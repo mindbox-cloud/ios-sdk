@@ -462,6 +462,24 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.pageFactory.pages.count == 1)
     }
 
+    @Test("A data push confirmation arriving while paused clears the wait and prevents rebuild on return")
+    func dataPushConfirmationWhilePausedClearsTheWait() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData()
+        #expect(bed.ackScheduler.scheduled.count == 1)
+
+        bed.provider.stop()
+        bed.page?.confirmInitData()
+
+        bed.provider.start()
+
+        #expect(bed.ackScheduler.scheduled.count == 1)
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.page?.loadCount == 1)
+    }
+
     @Test("The confirmation wait uses the page budget")
     func ackWaitUsesThePageBudget() {
         let bed = EmbeddedBlockTestBed()
@@ -807,8 +825,8 @@ struct EmbeddedBlockWebViewProviderTests {
 
     /// After `stop()` the provider must stay silent — the container relies on this when it
     /// collapses expired content on its own timeout.
-    @Test("Stop cancels the page and ignores what it says afterwards")
-    func stopCancelsThePage() {
+    @Test("Stop keeps the page, records what it says and announces nothing")
+    func stopPausesThePage() {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
         var states: [EmbeddedBlockState] = []
@@ -817,9 +835,32 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.stop()
         bed.page?.reportRendered(1)
 
-        #expect(bed.page?.cancelCount == 1)
+        #expect(bed.page?.cancelCount == 0)
         #expect(states.isEmpty)
+
+        bed.provider.start()
+
+        #expect(states == [.ready])
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.provider.contentView === bed.page?.view)
+    }
+
+    @Test("An abandoned attempt cancels the page and is not resumed")
+    func abandonedAttemptCancelsThePage() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.abandonAttempt()
+
+        #expect(bed.page?.cancelCount == 1)
         #expect(bed.provider.contentView == nil)
+
+        bed.provider.start()
+
+        #expect(bed.resolver.resolveCount == 2)
+        #expect(states == [.loading])
     }
 
     @Test("The page is told nobody is looking at it, and told again when the user comes back")
@@ -835,8 +876,8 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.page?.isUserPresent == true)
     }
 
-    @Test("A return builds a new page when the previous one never rendered")
-    func returnRebuildsAPageThatNeverRendered() {
+    @Test("A return resumes a page that never rendered and the same answer changes nothing")
+    func returnResumesAPageThatNeverRendered() {
         let bed = EmbeddedBlockTestBed()
 
         bed.provider.start()
@@ -845,13 +886,13 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.page?.reportRendered(1)
 
         #expect(bed.resolver.resolveCount == 2)
-        #expect(bed.pageFactory.pages.count == 2)
+        #expect(bed.pageFactory.pages.count == 1)
         #expect(bed.page?.loadCount == 1)
         #expect(bed.provider.contentView === bed.page?.view)
     }
 
-    @Test("A return builds a new page for a block that had collapsed as empty")
-    func returnRebuildsACollapsedPage() {
+    @Test("A return resumes the page of a block that had collapsed as empty")
+    func returnResumesACollapsedPage() {
         let bed = EmbeddedBlockTestBed()
 
         bed.provider.start()
@@ -860,7 +901,8 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.start()
         bed.page?.reportRendered(2)
 
-        #expect(bed.pageFactory.pages.count == 2)
+        #expect(bed.resolver.resolveCount == 2)
+        #expect(bed.pageFactory.pages.count == 1)
         #expect(bed.provider.contentView === bed.page?.view)
     }
 
@@ -909,6 +951,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.stop()
 
         bed.resolver.resolution = .content(.other)
+        bed.provider.apply(.content(.other))
         var states: [EmbeddedBlockState] = []
         bed.provider.onStateChange = { states.append($0) }
         bed.provider.start()
@@ -916,6 +959,164 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(states.first == .ready)
         #expect(bed.pageFactory.pages.count == 2)
         #expect(bed.pageFactory.contents.last == .other)
+    }
+
+    @Test("A return hears about a config that changed while nobody was on the place")
+    func returnAsksAgainAfterAnInvalidationItNeverHeard() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.provider.stop()
+
+        bed.resolver.resolution = .content(.other)
+        bed.announceNewConfig()
+        #expect(bed.pageFactory.pages.count == 1)
+
+        bed.provider.start()
+
+        #expect(bed.pageFactory.contents.last == .other)
+        #expect(bed.pageFactory.pages.count == 2)
+    }
+
+    @Test("A return with an empty answer in hand still asks the place")
+    func returnWithAnEmptyAnswerStillAsks() {
+        let bed = EmbeddedBlockTestBed(resolution: .empty)
+        bed.provider.start()
+        bed.provider.stop()
+        bed.provider.apply(.empty)
+
+        bed.provider.start()
+
+        #expect(bed.resolver.resolveCount == 2)
+    }
+
+    @Test("A reload drops the answer parked for the attempt it replaces")
+    func reloadDropsTheParkedAnswer() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.provider.abandonAttempt()
+        bed.provider.apply(.content(.other))
+
+        bed.provider.reload()
+        #expect(bed.pageFactory.contents.last == .stub)
+
+        bed.provider.stop()
+        bed.provider.start()
+
+        #expect(bed.pageFactory.contents.last == .stub)
+        #expect(bed.pageFactory.pages.count == 2)
+    }
+
+    @Test("A resolution arriving after abandonAttempt is discarded, not parked")
+    func resolutionAfterAbandonAttemptIsDiscarded() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.provider.abandonAttempt()
+
+        bed.provider.apply(.content(.other))
+        bed.provider.start()
+
+        #expect(bed.resolver.resolveCount == 2)
+        #expect(bed.pageFactory.contents == [.stub, .stub])
+    }
+
+    @Test("A failure off screen is reported when the block comes back")
+    func failureOffScreenIsHeldUntilTheReturn() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.provider.stop()
+
+        bed.page?.failLoad()
+
+        #expect(bed.failureReporter.reported.isEmpty)
+
+        bed.provider.start()
+
+        #expect(bed.failureReporter.reasons == [.webviewLoadFailed])
+    }
+
+    @Test("A data push left unconfirmed off screen is waited on again after the return")
+    func dataPushAckIsRearmedAfterAReturn() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData()
+        #expect(bed.ackScheduler.scheduled.count == 1)
+
+        bed.provider.stop()
+        #expect(bed.ackScheduler.scheduled.last?.work.isCancelled == true)
+
+        bed.provider.start()
+        #expect(bed.ackScheduler.scheduled.count == 2)
+
+        bed.ackScheduler.fire()
+
+        #expect(bed.pageFactory.pages.count == 2)
+    }
+
+    @Test("The confirmation wait resumes on its remainder, not on a full interval")
+    func dataPushAckResumesOnTheRemainder() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData()
+
+        let whole = TimeInterval(Constants.EmbeddedBlock.readyTimeoutSeconds)
+        #expect(bed.ackScheduler.scheduled.map(\.delay) == [whole])
+
+        bed.clock.advance(1)
+        bed.provider.stop()
+        bed.clock.advance(100)
+        bed.provider.start()
+
+        #expect(bed.ackScheduler.scheduled.map(\.delay) == [whole, whole - 1])
+    }
+
+    @Test("A confirmation wait spent in full fires the moment the block comes back")
+    func dataPushAckSpentInFullFiresOnTheReturn() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData()
+
+        bed.clock.advance(TimeInterval(Constants.EmbeddedBlock.readyTimeoutSeconds) + 1)
+        bed.provider.stop()
+        bed.provider.start()
+
+        #expect(bed.ackScheduler.scheduled.last?.delay == 0)
+
+        bed.ackScheduler.fire()
+
+        #expect(bed.pageFactory.pages.count == 2)
+    }
+
+    @Test("A fresh data push waits out the whole interval again")
+    func freshDataPushGetsTheWholeIntervalBack() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData("first")
+
+        bed.clock.advance(2)
+        bed.page?.confirmInitData()
+        bed.deliverSamePageWithNewData("second")
+
+        let whole = TimeInterval(Constants.EmbeddedBlock.readyTimeoutSeconds)
+        #expect(bed.ackScheduler.scheduled.map(\.delay) == [whole, whole])
+    }
+
+    @Test("The show reports the time the render took, not the time spent off screen")
+    func showReportsTheRenderTimeNotTheAbsence() async throws {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.provider.stop()
+        bed.page?.reportRendered(1)
+
+        try await Task.sleep(nanoseconds: 1_200_000_000)
+        bed.provider.start()
+
+        #expect(bed.showReporter.reported.count == 1)
+        #expect(bed.showReporter.reported.first?.timeToDisplay.hasPrefix("0:00:00.") == true)
     }
 
     @Test("Failed block tries again when it comes back")

@@ -38,7 +38,7 @@ public final class MindboxEmbeddedBlockView: UIView {
         didSet {
             // The same delegate is not a new subscriber: the host rebuilds its layout on the
             // outcome, and the rebuild reassigns the delegate again — answering that would loop.
-            guard delegate !== oldValue else { return }
+            guard delegate !== oldValue, !isReleased else { return }
 
             deliveredEvent = nil
             scheduleDelivery()
@@ -62,10 +62,11 @@ public final class MindboxEmbeddedBlockView: UIView {
     /// The SDK ships no stock error screen — what a failed block looks like is the host's design
     /// decision. Applies only to failures; an empty block always collapses.
     ///
-    /// A view assigned mid-failure swaps the error screen that is already shown, but never
-    /// expands a block that has already collapsed — reopening space the host layout has
-    /// reclaimed would make the layout jump. Such a view is remembered and takes effect on
-    /// the next load.
+    /// A view assigned mid-failure swaps the error screen that is already shown, and `nil` given
+    /// while one is shown takes the failure back down to a collapse — the space returns to the host
+    /// layout. What neither does is expand a block that has already collapsed: reopening space the
+    /// host layout has reclaimed would make the layout jump, so such a view is remembered for a load
+    /// that starts the cycle anew, never for the silent retry a return to the screen brings.
     public var errorView: UIView? {
         didSet {
             guard errorView !== oldValue else { return }
@@ -73,14 +74,72 @@ public final class MindboxEmbeddedBlockView: UIView {
         }
     }
 
-    /// What the container shows, for the SwiftUI wrapper — see `EmbeddedBlockPresentation`.
-    var onPresentationChange: ((EmbeddedBlockPresentation) -> Void)?
+    // MARK: - Wrapper API
+
+    /// Reports how the block occupies its place, for wrappers that lay it out themselves instead of
+    /// relying on `intrinsicContentSize` — see `MindboxEmbeddedBlockAppearance`.
+    ///
+    /// The current value arrives right away on subscribing: a wrapper that comes after the outcome
+    /// cannot miss what the block already decided.
+    @_spi(Internal)
+    public func setAppearanceObserver(_ observer: ((MindboxEmbeddedBlockAppearance) -> Void)?) {
+        appearanceObserver = observer
+        observer?(shownAppearance)
+    }
+
+    /// Tells the block whether the host still shows it — a second source for the same input as
+    /// window visibility: the content runs while `window != nil && isHostVisible`.
+    ///
+    /// For wrappers whose whole app lives in one window. In Flutter every screen shares it, so
+    /// leaving a screen never takes the block out of a window: the block would keep waiting — and
+    /// spending its budget — on a screen nobody is looking at, and could collapse before the user
+    /// ever got there. `true` by default, so a wrapper that says nothing behaves as before.
+    ///
+    /// The semantics are exactly those of leaving and entering a window: a pause, not a reset. A
+    /// block hidden mid-load keeps the page it has and the remainder of its budget; shown again, it
+    /// counts that remainder down instead of starting the budget anew.
+    @_spi(Internal)
+    public func setHostVisible(_ isHostVisible: Bool) {
+        guard self.isHostVisible != isHostVisible else { return }
+
+        self.isHostVisible = isHostVisible
+        updateContentActivity(reason: isHostVisible ? "was shown by the host wrapper"
+                                                   : "was hidden by the host wrapper")
+    }
+
+    /// Stops the block for good: the content stops, the wrapper's callbacks are dropped, and the
+    /// block does not start again even while it stays in a window.
+    ///
+    /// The container stops the same things in `deinit`, so a wrapper that simply lets the view go is
+    /// already correct. This is for wrappers that cannot promise that: a platform-view factory holds
+    /// the view for as long as the platform sees fit, and the block should stop when the screen is
+    /// gone rather than when the last reference is. What the container holds — the page among it —
+    /// still goes away with the container itself, so a released block is meant to be let go right
+    /// after, not kept around.
+    @_spi(Internal)
+    public func release() {
+        guard !isReleased else { return }
+
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' was released by the host wrapper",
+                      category: .embeddedBlocks)
+        isReleased = true
+        delegate = nil
+        appearanceObserver = nil
+        updateContentActivity(reason: "was released by the host wrapper")
+        contentProvider.teardown()
+    }
 
     // MARK: - State
 
     private let contentProvider: EmbeddedBlockWebViewProvider
 
-    private let preferredHeight: CGFloat
+    var preferredHeight: CGFloat {
+        didSet {
+            guard preferredHeight != oldValue else { return }
+
+            invalidateIntrinsicContentSize()
+        }
+    }
 
     private let waitBudget: EmbeddedBlockWaitBudget
 
@@ -97,9 +156,17 @@ public final class MindboxEmbeddedBlockView: UIView {
 
     /// Space once ceded to the host is not taken back: a retry does not reopen the container for
     /// its placeholder — only shown content expands it back, or an explicit reload.
-    private var hasCollapsed = false
+    private var hasSettled = false
 
-    private var shownLayer: EmbeddedBlockPresentation.Layer = .placeholder
+    private var shownAppearance: MindboxEmbeddedBlockAppearance = .placeholder
+
+    private var appearanceObserver: ((MindboxEmbeddedBlockAppearance) -> Void)?
+
+    private var isHostVisible = true
+
+    private var isReleased = false
+
+    private var isContentRunning = false
 
     private enum BlockEvent {
         case loaded
@@ -154,6 +221,7 @@ public final class MindboxEmbeddedBlockView: UIView {
             }
         )
         super.init(frame: .zero)
+        warnIfPlaceIsMissing()
         warnIfHeightReservesNothing()
         setUpContainer()
     }
@@ -174,6 +242,16 @@ public final class MindboxEmbeddedBlockView: UIView {
         return timeout
     }
 
+    /// An empty name addresses no place, and the name is never normalized: whatever the host
+    /// passed is what the config is asked for.
+    private func warnIfPlaceIsMissing() {
+        guard placeSystemName.isEmpty else { return }
+
+        Logger.common(message: "[EmbeddedBlock] A block was created without a place system name: it has nothing to resolve and stays invisible.",
+                      level: .error,
+                      category: .embeddedBlocks)
+    }
+
     /// Zero height is not a collapse: the block runs its whole cycle, it is simply never visible.
     private func warnIfHeightReservesNothing() {
         guard preferredHeight <= 0 else { return }
@@ -185,7 +263,7 @@ public final class MindboxEmbeddedBlockView: UIView {
 
     deinit {
         waitBudget.pause()
-        contentProvider.stop()
+        contentProvider.teardown()
     }
 
     private func setUpContainer() {
@@ -207,13 +285,13 @@ public final class MindboxEmbeddedBlockView: UIView {
 
         waitBudget.isNeeded = { [weak self] in
             guard let self else { return false }
-            return self.window != nil && self.state == .loading
+            return self.isEffectivelyVisible && self.state == .loading
         }
         waitBudget.onExpire = { [weak self] in
             self?.handleTimeout()
         }
 
-        layers.show(view(for: shownLayer))
+        layers.show(view(for: shownAppearance))
     }
 
     // MARK: - Layout
@@ -228,34 +306,47 @@ public final class MindboxEmbeddedBlockView: UIView {
     }
 
     private var contentHeight: CGFloat {
-        switch shownLayer {
-        case .placeholder, .content, .errorView: return max(0, preferredHeight)
-        case .nothing: return 0
-        }
+        shownAppearance == .collapsed ? 0 : max(0, preferredHeight)
     }
 
     // MARK: - Visibility
 
+    private var isEffectivelyVisible: Bool {
+        window != nil && isHostVisible && !isReleased
+    }
+
     override public func didMoveToWindow() {
         super.didMoveToWindow()
 
-        if window == nil {
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' left the window, stopping content", category: .embeddedBlocks)
+        updateContentActivity(reason: window == nil ? "left the window" : "entered the window")
+    }
+
+    private func updateContentActivity(reason: String) {
+        let shouldRun = isEffectivelyVisible
+
+        guard shouldRun != isContentRunning else { return }
+
+        isContentRunning = shouldRun
+
+        if shouldRun {
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' \(reason), starting content",
+                          category: .embeddedBlocks)
+            contentProvider.start()
+            waitBudget.armIfNeeded()
+        } else {
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' \(reason), stopping content",
+                          category: .embeddedBlocks)
             // A pause, not a reset: leaving the window does not cancel an attempt already started.
             waitBudget.pause()
             contentProvider.stop()
-        } else {
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' entered the window, starting content", category: .embeddedBlocks)
-            contentProvider.start()
-            waitBudget.armIfNeeded()
         }
     }
 
     /// Internal and without a public wrapper: automatic reloads — on failure, on returning to the
     /// app — will be built on this method.
     func reload() {
-        guard window != nil else {
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' reload skipped: the block is not in a window",
+        guard isEffectivelyVisible else {
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' reload skipped: the block is not on screen",
                           category: .embeddedBlocks)
             return
         }
@@ -265,7 +356,7 @@ public final class MindboxEmbeddedBlockView: UIView {
         // A new attempt means a new outcome: the host must hear it even if it matches the previous one.
         deliveredEvent = nil
         // A reload is the host's explicit consent to the full cycle with the placeholder.
-        hasCollapsed = false
+        hasSettled = false
         contentProvider.reload()
         waitBudget.armIfNeeded()
     }
@@ -277,7 +368,7 @@ public final class MindboxEmbeddedBlockView: UIView {
 
         contentProvider.reportPageTimedOut()
         // The provider must not resurrect content the container has already given up on.
-        contentProvider.stop()
+        contentProvider.abandonAttempt()
         state = hadContentToLoad ? .failed : .empty
     }
 
@@ -292,44 +383,53 @@ public final class MindboxEmbeddedBlockView: UIView {
     }
 
     private func apply(_ state: EmbeddedBlockState) {
-        shownLayer = layer(for: state)
+        shownAppearance = appearance(for: state)
 
-        if shownLayer == .nothing {
-            hasCollapsed = true
+        switch shownAppearance {
+        case .collapsed, .error: hasSettled = true
+        case .content: hasSettled = false
+        case .placeholder: break
         }
 
-        layers.show(view(for: shownLayer))
+        layers.show(view(for: shownAppearance))
 
         invalidateIntrinsicContentSize()
-        onPresentationChange?(EmbeddedBlockPresentation(layer: shownLayer, height: contentHeight))
+        appearanceObserver?(shownAppearance)
         scheduleDelivery()
     }
 
-    private func layer(for state: EmbeddedBlockState) -> EmbeddedBlockPresentation.Layer {
+    private func appearance(for state: EmbeddedBlockState) -> MindboxEmbeddedBlockAppearance {
         switch state {
-        case .loading: return hasCollapsed ? .nothing : .placeholder
+        case .loading:
+            guard hasSettled else { return .placeholder }
+
+            return shownAppearance == .error && errorView == nil ? .collapsed : shownAppearance
         case .ready: return .content
-        case .failed: return errorView == nil ? .nothing : .errorView
-        case .empty: return .nothing
+        case .failed:
+            guard hasSettled else { return errorView == nil ? .collapsed : .error }
+
+            return shownAppearance == .error && errorView == nil ? .collapsed : shownAppearance
+        case .empty: return .collapsed
         }
     }
 
-    private func view(for layer: EmbeddedBlockPresentation.Layer) -> UIView? {
-        switch layer {
+    private func view(for appearance: MindboxEmbeddedBlockAppearance) -> UIView? {
+        switch appearance {
         case .placeholder: return placeholderView ?? defaultPlaceholder
         case .content: return contentProvider.contentView
-        case .errorView: return errorView
-        case .nothing: return nil
+        case .error: return errorView
+        case .collapsed: return nil
         }
     }
 
     private func refreshPlaceholder() {
-        guard shownLayer == .placeholder else { return }
+        guard shownAppearance == .placeholder else { return }
         layers.show(view(for: .placeholder))
     }
 
     private func refreshErrorView() {
-        guard state == .failed, shownLayer == .errorView else { return }
+        guard shownAppearance == .error else { return }
+
         apply(state)
     }
 

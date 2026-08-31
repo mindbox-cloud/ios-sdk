@@ -45,6 +45,27 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(fitted.width == 320)
     }
 
+    @Test("A new height resizes the container in place")
+    func newHeightResizesInPlace() {
+        let block = BlockFixture()
+
+        block.view.preferredHeight = 200
+
+        #expect(block.view.intrinsicContentSize.height == 200)
+        #expect(block.view.sizeThatFits(CGSize(width: 320, height: CGFloat.greatestFiniteMagnitude)).height == 200)
+    }
+
+    @Test("A collapsed block stays collapsed whatever height it is given")
+    func collapsedBlockStaysCollapsedOnNewHeight() {
+        let block = BlockFixture()
+        block.attachToWindow()
+        block.page?.failLoad()
+
+        block.view.preferredHeight = 200
+
+        #expect(block.view.intrinsicContentSize.height == 0)
+    }
+
     @Test("Failed block collapses the container")
     func failedBlockCollapses() {
         let block = BlockFixture()
@@ -75,6 +96,58 @@ struct MindboxEmbeddedBlockViewTests {
         block.view.errorView = first
         block.attachToWindow()
         block.page?.failLoad()
+
+        let second = UIView()
+        block.view.errorView = second
+
+        #expect(second.superview === block.view)
+        #expect(first.superview == nil)
+    }
+
+    @Test("Taking the error view away collapses the failure it was showing")
+    func errorViewRemovedMidFailureCollapsesTheBlock() {
+        let block = BlockFixture()
+        let errorView = UIView()
+        block.view.errorView = errorView
+        block.attachToWindow()
+        block.page?.failLoad()
+        #expect(block.view.intrinsicContentSize.height == 120)
+
+        block.view.errorView = nil
+
+        #expect(block.view.intrinsicContentSize.height == 0)
+        #expect(errorView.superview == nil)
+    }
+
+    @Test("Taking the error view away collapses a failure still shown after a return")
+    func errorViewRemovedAfterReturnCollapsesTheBlock() {
+        let block = BlockFixture()
+        let errorView = UIView()
+        block.view.errorView = errorView
+        block.attachToWindow()
+        block.page?.failLoad()
+
+        block.removeFromWindow()
+        block.attachToWindow()
+        #expect(block.view.intrinsicContentSize.height == 120)
+        #expect(errorView.superview === block.view)
+
+        block.view.errorView = nil
+
+        #expect(block.view.intrinsicContentSize.height == 0)
+        #expect(errorView.superview == nil)
+    }
+
+    @Test("An error view swapped after a return replaces the one still on screen")
+    func errorViewSwappedAfterReturnReplacesTheShownOne() {
+        let block = BlockFixture()
+        let first = UIView()
+        block.view.errorView = first
+        block.attachToWindow()
+        block.page?.failLoad()
+
+        block.removeFromWindow()
+        block.attachToWindow()
 
         let second = UIView()
         block.view.errorView = second
@@ -332,56 +405,137 @@ struct MindboxEmbeddedBlockViewTests {
 
     // MARK: - Presentation for the SwiftUI wrapper
 
-    @Test("Every change is pushed to the SwiftUI wrapper as a layer and a height")
-    func presentationChangesArePushedToWrapper() {
+    @Test("Every change is reported to the wrapper")
+    func everyChangeIsReportedToTheWrapper() {
         let block = BlockFixture()
         block.attachToWindow()
-        var reported: [EmbeddedBlockPresentation] = []
-        block.view.onPresentationChange = { reported.append($0) }
+        let appearance = EmbeddedBlockAppearanceSpy()
+        block.view.setAppearanceObserver { appearance.record($0) }
 
         block.page?.reportRendered(1)
         block.page?.reportRendered(0)
 
-        #expect(reported == [EmbeddedBlockPresentation(layer: .content, height: 120),
-                             EmbeddedBlockPresentation(layer: .nothing, height: 0)])
+        #expect(appearance.values == [.placeholder, .content, .collapsed])
     }
 
-    @Test("Failed block without an error view reports nothing to show")
-    func failedBlockReportsNothingToShow() {
+    @Test("Failed block without an error view reports a collapsed block")
+    func failedBlockReportsCollapsed() {
         let block = BlockFixture()
         block.attachToWindow()
-        var reported: [EmbeddedBlockPresentation] = []
-        block.view.onPresentationChange = { reported.append($0) }
+        let appearance = EmbeddedBlockAppearanceSpy()
+        block.view.setAppearanceObserver { appearance.record($0) }
 
         block.page?.failLoad()
 
-        #expect(reported == [EmbeddedBlockPresentation(layer: .nothing, height: 0)])
+        #expect(appearance.last == .collapsed)
     }
 
-    @Test("Failed block with an error view reports the error layer")
-    func failedBlockWithErrorViewReportsErrorLayer() {
+    @Test("Failed block with an error view reports the error appearance")
+    func failedBlockWithErrorViewReportsError() {
         let block = BlockFixture()
         block.view.errorView = UIView()
         block.attachToWindow()
-        var reported: [EmbeddedBlockPresentation] = []
-        block.view.onPresentationChange = { reported.append($0) }
+        let appearance = EmbeddedBlockAppearanceSpy()
+        block.view.setAppearanceObserver { appearance.record($0) }
 
         block.page?.failLoad()
 
-        #expect(reported == [EmbeddedBlockPresentation(layer: .errorView, height: 120)])
+        #expect(appearance.last == .error)
     }
 
-    @Test("Reload reports the placeholder layer again")
-    func reloadReportsPlaceholderLayer() {
+    @Test("Reload reports the placeholder appearance again")
+    func reloadReportsPlaceholderAgain() {
         let block = BlockFixture()
         block.attachToWindow()
-        block.page?.reportRendered(1)
-        var reported: [EmbeddedBlockPresentation] = []
-        block.view.onPresentationChange = { reported.append($0) }
+        block.page?.reportRendered(3)
+        let appearance = EmbeddedBlockAppearanceSpy()
+        block.view.setAppearanceObserver { appearance.record($0) }
 
         block.view.reload()
 
-        #expect(reported == [EmbeddedBlockPresentation(layer: .placeholder, height: 120)])
+        #expect(appearance.values == [.content, .placeholder])
+    }
+
+    @Test("Block that failed with an error view keeps it on a retry")
+    func failedBlockWithErrorViewKeepsIt() {
+        let block = BlockFixture()
+        block.view.errorView = UIView()
+        block.attachToWindow()
+        block.page?.failLoad()
+        let appearance = EmbeddedBlockAppearanceSpy()
+        block.view.setAppearanceObserver { appearance.record($0) }
+
+        block.removeFromWindow()
+        block.attachToWindow()
+
+        #expect(appearance.values.allSatisfy { $0 == .error })
+    }
+
+    @Test("A collapsed settled block stays collapsed on retry even if errorView is assigned after collapse")
+    func collapsedSettledBlockStaysCollapsedEvenWithLateErrorView() {
+        let block = BlockFixture()
+        block.attachToWindow()
+        block.page?.failLoad()
+        #expect(block.view.intrinsicContentSize.height == 0)
+
+        let errorView = UIView()
+        block.view.errorView = errorView
+
+        block.removeFromWindow()
+        block.attachToWindow()
+
+        #expect(block.view.intrinsicContentSize.height == 0)
+        #expect(errorView.superview == nil)
+    }
+
+    @Test("A failed settled block with error screen stays collapsed on retry when errorView is removed")
+    func failedSettledBlockStaysCollapsedWhenErrorViewRemoved() {
+        let block = BlockFixture()
+        let errorView = UIView()
+        block.view.errorView = errorView
+        block.attachToWindow()
+        block.page?.failLoad()
+        #expect(block.view.intrinsicContentSize.height == 120)
+
+        block.view.errorView = nil
+        #expect(block.view.intrinsicContentSize.height == 0)
+
+        block.removeFromWindow()
+        block.attachToWindow()
+
+        #expect(block.view.intrinsicContentSize.height == 0)
+        #expect(block.view.subviews.isEmpty)
+    }
+
+    @Test("A reload resets the settled state and allows error view to show on the next failure")
+    func reloadResetsSettledStateAndAllowsErrorViewAgain() {
+        let block = BlockFixture()
+        block.attachToWindow()
+        block.page?.failLoad()
+        #expect(block.view.intrinsicContentSize.height == 0)
+
+        let errorView = UIView()
+        block.view.errorView = errorView
+
+        block.view.reload()
+        block.page?.failLoad()
+
+        #expect(block.view.intrinsicContentSize.height == 120)
+        #expect(errorView.superview === block.view)
+    }
+
+    @Test("Reload after a failure with an error view shows the placeholder")
+    func reloadAfterErrorViewShowsThePlaceholder() {
+        let block = BlockFixture()
+        block.view.errorView = UIView()
+        block.attachToWindow()
+        block.page?.failLoad()
+        let appearance = EmbeddedBlockAppearanceSpy()
+        block.view.setAppearanceObserver { appearance.record($0) }
+
+        block.view.reload()
+
+        #expect(appearance.values == [.error, .placeholder])
     }
 
     // MARK: - Lifecycle
@@ -397,7 +551,8 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.page?.cancelCount == 0)
 
         block.removeFromWindow()
-        #expect(block.page?.cancelCount == 1)
+        #expect(block.page?.cancelCount == 0)
+        #expect(block.page?.isUserPresent == false)
     }
 
     @Test("Block returning to the window keeps its content as it was")
@@ -704,6 +859,253 @@ struct MindboxEmbeddedBlockViewTests {
 
         #expect(block.view.intrinsicContentSize.height == 0)
         #expect(delegate.events.last == .failed)
+    }
+
+    // MARK: - Appearance observer
+
+    @Test("Appearance observer reports the current value on subscribe")
+    func appearanceObserverReportsCurrentValueOnSubscribe() {
+        let block = BlockFixture()
+        block.attachToWindow()
+        block.page?.failLoad()
+
+        let appearance = EmbeddedBlockAppearanceSpy()
+        block.view.setAppearanceObserver { appearance.record($0) }
+
+        #expect(appearance.values == [.collapsed])
+    }
+
+    @Test("Appearance observer reports the collapse of a failed block")
+    func appearanceObserverReportsTheCollapse() {
+        let block = BlockFixture()
+        let appearance = EmbeddedBlockAppearanceSpy()
+        block.view.setAppearanceObserver { appearance.record($0) }
+        block.attachToWindow()
+
+        block.page?.failLoad()
+
+        #expect(appearance.last == .collapsed)
+    }
+
+    @Test("Block that loads and shows content never reports a collapse")
+    func shownBlockNeverReportsCollapse() {
+        let block = BlockFixture()
+        let appearance = EmbeddedBlockAppearanceSpy()
+        block.view.setAppearanceObserver { appearance.record($0) }
+        block.attachToWindow()
+
+        block.page?.reportRendered(3)
+
+        #expect(appearance.last == .content)
+        #expect(appearance.wasAlwaysVisible)
+    }
+
+    @Test("Appearance observer follows the error view opt-in")
+    func appearanceObserverFollowsTheErrorViewOptIn() {
+        let failed = BlockFixture()
+        let failedAppearance = EmbeddedBlockAppearanceSpy()
+        failed.view.errorView = UIView()
+        failed.view.setAppearanceObserver { failedAppearance.record($0) }
+        failed.attachToWindow()
+
+        failed.page?.failLoad()
+
+        #expect(failedAppearance.last == .error)
+
+        let empty = BlockFixture(resolution: .empty)
+        let emptyAppearance = EmbeddedBlockAppearanceSpy()
+        empty.view.errorView = UIView()
+        empty.view.setAppearanceObserver { emptyAppearance.record($0) }
+
+        empty.attachToWindow()
+
+        #expect(emptyAppearance.last == .collapsed)
+    }
+
+    // MARK: - Host visibility
+
+    @Test("Host-hidden block does not start when it enters a window")
+    func hostHiddenBlockDoesNotStartInWindow() {
+        let block = BlockFixture()
+        block.view.setHostVisible(false)
+
+        block.attachToWindow()
+
+        #expect(block.bed.resolver.resolveCount == 0)
+        #expect(block.bed.pageFactory.pages.isEmpty)
+        #expect(block.waitBudgetBed.scheduler.lastDelay == nil)
+    }
+
+    @Test("Host-shown block in a window starts its content")
+    func hostShownBlockStartsContent() {
+        let block = BlockFixture()
+        block.view.setHostVisible(false)
+        block.attachToWindow()
+
+        block.view.setHostVisible(true)
+
+        #expect(block.bed.resolver.resolveCount == 1)
+        #expect(block.page?.loadCount == 1)
+    }
+
+    @Test("Host visibility alone does not start a block outside a window")
+    func hostVisibilityAloneStartsNothing() {
+        let block = BlockFixture()
+
+        block.view.setHostVisible(false)
+        block.view.setHostVisible(true)
+
+        #expect(block.bed.resolver.resolveCount == 0)
+        #expect(block.bed.pageFactory.pages.isEmpty)
+    }
+
+    @Test("Host-hidden block pauses its content and keeps its page")
+    func hostHiddenBlockPausesContent() {
+        let block = BlockFixture()
+        block.attachToWindow()
+
+        block.view.setHostVisible(false)
+
+        #expect(block.page?.isUserPresent == false)
+        #expect(block.page?.cancelCount == 0)
+    }
+
+    @Test("Repeated host visibility changes nothing")
+    func repeatedHostVisibilityIsIdempotent() {
+        let block = BlockFixture()
+        block.attachToWindow()
+
+        block.view.setHostVisible(false)
+        block.view.setHostVisible(false)
+
+        #expect(block.page?.isUserPresent == false)
+        #expect(block.page?.cancelCount == 0)
+        #expect(block.bed.pageFactory.pages.count == 1)
+    }
+
+    @Test("Block hidden and shown again keeps its page")
+    func hostHiddenBlockKeepsItsPage() {
+        let block = BlockFixture()
+        block.attachToWindow()
+
+        block.view.setHostVisible(false)
+        block.view.setHostVisible(true)
+
+        #expect(block.bed.resolver.resolveCount == 2)
+        #expect(block.bed.pageFactory.pages.count == 1)
+    }
+
+    @Test("Host visibility pauses the budget and resumes it from the remainder")
+    func hostVisibilityResumesTheBudgetFromTheRemainder() async {
+        let block = BlockFixture()
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.attachToWindow()
+
+        block.waitBudgetBed.clock.advance(2)
+        block.view.setHostVisible(false)
+        block.expireTimeout()
+        await mainQueueTurn()
+
+        #expect(delegate.events.isEmpty)
+        #expect(block.view.intrinsicContentSize.height == 120)
+
+        block.view.setHostVisible(true)
+
+        #expect(block.waitBudgetBed.scheduler.lastDelay == 3)
+
+        block.expireTimeout()
+        await mainQueueTurn()
+
+        #expect(delegate.events == [.failed])
+        #expect(block.view.intrinsicContentSize.height == 0)
+    }
+
+    @Test("Shown block hidden and shown again keeps its content and reports nothing twice")
+    func hostVisibilityKeepsShownContent() async {
+        let block = BlockFixture()
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.attachToWindow()
+        block.page?.reportRendered(3)
+        await mainQueueTurn()
+
+        block.view.setHostVisible(false)
+        block.view.setHostVisible(true)
+        await mainQueueTurn()
+
+        #expect(block.view.intrinsicContentSize.height == 120)
+        #expect(delegate.events == [.loaded])
+        #expect(block.bed.resolver.resolveCount == 2)
+    }
+
+    @Test("Reload on a host-hidden block does nothing")
+    func reloadOnHostHiddenBlockDoesNothing() {
+        let block = BlockFixture()
+        block.attachToWindow()
+        block.view.setHostVisible(false)
+
+        block.view.reload()
+
+        #expect(block.bed.pageFactory.pages.count == 1)
+        #expect(block.bed.resolver.resolveCount == 1)
+    }
+
+    // MARK: - Release
+
+    @Test("Release stops the content")
+    func releaseStopsTheContent() {
+        let block = BlockFixture()
+        block.attachToWindow()
+
+        block.view.release()
+
+        #expect(block.page?.cancelCount == 1)
+    }
+
+    @Test("Released block does not start again in a window")
+    func releasedBlockDoesNotStartAgain() {
+        let block = BlockFixture()
+        block.attachToWindow()
+
+        block.view.release()
+        block.removeFromWindow()
+        block.attachToWindow()
+
+        #expect(block.page?.loadCount == 1)
+        #expect(block.bed.resolver.resolveCount == 1)
+    }
+
+    @Test("Release silences the delegate and the appearance observer")
+    func releaseSilencesTheWrapper() async {
+        let block = BlockFixture()
+        let delegate = EmbeddedBlockViewDelegateMock()
+        let appearance = EmbeddedBlockAppearanceSpy()
+        block.view.delegate = delegate
+        block.view.setAppearanceObserver { appearance.record($0) }
+        block.attachToWindow()
+        block.page?.reportRendered(3)
+        await mainQueueTurn()
+        let reportsBeforeRelease = appearance.values.count
+
+        block.view.release()
+        block.page?.failLoad()
+        await mainQueueTurn()
+
+        #expect(block.view.delegate == nil)
+        #expect(delegate.events == [.loaded])
+        #expect(appearance.values.count == reportsBeforeRelease)
+    }
+
+    @Test("Repeated release changes nothing")
+    func repeatedReleaseIsIdempotent() {
+        let block = BlockFixture()
+        block.attachToWindow()
+
+        block.view.release()
+        block.view.release()
+
+        #expect(block.page?.cancelCount == 1)
     }
 
     // MARK: - Helpers
