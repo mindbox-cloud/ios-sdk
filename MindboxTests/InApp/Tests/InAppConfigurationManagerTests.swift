@@ -8,6 +8,7 @@
 
 import Foundation
 import Testing
+import QuartzCore
 import class MindboxLogger.Locked
 @testable import Mindbox
 
@@ -88,8 +89,16 @@ struct InAppConfigurationManagerTests {
             wrapped.filter(place: place, in: candidates)
         }
 
-        func filter(feedIds ids: [String], in candidates: ConfigCandidates) -> [InApp] {
-            wrapped.filter(feedIds: ids, in: candidates)
+        func inapps(addressedTo place: String, in candidates: ConfigCandidates) -> [InApp] {
+            wrapped.inapps(addressedTo: place, in: candidates)
+        }
+
+        func inapps(askedAbout ids: [String], in candidates: ConfigCandidates) -> [InApp] {
+            wrapped.inapps(askedAbout: ids, in: candidates)
+        }
+
+        func filter(requestedIds ids: [String], in candidates: ConfigCandidates) -> [InApp] {
+            wrapped.filter(requestedIds: ids, in: candidates)
         }
 
         func filter(id: String, in candidates: ConfigCandidates) -> InApp? {
@@ -113,11 +122,6 @@ struct InAppConfigurationManagerTests {
         }
 
         func filterInappsByTargeting(inapps: [InApp],
-                                     targetingChecker: InAppTargetingCheckerProtocol) -> [InAppTransitionData] {
-            wrapped.filterInappsByTargeting(inapps: inapps, targetingChecker: targetingChecker)
-        }
-
-        func filterInappsByTargeting(inapps: [InApp],
                                      targetingChecker: InAppTargetingCheckerProtocol,
                                      pickVariant: (InApp) -> MindboxFormVariant?) -> [InAppTransitionData] {
             wrapped.filterInappsByTargeting(inapps: inapps, targetingChecker: targetingChecker, pickVariant: pickVariant)
@@ -135,15 +139,23 @@ struct InAppConfigurationManagerTests {
         persistenceStorage.shownDatesByInApp = [:]
         persistenceStorage.deviceUUID = "00000000-0000-0000-0000-000000000000"
 
-        manager = InAppConfigurationManager(
+        manager = Self.makeManager(api: api, configWaitBudget: 0.2)
+    }
+
+    private static func makeManager(api: InAppConfigurationAPI,
+                                    configWaitBudget: TimeInterval,
+                                    inappFilterService: InappFilterProtocol = DI.injectOrFail(InappFilterProtocol.self),
+                                    now: @escaping () -> TimeInterval = { CACurrentMediaTime() }) -> InAppConfigurationManager {
+        InAppConfigurationManager(
             inAppConfigAPI: api,
             inAppConfigRepository: EmptyConfigRepository(),
             inappMapper: DI.injectOrFail(InappMapperProtocol.self),
-            persistenceStorage: persistenceStorage,
+            persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
             featureToggleManager: DI.injectOrFail(FeatureToggleManager.self),
             webViewPrewarmService: DI.injectOrFail(InAppWebViewPrewarmServiceProtocol.self),
-            inappFilterService: DI.injectOrFail(InappFilterProtocol.self),
-            configWaitBudget: 0.2
+            inappFilterService: inappFilterService,
+            configWaitBudget: configWaitBudget,
+            now: now
         )
     }
 
@@ -171,7 +183,7 @@ struct InAppConfigurationManagerTests {
         try await waitUntil(api.isFetchPending)
 
         let answers = Answers<[String]>()
-        manager.getShowableInappIds([Constants.liveStoryId]) { answers.append($0.inappIds) }
+        manager.getShowableInappIds([Constants.liveStoryId], askedBy: "a-block") { answers.append($0) }
 
         api.deliver(.data(try fixtureData()))
 
@@ -186,7 +198,7 @@ struct InAppConfigurationManagerTests {
         api.deliver(.data(try fixtureData()))
 
         let answers = Answers<[String]>()
-        manager.getShowableInappIds([Constants.liveStoryId]) { answers.append($0.inappIds) }
+        manager.getShowableInappIds([Constants.liveStoryId], askedBy: "a-block") { answers.append($0) }
 
         try await waitUntil(!answers.isEmpty)
         #expect(answers.all == [[Constants.liveStoryId]])
@@ -197,29 +209,32 @@ struct InAppConfigurationManagerTests {
         manager.prepareConfiguration()
 
         let answers = Answers<[String]>()
-        manager.getShowableInappIds([Constants.liveStoryId]) { answers.append($0.inappIds) }
+        manager.getShowableInappIds([Constants.liveStoryId], askedBy: "a-block") { answers.append($0) }
 
         try await waitUntil(!answers.isEmpty)
         #expect(answers.all == [[]])
     }
 
+    @Test("A config is in hand only once the download concluded with one")
+    func hasConfigFollowsTheDownload() async throws {
+        #expect(!manager.hasConfig)
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        #expect(!manager.hasConfig)
+
+        api.deliver(.data(try fixtureData()))
+
+        try await waitUntil(manager.hasConfig)
+    }
+
     @Test("A failed download with no cache answers with nothing at once")
     func failedDownloadAnswersWithoutWaitingOutTheBudget() async throws {
-        let slowBudgetManager = InAppConfigurationManager(
-            inAppConfigAPI: api,
-            inAppConfigRepository: EmptyConfigRepository(),
-            inappMapper: DI.injectOrFail(InappMapperProtocol.self),
-            persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
-            featureToggleManager: DI.injectOrFail(FeatureToggleManager.self),
-            webViewPrewarmService: DI.injectOrFail(InAppWebViewPrewarmServiceProtocol.self),
-            inappFilterService: DI.injectOrFail(InappFilterProtocol.self),
-            configWaitBudget: 60
-        )
+        let slowBudgetManager = Self.makeManager(api: api, configWaitBudget: 60)
         slowBudgetManager.prepareConfiguration()
         try await waitUntil(api.isFetchPending)
 
         let answers = Answers<[String]>()
-        slowBudgetManager.getShowableInappIds([Constants.liveStoryId]) { answers.append($0.inappIds) }
+        slowBudgetManager.getShowableInappIds([Constants.liveStoryId], askedBy: "a-block") { answers.append($0) }
         api.deliver(.error(MindboxError.connectionError))
 
         try await waitUntil(!answers.isEmpty)
@@ -232,7 +247,7 @@ struct InAppConfigurationManagerTests {
         try await waitUntil(api.isFetchPending)
 
         let answers = Answers<[String]>()
-        manager.getShowableInappIds([Constants.liveStoryId]) { answers.append($0.inappIds) }
+        manager.getShowableInappIds([Constants.liveStoryId], askedBy: "a-block") { answers.append($0) }
         try await waitUntil(!answers.isEmpty)
 
         api.deliver(.data(try fixtureData()))
@@ -243,22 +258,13 @@ struct InAppConfigurationManagerTests {
 
     @Test("A caller arriving after a failed download is answered with nothing at once")
     func callerAfterFailedDownloadDoesNotWaitOutTheBudget() async throws {
-        let slowBudgetManager = InAppConfigurationManager(
-            inAppConfigAPI: api,
-            inAppConfigRepository: EmptyConfigRepository(),
-            inappMapper: DI.injectOrFail(InappMapperProtocol.self),
-            persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
-            featureToggleManager: DI.injectOrFail(FeatureToggleManager.self),
-            webViewPrewarmService: DI.injectOrFail(InAppWebViewPrewarmServiceProtocol.self),
-            inappFilterService: DI.injectOrFail(InappFilterProtocol.self),
-            configWaitBudget: 60
-        )
+        let slowBudgetManager = Self.makeManager(api: api, configWaitBudget: 60)
         slowBudgetManager.prepareConfiguration()
         try await waitUntil(api.isFetchPending)
         api.deliver(.error(MindboxError.connectionError))
 
         let answers = Answers<[String]>()
-        slowBudgetManager.getShowableInappIds([Constants.liveStoryId]) { answers.append($0.inappIds) }
+        slowBudgetManager.getShowableInappIds([Constants.liveStoryId], askedBy: "a-block") { answers.append($0) }
 
         try await waitUntil(!answers.isEmpty)
         #expect(answers.all == [[]])
@@ -270,39 +276,50 @@ struct InAppConfigurationManagerTests {
         try await waitUntil(api.isFetchPending)
 
         let answers = Answers<InAppTransitionData?>()
-        manager.selectInappForPlace("stories-list-container", trigger: nil) { answers.append($0) }
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { inapp, _ in answers.append(inapp) }
         api.deliver(.data(try fixtureData()))
 
         try await waitUntil(!answers.isEmpty)
         #expect((answers.first ?? nil)?.inAppId == "11111111-1111-1111-1111-111111111111")
     }
 
-    @Test("One applied config is prepared once, however many blocks and feeds ask")
+    @Test("The place's processing time runs from the block's request, the wait for the config included")
+    func placeProcessingTimeIncludesTheWaitForTheConfig() async throws {
+        let clock = TestClock()
+        let patientManager = Self.makeManager(api: api, configWaitBudget: 60, now: { clock.now })
+        patientManager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+
+        let answers = Answers<(inapp: InAppTransitionData?, duration: TimeInterval)>()
+        patientManager.selectInappForPlace("stories-list-container", trigger: nil) { inapp, processingDuration in
+            answers.append((inapp, processingDuration))
+        }
+        clock.advance(12.5)
+        api.deliver(.data(try fixtureData()))
+
+        try await waitUntil(!answers.isEmpty)
+        let answer = try #require(answers.first)
+        #expect(answer.inapp != nil, "the place was not answered from the config")
+        #expect(answer.duration == 12.5)
+    }
+
+    @Test("One applied config is prepared once, however many blocks and pages ask")
     func configIsPreparedOncePerDownload() async throws {
         let counting = CountingFilterService()
-        let manager = InAppConfigurationManager(
-            inAppConfigAPI: api,
-            inAppConfigRepository: EmptyConfigRepository(),
-            inappMapper: DI.injectOrFail(InappMapperProtocol.self),
-            persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
-            featureToggleManager: DI.injectOrFail(FeatureToggleManager.self),
-            webViewPrewarmService: DI.injectOrFail(InAppWebViewPrewarmServiceProtocol.self),
-            inappFilterService: counting,
-            configWaitBudget: 0.2
-        )
+        let manager = Self.makeManager(api: api, configWaitBudget: 0.2, inappFilterService: counting)
 
         manager.prepareConfiguration()
         try await waitUntil(api.isFetchPending)
         api.deliver(.data(try fixtureData()))
 
-        let feeds = Answers<[String]>()
+        let pages = Answers<[String]>()
         let places = Answers<InAppTransitionData?>()
-        manager.getShowableInappIds([Constants.liveStoryId]) { feeds.append($0.inappIds) }
-        manager.selectInappForPlace("stories-list-container", trigger: nil) { places.append($0) }
-        manager.getShowableInappIds([Constants.liveStoryId]) { feeds.append($0.inappIds) }
-        manager.selectInappForPlace("stories-list-container", trigger: nil) { places.append($0) }
+        manager.getShowableInappIds([Constants.liveStoryId], askedBy: "a-block") { pages.append($0) }
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { inapp, _ in places.append(inapp) }
+        manager.getShowableInappIds([Constants.liveStoryId], askedBy: "a-block") { pages.append($0) }
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { inapp, _ in places.append(inapp) }
 
-        try await waitUntil(feeds.all.count == 2 && places.all.count == 2)
+        try await waitUntil(pages.all.count == 2 && places.all.count == 2)
         #expect(counting.prepareCount == 1)
     }
 
@@ -313,7 +330,7 @@ struct InAppConfigurationManagerTests {
         api.deliver(.data(try fixtureData()))
 
         let withBlock = Answers<InAppTransitionData?>()
-        manager.selectInappForPlace("stories-list-container", trigger: nil) { withBlock.append($0) }
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { inapp, _ in withBlock.append(inapp) }
         try await waitUntil(!withBlock.isEmpty)
         #expect((withBlock.first ?? nil)?.inAppId == "11111111-1111-1111-1111-111111111111")
 
@@ -322,7 +339,7 @@ struct InAppConfigurationManagerTests {
         api.deliver(.empty)
 
         let withoutBlock = Answers<InAppTransitionData?>()
-        manager.selectInappForPlace("stories-list-container", trigger: nil) { withoutBlock.append($0) }
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { inapp, _ in withoutBlock.append(inapp) }
         try await waitUntil(!withoutBlock.isEmpty)
         #expect((withoutBlock.first ?? nil)?.inAppId == nil)
     }
