@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import QuartzCore
 import MindboxLogger
 
 /// Embedded block content — a web page found by the block id.
@@ -47,6 +48,8 @@ final class EmbeddedBlockWebViewProvider {
 
     private var isStarted = false
 
+    private var isPaused = false
+
     private var outcome: EmbeddedBlockState = .loading
 
     private var isReady: Bool { outcome == .ready }
@@ -68,7 +71,25 @@ final class EmbeddedBlockWebViewProvider {
 
     private let scheduleAckTimeout: EmbeddedBlockWaitScheduling
 
+    private let now: () -> TimeInterval
+
     private var dataPushAck: DispatchWorkItem?
+
+    private var isAwaitingDataPushAck = false
+
+    private var ackConsumed: TimeInterval = 0
+
+    private var ackResumedAt: TimeInterval?
+
+    private var ackRemaining: TimeInterval {
+        max(0, TimeInterval(Constants.EmbeddedBlock.readyTimeoutSeconds) - ackConsumed)
+    }
+
+    private var pendingFailureReport: (content: EmbeddedBlockWebContent,
+                                       reason: InAppShowFailureReason,
+                                       details: String)?
+
+    private var pendingResolution: (resolution: EmbeddedBlockResolution, processingDuration: TimeInterval)?
 
     init(placeSystemName: String,
          registry: EmbeddedBlockPlaceRegistering,
@@ -80,7 +101,8 @@ final class EmbeddedBlockWebViewProvider {
          scheduleAckTimeout: @escaping EmbeddedBlockWaitScheduling = { delay, work in
              DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
          },
-         makeStopwatch: @escaping () -> ForegroundStopwatch = { ForegroundStopwatch() }) {
+         makeStopwatch: @escaping () -> ForegroundStopwatch = { ForegroundStopwatch() },
+         now: @escaping () -> TimeInterval = { CACurrentMediaTime() }) {
         self.placeSystemName = placeSystemName
         self.registry = registry
         self.inappService = inappService
@@ -91,6 +113,7 @@ final class EmbeddedBlockWebViewProvider {
         self.scheduleAckTimeout = scheduleAckTimeout
         self.makeStopwatch = makeStopwatch
         self.presentationStopwatch = makeStopwatch()
+        self.now = now
 
         registry.register(self, place: placeSystemName)
     }
@@ -99,41 +122,80 @@ final class EmbeddedBlockWebViewProvider {
         guard !isStarted else { return }
 
         isStarted = true
+        isPaused = false
         page?.isUserPresent = true
 
-        if isReady, page != nil {
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': showing the page rendered earlier",
+        let pending = pendingResolution
+        pendingResolution = nil
+
+        flushPendingFailureReport()
+
+        if page != nil, outcome != .failed {
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': back on screen, resuming its attempt at \(outcome)",
                           category: .embeddedBlocks)
-            onStateChange?(.ready)
-            registry.blockAppeared(placeSystemName)
+            onStateChange?(outcome)
+            if outcome == .ready {
+                accountForShow()
+            }
+
+            if let pending = pending {
+                apply(pending.resolution, processingDuration: pending.processingDuration)
+            }
+
+            rearmDataPushAckIfAwaited()
+            askThePlaceAgain()
+            return
+        }
+
+        if let pending = pending {
+            apply(pending.resolution, processingDuration: pending.processingDuration)
+            askThePlaceAgain()
             return
         }
 
         beginAttempt()
     }
 
+    private func askThePlaceAgain() {
+        registry.blockAppeared(placeSystemName)
+    }
+
     func stop() {
         guard isStarted else { return }
 
         isStarted = false
+        isPaused = true
         // The outcome is deliberately not reset: otherwise every pass of the block across the screen
         // would cost a full reload.
-        loadGeneration += 1
-        cancelDataPushAck()
+        suspendDataPushAck()
         // The page stays alive off screen, so it has to be told that nobody is looking.
         page?.isUserPresent = false
+    }
 
-        if !isReady {
-            page?.cancel()
-        }
+    func abandonAttempt() {
+        isStarted = false
+        isPaused = false
+        outcome = .failed
+        pendingResolution = nil
+        dropPage()
+    }
+
+    func teardown() {
+        isStarted = false
+        isPaused = false
+        pendingResolution = nil
+        pendingFailureReport = nil
+        dropPage()
     }
 
     func reload() {
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' is reloading", category: .embeddedBlocks)
 
         dropPage()
+        pendingResolution = nil
         loadGeneration += 1
         isStarted = true
+        isPaused = false
 
         beginAttempt()
     }
@@ -155,7 +217,12 @@ final class EmbeddedBlockWebViewProvider {
     // MARK: - The registry's answer
 
     func apply(_ resolution: EmbeddedBlockResolution, processingDuration: TimeInterval) {
-        guard isStarted else { return }
+        guard isStarted else {
+            if isPaused {
+                pendingResolution = (resolution, processingDuration)
+            }
+            return
+        }
 
         isAwaitingDelayedContent = false
 
@@ -284,11 +351,19 @@ final class EmbeddedBlockWebViewProvider {
     private func armDataPushAck() {
         cancelDataPushAck()
 
+        isAwaitingDataPushAck = true
+        resumeDataPushAck()
+    }
+
+    private func resumeDataPushAck() {
         let generation = loadGeneration
         let work = DispatchWorkItem { [weak self] in
             guard let self, self.isStarted, self.loadGeneration == generation else { return }
 
             self.dataPushAck = nil
+            self.ackResumedAt = nil
+            self.ackConsumed = TimeInterval(Constants.EmbeddedBlock.readyTimeoutSeconds)
+            self.isAwaitingDataPushAck = false
 
             guard let content = self.content else { return }
 
@@ -297,18 +372,36 @@ final class EmbeddedBlockWebViewProvider {
             self.buildPage(with: content, processingDuration: self.processingDuration)
         }
 
+        ackResumedAt = now()
         dataPushAck = work
-        scheduleAckTimeout(TimeInterval(Constants.EmbeddedBlock.readyTimeoutSeconds), work)
+        scheduleAckTimeout(ackRemaining, work)
     }
 
-    private func cancelDataPushAck() {
+    private func suspendDataPushAck() {
+        if let ackResumedAt {
+            ackConsumed += max(0, now() - ackResumedAt)
+            self.ackResumedAt = nil
+        }
         dataPushAck?.cancel()
         dataPushAck = nil
     }
 
+    private func cancelDataPushAck() {
+        suspendDataPushAck()
+        ackConsumed = 0
+        isAwaitingDataPushAck = false
+    }
+
+    private func rearmDataPushAckIfAwaited() {
+        guard isAwaitingDataPushAck else { return }
+
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': back on screen with a data push still unconfirmed — waiting out the remaining \(ackRemaining)s",
+                      category: .embeddedBlocks)
+        resumeDataPushAck()
+    }
+
     private func acknowledgeDataPush() {
-        guard isStarted else { return }
-        guard dataPushAck != nil else {
+        guard isAwaitingDataPushAck else {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the page confirmed a data push nobody was waiting on",
                           level: .debug, category: .embeddedBlocks)
             return
@@ -321,11 +414,16 @@ final class EmbeddedBlockWebViewProvider {
 
     // MARK: - The page's reports
 
-    func handleLoadFailure() {
+    private func settle(_ newOutcome: EmbeddedBlockState) {
+        outcome = newOutcome
+
         guard isStarted else { return }
 
-        outcome = .failed
-        onStateChange?(.failed)
+        onStateChange?(newOutcome)
+    }
+
+    func handleLoadFailure() {
+        settle(.failed)
         report(.webviewLoadFailed, "The block's page failed to load")
     }
 
@@ -351,9 +449,26 @@ final class EmbeddedBlockWebViewProvider {
     private func report(_ reason: InAppShowFailureReason, _ details: String) {
         guard let content = content else { return }
 
+        guard isStarted else {
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': \(reason.rawValue) for in-app \(content.inAppId) happened off screen — held until the block is looked at",
+                          category: .embeddedBlocks)
+            pendingFailureReport = (content, reason, details)
+            return
+        }
+
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': reporting \(reason.rawValue) for in-app \(content.inAppId)",
                       level: .error, category: .embeddedBlocks)
         reportFailure(content, reason, details)
+    }
+
+    private func flushPendingFailureReport() {
+        guard let held = pendingFailureReport else { return }
+
+        pendingFailureReport = nil
+
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': reporting the held \(held.reason.rawValue) for in-app \(held.content.inAppId)",
+                      level: .error, category: .embeddedBlocks)
+        reportFailure(held.content, held.reason, held.details)
     }
 
     private var isAttemptAlive: Bool {
@@ -389,7 +504,6 @@ final class EmbeddedBlockWebViewProvider {
     }
 
     private func applyContentRendered(_ count: Int) {
-        guard isStarted else { return }
         guard !didReportShownContent else {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the page reported itself again with nothing asked of it — ignoring",
                           category: .embeddedBlocks)
@@ -398,20 +512,20 @@ final class EmbeddedBlockWebViewProvider {
 
         guard count > 0 else {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': page rendered nothing", category: .embeddedBlocks)
-            outcome = .empty
-            onStateChange?(.empty)
+            settle(.empty)
             return
         }
 
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': page rendered \(count) item(s)", category: .embeddedBlocks)
-        outcome = .ready
         didReportShownContent = true
-        onStateChange?(.ready)
+        settle(.ready)
+
+        guard isStarted else { return }
+
         accountForShow()
     }
 
     private func handleUnreadableContentReport() {
-        guard isStarted else { return }
         guard !didReportShownContent else {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the page repeated contentRendered without a readable count — ignoring, the block is already shown",
                           category: .embeddedBlocks)
@@ -420,8 +534,7 @@ final class EmbeddedBlockWebViewProvider {
 
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': contentRendered without a readable count, treating as broken",
                       level: .error, category: .embeddedBlocks)
-        outcome = .failed
-        onStateChange?(.failed)
+        settle(.failed)
         report(.presentationFailed, "The block's page reported contentRendered without a readable count")
     }
 

@@ -543,7 +543,7 @@ final class EmbeddedBlockTestBed {
     /// One per bed: a new config must reach only this provider.
     let center: NotificationCenter
 
-    /// The page's rendering time runs on it: what the block's `timeToDisplay` adds to the selection's part.
+    /// One clock for both seams: the page's rendering time (the block's part of `timeToDisplay`) and the ack wait.
     let clock: TestClock
 
     var page: EmbeddedBlockPageMock? { pageFactory.page }
@@ -582,7 +582,8 @@ final class EmbeddedBlockTestBed {
                                                      reportFailure: { failureReporter.report($0, $1, $2) },
                                                      reportUnansweredWait: { failureReporter.reportUnansweredWait($0) },
                                                      scheduleAckTimeout: { ackScheduler.schedule($0, $1) },
-                                                     makeStopwatch: { ForegroundStopwatch(notificationCenter: center, now: { clock.now }) })
+                                                     makeStopwatch: { ForegroundStopwatch(notificationCenter: center, now: { clock.now }) },
+                                                     now: { clock.now })
     }
 
     func announceNewConfig() {
@@ -604,6 +605,19 @@ final class EmbeddedBlockTestBed {
         let event = ApplicationEvent(name: name, model: nil)
         center.post(name: .inAppOperationOccurred, object: event)
         return event
+    }
+}
+
+final class EmbeddedBlockAppearanceSpy {
+
+    private(set) var values: [MindboxEmbeddedBlockAppearance] = []
+
+    var last: MindboxEmbeddedBlockAppearance? { values.last }
+
+    var wasAlwaysVisible: Bool { !values.contains(.collapsed) }
+
+    func record(_ appearance: MindboxEmbeddedBlockAppearance) {
+        values.append(appearance)
     }
 }
 
