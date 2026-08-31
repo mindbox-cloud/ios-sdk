@@ -21,30 +21,35 @@ struct ConfigCandidates {
     static let empty = ConfigCandidates(renderable: [], inPool: [])
 }
 
-/// The selection's view of the config: which in-apps are valid at all, and which of them a given
-/// path — trigger, place, feed, direct call — may consider. Every path starts from the same
-/// `ConfigCandidates`, built once per applied config, and narrows it by what changes at runtime.
+/// The selection's view of the config: which in-apps are valid at all, and which of them each path —
+/// trigger, place, page, direct call — may consider.
 protocol InappFilterProtocol {
 
-    /// Turns a config into the models every path narrows: the version range, the form rebuild, the
-    /// A/B pool. Called once per applied config — the result holds for as long as that config does.
+    /// The config as models — version range, form rebuild, A/B pool — built once per applied config.
     func candidates(from response: ConfigResponse) -> ConfigCandidates
 
     /// The trigger path's candidates: in-apps an overlay can show, minus the direct-call-only ones
     /// and those the frequency already spent — in priority order.
     func filterForTrigger(in candidates: ConfigCandidates) -> [InApp]
 
-    /// The candidates a block at `place` could show, in priority order. The trigger chain with one
-    /// step swapped: "is this addressed to this place" instead of "can this be shown over the screen".
+    /// The candidates a block at `place` could show, in priority order: the trigger chain with "addressed to
+    /// this place" in place of "shows over the screen".
     func filter(place: String, in candidates: ConfigCandidates) -> [InApp]
 
-    /// The in-apps out of `ids` a feed may draw, before targeting. The trigger chain minus the
-    /// direct-call cut — that one would drop exactly the in-apps a feed is made of.
-    func filter(feedIds ids: [String], in candidates: ConfigCandidates) -> [InApp]
+    /// Every valid in-app with a variant for `place`, the A/B pool and the frequency not applied — everyone
+    /// who could have shown here.
+    func inapps(addressedTo place: String, in candidates: ConfigCandidates) -> [InApp]
 
-    /// The in-app behind `id`, with no restriction checked — not the frequency, not the display
-    /// conditions, not the A/B pool: an in-app the page has already offered has to open, and every
-    /// one of those checks is a way for it to open into nothing. `nil` — no valid in-app under this id.
+    /// Every valid in-app out of `ids`, duplicates collapsed, the A/B pool and the frequency not applied — the
+    /// page's twin of `inapps(addressedTo:)`.
+    func inapps(askedAbout ids: [String], in candidates: ConfigCandidates) -> [InApp]
+
+    /// The in-apps out of `ids` a page may draw, before targeting: the trigger chain minus the direct-call cut,
+    /// in the order asked, duplicates kept.
+    func filter(requestedIds ids: [String], in candidates: ConfigCandidates) -> [InApp]
+
+    /// The in-app behind `id` with nothing checked — not the frequency, the display conditions or the A/B pool:
+    /// an in-app the page already offered has to open. `nil` — no valid in-app under this id.
     func filter(id: String, in candidates: ConfigCandidates) -> InApp?
 
     /// The valid in-apps wired to `event`'s operation, with nothing else checked — the A/B pool
@@ -65,14 +70,8 @@ protocol InappFilterProtocol {
                                         operationInapps: [String: Set<String>],
                                         in candidates: ConfigCandidates) -> [InApp]
 
-    /// The overlay path's targeting pass: keeps the targeted in-apps, each paired with its first
-    /// overlay-presentable variant.
-    func filterInappsByTargeting(inapps: [InApp], targetingChecker: InAppTargetingCheckerProtocol) -> [InAppTransitionData]
-
-    /// The same targeting pass for callers that render something else: `pickVariant` names the
-    /// variant the caller is going to draw, `nil` skips the candidate. One check, however many
-    /// paths ask it — a feed and a trigger disagreeing about who is targeted would be a defect
-    /// nobody could explain.
+    /// The targeting pass: keeps the targeted in-apps, each paired with the variant `pickVariant` names for
+    /// it — `nil` skips the candidate. One check for every path.
     func filterInappsByTargeting(inapps: [InApp],
                                  targetingChecker: InAppTargetingCheckerProtocol,
                                  pickVariant: (InApp) -> MindboxFormVariant?) -> [InAppTransitionData]
@@ -106,20 +105,32 @@ final class InappsFilterService: InappFilterProtocol {
     }
 
     func filter(place: String, in candidates: ConfigCandidates) -> [InApp] {
-        filterInappsForPlace(place, inapps: candidates.inPool)
+        applyPostABFilters(filterInappsByPlace(place, inapps: candidates.inPool))
     }
 
-    func filter(feedIds ids: [String], in candidates: ConfigCandidates) -> [InApp] {
+    func inapps(addressedTo place: String, in candidates: ConfigCandidates) -> [InApp] {
+        filterInappsByPlace(place, inapps: candidates.renderable)
+    }
+
+    func inapps(askedAbout ids: [String], in candidates: ConfigCandidates) -> [InApp] {
+        var seen = Set<String>()
+        return ids.compactMap { id in
+            guard seen.insert(id).inserted else { return nil }
+            return candidates.renderable.first { $0.id == id }
+        }
+    }
+
+    func filter(requestedIds ids: [String], in candidates: ConfigCandidates) -> [InApp] {
         let asked = Set(ids)
 
         let missing = asked.subtracting(candidates.renderable.map(\.id))
         if !missing.isEmpty {
-            Logger.common(message: "[InappsFilterService] The feed asked about in-app(s) this SDK cannot render: [\(missing.sorted().joined(separator: ", "))]",
+            Logger.common(message: "[InappsFilterService] The page asked about in-app(s) this SDK cannot render: [\(missing.sorted().joined(separator: ", "))]",
                           level: .debug, category: .inAppMessages)
         }
 
-        let requested = candidates.inPool.filter { asked.contains($0.id) }
-        return applyShowabilityFilters(filterOutNonOverlayInapps(requested))
+        let requested = ids.compactMap { id in candidates.inPool.first { $0.id == id } }
+        return filterInappsByAlreadyShown(filterOutNonOverlayInapps(requested))
     }
 
     func filter(id: String, in candidates: ConfigCandidates) -> InApp? {
@@ -169,12 +180,6 @@ final class InappsFilterService: InappFilterProtocol {
         }
 
         return inapps.filter { inappIDS.contains($0.id) }
-    }
-
-    func filterInappsByTargeting(inapps: [InApp], targetingChecker: InAppTargetingCheckerProtocol) -> [InAppTransitionData] {
-        filterInappsByTargeting(inapps: inapps, targetingChecker: targetingChecker) { inapp in
-            inapp.form.variants.first(where: { $0.isOverlayPresentable })
-        }
     }
 
     func filterInappsByTargeting(inapps: [InApp],
@@ -312,6 +317,7 @@ extension InappsFilterService {
                                            displayConditions: inapp.displayConditions,
                                            form: formModel,
                                            tags: inapp.tags)
+                    warnIfNoPassCanReach(inappModel)
                     filteredInapps.append(inappModel)
                 }
             } catch {
@@ -323,22 +329,23 @@ extension InappsFilterService {
         return filteredInapps
     }
 
+    /// An event-only targeting on a direct-call in-app can never pass — every pass cuts direct-call in-apps first,
+    /// and a page's question carries no event. Almost certainly a config mistake (in sync with Android).
+    private func warnIfNoPassCanReach(_ inapp: InApp) {
+        guard inapp.displayConditions == .directCall, inapp.targeting.requiresEvent else { return }
+
+        Logger.common(message: "[InappsFilterService] In-app \(inapp.id) is direct-call only but targeted by an event: no pass will show it or vouch for it, only a direct call opens it. Check the campaign.",
+                      level: .error, category: .inAppMessages)
+    }
+
     private func createFrequencyValidator() -> InappFrequencyValidator {
         InappFrequencyValidator(persistenceStorage: persistenceStorage)
     }
 
     /// The overlay lock and the delayed queue are never asked here; the shared show budgets are
     /// asked later, on the winner.
-    func filterInappsForPlace(_ place: String, inapps: [InApp]) -> [InApp] {
-        applyPostABFilters(filterInappsByPlace(place, inapps: inapps))
-    }
-
     private func applyPostABFilters(_ inapps: [InApp]) -> [InApp] {
-        applyShowabilityFilters(filterOutDirectCallInapps(inapps))
-    }
-
-    private func applyShowabilityFilters(_ inapps: [InApp]) -> [InApp] {
-        sortInappsByPriority(filterInappsByAlreadyShown(inapps))
+        sortInappsByPriority(filterInappsByAlreadyShown(filterOutDirectCallInapps(inapps)))
     }
 
     func filterInappsByPlace(_ place: String, inapps: [InApp]) -> [InApp] {

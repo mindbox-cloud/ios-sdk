@@ -32,6 +32,36 @@ final class InappFilterServiceTests: XCTestCase {
         super.tearDown()
     }
 
+    // MARK: - An event-only targeting on a direct-call in-app
+
+    private var operationNode: Targeting {
+        .apiMethodCall(CustomOperationTargeting(systemName: "custom.operation"))
+    }
+
+    func test_requiresEvent_isTrueForAnOperationNode() {
+        XCTAssertTrue(operationNode.requiresEvent)
+        XCTAssertTrue(Targeting.viewProductId(ProductIDTargeting(kind: .substring, value: "1")).requiresEvent)
+    }
+
+    func test_requiresEvent_isTrueWhenAnAndBranchNeedsTheEvent() {
+        let targeting = Targeting.and(AndTargeting(nodes: [.true(TrueTargeting()), operationNode]))
+
+        XCTAssertTrue(targeting.requiresEvent)
+    }
+
+    func test_requiresEvent_isFalseWhenAnOrBranchNeedsNoEvent() {
+        let targeting = Targeting.or(OrTargeting(nodes: [.true(TrueTargeting()), operationNode]))
+
+        XCTAssertFalse(targeting.requiresEvent)
+    }
+
+    func test_requiresEvent_isFalseWithoutEventNodes() {
+        let targeting = Targeting.and(AndTargeting(nodes: [.true(TrueTargeting()), .visit(VisitTargeting(kind: .equals, value: 1))]))
+
+        XCTAssertFalse(targeting.requiresEvent)
+        XCTAssertFalse(Targeting.or(OrTargeting(nodes: [])).requiresEvent)
+    }
+
     func test_unknown_type_for_variants() throws {
         let config = try getConfig(name: "unknownVariantType")
         let inapps = triggerCandidates(of: config)

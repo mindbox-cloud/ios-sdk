@@ -22,8 +22,9 @@ protocol InappMapperProtocol {
                       _ candidates: ConfigCandidates,
                       _ completion: @escaping (InAppTransitionData?) -> Void)
     func getShowableInappIds(_ ids: [String],
+                             askedBy blockInappId: String,
                              _ candidates: ConfigCandidates,
-                             _ completion: @escaping (FeedAnswer) -> Void)
+                             _ completion: @escaping ([String]) -> Void)
     func getInAppToShowById(_ id: String,
                             params: [String: JSONValue],
                             _ candidates: ConfigCandidates,
@@ -32,18 +33,16 @@ protocol InappMapperProtocol {
 
 class InappMapper: InappMapperProtocol {
 
-    // @Locked: written on the processing queue when a pass sets up its environment, read from the
-    // main and global queues by the build/track completions that pass hops through.
-    @Locked private var applicationEvent: ApplicationEvent?
     private var targetingChecker: InAppTargetingCheckerProtocol
     private let inappFilterService: InappFilterProtocol
     private let dataFacade: InAppConfigurationDataFacadeProtocol
     private let presentationValidator: InAppPresentationValidatorProtocol
+    private let formBuilder: InappFormBuilder
 
     @Locked private var shownInappIDWithHashValue: [String: Int] = [:]
-    
+
     private let processingQueue = DispatchQueue(label: "com.Mindbox.inAppMapper.processingQueue")
-    
+
     init(targetingChecker: InAppTargetingCheckerProtocol,
          inappFilterService: InappFilterProtocol,
          dataFacade: InAppConfigurationDataFacadeProtocol,
@@ -52,31 +51,24 @@ class InappMapper: InappMapperProtocol {
         self.inappFilterService = inappFilterService
         self.dataFacade = dataFacade
         self.presentationValidator = presentationValidator
+        self.formBuilder = InappFormBuilder(dataFacade: dataFacade)
     }
+
+    // MARK: - Entry points
 
     func handleInapps(_ event: ApplicationEvent?,
                       _ candidates: ConfigCandidates,
                       _ completion: @escaping (InAppFormData?) -> Void) {
-        processingQueue.async {
-            let group = DispatchGroup()
-            group.enter()
-
-            Logger.common(message: "[InappMapper] Start handingInapps by event: \(event?.name ?? "start")",
-                          level: .debug, category: .inAppMessages)
-            self.setupEnvironment(event: event)
-            self.prepareTargetingChecker(for: candidates.renderable)
-            // Narrowed here rather than in the fetch completion below: that one answers on the main
-            // queue, and the frequency reads and their logging have no business there.
-            let inapps = self.showableInapps(in: candidates)
-
-            self.chooseInappToShow(inapps) { formData in
-                self.sendRemainingInappsTargeting(candidates) {
-                    completion(formData)
-                    group.leave()
+        runPass("the trigger", event: event) { finish in
+            self.evaluate(self.triggerQuery(event, candidates), event: event) { verdict in
+                self.buildFirstShowable(verdict, event: event) { formData in
+                    self.evaluate(self.catchUpQuery(event, candidates), event: event) { catchUp in
+                        self.vouchCatchUp(catchUp, event: event)
+                        finish(formData != nil)
+                        completion(formData)
+                    }
                 }
             }
-            
-            group.wait()
         }
     }
 
@@ -84,133 +76,52 @@ class InappMapper: InappMapperProtocol {
                              trigger: ApplicationEvent?,
                              _ candidates: ConfigCandidates,
                              _ completion: @escaping (InAppTransitionData?) -> Void) {
-        let query = TargetingQuery(
-            label: "place '\(place)'",
-            event: trigger,
-            fetchesDependencies: true,
-            candidates: {
-                self.inappFilterService.filter(place: place, in: candidates)
-            },
-            pickVariant: { $0.form.variants.first { $0.placeSystemName == place } }
-        )
+        runPass("place '\(place)'", event: trigger) { finish in
+            self.evaluate(self.placeQuery(place, candidates), event: trigger) { verdict in
+                self.evaluate(self.placeTargetingQuery(place, candidates), event: trigger) { targeted in
+                    let winner = verdict.first
+                    self.vouch(targeted, winner: winner, at: place)
 
-        evaluateTargeting(query) { suitableInapps in
-            guard let winner = suitableInapps.first else {
-                completion(nil)
-                return
-            }
+                    guard let winner else {
+                        finish(false)
+                        completion(nil)
+                        return
+                    }
 
-            guard self.presentationValidator.isWithinShowBudgets(isPriority: winner.isPriority,
-                                                                frequency: winner.frequency,
-                                                                id: winner.inAppId) else {
-                Logger.common(message: "[InappMapper] In-app \(winner.inAppId) won place '\(place)' but the show budgets are spent, the place stays empty",
-                              level: .debug, category: .inAppMessages)
-                completion(nil)
-                return
-            }
+                    guard self.presentationValidator.isWithinShowBudgets(isPriority: winner.isPriority,
+                                                                        frequency: winner.frequency,
+                                                                        id: winner.inAppId) else {
+                        Logger.common(message: "[InappMapper] In-app \(winner.inAppId) won place '\(place)' but the show budgets are spent, the place stays empty",
+                                      level: .debug, category: .inAppMessages)
+                        // Selected all the same: spent budgets are no targeting failure, so the buffer is dropped as after the overlay's pass.
+                        finish(true)
+                        completion(nil)
+                        return
+                    }
 
-            self.vouchOncePerSession(for: [winner])
-
-            completion(winner)
-        }
-    }
-
-    /// Never goes to the network: answers from what the session already fetched, and an id whose
-    /// targeting lacks data is cut — fail closed, in sync with Android.
-    func getShowableInappIds(_ ids: [String],
-                             _ candidates: ConfigCandidates,
-                             _ completion: @escaping (FeedAnswer) -> Void) {
-        let query = TargetingQuery(
-            label: "a feed asking about \(ids.count) in-app(s)",
-            event: nil,
-            fetchesDependencies: false,
-            candidates: {
-                self.inappFilterService.filter(feedIds: ids, in: candidates)
-            },
-            pickVariant: { $0.form.variants.first { $0.isOverlayPresentable } }
-        )
-
-        evaluateTargeting(query) { allowed in
-            // Vouching travels with the answer — only the caller knows it reached the page — and
-            // repeats per delivered answer with no session dedup, in sync with Android.
-            let answer = FeedAnswer(inappIds: allowed.map(\.inAppId)) { [weak self] in
-                for inapp in allowed {
-                    self?.dataFacade.trackTargeting(id: inapp.inAppId, tags: inapp.tags)
+                    finish(true)
+                    completion(winner)
                 }
             }
-
-            completion(answer)
         }
     }
 
-    /// Place path only: its resolves repeat without offering anything new, hence once per session —
-    /// unlike a feed, which vouches per delivered answer. The split is an open question with Android.
-    private func vouchOncePerSession(for inapps: [InAppTransitionData]) {
-        for inapp in inapps {
-            guard !SessionTemporaryStorage.shared.vouchedInappIds.contains(inapp.inAppId) else {
-                Logger.common(message: "[InappMapper] In-app \(inapp.inAppId) was already vouched for in this session, no second Inapp.Targeting",
-                              level: .debug, category: .inAppMessages)
-                continue
+    /// Vouches as it answers, not on delivery — the overlay's rule. An id whose targeting still lacks data
+    /// after the fetch is cut: fail closed, in sync with Android.
+    func getShowableInappIds(_ ids: [String],
+                             askedBy blockInappId: String,
+                             _ candidates: ConfigCandidates,
+                             _ completion: @escaping ([String]) -> Void) {
+        runPass("a page of in-app \(blockInappId) asking about \(ids.count) in-app(s)", event: nil) { finish in
+            self.evaluate(self.pageQuery(ids, candidates), event: nil) { verdict in
+                self.evaluate(self.pageTargetingQuery(ids, candidates), event: nil) { offered in
+                    // A page's question selects nothing; false only flushes a buffer this pass
+                    // keeps empty (collectsFailures: false).
+                    finish(false)
+                    self.vouchOffers(offered, by: blockInappId)
+                    completion(verdict.map(\.inAppId))
+                }
             }
-
-            SessionTemporaryStorage.shared.$vouchedInappIds.mutate { $0.insert(inapp.inAppId) }
-            self.dataFacade.trackTargeting(id: inapp.inAppId, tags: inapp.tags)
-        }
-    }
-
-    private struct TargetingQuery {
-
-        let label: String
-
-        let event: ApplicationEvent?
-
-        /// A place resolve may fetch geo/segmentations; a feed may not — its page holds a
-        /// three-second deadline, and a checker asked without data says "not targeted".
-        let fetchesDependencies: Bool
-
-        let candidates: () -> [InApp]
-        let pickVariant: (InApp) -> MindboxFormVariant?
-    }
-
-    /// One serial queue and one shared targeting checker for every path — two passes in flight would
-    /// answer each other's questions.
-    private func evaluateTargeting(_ query: TargetingQuery,
-                                   completion: @escaping ([InAppTransitionData]) -> Void) {
-        processingQueue.async {
-            let group = DispatchGroup()
-            group.enter()
-
-            self.setupEnvironment(event: query.event)
-
-            let candidates = query.candidates()
-            self.prepareTargetingChecker(for: candidates)
-
-            let startedAt = Date()
-
-            let checkTargeting = {
-                let suitable = self.inappFilterService.filterInappsByTargeting(
-                    inapps: candidates,
-                    targetingChecker: self.targetingChecker,
-                    pickVariant: query.pickVariant
-                )
-
-                let ms = Int(Date().timeIntervalSince(startedAt) * 1000)
-                Logger.common(message: """
-                [InappMapper] \(query.label): \(candidates.count) candidate(s), \(suitable.count) targeted, \
-                answered in \(ms) ms.
-                """, level: .debug, category: .inAppMessages)
-
-                completion(suitable)
-                group.leave()
-            }
-
-            if query.fetchesDependencies {
-                self.dataFacade.fetchDependencies(model: query.event?.model, checkTargeting)
-            } else {
-                checkTargeting()
-            }
-
-            group.wait()
         }
     }
 
@@ -219,38 +130,20 @@ class InappMapper: InappMapperProtocol {
                       _ candidates: ConfigCandidates,
                       _ completion: @escaping (InAppTransitionData?) -> Void) {
         processingQueue.async {
-            guard let inapp = self.inappFilterService.filter(id: id, in: candidates) else {
-                completion(nil)
-                return
-            }
-
-            // The same variant a feed offers: it keeps an in-app that has any overlay variant, so
-            // taking the first one would refuse a mixed form whose embedded variant comes first.
-            guard let variant = inapp.form.variants.first(where: { $0.isOverlayPresentable })
-                    ?? inapp.form.variants.first else {
-                Logger.common(message: "[InappMapper] In-app \(id) has no variant left to render.",
-                              level: .error, category: .inAppMessages)
-                completion(nil)
-                return
-            }
-
-            completion(InAppTransitionData(inAppId: inapp.id,
-                                           isPriority: inapp.isPriority,
-                                           delayTime: inapp.delayTime,
-                                           content: variant,
-                                           frequency: inapp.frequency,
-                                           tags: inapp.tags))
+            completion(self.transition(forId: id, in: candidates))
         }
     }
 
     /// Show history is deliberately not consulted: the page already offered this in-app, and a tap
-    /// has to open it however many times it opened before.
+    /// has to open it however many times it opened before. A pass of its own, so a form that could
+    /// not be built reports why at once instead of leaving that to whatever pass comes next.
     func getInAppToShowById(_ id: String,
                             params: [String: JSONValue],
                             _ candidates: ConfigCandidates,
                             _ completion: @escaping (InAppFormData?) -> Void) {
-        getInAppById(id, candidates) { transitionData in
-            guard let transitionData = transitionData else {
+        runPass("a tap on in-app \(id)", event: nil) { finish in
+            guard let transitionData = self.transition(forId: id, in: candidates) else {
+                finish(false)
                 completion(nil)
                 return
             }
@@ -258,73 +151,272 @@ class InappMapper: InappMapperProtocol {
             guard transitionData.content.isOverlayPresentable else {
                 Logger.common(message: "[InappMapper] In-app \(id) is drawn inside the host layout and cannot be shown over the screen.",
                               level: .error, category: .inAppMessages)
+                finish(false)
                 completion(nil)
                 return
             }
 
-            self.buildInApp(transitionData, extraParams: params, completion: completion)
-        }
-    }
-
-    private func setupEnvironment(event: ApplicationEvent?) {
-        applicationEvent = event
-        targetingChecker.event = event
-    }
-
-    private func prepareTargetingChecker(for inapps: [InApp]) {
-        inapps.forEach {
-            targetingChecker.prepare(id: $0.id, targeting: $0.targeting)
-        }
-    }
-
-    private func showableInapps(in candidates: ConfigCandidates) -> [InApp] {
-        guard let event = applicationEvent else {
-            return inappFilterService.filterForTrigger(in: candidates)
-        }
-
-        return inappFilterService.filterInappsByOperationForShow(
-            event: event,
-            operationInapps: targetingChecker.context.operationInapps,
-            in: candidates
-        )
-    }
-
-    private func chooseInappToShow(_ inapps: [InApp], completion: @escaping (InAppFormData?) -> Void) {
-        dataFacade.fetchDependencies(model: applicationEvent?.model) {
-            let suitableInapps = self.inappFilterService.filterInappsByTargeting(inapps: inapps, targetingChecker: self.targetingChecker)
-            let suitableIds = Set(suitableInapps.map(\.inAppId))
-            let failedTargetingInappIds = Set(inapps.map(\.id)).subtracting(suitableIds)
-            let tagsByInappId: [String: [String: String]] = inapps.reduce(into: [:]) { result, inapp in
-                guard failedTargetingInappIds.contains(inapp.id), let tags = inapp.tags else { return }
-                result[inapp.id] = tags
-            }
-            self.dataFacade.collectTargetingFailures(forFailedTargetingInappIds: failedTargetingInappIds, tagsByInappId: tagsByInappId)
-
-            if suitableInapps.isEmpty {
-                completion(nil)
-                return
-            }
-
-            self.buildInAppByEvent(inapps: suitableInapps) { formData in
+            self.buildInApp(transitionData, extraParams: params) { formData in
+                finish(formData != nil)
                 completion(formData)
             }
         }
     }
 
-    private func buildInAppByEvent(inapps: [InAppTransitionData],
-                                   completion: @escaping (InAppFormData?) -> Void) {
+    private func transition(forId id: String, in candidates: ConfigCandidates) -> InAppTransitionData? {
+        guard let inapp = inappFilterService.filter(id: id, in: candidates) else { return nil }
+
+        // The variant the page's question picks, so a tap opens what the page offered.
+        guard let variant = inapp.form.variants.first(where: { $0.isOverlayPresentable })
+                ?? inapp.form.variants.first else {
+            Logger.common(message: "[InappMapper] In-app \(id) has no variant left to render.",
+                          level: .error, category: .inAppMessages)
+            return nil
+        }
+
+        return InAppTransitionData(inAppId: inapp.id,
+                                   isPriority: inapp.isPriority,
+                                   delayTime: inapp.delayTime,
+                                   content: variant,
+                                   frequency: inapp.frequency,
+                                   tags: inapp.tags)
+    }
+
+    // MARK: - The pass
+
+    /// One serial queue and one shared checker: a pass holds the queue until `finish`, so a place resolve
+    /// cannot land between a trigger's selection and its catch-up and swap the event under it.
+    /// The buffered failures answer "why was nothing shown", so only a pass that selected nothing sends them.
+    private func runPass(_ label: String,
+                         event: ApplicationEvent?,
+                         _ body: @escaping (_ finish: @escaping (_ selected: Bool) -> Void) -> Void) {
+        processingQueue.async {
+            let group = DispatchGroup()
+            group.enter()
+
+            Logger.common(message: "[InappMapper] Pass for \(label) by event: \(event?.name ?? "start")",
+                          level: .debug, category: .inAppMessages)
+            self.targetingChecker.event = event
+
+            // A missed finish freezes the queue for good, a second one would crash the leave.
+            let finishLock = NSLock()
+            var finished = false
+
+            body { selected in
+                finishLock.lock()
+                let alreadyFinished = finished
+                finished = true
+                finishLock.unlock()
+
+                guard !alreadyFinished else {
+                    assertionFailure("[InappMapper] The pass for \(label) tried to finish twice")
+                    return
+                }
+
+                if selected {
+                    self.dataFacade.discardCollectedFailures()
+                } else {
+                    self.dataFacade.sendCollectedFailures()
+                }
+                group.leave()
+            }
+
+            group.wait()
+        }
+    }
+
+    /// One question to the shared checker, inside a pass only.
+    private struct TargetingQuery {
+
+        let label: String
+
+        /// In-apps the checker learns about before the check — what to fetch, who listens to which operation.
+        let prepares: () -> [InApp]
+
+        /// The pass's candidates, decided once the checker has been prepared.
+        let candidates: (PreparationContext) -> [InApp]
+
+        /// Fetches geo/segmentations first; off for a follow-up question whose pass already did.
+        let fetchesDependencies: Bool
+
+        /// A failed fetch becomes a buffered `Inapp.ShowFailure` for every candidate the pass then cut.
+        /// Off for a page's question: what it cut is not reported in this iteration.
+        let collectsFailures: Bool
+
+        let pickVariant: (InApp) -> MindboxFormVariant?
+    }
+
+    private func evaluate(_ query: TargetingQuery,
+                          event: ApplicationEvent?,
+                          completion: @escaping ([InAppTransitionData]) -> Void) {
+        let prepared = query.prepares()
+        prepared.forEach { targetingChecker.prepare(id: $0.id, targeting: $0.targeting) }
+
+        // Narrowed before the fetch: its completion answers on the main queue, where frequency reads have no business.
+        let candidates = query.candidates(targetingChecker.context)
+        let startedAt = Date()
+
+        let check = {
+            let suitable = self.inappFilterService.filterInappsByTargeting(inapps: candidates,
+                                                                           targetingChecker: self.targetingChecker,
+                                                                           pickVariant: query.pickVariant)
+            if query.collectsFailures {
+                self.collectTargetingFailures(among: candidates, suitable: suitable)
+            }
+
+            let ms = Int(Date().timeIntervalSince(startedAt) * 1000)
+            Logger.common(message: """
+            [InappMapper] \(query.label): \(candidates.count) candidate(s), \(suitable.count) targeted, \
+            answered in \(ms) ms.
+            """, level: .debug, category: .inAppMessages)
+
+            completion(suitable)
+        }
+
+        if query.fetchesDependencies {
+            dataFacade.fetchDependencies(model: event?.model, shouldCollectFailures: query.collectsFailures, check)
+        } else {
+            check()
+        }
+    }
+
+    private func collectTargetingFailures(among candidates: [InApp], suitable: [InAppTransitionData]) {
+        let suitableIds = Set(suitable.map(\.inAppId))
+        let failedIds = Set(candidates.map(\.id)).subtracting(suitableIds)
+        let tagsByInappId: [String: [String: String]] = candidates.reduce(into: [:]) { result, inapp in
+            guard failedIds.contains(inapp.id), let tags = inapp.tags else { return }
+            result[inapp.id] = tags
+        }
+        dataFacade.collectTargetingFailures(forFailedTargetingInappIds: failedIds, tagsByInappId: tagsByInappId)
+    }
+
+    // MARK: - Queries
+
+    private static let overlayVariant: (InApp) -> MindboxFormVariant? = { inapp in
+        inapp.form.variants.first(where: { $0.isOverlayPresentable })
+    }
+
+    private func triggerQuery(_ event: ApplicationEvent?, _ candidates: ConfigCandidates) -> TargetingQuery {
+        TargetingQuery(
+            label: "the trigger",
+            prepares: { candidates.renderable },
+            candidates: { context in
+                guard let event = event else {
+                    return self.inappFilterService.filterForTrigger(in: candidates)
+                }
+
+                return self.inappFilterService.filterInappsByOperationForShow(event: event,
+                                                                             operationInapps: context.operationInapps,
+                                                                             in: candidates)
+            },
+            fetchesDependencies: true,
+            collectsFailures: true,
+            pickVariant: Self.overlayVariant
+        )
+    }
+
+    /// The trigger's second question: everyone the event could have targeted, so the funnel hears
+    /// about the in-apps a show would never pick — the A/B pool included.
+    private func catchUpQuery(_ event: ApplicationEvent?, _ candidates: ConfigCandidates) -> TargetingQuery {
+        TargetingQuery(
+            label: "the targeting catch-up",
+            prepares: { [] },
+            candidates: { context in
+                let listening: [InApp]
+                if let event = event {
+                    listening = self.inappFilterService.filterInappsByOperation(event: event,
+                                                                                operationInapps: context.operationInapps,
+                                                                                in: candidates)
+                } else {
+                    listening = candidates.renderable
+                }
+                // Not the direct-call in-apps: vouching for them here would offer every one of them on every start.
+                let triggerable = listening.filter { $0.displayConditions != .directCall }
+                // Not the pure-embedded ones either: their place resolve vouches, twice would double the funnel (in sync with Android).
+                return self.inappFilterService.filterOutNonOverlayInapps(triggerable)
+            },
+            fetchesDependencies: true,
+            collectsFailures: false,
+            pickVariant: Self.overlayVariant
+        )
+    }
+
+    /// Prepares everyone, like the trigger: the session's single segmentation fetch is shaped by whoever
+    /// asks first, and a block that waited for the config asks before the start pass does.
+    private func placeQuery(_ place: String, _ candidates: ConfigCandidates) -> TargetingQuery {
+        TargetingQuery(
+            label: "place '\(place)'",
+            prepares: { candidates.renderable },
+            candidates: { _ in self.inappFilterService.filter(place: place, in: candidates) },
+            fetchesDependencies: true,
+            collectsFailures: true,
+            pickVariant: { $0.form.variants.first { $0.placeSystemName == place } }
+        )
+    }
+
+    /// Everyone the place could have shown — the A/B cut and the spent frequencies in, the direct-call
+    /// in-apps out: the catch-up's rule for one place.
+    private func placeTargetingQuery(_ place: String, _ candidates: ConfigCandidates) -> TargetingQuery {
+        TargetingQuery(
+            label: "targeting at place '\(place)'",
+            prepares: { [] },
+            candidates: { _ in
+                self.inappFilterService.inapps(addressedTo: place, in: candidates)
+                    .filter { $0.displayConditions != .directCall }
+            },
+            fetchesDependencies: false,
+            collectsFailures: false,
+            pickVariant: { $0.form.variants.first { $0.placeSystemName == place } }
+        )
+    }
+
+    /// Fetches like a place resolve — a cold cache may miss the page's deadline, an accepted cost.
+    private func pageQuery(_ ids: [String], _ candidates: ConfigCandidates) -> TargetingQuery {
+        TargetingQuery(
+            label: "a page asking about \(ids.count) in-app(s)",
+            prepares: { candidates.renderable },
+            candidates: { _ in self.inappFilterService.filter(requestedIds: ids, in: candidates) },
+            fetchesDependencies: true,
+            collectsFailures: false,
+            pickVariant: Self.overlayVariant
+        )
+    }
+
+    /// Everyone the page could have drawn — the A/B cut and the spent frequencies in, so an A/B test on an
+    /// in-app the page lists hears from both branches (in sync with Android).
+    private func pageTargetingQuery(_ ids: [String], _ candidates: ConfigCandidates) -> TargetingQuery {
+        TargetingQuery(
+            label: "targeting for the page's \(ids.count) in-app(s)",
+            prepares: { [] },
+            candidates: { _ in self.inappFilterService.inapps(askedAbout: ids, in: candidates) },
+            fetchesDependencies: false,
+            collectsFailures: false,
+            pickVariant: Self.overlayVariant
+        )
+    }
+
+    // MARK: - After the trigger's verdict
+
+    private func buildFirstShowable(_ inapps: [InAppTransitionData],
+                                    event: ApplicationEvent?,
+                                    completion: @escaping (InAppFormData?) -> Void) {
+        guard !inapps.isEmpty else {
+            completion(nil)
+            return
+        }
+
         var formData: InAppFormData?
 
         DispatchQueue.global().async {
-            let operation = self.getOperation()
+            let operation = Self.operation(from: event)
             for inapp in inapps where formData == nil {
-                formData = self.makeFormData(inapp, extraParams: nil, operation: operation)
+                formData = self.formBuilder.makeFormData(inapp, extraParams: nil, operation: operation)
             }
 
             DispatchQueue.main.async { [weak self] in
                 if let id = formData?.inAppId {
                     self?.dataFacade.trackTargeting(id: id, tags: formData?.tags)
-                    self?.$shownInappIDWithHashValue.mutate { $0[id] = self?.getEventHashValue() }
+                    self?.$shownInappIDWithHashValue.mutate { $0[id] = Self.eventHash(event) }
                 }
 
                 completion(formData)
@@ -332,97 +424,72 @@ class InappMapper: InappMapperProtocol {
         }
     }
 
-    /// Blocking by design — callers walk a list and stop at the first buildable in-app. Must not run
-    /// on `processingQueue`: a download wait there would stall every targeting question behind it.
-    ///
-    /// `operation` is the caller's to name: this runs outside the pass lock, so reading the shared
-    /// event here could pick up a later pass's.
-    private func makeFormData(_ inapp: InAppTransitionData,
-                              extraParams: [String: JSONValue]?,
-                              operation: (name: String, body: String)?) -> InAppFormData? {
-        Logger.common(message: "[InappMapper] Starting in-app processing. [ID]: \(inapp.inAppId)", level: .debug, category: .inAppMessages)
+    private func vouchCatchUp(_ suitable: [InAppTransitionData], event: ApplicationEvent?) {
+        Logger.common(message: "[InappMapper] TR | Targeting catch-up for event \(event?.name ?? "start"): \(suitable.map(\.inAppId))",
+                      level: .debug, category: .inAppMessages)
 
-        if case .modal(let modal) = inapp.content,
-           modal.content.background.layers.contains(where: { $0.layerType == .webview }) {
-            return InAppFormData(inAppId: inapp.inAppId,
-                                 isPriority: inapp.isPriority,
-                                 delayTime: inapp.delayTime,
-                                 imagesDict: [:],
-                                 firstImageValue: "",
-                                 content: inapp.content,
-                                 frequency: inapp.frequency,
-                                 tags: inapp.tags,
-                                 operation: operation,
-                                 extraParams: extraParams)
+        let hash = Self.eventHash(event)
+        for inapp in suitable where shownInappIDWithHashValue[inapp.inAppId] != hash {
+            dataFacade.trackTargeting(id: inapp.inAppId, tags: inapp.tags)
         }
+    }
 
-        let urlExtractorService = DI.injectOrFail(VariantImageUrlExtractorServiceProtocol.self)
-        let imageValues = urlExtractorService.extractImageURL(from: inapp.content)
-
-        let group = DispatchGroup()
-        let imageDictQueue = DispatchQueue(label: "com.mindbox.imagedict.queue", attributes: .concurrent)
-        var imageDict: [String: UIImage] = [:]
-        var gotError = false
-
-        for imageValue in imageValues {
-            group.enter()
-            Logger.common(message: "[InappMapper] Initiating the process of image loading from the URL: \(imageValue)", level: .debug, category: .inAppMessages)
-            dataFacade.downloadImage(withUrl: imageValue, inappId: inapp.inAppId, tags: inapp.tags) { result in
-                defer {
-                    group.leave()
-                }
-
-                switch result {
-                case .success(let image):
-                    imageDictQueue.async(flags: .barrier) {
-                        imageDict[imageValue] = image
-                    }
-                case .failure:
-                    gotError = true
-                }
+    /// Everyone the place could have shown hears its `Inapp.Targeting`: the losers once per session,
+    /// the winner by the place's slot — showing another in-app and coming back is a new offer.
+    private func vouch(_ targeted: [InAppTransitionData], winner: InAppTransitionData?, at place: String) {
+        for inapp in targeted {
+            guard inapp.inAppId == winner?.inAppId else {
+                vouchOncePerSession(for: [inapp])
+                continue
             }
-        }
 
-        group.wait()
-
-        return imageDictQueue.sync {
-            guard !imageDict.isEmpty, !gotError else { return nil }
-
-            return InAppFormData(inAppId: inapp.inAppId,
-                                 isPriority: inapp.isPriority,
-                                 delayTime: inapp.delayTime,
-                                 imagesDict: imageDict,
-                                 firstImageValue: imageValues.first ?? "",
-                                 content: inapp.content,
-                                 frequency: inapp.frequency,
-                                 tags: inapp.tags,
-                                 operation: operation,
-                                 extraParams: extraParams)
-        }
-    }
-
-    private func buildInApp(_ inapp: InAppTransitionData,
-                            extraParams: [String: JSONValue],
-                            completion: @escaping (InAppFormData?) -> Void) {
-        DispatchQueue.global().async {
-            let formData = self.makeFormData(inapp, extraParams: extraParams, operation: nil)
-
-            DispatchQueue.main.async {
-                completion(formData)
+            guard SessionTemporaryStorage.shared.ledger.placeTargetedInappId[place] != inapp.inAppId else {
+                Logger.common(message: "[InappMapper] In-app \(inapp.inAppId) is still what place '\(place)' vouched for last, no second Inapp.Targeting",
+                              level: .debug, category: .inAppMessages)
+                continue
             }
+
+            SessionTemporaryStorage.shared.$ledger.mutate {
+                $0.placeTargetedInappId[place] = inapp.inAppId
+                $0.vouchedInappIds.insert(inapp.inAppId)
+            }
+            dataFacade.trackTargeting(id: inapp.inAppId, tags: inapp.tags)
         }
     }
 
-    private func getEventHashValue() -> Int {
-        return applicationEvent?.hashValue ?? InAppMessageTriggerEvent.start.hashValue
+    /// Once per session per block and in-app: the same in-app offered by another block is a new offer.
+    private func vouchOffers(_ offered: [InAppTransitionData], by blockInappId: String) {
+        for inapp in offered {
+            let offer = BlockOffer(blockInappId: blockInappId, inappId: inapp.inAppId)
+            guard !SessionTemporaryStorage.shared.ledger.vouchedBlockOffers.contains(offer) else { continue }
+
+            SessionTemporaryStorage.shared.$ledger.mutate { $0.vouchedBlockOffers.insert(offer) }
+            dataFacade.trackTargeting(id: inapp.inAppId, tags: inapp.tags)
+        }
     }
 
-    private func getOperation() -> (name: String, body: String)? {
-        guard let event = applicationEvent else { return nil }
+    /// The losers at a place: their resolves repeat without offering anything new, hence once per session.
+    private func vouchOncePerSession(for inapps: [InAppTransitionData]) {
+        for inapp in inapps {
+            guard !SessionTemporaryStorage.shared.ledger.vouchedInappIds.contains(inapp.inAppId) else {
+                Logger.common(message: "[InappMapper] In-app \(inapp.inAppId) was already vouched for in this session, no second Inapp.Targeting",
+                              level: .debug, category: .inAppMessages)
+                continue
+            }
 
-        let name = event.name
+            SessionTemporaryStorage.shared.$ledger.mutate { $0.vouchedInappIds.insert(inapp.inAppId) }
+            self.dataFacade.trackTargeting(id: inapp.inAppId, tags: inapp.tags)
+        }
+    }
+
+    private static func eventHash(_ event: ApplicationEvent?) -> Int {
+        event?.hashValue ?? InAppMessageTriggerEvent.start.hashValue
+    }
+
+    private static func operation(from event: ApplicationEvent?) -> (name: String, body: String)? {
+        guard let event = event else { return nil }
+
         let body: String
-
         if let model = event.model,
            let data = try? JSONEncoder().encode(model),
            let jsonString = String(data: data, encoding: .utf8) {
@@ -431,45 +498,20 @@ class InappMapper: InappMapperProtocol {
             body = "{}"
         }
 
-        return (name: name, body: body)
+        return (name: event.name, body: body)
     }
 
-    private func sendRemainingInappsTargeting(_ candidates: ConfigCandidates, _ completion: @escaping () -> Void) {
-        self.dataFacade.fetchDependencies(model: applicationEvent?.model, shouldCollectFailures: false) {
-            let inapps: [InApp]
-            if let event = self.applicationEvent {
-                inapps = self.inappFilterService.filterInappsByOperation(
-                    event: event,
-                    operationInapps: self.targetingChecker.context.operationInapps,
-                    in: candidates
-                )
-            } else {
-                inapps = candidates.renderable
-            }
-            // A direct-call in-app answers no trigger, so the catch-up does not vouch for it either —
-            // otherwise every start would pump the story funnel with every user.
-            let triggerable = inapps.filter { $0.displayConditions != .directCall }
-            // A pure-embedded in-app is vouched by its place resolve — speaking here too would double
-            // the funnel. A mixed form stays: the catch-up covers its overlay half (in sync with Android).
-            let catchUpCandidates = self.inappFilterService.filterOutNonOverlayInapps(triggerable)
-            let suitableInapps = self.inappFilterService.filterInappsByTargeting(inapps: catchUpCandidates, targetingChecker: self.targetingChecker)
+    // MARK: - Building the form
 
-            let logMessage = """
-            [InappMapper] TR | Initiating processing of remaining in-app targeting requests.
-                 Full list of in-app messages: \(candidates.renderable.map { $0.id })
-                 Saved event for targeting: \(self.applicationEvent?.name ?? "None")
-            """
-            Logger.common(message: logMessage, level: .debug, category: .inAppMessages)
+    private func buildInApp(_ inapp: InAppTransitionData,
+                            extraParams: [String: JSONValue],
+                            completion: @escaping (InAppFormData?) -> Void) {
+        DispatchQueue.global().async {
+            let formData = self.formBuilder.makeFormData(inapp, extraParams: extraParams, operation: nil)
 
-            for inapp in suitableInapps {
-                if self.shownInappIDWithHashValue[inapp.inAppId] != self.getEventHashValue(),
-                   let inapp = candidates.renderable.first(where: { $0.id == inapp.inAppId }),
-                    self.targetingChecker.check(targeting: inapp.targeting) {
-                       self.dataFacade.trackTargeting(id: inapp.id, tags: inapp.tags)
-                }
+            DispatchQueue.main.async {
+                completion(formData)
             }
-            
-            completion()
         }
     }
 }
