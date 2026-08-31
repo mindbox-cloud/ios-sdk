@@ -65,6 +65,10 @@ final class EmbeddedBlockWebViewProvider {
     /// The selection's part of `timeToDisplay`; the page's part runs on `presentationStopwatch`.
     private var processingDuration: TimeInterval = 0
 
+    /// `timeToDisplay` frozen at the moment the page drew: a Show sent on a later return reports
+    /// the render, not the time nobody was looking.
+    private var renderedElapsed: TimeInterval?
+
     private var presentationStopwatch: ForegroundStopwatch
 
     private let makeStopwatch: () -> ForegroundStopwatch
@@ -301,6 +305,7 @@ final class EmbeddedBlockWebViewProvider {
         didReportShownContent = false
         self.processingDuration = processingDuration
         presentationStopwatch = makeStopwatch()
+        renderedElapsed = nil
 
         let page = makePage(fresh)
         page.isUserPresent = true
@@ -518,6 +523,7 @@ final class EmbeddedBlockWebViewProvider {
 
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': page rendered \(count) item(s)", category: .embeddedBlocks)
         didReportShownContent = true
+        renderedElapsed = processingDuration + presentationStopwatch.elapsed
         settle(.ready)
 
         guard isStarted else { return }
@@ -543,7 +549,7 @@ final class EmbeddedBlockWebViewProvider {
 
         didAccountForShow = true
 
-        let timeToDisplay = processingDuration + presentationStopwatch.elapsed
+        let timeToDisplay = renderedElapsed ?? (processingDuration + presentationStopwatch.elapsed)
         presentationStopwatch.stop()
 
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': in-app \(content.inAppId) is shown, timeToDisplay=\(timeToDisplay.toTimeSpan())",
