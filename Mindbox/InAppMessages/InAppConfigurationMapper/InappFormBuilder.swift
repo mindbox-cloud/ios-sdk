@@ -61,7 +61,9 @@ struct InappFormBuilder {
                         imageDict[imageValue] = image
                     }
                 case .failure:
-                    gotError = true
+                    imageDictQueue.async(flags: .barrier) {
+                        gotError = true
+                    }
                 }
             }
         }
