@@ -61,13 +61,12 @@ final class InappShowAccountant: InappShowAccounting {
     }
 
     func recordBlockShow(_ show: InappShow, at place: String) {
-        guard SessionTemporaryStorage.shared.ledger.placeShownInappId[place] != show.inAppId else {
+        guard SessionTemporaryStorage.shared.$ledger.mutate({ $0.recordShow(show.inAppId, at: place) }) else {
             Logger.common(message: "[InappShowAccountant] Place '\(place)' shows in-app \(show.inAppId) again — nothing new to account for",
                           level: .debug, category: .inAppMessages)
             return
         }
 
-        SessionTemporaryStorage.shared.$ledger.mutate { $0.placeShownInappId[place] = show.inAppId }
         recordShow(show)
     }
 }

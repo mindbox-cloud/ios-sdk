@@ -43,3 +43,37 @@ struct InappSessionLedger: Equatable {
     /// The in-app each place showed last — a block's show is accounted when this changes.
     var placeShownInappId: [String: String] = [:]
 }
+
+// Ask-and-record in one step, each meant to run inside a single `$ledger.mutate`: callers live on
+// different queues, and a check split from its write can straddle the session reset.
+extension InappSessionLedger {
+
+    /// True when the place's slot moves to this in-app; the winner is vouched for along the way.
+    mutating func vouchWinner(_ inappId: String, at place: String) -> Bool {
+        guard placeTargetedInappId[place] != inappId else { return false }
+
+        placeTargetedInappId[place] = inappId
+        vouchedInappIds.insert(inappId)
+        return true
+    }
+
+    mutating func vouch(_ inappId: String) -> Bool {
+        vouchedInappIds.insert(inappId).inserted
+    }
+
+    mutating func vouchOffer(_ offer: BlockOffer) -> Bool {
+        vouchedBlockOffers.insert(offer).inserted
+    }
+
+    /// True when the place shows something other than what it showed last.
+    mutating func recordShow(_ inappId: String, at place: String) -> Bool {
+        guard placeShownInappId[place] != inappId else { return false }
+
+        placeShownInappId[place] = inappId
+        return true
+    }
+
+    mutating func recordUnanswered(_ place: String) -> Bool {
+        placesReportedUnanswered.insert(place).inserted
+    }
+}

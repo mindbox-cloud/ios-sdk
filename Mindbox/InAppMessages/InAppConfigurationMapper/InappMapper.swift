@@ -443,16 +443,12 @@ class InappMapper: InappMapperProtocol {
                 continue
             }
 
-            guard SessionTemporaryStorage.shared.ledger.placeTargetedInappId[place] != inapp.inAppId else {
+            guard SessionTemporaryStorage.shared.$ledger.mutate({ $0.vouchWinner(inapp.inAppId, at: place) }) else {
                 Logger.common(message: "[InappMapper] In-app \(inapp.inAppId) is still what place '\(place)' vouched for last, no second Inapp.Targeting",
                               level: .debug, category: .inAppMessages)
                 continue
             }
 
-            SessionTemporaryStorage.shared.$ledger.mutate {
-                $0.placeTargetedInappId[place] = inapp.inAppId
-                $0.vouchedInappIds.insert(inapp.inAppId)
-            }
             dataFacade.trackTargeting(id: inapp.inAppId, tags: inapp.tags)
         }
     }
@@ -461,9 +457,8 @@ class InappMapper: InappMapperProtocol {
     private func vouchOffers(_ offered: [InAppTransitionData], by blockInappId: String) {
         for inapp in offered {
             let offer = BlockOffer(blockInappId: blockInappId, inappId: inapp.inAppId)
-            guard !SessionTemporaryStorage.shared.ledger.vouchedBlockOffers.contains(offer) else { continue }
+            guard SessionTemporaryStorage.shared.$ledger.mutate({ $0.vouchOffer(offer) }) else { continue }
 
-            SessionTemporaryStorage.shared.$ledger.mutate { $0.vouchedBlockOffers.insert(offer) }
             dataFacade.trackTargeting(id: inapp.inAppId, tags: inapp.tags)
         }
     }
@@ -471,13 +466,12 @@ class InappMapper: InappMapperProtocol {
     /// The losers at a place: their resolves repeat without offering anything new, hence once per session.
     private func vouchOncePerSession(for inapps: [InAppTransitionData]) {
         for inapp in inapps {
-            guard !SessionTemporaryStorage.shared.ledger.vouchedInappIds.contains(inapp.inAppId) else {
+            guard SessionTemporaryStorage.shared.$ledger.mutate({ $0.vouch(inapp.inAppId) }) else {
                 Logger.common(message: "[InappMapper] In-app \(inapp.inAppId) was already vouched for in this session, no second Inapp.Targeting",
                               level: .debug, category: .inAppMessages)
                 continue
             }
 
-            SessionTemporaryStorage.shared.$ledger.mutate { $0.vouchedInappIds.insert(inapp.inAppId) }
             self.dataFacade.trackTargeting(id: inapp.inAppId, tags: inapp.tags)
         }
     }
