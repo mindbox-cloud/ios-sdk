@@ -22,20 +22,25 @@ final class EmbeddedBlockWebViewProvider {
 
     var onContentArrived: (() -> Void)?
 
+    var onContentDelayed: (() -> Void)?
+
     var contentView: UIView? { isReady ? page?.view : nil }
 
     var isAwaitingAnswer: Bool { page == nil }
 
+    /// While set, the block keeps loading on purpose: content is coming, the SDK is not silent.
+    private(set) var isAwaitingDelayedContent = false
+
     private let placeSystemName: String
     private let registry: EmbeddedBlockPlaceRegistering
-    private let feed: EmbeddedBlockFeedServing
+    private let inappService: EmbeddedBlockInappServing
     private let makePage: (EmbeddedBlockWebContent) -> EmbeddedBlockPageHosting
 
-    private let recordShow: (String) -> Void
-
-    private let reportShow: (EmbeddedBlockWebContent, String) -> Void
+    private let accounting: InappShowAccounting
 
     private let reportFailure: (EmbeddedBlockWebContent, InAppShowFailureReason, String) -> Void
+
+    private let reportUnansweredWait: (_ waited: TimeInterval) -> Void
 
     private var page: EmbeddedBlockPageHosting?
 
@@ -53,52 +58,58 @@ final class EmbeddedBlockWebViewProvider {
 
     private var didAccountForShow = false
 
-    private var attemptStopwatch = ForegroundStopwatch()
+    /// The page has drawn something and nothing has been asked of it since. A stray repeat must not
+    /// un-show a shown block; a rebuild and a data push both invite a fresh report.
+    private var didReportShownContent = false
+
+    /// The selection's part of `timeToDisplay`; the page's part runs on `presentationStopwatch`.
+    private var processingDuration: TimeInterval = 0
+
+    /// `timeToDisplay` frozen at the moment the page drew: a Show sent on a later return reports
+    /// the render, not the time nobody was looking.
+    private var renderedElapsed: TimeInterval?
+
+    private var presentationStopwatch: ForegroundStopwatch
+
+    private let makeStopwatch: () -> ForegroundStopwatch
 
     private let scheduleAckTimeout: EmbeddedBlockWaitScheduling
-
-    private let now: () -> TimeInterval
 
     private var dataPushAck: DispatchWorkItem?
 
     private var isAwaitingDataPushAck = false
 
-    private var ackConsumed: TimeInterval = 0
-
-    private var ackResumedAt: TimeInterval?
-
-    private var ackRemaining: TimeInterval {
-        max(0, TimeInterval(Constants.EmbeddedBlock.readyTimeoutSeconds) - ackConsumed)
-    }
+    private var ackBudget: EmbeddedBlockAckBudget
 
     private var pendingFailureReport: (content: EmbeddedBlockWebContent,
                                        reason: InAppShowFailureReason,
                                        details: String)?
 
-    private var renderedElapsed: TimeInterval?
-
-    private var pendingResolution: EmbeddedBlockResolution?
+    private var pendingResolution: (resolution: EmbeddedBlockResolution, processingDuration: TimeInterval)?
 
     init(placeSystemName: String,
          registry: EmbeddedBlockPlaceRegistering,
-         feed: EmbeddedBlockFeedServing,
+         inappService: EmbeddedBlockInappServing,
          makePage: @escaping (EmbeddedBlockWebContent) -> EmbeddedBlockPageHosting,
-         recordShow: @escaping (String) -> Void,
-         reportShow: @escaping (EmbeddedBlockWebContent, String) -> Void,
+         accounting: InappShowAccounting,
          reportFailure: @escaping (EmbeddedBlockWebContent, InAppShowFailureReason, String) -> Void,
+         reportUnansweredWait: @escaping (_ waited: TimeInterval) -> Void,
          scheduleAckTimeout: @escaping EmbeddedBlockWaitScheduling = { delay, work in
              DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
          },
+         makeStopwatch: @escaping () -> ForegroundStopwatch = { ForegroundStopwatch() },
          now: @escaping () -> TimeInterval = { CACurrentMediaTime() }) {
         self.placeSystemName = placeSystemName
         self.registry = registry
-        self.feed = feed
+        self.inappService = inappService
         self.makePage = makePage
-        self.recordShow = recordShow
-        self.reportShow = reportShow
+        self.accounting = accounting
         self.reportFailure = reportFailure
+        self.reportUnansweredWait = reportUnansweredWait
         self.scheduleAckTimeout = scheduleAckTimeout
-        self.now = now
+        self.makeStopwatch = makeStopwatch
+        self.presentationStopwatch = makeStopwatch()
+        self.ackBudget = EmbeddedBlockAckBudget(now: now)
 
         registry.register(self, place: placeSystemName)
     }
@@ -124,7 +135,7 @@ final class EmbeddedBlockWebViewProvider {
             }
 
             if let pending = pending {
-                apply(pending)
+                apply(pending.resolution, processingDuration: pending.processingDuration)
             }
 
             rearmDataPushAckIfAwaited()
@@ -133,7 +144,7 @@ final class EmbeddedBlockWebViewProvider {
         }
 
         if let pending = pending {
-            apply(pending)
+            apply(pending.resolution, processingDuration: pending.processingDuration)
             askThePlaceAgain()
             return
         }
@@ -188,7 +199,7 @@ final class EmbeddedBlockWebViewProvider {
     private func beginAttempt() {
         onStateChange?(.loading)
         outcome = .loading
-        attemptStopwatch = ForegroundStopwatch()
+        isAwaitingDelayedContent = false
 
         if page != nil {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the page from the previous attempt cannot be resumed, dropping it",
@@ -201,13 +212,15 @@ final class EmbeddedBlockWebViewProvider {
 
     // MARK: - The registry's answer
 
-    func apply(_ resolution: EmbeddedBlockResolution) {
+    func apply(_ resolution: EmbeddedBlockResolution, processingDuration: TimeInterval) {
         guard isStarted else {
             if isPaused {
-                pendingResolution = resolution
+                pendingResolution = (resolution, processingDuration)
             }
             return
         }
+
+        isAwaitingDelayedContent = false
 
         switch resolution {
         case .empty:
@@ -219,45 +232,73 @@ final class EmbeddedBlockWebViewProvider {
             onStateChange?(.empty)
 
         case .content(let fresh):
-            applyContent(fresh)
+            applyContent(fresh, processingDuration: processingDuration)
         }
     }
 
-    private func applyContent(_ fresh: EmbeddedBlockWebContent) {
-        if let current = content, let page = page, outcome != .failed {
-            // A collapsed page is deliberately not deduplicated: for it the same answer is news —
-            // re-sent data is what makes the page re-report itself and revive.
-            if fresh == current, outcome == .ready || outcome == .loading {
+    func contentIsDelayed() {
+        guard isStarted else { return }
+
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': content is coming after its delay — waiting",
+                      category: .embeddedBlocks)
+        isAwaitingDelayedContent = true
+        onContentDelayed?()
+    }
+
+    private func applyContent(_ fresh: EmbeddedBlockWebContent, processingDuration: TimeInterval) {
+        // Only a block that shows something is talked to; one that shows nothing is rebuilt. A page
+        // confirms a data push and stays exactly as it was, so a collapsed block told about its content
+        // would sit waiting for a report that never comes. Rebuilding revives it, in sync with Android.
+        if let current = content, let page = page, isAttemptAlive {
+            if fresh == current {
                 Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the place resolved to the same content — nothing to change",
                               category: .embeddedBlocks)
                 return
             }
 
             if fresh.isSamePage(as: current) {
+                content = fresh
+                guard fresh.params != current.params else {
+                    Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': same page, only its frequency or tags moved — refreshing the snapshot, nothing to tell the page",
+                                  category: .embeddedBlocks)
+                    return
+                }
+
                 Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': same page, new data — telling the page",
                               category: .embeddedBlocks)
-                content = fresh
+                // The stopwatch is deliberately not restarted: a re-render after a data push cannot
+                // account a show anyway (didAccountForShow holds), so its time goes nowhere.
+                didReportShownContent = false
                 page.sendInitData(params: fresh.params)
                 armDataPushAck()
                 return
             }
         }
 
-        let reason = page == nil ? "building its page" : "the place points at another page — rebuilding it"
-        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': \(reason)", category: .embeddedBlocks)
-        buildPage(with: fresh)
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': \(rebuildReason)", category: .embeddedBlocks)
+        buildPage(with: fresh, processingDuration: processingDuration)
     }
 
-    private func buildPage(with fresh: EmbeddedBlockWebContent) {
+    private var rebuildReason: String {
+        guard page != nil else { return "building its page" }
+
+        return isAttemptAlive
+            ? "the place points at another page — rebuilding it"
+            : "nothing is shown here — rebuilding its page to revive it"
+    }
+
+    private func buildPage(with fresh: EmbeddedBlockWebContent, processingDuration: TimeInterval) {
         dropPage()
 
         if outcome != .loading {
             onStateChange?(.loading)
-            attemptStopwatch = ForegroundStopwatch()
         }
         outcome = .loading
         loadGeneration += 1
         didAccountForShow = false
+        didReportShownContent = false
+        self.processingDuration = processingDuration
+        presentationStopwatch = makeStopwatch()
         renderedElapsed = nil
 
         let page = makePage(fresh)
@@ -291,12 +332,7 @@ final class EmbeddedBlockWebViewProvider {
     /// Detached from us first, so that its late messages do not end up in the new attempt.
     private func dropPage() {
         cancelDataPushAck()
-        page?.onContentRendered = nil
-        page?.onUnreadableContentReport = nil
-        page?.onShowableQuestion = nil
-        page?.onShowInAppRequest = nil
-        page?.onDataPushConfirmed = nil
-        page?.onLoadFailure = nil
+        page?.detachCallbacks()
         page?.cancel()
         page = nil
         content = nil
@@ -319,41 +355,37 @@ final class EmbeddedBlockWebViewProvider {
             guard let self, self.isStarted, self.loadGeneration == generation else { return }
 
             self.dataPushAck = nil
-            self.ackResumedAt = nil
-            self.ackConsumed = TimeInterval(Constants.EmbeddedBlock.readyTimeoutSeconds)
+            self.ackBudget.exhaust()
             self.isAwaitingDataPushAck = false
 
             guard let content = self.content else { return }
 
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the page never confirmed the data push — rebuilding it",
                           level: .error, category: .embeddedBlocks)
-            self.buildPage(with: content)
+            self.buildPage(with: content, processingDuration: self.processingDuration)
         }
 
-        ackResumedAt = now()
+        ackBudget.resume()
         dataPushAck = work
-        scheduleAckTimeout(ackRemaining, work)
+        scheduleAckTimeout(ackBudget.remaining, work)
     }
 
     private func suspendDataPushAck() {
-        if let ackResumedAt {
-            ackConsumed += max(0, now() - ackResumedAt)
-            self.ackResumedAt = nil
-        }
+        ackBudget.suspend()
         dataPushAck?.cancel()
         dataPushAck = nil
     }
 
     private func cancelDataPushAck() {
         suspendDataPushAck()
-        ackConsumed = 0
+        ackBudget.reset()
         isAwaitingDataPushAck = false
     }
 
     private func rearmDataPushAckIfAwaited() {
         guard isAwaitingDataPushAck else { return }
 
-        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': back on screen with a data push still unconfirmed — waiting out the remaining \(ackRemaining)s",
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': back on screen with a data push still unconfirmed — waiting out the remaining \(ackBudget.remaining)s",
                       category: .embeddedBlocks)
         resumeDataPushAck()
     }
@@ -387,6 +419,20 @@ final class EmbeddedBlockWebViewProvider {
 
     func reportPageTimedOut() {
         report(.presentationFailed, "The block's page did not report itself in time")
+    }
+
+    /// The SDK never answered within the block's budget — a failure with no in-app to pin it on, once
+    /// per place per session. Any answer, "nothing" included, would have disarmed the budget instead.
+    func reportAnswerTimedOut(waited: TimeInterval) {
+        guard SessionTemporaryStorage.shared.$ledger.mutate({ $0.recordUnanswered(placeSystemName) }) else {
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the SDK stayed silent again this session — already reported",
+                          category: .embeddedBlocks)
+            return
+        }
+
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the SDK never answered within \(waited.toTimeSpan()) — reporting a failure without an in-app",
+                      level: .error, category: .embeddedBlocks)
+        reportUnansweredWait(waited)
     }
 
     private func report(_ reason: InAppShowFailureReason, _ details: String) {
@@ -430,32 +476,38 @@ final class EmbeddedBlockWebViewProvider {
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': showing in-app \(inappId) with \(params.count) param(s)",
                       category: .embeddedBlocks)
 
-        feed.showInapp(id: inappId, params: params)
+        inappService.showInapp(id: inappId, params: params)
     }
 
     /// A question shows nothing, so it is answered for as long as the block is running — including
-    /// while it is still loading, which is exactly when a feed asks.
+    /// while it is still loading, which is exactly when a page asks.
     private func answerShowableQuestion(_ ids: [String], completion: @escaping ([String]) -> Void) {
-        guard isStarted else { return }
+        guard isStarted, let content else { return }
 
         let generation = loadGeneration
-        feed.showableInappIds(among: ids) { [weak self] answer in
+        inappService.showableInappIds(among: ids, askedBy: content.inAppId) { [weak self] allowed in
             guard let self, self.isStarted, self.loadGeneration == generation else { return }
 
-            completion(answer.inappIds)
-            answer.vouch()
+            completion(allowed)
         }
     }
 
-    private func applyContentRendered(_ renderedCount: Int) {
-        guard renderedCount > 0 else {
+    private func applyContentRendered(_ count: Int) {
+        guard !didReportShownContent else {
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the page reported itself again with nothing asked of it — ignoring",
+                          category: .embeddedBlocks)
+            return
+        }
+
+        guard count > 0 else {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': page rendered nothing", category: .embeddedBlocks)
             settle(.empty)
             return
         }
 
-        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': page rendered \(renderedCount) item(s)", category: .embeddedBlocks)
-        renderedElapsed = attemptStopwatch.elapsed
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': page rendered \(count) item(s)", category: .embeddedBlocks)
+        didReportShownContent = true
+        renderedElapsed = processingDuration + presentationStopwatch.elapsed
         settle(.ready)
 
         guard isStarted else { return }
@@ -464,43 +516,33 @@ final class EmbeddedBlockWebViewProvider {
     }
 
     private func handleUnreadableContentReport() {
+        guard !didReportShownContent else {
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the page repeated contentRendered without a readable count — ignoring, the block is already shown",
+                          category: .embeddedBlocks)
+            return
+        }
+
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': contentRendered without a readable count, treating as broken",
                       level: .error, category: .embeddedBlocks)
         settle(.failed)
         report(.presentationFailed, "The block's page reported contentRendered without a readable count")
     }
 
-    /// Blocks arrive `unlimited` by contract, so the backend is told even when the frequency writes
-    /// no history. The cooldown between overlay shows is deliberately left alone — a block interrupts nothing.
     private func accountForShow() {
         guard let content = content, !didAccountForShow else { return }
 
         didAccountForShow = true
 
-        let timeToDisplay = (renderedElapsed ?? attemptStopwatch.elapsed).toTimeSpan()
-        attemptStopwatch.stop()
+        let timeToDisplay = renderedElapsed ?? (processingDuration + presentationStopwatch.elapsed)
+        presentationStopwatch.stop()
 
-        // Deduplicated per session by the in-app, in sync with Android: a page rebuilt within a
-        // session re-draws what the user already saw.
-        if SessionTemporaryStorage.shared.blockShowsReportedInSession.contains(content.inAppId) {
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': in-app \(content.inAppId) is shown again this session — the event was already reported",
-                          category: .embeddedBlocks)
-        } else {
-            SessionTemporaryStorage.shared.$blockShowsReportedInSession.mutate { $0.insert(content.inAppId) }
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': in-app \(content.inAppId) is shown, timeToDisplay=\(timeToDisplay)",
-                          category: .embeddedBlocks)
-            reportShow(content, timeToDisplay)
-        }
-
-        guard InappFrequency.countsShows(content.frequency) else {
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': in-app \(content.inAppId) is shown without a limit — nothing to count",
-                          category: .embeddedBlocks)
-            return
-        }
-
-        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': counting a show of in-app \(content.inAppId)",
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': in-app \(content.inAppId) is shown, timeToDisplay=\(timeToDisplay.toTimeSpan())",
                       category: .embeddedBlocks)
-        recordShow(content.inAppId)
+        accounting.recordBlockShow(InappShow(inAppId: content.inAppId,
+                                             frequency: content.frequency,
+                                             tags: content.tags,
+                                             timeToDisplay: timeToDisplay),
+                                   at: placeSystemName)
     }
 }
 

@@ -48,6 +48,9 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
 
     private enum Constants {
         static let defaultAlphaBackgroundColor: CGFloat = 0.0
+
+        /// Short on purpose: the page is already drawn at `init`; the fade only delays what the user sees.
+        static let revealDuration: TimeInterval = 0.15
     }
 
     private var transparentWebView: TransparentView?
@@ -262,7 +265,7 @@ extension WebViewController: WebViewAction {
         DispatchQueue.main.async {
             if let window = self.windowProvider() {
                 window.isUserInteractionEnabled = true
-                UIView.animate(withDuration: 0.3) {
+                UIView.animate(withDuration: Constants.revealDuration) {
                     window.alpha = 1.0
                 }
                 window.makeKeyAndVisible()

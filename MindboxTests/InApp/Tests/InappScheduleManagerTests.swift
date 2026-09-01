@@ -30,8 +30,7 @@ struct InappScheduleManagerTests {
         scheduleManager = InappScheduleManager(
             presentationManager: presentationManagerMock,
             presentationValidator: DI.injectOrFail(InAppPresentationValidatorProtocol.self),
-            trackingService: trackingServiceMock,
-            tracker: DI.injectOrFail(InAppMessagesTracker.self),
+            accountant: InappShowAccountant(tracker: DI.injectOrFail(InAppMessagesTracker.self), trackingService: trackingServiceMock),
             failureManager: failureManagerMock
         )
 
@@ -43,7 +42,6 @@ struct InappScheduleManagerTests {
     @Test("In-app without delay is presented exactly once and the queue is cleaned up", .tags(.inAppSchedule))
     func scheduleInapp_noDelay_schedulesCorrectly() {
         #expect(scheduleManager.inappsByPresentationTime.isEmpty)
-        #expect(scheduleManager.getDelay(nil) == 0)
 
         let inapp = createInAppFormData(id: "1", isPriority: false, delayTime: nil)
         scheduleManager.scheduleInApp(inapp, processingDuration: 0)
@@ -152,6 +150,33 @@ struct InappScheduleManagerTests {
         }
     }
 
+    @Test("A delayed in-app whose time comes while another is on screen is dropped, closing that one does not show it", .tags(.inAppSchedule))
+    func scheduleInapp_missedMomentBehindAnotherInapp_isDropped() throws {
+        let onScreen = createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02")
+        let late = createInAppFormData(id: "2", isPriority: false, delayTime: "00:00:02")
+        scheduleManager.scheduleInApp(onScreen, processingDuration: 0)
+        let onScreenTime = try #require(scheduleManager.queue.sync { scheduleManager.inappsByPresentationTime.keys.first })
+        scheduleManager.showEligibleInapp(onScreenTime)
+        scheduleManager.queue.sync {
+            #expect(self.presentationManagerMock.receivedInAppUIModel?.inAppId == onScreen.inAppId)
+        }
+
+        scheduleManager.scheduleInApp(late, processingDuration: 0)
+        let lateTime = try #require(scheduleManager.queue.sync { scheduleManager.inappsByPresentationTime.keys.first })
+        scheduleManager.showEligibleInapp(lateTime)
+        scheduleManager.queue.sync {
+            #expect(self.presentationManagerMock.presentCallsCount == 1)
+            #expect(self.scheduleManager.inappsByPresentationTime.isEmpty)
+        }
+
+        presentationManagerMock.dismissActiveInApp()
+
+        scheduleManager.queue.sync {
+            #expect(self.presentationManagerMock.presentCallsCount == 1)
+        }
+        #expect(!SessionTemporaryStorage.shared.isPresentingInAppMessage)
+    }
+
     // MARK: - Records deletion
 
     @Test("Scheduled entries are removed after in-app is shown", .tags(.inAppSchedule))
@@ -180,11 +205,10 @@ struct InappScheduleManagerTests {
         }
     }
 
-    /// The delay keeps the manager's own timer out of the test: with no delay it fires at once and
-    /// clears the failures itself, which races the "not cleared yet" check below.
-    @Test("Eligible in-app cleanup clears buffered failures", .tags(.inAppSchedule))
-    func showEligibleInapp_clearsFailuresAfterCleanup() {
-        let inapp = createInAppFormData(id: "clear-on-show", isPriority: false, delayTime: "00:01:00")
+    /// The delay keeps the manager's own timer out of the test.
+    @Test("Eligible in-app cleanup leaves the failure buffer alone", .tags(.inAppSchedule))
+    func showEligibleInapp_leavesFailuresAlone() {
+        let inapp = createInAppFormData(id: "keep-failures", isPriority: false, delayTime: "00:01:00")
         scheduleManager.scheduleInApp(inapp, processingDuration: 0)
 
         var presentationTime: TimeInterval?
@@ -197,11 +221,10 @@ struct InappScheduleManagerTests {
             return
         }
 
-        #expect(failureManagerMock.clearFailuresCallCount == 0)
         scheduleManager.showEligibleInapp(presentationTime)
 
         scheduleManager.queue.sync {
-            #expect(self.failureManagerMock.clearFailuresCallCount == 1)
+            #expect(self.failureManagerMock.sendFailuresCallCount == 0)
             #expect(self.scheduleManager.inappsByPresentationTime.isEmpty)
         }
     }
@@ -210,8 +233,6 @@ struct InappScheduleManagerTests {
 
     @Test("Invalid delay string falls back to zero and in-app is presented", .tags(.inAppSchedule))
     func scheduleInapp_withInvalidDelayTime_usesDefaultDelay() {
-        #expect(scheduleManager.getDelay("invalid_time") == 0)
-
         let inapp = createInAppFormData(id: "1", isPriority: false, delayTime: "invalid_time")
         scheduleManager.scheduleInApp(inapp, processingDuration: 0)
 
@@ -236,8 +257,6 @@ struct InappScheduleManagerTests {
 
     @Test("Zero delay is treated as immediate and in-app is presented", .tags(.inAppSchedule))
     func scheduleInapp_withZeroDelay_schedulesCorrectly() {
-        #expect(scheduleManager.getDelay("00:00:00") == 0)
-
         let inapp = createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:00")
         scheduleManager.scheduleInApp(inapp, processingDuration: 0)
 
@@ -343,16 +362,16 @@ struct InappScheduleManagerTests {
         }
     }
     
-    @Test("In-app success callback clears buffered failures", .tags(.inAppSchedule))
-    func presentInapp_onPresented_clearsFailures() {
+    @Test("In-app success callback leaves the failure buffer alone", .tags(.inAppSchedule))
+    func presentInapp_onPresented_leavesFailuresAlone() {
         let inapp = createInAppFormData(id: "success-id", isPriority: false, delayTime: nil)
 
         scheduleManager.presentInapp(inapp, stopwatch: ForegroundStopwatch())
         #expect(presentationManagerMock.presentCallsCount == 1)
-        #expect(failureManagerMock.clearFailuresCallCount == 0)
 
         presentationManagerMock.receivedOnPresent?()
-        #expect(failureManagerMock.clearFailuresCallCount == 1)
+        #expect(failureManagerMock.sendFailuresCallCount == 0)
+        #expect(failureManagerMock.addFailureCallCount == 0)
     }
     
     @Test("In-app error callback sends buffered failures", .tags(.inAppSchedule))
@@ -436,14 +455,15 @@ struct InappScheduleManagerTests {
         InappScheduleManager(
             presentationManager: presentationManagerMock,
             presentationValidator: DI.injectOrFail(InAppPresentationValidatorProtocol.self),
-            trackingService: trackingServiceMock,
-            tracker: tracker,
+            accountant: InappShowAccountant(tracker: tracker, trackingService: trackingServiceMock),
             failureManager: failureManagerMock
         )
     }
 
-    private func showNowAndAwaitMainQueue(_ manager: InappScheduleManager, _ inapp: InAppFormData) async {
-        manager.showInAppNow(inapp)
+    private func showNowAndAwaitMainQueue(_ manager: InappScheduleManager,
+                                          _ inapp: InAppFormData,
+                                          processingDuration: TimeInterval = 0) async {
+        manager.showInAppNow(inapp, processingDuration: processingDuration)
         // showInAppNow takes two main-queue turns: close the active overlay, then present.
         for _ in 0..<2 {
             await withCheckedContinuation { continuation in
@@ -516,6 +536,19 @@ struct InappScheduleManagerTests {
 
         #expect(trackerSpy.trackViewCallCount == 1)
         #expect(trackerSpy.trackTargetingCallCount == 0)
+    }
+
+    @Test("A show on request counts the time since the tap into timeToDisplay", .tags(.inAppSchedule))
+    func showInAppNow_countsTheTapsProcessingTime() async throws {
+        let trackerSpy = InAppMessagesTrackerSpyMock()
+        let manager = makeSpiedManager(tracker: trackerSpy)
+        let inapp = createInAppFormData(id: "direct-timed", isPriority: false, delayTime: nil)
+
+        await showNowAndAwaitMainQueue(manager, inapp, processingDuration: 3)
+        presentationManagerMock.receivedOnPresent?()
+
+        let timeToDisplay = try #require(trackerSpy.lastTimeToDisplay)
+        #expect(timeToDisplay.hasPrefix("00:00:03."), "expected at least the 3 s of processing, got \(timeToDisplay)")
     }
 
     @Test("A show on request closes the overlay already on screen", .tags(.inAppSchedule))
@@ -621,8 +654,9 @@ final class InappShowFailureManagerMock: InappShowFailureManagerProtocol {
 
     // @Locked: production calls these from its queues while the test reads from its own context.
     @Locked private(set) var addFailureCallCount = 0
-    @Locked private(set) var clearFailuresCallCount = 0
     @Locked private(set) var sendFailuresCallCount = 0
+    @Locked private(set) var clearFailuresCallCount = 0
+    @Locked private(set) var waitBudgetExceeded: [(place: String, waited: TimeInterval, phase: EmbeddedBlockShowFailure.Phase)] = []
     @Locked private(set) var addFailureCalls: [AddFailureCall] = []
     @Locked private(set) var sentAtOnce: [AddFailureCall] = []
 
@@ -635,11 +669,15 @@ final class InappShowFailureManagerMock: InappShowFailureManagerProtocol {
         sentAtOnce.append(AddFailureCall(inappId: inappId, reason: reason, details: details, tags: tags))
     }
 
+    func sendFailures() {
+        sendFailuresCallCount += 1
+    }
+
     func clearFailures() {
         clearFailuresCallCount += 1
     }
 
-    func sendFailures() {
-        sendFailuresCallCount += 1
+    func sendWaitBudgetExceeded(place: String, waited: TimeInterval, phase: EmbeddedBlockShowFailure.Phase) {
+        waitBudgetExceeded.append((place, waited, phase))
     }
 }

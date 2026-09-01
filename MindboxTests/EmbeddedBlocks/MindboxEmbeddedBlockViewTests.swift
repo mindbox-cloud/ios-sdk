@@ -238,7 +238,8 @@ struct MindboxEmbeddedBlockViewTests {
 
         block.page?.reportRendered(1)
         let content = try #require(block.page?.view)
-        block.page?.reportRendered(0)
+        block.bed.resolver.resolution = .empty
+        block.bed.announceNewConfig()
 
         #expect(content.superview == nil)
     }
@@ -413,7 +414,8 @@ struct MindboxEmbeddedBlockViewTests {
         block.view.setAppearanceObserver { appearance.record($0) }
 
         block.page?.reportRendered(1)
-        block.page?.reportRendered(0)
+        block.bed.resolver.resolution = .empty
+        block.bed.announceNewConfig()
 
         #expect(appearance.values == [.placeholder, .content, .collapsed])
     }
@@ -655,6 +657,43 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(MindboxEmbeddedBlockView.sanitizedTimeout(given, placeSystemName: "block") == effective)
     }
 
+    // MARK: - The place name
+
+    @Test("A place name with surrounding whitespace is normalized at the block's boundary")
+    func paddedPlaceNameIsNormalized() {
+        let bed = EmbeddedBlockTestBed()
+        let factory = EmbeddedBlockContentProviderFactoryMock(provider: bed.provider)
+        // The container is process-global and the mode swap rebuilds it: save and restore both.
+        let savedBuilder = MBInject.buildTestContainer
+        let savedMode = MBInject.mode
+        defer {
+            MBInject.buildTestContainer = savedBuilder
+            MBInject.mode = savedMode
+        }
+        MBInject.buildTestContainer = {
+            let container = MBContainer()
+            container.register(EmbeddedBlockContentProviderMaking.self) { factory }
+            return container
+        }
+        MBInject.mode = .test
+
+        let view = MindboxEmbeddedBlockView(placeSystemName: "  stories \n", height: 120)
+
+        #expect(view.placeSystemName == "stories")
+        #expect(factory.requestedPlaces == ["stories"])
+    }
+
+    @Test("Only the surrounding whitespace goes, the name itself is kept as it is",
+          arguments: [("stories", "stories"),
+                      (" stories ", "stories"),
+                      ("\tstories\n", "stories"),
+                      ("my place", "my place"),
+                      ("Stories", "Stories"),
+                      ("   ", "")])
+    func placeNameNormalizationKeepsTheName(given: String, expected: String) {
+        #expect(MindboxEmbeddedBlockView.normalizedPlaceSystemName(given) == expected)
+    }
+
     @Test("Silent block times out, collapses and reports didFail")
     func silentBlockTimesOut() async {
         let block = BlockFixture()
@@ -741,6 +780,8 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.view.intrinsicContentSize.height == 0)
         #expect(block.view.subviews.isEmpty)
         #expect(delegate.events == [.failed])
+        #expect(block.bed.failureReporter.unansweredWaits == [block.waitBudgetBed.duration])
+        #expect(block.bed.failureReporter.reported.isEmpty)
     }
 
     @Test("A page that was built and stayed silent fails")
@@ -758,6 +799,26 @@ struct MindboxEmbeddedBlockViewTests {
 
         #expect(block.view.subviews.contains(errorView))
         #expect(delegate.events == [.failed])
+        #expect(block.bed.failureReporter.reasons == [.presentationFailed])
+        #expect(block.bed.failureReporter.unansweredWaits.isEmpty)
+    }
+
+    @Test("A delayed answer stands the wait budget down and keeps the placeholder")
+    func delayedAnswerStandsTheBudgetDown() async {
+        let block = BlockFixture(resolution: .content(.delayed()))
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.attachToWindow()
+        await mainQueueTurn()
+
+        #expect(!block.waitBudgetBed.budget.isRunning)
+        #expect(block.view.intrinsicContentSize.height == 120)
+
+        block.expireTimeout()
+        await mainQueueTurn()
+
+        #expect(delegate.events.isEmpty)
+        #expect(block.bed.failureReporter.unansweredWaits.isEmpty)
     }
 
     @Test("The answer restarts the waiting budget")
@@ -774,27 +835,21 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.waitBudgetBed.scheduler.lastDelay == block.waitBudgetBed.duration)
     }
 
-    /// The only test on real main-queue timing: the container builds the budget's duration itself
-    /// and no seam shows it. 50 ms is the answer timeout; the page's own budget is seconds long.
     @Test("A block waits the answer timeout for its answer and the page's own budget for the page")
-    func waitBudgetFollowsTheLoadingPhase() async throws {
-        let awaitingAnswer = RealBudgetBlockFixture(timeout: 0.05)
+    func waitBudgetFollowsTheLoadingPhase() {
+        let awaitingAnswer = OwnBudgetBlockFixture(timeout: 5)
         awaitingAnswer.bed.resolver.isDeferred = true
         awaitingAnswer.attachToWindow()
 
-        try await waitForCollapse(of: awaitingAnswer.view)
-
+        #expect(awaitingAnswer.scheduler.lastDelay == 5)
+        awaitingAnswer.scheduler.fireAll()
         #expect(awaitingAnswer.view.intrinsicContentSize.height == 0)
 
-        let withPage = RealBudgetBlockFixture(timeout: 0.05)
-        let delegate = EmbeddedBlockViewDelegateMock()
-        withPage.view.delegate = delegate
+        let withPage = OwnBudgetBlockFixture(timeout: 5)
         withPage.attachToWindow()
 
-        try await Task.sleep(nanoseconds: 300_000_000)
-
+        #expect(withPage.scheduler.lastDelay == 7)
         #expect(withPage.view.intrinsicContentSize.height == 120)
-        #expect(delegate.events.isEmpty)
     }
 
     @Test("Returning from the background does not arm a timeout outside a window")
@@ -1119,15 +1174,6 @@ struct MindboxEmbeddedBlockViewTests {
             }
         }
     }
-
-    /// Bounded, so a block that never gives up fails the test instead of hanging it.
-    private func waitForCollapse(of view: MindboxEmbeddedBlockView) async throws {
-        for _ in 0..<80 {
-            guard view.intrinsicContentSize.height != 0 else { return }
-
-            try await Task.sleep(nanoseconds: 25_000_000)
-        }
-    }
 }
 
 /// A block with every dependency substituted and a live window: the window must outlive the test,
@@ -1156,7 +1202,7 @@ private final class BlockFixture {
         self.view = MindboxEmbeddedBlockView(placeSystemName: "block-id",
                                              height: height,
                                              contentProvider: bed.provider,
-                                             waitBudget: waitBudgetBed.budget)
+                                             makeWaitBudget: { _, _ in waitBudgetBed.budget })
     }
 
     func attachToWindow() {
@@ -1181,11 +1227,14 @@ private final class BlockFixture {
     }
 }
 
-/// A block on the waiting budget the container builds for itself, counted down by the main queue.
+/// A block on the waiting budget the container builds for itself — its own switch between the answer
+/// timeout and the page's budget — counted down by a test scheduler.
 @MainActor
-private final class RealBudgetBlockFixture {
+private final class OwnBudgetBlockFixture {
 
     let bed: EmbeddedBlockTestBed
+
+    let scheduler: TestScheduler
 
     let view: MindboxEmbeddedBlockView
 
@@ -1193,11 +1242,20 @@ private final class RealBudgetBlockFixture {
 
     init(timeout: TimeInterval) {
         let bed = EmbeddedBlockTestBed()
+        let scheduler = TestScheduler()
         self.bed = bed
+        self.scheduler = scheduler
         self.view = MindboxEmbeddedBlockView(placeSystemName: "block-id",
                                              height: 120,
                                              contentProvider: bed.provider,
-                                             timeout: timeout)
+                                             timeout: timeout,
+                                             makeWaitBudget: { place, duration in
+                                                 EmbeddedBlockWaitBudget(placeSystemName: place,
+                                                                         duration: duration,
+                                                                         now: { bed.clock.now },
+                                                                         notificationCenter: bed.center,
+                                                                         schedule: { scheduler.schedule($0, $1) })
+                                             })
     }
 
     func attachToWindow() {

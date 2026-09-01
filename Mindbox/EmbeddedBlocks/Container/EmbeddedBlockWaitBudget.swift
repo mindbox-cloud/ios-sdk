@@ -33,7 +33,8 @@ final class EmbeddedBlockWaitBudget {
 
     private var workItem: DispatchWorkItem?
 
-    private var consumed: TimeInterval = 0
+    /// Foreground time the current attempt has waited so far.
+    private(set) var consumed: TimeInterval = 0
 
     private var resumedAt: TimeInterval?
 

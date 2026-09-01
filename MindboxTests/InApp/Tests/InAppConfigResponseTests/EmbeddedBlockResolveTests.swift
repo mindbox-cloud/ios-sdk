@@ -32,6 +32,12 @@ struct EmbeddedBlockResolveTests {
         static let operationName = "block.refresh.operation"
         static let segmentStoryId = "99999999-9999-9999-9999-999999999999"
         static let mixedId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+        static let abPlace = "ab-block-place"
+        static let abBlockId = "cccccccc-cccc-cccc-cccc-cccccccccccc"
+        static let directCallBlockId = "dddddddd-dddd-dddd-dddd-dddddddddddd"
+        // The fixture's A/B test shares its salt with the overlay A/B fixture; these devices hash into its first and second branch.
+        static let deviceKeepingAbBlock = "40909d27-4bef-4a8d-9164-6bfcf58ecc76"
+        static let deviceCuttingAbBlock = "b4e0f767-fe8f-4825-9772-f1162f2db52d"
     }
 
     private let mapper: InappMapperProtocol
@@ -56,9 +62,11 @@ struct EmbeddedBlockResolveTests {
         candidates = config.candidates
     }
 
-    private func resolvePlace(_ place: String, trigger: ApplicationEvent? = nil) async -> InAppTransitionData? {
+    private func resolvePlace(_ place: String,
+                              trigger: ApplicationEvent? = nil,
+                              candidates: ConfigCandidates? = nil) async -> InAppTransitionData? {
         await withCheckedContinuation { continuation in
-            mapper.selectInappForPlace(place, trigger: trigger, candidates) { continuation.resume(returning: $0) }
+            mapper.selectInappForPlace(place, trigger: trigger, candidates ?? self.candidates) { continuation.resume(returning: $0) }
         }
     }
 
@@ -68,13 +76,17 @@ struct EmbeddedBlockResolveTests {
         }
     }
 
-    private func showable(_ ids: [String]) async -> [String] {
+    private func showable(_ ids: [String],
+                          askedBy blockInappId: String = Constants.blockId,
+                          candidates: ConfigCandidates? = nil) async -> [String] {
+        await showableInOrder(ids, askedBy: blockInappId, candidates: candidates).sorted()
+    }
+
+    private func showableInOrder(_ ids: [String],
+                                 askedBy blockInappId: String = Constants.blockId,
+                                 candidates: ConfigCandidates? = nil) async -> [String] {
         await withCheckedContinuation { continuation in
-            mapper.getShowableInappIds(ids, candidates) { answer in
-                // Delivering the answer, as a block does, is what sends targeting — the selection does not vouch by itself.
-                answer.vouch()
-                continuation.resume(returning: answer.inappIds.sorted())
-            }
+            mapper.getShowableInappIds(ids, askedBy: blockInappId, candidates ?? self.candidates) { continuation.resume(returning: $0) }
         }
     }
 
@@ -136,14 +148,46 @@ struct EmbeddedBlockResolveTests {
         #expect(vouched.count == 1)
     }
 
-    /// Every delivered answer is a new offer — the rule operation targeting lives by (in sync with Android).
-    @Test("A feed asking again vouches for the same in-apps again")
-    func feedVouchesPerDeliveredAnswer() async {
+    @Test("A page asking again vouches for nothing it was already told about")
+    func pageVouchesOncePerSession() async {
         _ = await showable(everyId)
         _ = await showable(everyId)
 
         let vouched = dataFacade.trackTargetingCalls.filter { $0.id == Constants.unlimitedStoryId }
+        #expect(vouched.count == 1)
+    }
+
+    @Test("Another block asking about the same in-app vouches for it again")
+    func anotherBlockVouchesAgain() async {
+        _ = await showable(everyId, askedBy: Constants.blockId)
+        _ = await showable(everyId, askedBy: Constants.mixedId)
+
+        let vouched = dataFacade.trackTargetingCalls.filter { $0.id == Constants.unlimitedStoryId }
         #expect(vouched.count == 2)
+    }
+
+    @Test("A new session vouches for the page's in-apps again")
+    func newSessionVouchesForThePageAgain() async {
+        _ = await showable(everyId)
+        SessionTemporaryStorage.shared.erase()
+        _ = await showable(everyId)
+
+        let vouched = dataFacade.trackTargetingCalls.filter { $0.id == Constants.unlimitedStoryId }
+        #expect(vouched.count == 2)
+    }
+
+    @Test("An id asked twice is answered twice and vouched for once")
+    func duplicateIdIsMirroredAndVouchedOnce() async {
+        let answer = await showableInOrder([Constants.unlimitedStoryId, Constants.unlimitedStoryId])
+
+        #expect(answer == [Constants.unlimitedStoryId, Constants.unlimitedStoryId])
+        #expect(dataFacade.trackTargetingCalls.filter { $0.id == Constants.unlimitedStoryId }.count == 1)
+    }
+
+    @Test("The answer keeps the order the page asked in, a priority in-app included")
+    func answerKeepsTheAskedOrder() async {
+        #expect(await showableInOrder([Constants.modalId, Constants.unlimitedStoryId]) == [Constants.modalId, Constants.unlimitedStoryId])
+        #expect(await showableInOrder([Constants.unlimitedStoryId, Constants.modalId]) == [Constants.unlimitedStoryId, Constants.modalId])
     }
 
     @Test("A new session vouches for the in-app again")
@@ -164,6 +208,43 @@ struct EmbeddedBlockResolveTests {
         #expect(persistenceStorage.shownDatesByInApp?.isEmpty == true)
         #expect(SessionTemporaryStorage.shared.sessionShownInApps.isEmpty)
         #expect(persistenceStorage.lastInappStateChangeDate == nil)
+    }
+
+    @Test("A place resolve that picked a winner drops the pass's buffered failures, like the overlay's pass")
+    func placeResolveWithWinnerDropsBufferedFailures() async {
+        _ = await resolvePlace(Constants.place)
+
+        #expect(dataFacade.discardCollectedFailuresCalls == 1)
+        #expect(dataFacade.sendCollectedFailuresCalls == 0)
+    }
+
+    @Test("A place resolve that picked nothing sends the pass's buffered failures")
+    func placeResolveWithoutWinnerSendsBufferedFailures() async {
+        _ = await resolvePlace("place-nobody-addresses")
+
+        #expect(dataFacade.sendCollectedFailuresCalls == 1)
+        #expect(dataFacade.discardCollectedFailuresCalls == 0)
+    }
+
+    @Test("A place resolve whose winner the show limits hold back drops the pass's buffered failures too")
+    func placeResolveWithWinnerHeldByBudgetsDropsBufferedFailures() async {
+        spendEveryShowBudget()
+
+        #expect(await resolvePlace(Constants.cappedPlace) == nil)
+        #expect(dataFacade.discardCollectedFailuresCalls == 1)
+        #expect(dataFacade.sendCollectedFailuresCalls == 0)
+    }
+
+    @Test("A place resolve hands the in-apps its targeting cut to the failure collection")
+    func placeResolveCollectsFailuresForTheCut() async {
+        _ = await resolvePlace(Constants.place)
+
+        #expect(dataFacade.collectedTargetingFailureIds == [Set([Constants.operationBlockId])])
+    }
+
+    @Test("A direct-call in-app targeted by an operation stays valid, a direct call still has to open it")
+    func directCallWithOperationTargetingStaysValid() {
+        #expect(candidates.renderable.contains { $0.id == Constants.operationStoryId })
     }
 
     @Test("Spent show limits do not stop an unlimited block")
@@ -187,13 +268,70 @@ struct EmbeddedBlockResolveTests {
         #expect(resolved.inAppId == Constants.cappedBlockId)
     }
 
-    @Test("A block stopped by the show limits is not vouched for")
-    func blockedByBudgetsIsNotVouchedFor() async {
+    @Test("A block stopped by the show limits is still vouched for")
+    func blockedByBudgetsIsStillVouchedFor() async {
         spendEveryShowBudget()
 
-        _ = await resolvePlace(Constants.cappedPlace)
+        #expect(await resolvePlace(Constants.cappedPlace) == nil)
+        #expect(dataFacade.trackTargetingCalls.contains { $0.id == Constants.cappedBlockId })
+    }
 
-        #expect(dataFacade.trackTargetingCalls.contains { $0.id == Constants.cappedBlockId } == false)
+    @Test("Resolving a place vouches for every targeted in-app set up for it, not only the winner")
+    func placeVouchesForTheLosersToo() async throws {
+        let event = ApplicationEvent(name: Constants.operationName, model: nil)
+
+        let resolved = try #require(await resolvePlace(Constants.place, trigger: event))
+
+        #expect(resolved.inAppId == Constants.operationBlockId)
+        #expect(Set(dataFacade.trackTargetingCalls.compactMap(\.id)) == [Constants.operationBlockId, Constants.blockId])
+    }
+
+    @Test("A place in-app spent by its frequency still gets its targeting")
+    func spentPlaceInappIsStillVouchedFor() async {
+        let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+        persistenceStorage.shownDatesByInApp = [Constants.cappedBlockId: [Date()]]
+
+        #expect(await resolvePlace(Constants.cappedPlace) == nil)
+        #expect(dataFacade.trackTargetingCalls.contains { $0.id == Constants.cappedBlockId })
+    }
+
+    @Test("A place in-app the A/B branch cut still gets its targeting")
+    func abCutPlaceInappIsStillVouchedFor() async {
+        let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+        persistenceStorage.deviceUUID = Constants.deviceCuttingAbBlock
+
+        #expect(await resolvePlace(Constants.abPlace, candidates: config.candidates) == nil)
+        #expect(dataFacade.trackTargetingCalls.contains { $0.id == Constants.abBlockId })
+    }
+
+    @Test("In the A/B branch that keeps it, the in-app wins its place")
+    func abKeptPlaceInappWins() async throws {
+        let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+        persistenceStorage.deviceUUID = Constants.deviceKeepingAbBlock
+
+        let resolved = try #require(await resolvePlace(Constants.abPlace, candidates: config.candidates))
+        #expect(resolved.inAppId == Constants.abBlockId)
+    }
+
+    @Test("A direct-call in-app at the place is not vouched for by the resolve")
+    func directCallPlaceInappIsNotVouchedFor() async throws {
+        let resolved = try #require(await resolvePlace(Constants.place))
+
+        #expect(resolved.inAppId == Constants.blockId)
+        #expect(dataFacade.trackTargetingCalls.contains { $0.id == Constants.directCallBlockId } == false)
+    }
+
+    @Test("A place that goes back to an earlier winner vouches for it again")
+    func returningWinnerIsVouchedForAgain() async {
+        let event = ApplicationEvent(name: Constants.operationName, model: nil)
+
+        _ = await resolvePlace(Constants.place)
+        _ = await resolvePlace(Constants.place, trigger: event)
+        _ = await resolvePlace(Constants.place)
+
+        let ids = dataFacade.trackTargetingCalls.compactMap(\.id)
+        #expect(ids.filter { $0 == Constants.blockId }.count == 2)
+        #expect(ids.filter { $0 == Constants.operationBlockId }.count == 1)
     }
 
     private func spendEveryShowBudget() {
@@ -249,15 +387,15 @@ struct EmbeddedBlockResolveTests {
         #expect(await resolveId("44444444-4444-4444-4444-444444444444") == nil)
     }
 
-    // MARK: - What a feed may draw
+    // MARK: - What a page may draw
 
-    @Test("A feed may draw the stories and the modal, but not the block")
-    func feedKeepsDirectCallAndDropsTheBlock() async {
+    @Test("A page may draw the stories and the modal, but not the block")
+    func pageKeepsDirectCallAndDropsTheBlock() async {
         #expect(await showable(everyId) == [Constants.unlimitedStoryId, Constants.modalId, Constants.onceStoryId].sorted())
     }
 
     @Test("A watched unlimited story is still drawn")
-    func feedKeepsAWatchedUnlimitedStory() async {
+    func pageKeepsAWatchedUnlimitedStory() async {
         let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         persistenceStorage.shownDatesByInApp = [Constants.unlimitedStoryId: [Date()]]
 
@@ -265,7 +403,7 @@ struct EmbeddedBlockResolveTests {
     }
 
     @Test("A once story that was already shown is not drawn")
-    func feedDropsASpentOnceStory() async {
+    func pageDropsASpentOnceStory() async {
         let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         persistenceStorage.shownDatesByInApp = [Constants.onceStoryId: [Date()]]
 
@@ -273,12 +411,12 @@ struct EmbeddedBlockResolveTests {
     }
 
     @Test("An id no config knows is not drawn")
-    func feedDropsUnknownId() async {
+    func pageDropsUnknownId() async {
         #expect(await showable(["44444444-4444-4444-4444-444444444444"]).isEmpty)
     }
 
-    @Test("A feed vouches for every story it allows and for nothing it cuts")
-    func feedVouchesForWhatItAllows() async {
+    @Test("A page vouches for what it allows and never for a pure-embedded in-app")
+    func pageVouchesForWhatItAllows() async {
         let allowed = await showable(everyId)
         let vouched = Set(dataFacade.trackTargetingCalls.compactMap(\.id))
 
@@ -286,19 +424,37 @@ struct EmbeddedBlockResolveTests {
         #expect(!vouched.contains(Constants.blockId))
     }
 
-    @Test("A story only an operation targets is not drawn for a feed")
-    func feedDropsAnOperationTargetedStory() async {
-        #expect(await showable([Constants.operationStoryId]).isEmpty)
+    @Test("A story the A/B branch cut is vouched for but left out of the answer")
+    func abCutStoryIsVouchedForButNotDrawn() async {
+        let cut = ConfigCandidates(renderable: candidates.renderable,
+                                   inPool: candidates.inPool.filter { $0.id != Constants.unlimitedStoryId })
+
+        #expect(await showable([Constants.unlimitedStoryId], candidates: cut).isEmpty)
+        #expect(dataFacade.trackTargetingCalls.contains { $0.id == Constants.unlimitedStoryId })
     }
 
-    // MARK: - The feed answers without the network
+    @Test("A spent once story is vouched for but left out of the answer")
+    func spentOnceStoryIsVouchedForButNotDrawn() async {
+        let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+        persistenceStorage.shownDatesByInApp = [Constants.onceStoryId: [Date()]]
 
-    /// The wire contract gives the page three seconds: the feed is answered from what the session already fetched — fail closed, in sync with Android.
-    @Test("A feed's question asks nothing of the network")
-    func feedAsksNothingOfTheNetwork() async {
+        #expect(await showable([Constants.onceStoryId]).isEmpty)
+        #expect(dataFacade.trackTargetingCalls.contains { $0.id == Constants.onceStoryId })
+    }
+
+    @Test("A story only an operation targets is not drawn for a page and not vouched for")
+    func pageDropsAnOperationTargetedStory() async {
+        #expect(await showable([Constants.operationStoryId]).isEmpty)
+        #expect(!dataFacade.trackTargetingCalls.contains { $0.id == Constants.operationStoryId })
+    }
+
+    // MARK: - The page's question and the network
+
+    @Test("A page's question fetches the pass's dependencies like a place resolve")
+    func pageQuestionFetchesLikeAPlace() async {
         _ = await showable(everyId)
 
-        #expect(dataFacade.fetchDependenciesCalls == 0)
+        #expect(dataFacade.fetchDependenciesCalls == 1)
     }
 
     @Test("A place resolve still fetches its dependencies")
@@ -308,14 +464,28 @@ struct EmbeddedBlockResolveTests {
         #expect(dataFacade.fetchDependenciesCalls == 1)
     }
 
-    @Test("A segment story on a cold cache is cut from the feed")
+    @Test("A place resolve prepares every renderable in-app's segmentations, not only its own place's")
+    func placeResolvePreparesEveryRenderableInapp() async {
+        _ = await resolvePlace(Constants.place)
+
+        #expect(dataFacade.targetingChecker.context.segmentInapps.contains(Constants.segmentStoryId))
+    }
+
+    @Test("A page's question prepares every renderable in-app's segmentations, not only the asked ones")
+    func pageQuestionPreparesEveryRenderableInapp() async {
+        _ = await showable([Constants.unlimitedStoryId])
+
+        #expect(dataFacade.targetingChecker.context.segmentInapps.contains(Constants.segmentStoryId))
+    }
+
+    @Test("A segment story is cut when the fetch brings no segmentations")
     func coldCacheCutsASegmentStory() async {
         dataFacade.targetingChecker.checkedSegmentations = nil
 
         #expect(await showable([Constants.segmentStoryId]).isEmpty)
     }
 
-    @Test("A segment story on a warm cache is drawn without a fetch")
+    @Test("A segment story on a warm cache is drawn")
     func warmCacheKeepsASegmentStory() async {
         dataFacade.targetingChecker.checkedSegmentations = [
             .init(segmentation: .init(ids: .init(externalId: "feed-segmentation")),
@@ -323,23 +493,22 @@ struct EmbeddedBlockResolveTests {
         ]
 
         #expect(await showable([Constants.segmentStoryId]) == [Constants.segmentStoryId])
-        #expect(dataFacade.fetchDependenciesCalls == 0)
     }
 
-    @Test("Spent show limits do not shrink a feed's answer")
-    func showLimitsDoNotShrinkTheFeedAnswer() async {
+    @Test("Spent show limits do not shrink a page's answer")
+    func showLimitsDoNotShrinkThePagesAnswer() async {
         spendEveryShowBudget()
 
         #expect(await showable([Constants.unlimitedStoryId]) == [Constants.unlimitedStoryId])
     }
 
     @Test("An empty question gets an empty answer")
-    func feedAnswersNothingToNothing() async {
+    func pageAnswersNothingToNothing() async {
         #expect(await showable([]).isEmpty)
     }
 
-    @Test("Answering a feed writes nothing to the show history")
-    func feedAnswerWritesNothingToShowHistory() async {
+    @Test("Answering a page writes nothing to the show history")
+    func pageAnswerWritesNothingToShowHistory() async {
         _ = await showable(everyId)
 
         let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
@@ -391,8 +560,6 @@ struct EmbeddedBlockResolveTests {
         #expect(formData.inAppId == Constants.onceStoryId)
     }
 
-    /// The feed offers a mixed form because it has an overlay variant; the tap has to open that one
-    /// even though the embedded variant comes first in the config.
     @Test("A tap on a mixed form opens its overlay variant")
     func mixedFormTapOpensTheOverlayVariant() async throws {
         let formData = try #require(await inappToShow(Constants.mixedId))
@@ -409,6 +576,14 @@ struct EmbeddedBlockResolveTests {
     @Test("A block's own id refuses to show over the screen")
     func blockIdDoesNotShowOverTheScreen() async {
         #expect(await inappToShow(Constants.blockId) == nil)
+    }
+
+    @Test("A tap that opens its in-app drops the failure buffer, like a pass that showed")
+    func tapThatShowsDropsTheFailureBuffer() async throws {
+        _ = try #require(await inappToShow(Constants.onceStoryId))
+
+        #expect(dataFacade.discardCollectedFailuresCalls == 1)
+        #expect(dataFacade.sendCollectedFailuresCalls == 0)
     }
 
     // MARK: - The trigger path on the same config
@@ -444,8 +619,8 @@ struct EmbeddedBlockResolveTests {
         #expect(dataFacade.targetingArray.contains(Constants.mixedId))
     }
 
-    @Test("A feed keeps a mixed in-app — its overlay half can be drawn")
-    func feedKeepsAMixedInapp() async {
+    @Test("A page keeps a mixed in-app — its overlay half can be drawn")
+    func pageKeepsAMixedInapp() async {
         #expect(await showable([Constants.mixedId]) == [Constants.mixedId])
     }
 }

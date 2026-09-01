@@ -11,8 +11,15 @@ import MindboxLogger
 
 protocol InappShowFailureManagerProtocol {
     func addFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?)
-    func clearFailures()
+
+    /// The buffer answers "why was nothing shown": a pass that picked nothing sends it, a pass that
+    /// picked something drops it (in sync with Android).
     func sendFailures()
+    func clearFailures()
+
+    /// The SDK never answered a block within its wait budget — a failure with no in-app to pin it on, so
+    /// it names the place instead. Sent at once, past the buffer, like the other block failures.
+    func sendWaitBudgetExceeded(place: String, waited: TimeInterval, phase: EmbeddedBlockShowFailure.Phase)
 
     /// Sends one failure at once, without joining the buffer the selection pass fills.
     ///
@@ -27,8 +34,8 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
     /// Backend payload limit for errorDetails.
     static let errorDetailsLimit = 1000
 
-    private struct InAppShowFailuresBody: Codable {
-        let failures: [InAppShowFailure]
+    private struct InAppShowErrorsBody: Encodable {
+        let errors: [InAppShowError]
     }
 
     private let databaseRepository: DatabaseRepositoryProtocol
@@ -84,7 +91,7 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
                                   tags: featureToggleManager.gatedTags(tags))
 
         queue.async { [self] in
-            guard enqueue([failure]) else { return }
+            guard enqueue([.inapp(failure)]) else { return }
 
             Logger.common(message: "[InappShowFailureManager] Inapp.ShowFailure event sent at once. inappId=\(inappId), reason=\(reason.rawValue)",
                           category: .inAppMessages)
@@ -106,8 +113,8 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
     }
 
     /// Must be called on `queue`.
-    private func enqueue(_ failures: [InAppShowFailure]) -> Bool {
-        let eventBody = InAppShowFailuresBody(failures: failures)
+    private func enqueue(_ errors: [InAppShowError]) -> Bool {
+        let eventBody = InAppShowErrorsBody(errors: errors)
         let event = Event(type: .inAppShowFailureEvent, body: BodyEncoder(encodable: eventBody).body)
 
         do {
@@ -123,12 +130,6 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
         }
     }
 
-    func clearFailures() {
-        queue.async { [self] in
-            failures.removeAll()
-        }
-    }
-    
     func sendFailures() {
         guard featureToggleManager.isFeatureEnabled(.shouldSendInAppShowError) else {
             Logger.common(
@@ -140,7 +141,7 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
         }
         
         queue.async { [self] in
-            guard !failures.isEmpty, enqueue(failures) else {
+            guard !failures.isEmpty, enqueue(failures.map(InAppShowError.inapp)) else {
                 return
             }
 
@@ -150,6 +151,35 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
         }
     }
     
+    func clearFailures() {
+        queue.async { [self] in
+            guard !failures.isEmpty else { return }
+
+            Logger.common(message: "[InappShowFailureManager] Dropping \(failures.count) buffered failure(s): the pass showed something",
+                          level: .debug, category: .inAppMessages)
+            failures.removeAll()
+        }
+    }
+
+    func sendWaitBudgetExceeded(place: String, waited: TimeInterval, phase: EmbeddedBlockShowFailure.Phase) {
+        guard featureToggleManager.isFeatureEnabled(.shouldSendInAppShowError) else {
+            Logger.common(message: "[InappShowFailureManager] sendWaitBudgetExceeded ignored, feature is disabled", category: .inAppMessages)
+            return
+        }
+
+        let failure = EmbeddedBlockShowFailure(placeSystemName: place,
+                                               waited: waited,
+                                               phase: phase,
+                                               dateTimeUtc: Date().toString(withFormat: .utc))
+
+        queue.async { [self] in
+            guard enqueue([.embeddedBlock(failure)]) else { return }
+
+            Logger.common(message: "[InappShowFailureManager] Inapp.ShowFailure event sent for place '\(place)': the SDK stayed silent for \(waited.toTimeSpan()) (\(phase.rawValue))",
+                          category: .inAppMessages)
+        }
+    }
+
     private func makeFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?) -> InAppShowFailure {
         InAppShowFailure(
             inappId: inappId,

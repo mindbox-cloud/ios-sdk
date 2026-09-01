@@ -23,15 +23,15 @@ protocol InappScheduleManagerProtocol {
 
     /// Past the queue and every limit — a direct call is invited, and a tap that does nothing is a
     /// defect. Only `Inapp.Show` goes out: targeting was sent when the selection offered the in-app.
-    func showInAppNow(_ inAppFormData: InAppFormData)
+    /// `processingDuration` is the caller's time since the tap; it counts into `timeToDisplay` like the overlay pass's.
+    func showInAppNow(_ inAppFormData: InAppFormData, processingDuration: TimeInterval)
 }
 
 final class InappScheduleManager: InappScheduleManagerProtocol {
     
     let presentationManager: InAppPresentationManagerProtocol
     let presentationValidator: InAppPresentationValidatorProtocol
-    let trackingService: InAppTrackingServiceProtocol
-    let tracker: InAppMessagesTrackerProtocol
+    let accountant: InappShowAccounting
     let failureManager: InappShowFailureManagerProtocol
     
     let queue = DispatchQueue(label: "com.Mindbox.delayedInAppManager", qos: .userInitiated)
@@ -39,13 +39,11 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
     
     init(presentationManager: InAppPresentationManagerProtocol,
          presentationValidator: InAppPresentationValidatorProtocol,
-         trackingService: InAppTrackingServiceProtocol,
-         tracker: InAppMessagesTrackerProtocol,
+         accountant: InappShowAccounting,
          failureManager: InappShowFailureManagerProtocol) {
         self.presentationManager = presentationManager
         self.presentationValidator = presentationValidator
-        self.trackingService = trackingService
-        self.tracker = tracker
+        self.accountant = accountant
         self.failureManager = failureManager
         addObserver()
     }
@@ -57,7 +55,7 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
     weak var delegate: InAppMessagesDelegate?
     
     func scheduleInApp(_ inapp: InAppFormData, processingDuration: TimeInterval) {
-        let delay = getDelay(inapp.delayTime)
+        let delay = TimeInterval.delay(fromTimeSpan: inapp.delayTime)
         let presentationTime = Date().addingTimeInterval(delay).timeIntervalSince1970
         
         let timer = DispatchSource.makeTimerSource(flags: .strict, queue: queue)
@@ -82,14 +80,14 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
         }
     }
 
-    func showInAppNow(_ inapp: InAppFormData) {
+    func showInAppNow(_ inapp: InAppFormData, processingDuration: TimeInterval) {
         DispatchQueue.main.async {
             // Dismissal completes the closed show on the next main-queue turn; presenting is deferred
             // behind it so the lock is released before the new show takes it.
             self.presentationManager.dismissActiveInApp()
 
             DispatchQueue.main.async {
-                self.presentRequestedInapp(inapp)
+                self.presentRequestedInapp(inapp, processingDuration: processingDuration)
             }
         }
     }
@@ -118,49 +116,27 @@ internal extension InappScheduleManager {
                 scheduledInapp.timer.cancel()
             }
             
-            self.failureManager.clearFailures()
+            // Gone whether it showed or not: a moment missed behind another in-app is missed, by decision — no queue, no re-arm.
             self.inappsByPresentationTime.removeValue(forKey: presentationTime)
         }
     }
     
-    private func trackShow(_ inapp: InAppFormData, timeToDisplay: String) {
-        do {
-            try tracker.trackView(id: inapp.inAppId, timeToDisplay: timeToDisplay, tags: inapp.tags)
-        } catch {
-            Logger.common(message: "[InappScheduleManager] Track InApp.View failed with error: \(error)", level: .error, category: .notification)
-        }
-
-        guard InappFrequency.countsShows(inapp.frequency) else { return }
-
-        trackingService.trackInAppShown(id: inapp.inAppId)
-        trackingService.saveInappStateChange()
+    private func trackShow(_ inapp: InAppFormData, timeToDisplay: TimeInterval) {
+        accountant.recordShow(InappShow(inAppId: inapp.inAppId,
+                                        frequency: inapp.frequency,
+                                        tags: inapp.tags,
+                                        timeToDisplay: timeToDisplay))
     }
 
     /// The cooldown is written a second time on dismissal, so that an app killed while the in-app was
     /// on screen still leaves the interval counted from a real moment.
     private func trackDismissal(_ inapp: InAppFormData) {
-        guard InappFrequency.countsShows(inapp.frequency) else { return }
-
-        trackingService.saveInappStateChange()
+        accountant.recordCooldown(frequency: inapp.frequency)
     }
 
-    private func presentRequestedInapp(_ inapp: InAppFormData) {
+    private func presentRequestedInapp(_ inapp: InAppFormData, processingDuration: TimeInterval) {
         Logger.common(message: "[InappScheduleManager] Showing \(inapp.inAppId) on request, past the queue and its limits")
-
-        let stopwatch = ForegroundStopwatch()
-        present(
-            inapp,
-            onPresented: {
-                let presentationTime = stopwatch.elapsed
-                stopwatch.stop()
-                let timeToDisplayString = presentationTime.toTimeSpan()
-                Logger.common(message: "[InAppMetric] inappId=\(inapp.inAppId) presentationTime=\(timeToDisplayString) timeToDisplay=\(timeToDisplayString)")
-                self.trackShow(inapp, timeToDisplay: timeToDisplayString)
-            },
-            onDismissed: {
-                self.trackDismissal(inapp)
-            }
-        )
+        presentInapp(inapp, stopwatch: ForegroundStopwatch(), processingDuration: processingDuration)
     }
 
     func presentInapp(_ inapp: InAppFormData, stopwatch: ForegroundStopwatch, processingDuration: TimeInterval = 0) {
@@ -170,10 +146,9 @@ internal extension InappScheduleManager {
                 let presentationTime = stopwatch.elapsed
                 stopwatch.stop()
                 let timeToDisplay = processingDuration + presentationTime
-                let timeToDisplayString = timeToDisplay.toTimeSpan()
-                Logger.common(message: "[InAppMetric] inappId=\(inapp.inAppId) processingTime=\(processingDuration.toTimeSpan()) presentationTime=\(presentationTime.toTimeSpan()) timeToDisplay=\(timeToDisplayString)")
-                self.trackShow(inapp, timeToDisplay: timeToDisplayString)
-                self.failureManager.clearFailures()
+                Logger.common(message: "[InAppMetric] inappId=\(inapp.inAppId) processingTime=\(processingDuration.toTimeSpan()) "
+                    + "presentationTime=\(presentationTime.toTimeSpan()) timeToDisplay=\(timeToDisplay.toTimeSpan())")
+                self.trackShow(inapp, timeToDisplay: timeToDisplay)
             },
             onDismissed: {
                 self.trackDismissal(inapp)
@@ -221,12 +196,6 @@ internal extension InappScheduleManager {
                 self.failureManager.sendFailures()
             }
         )
-    }
-    
-    func getDelay(_ time: String?) -> TimeInterval {
-        let delayTimeStr = time
-        let delayMilis = (try? delayTimeStr?.parseTimeSpanToMillis()) ?? 0
-        return TimeInterval(delayMilis) / 1000
     }
     
     func addObserver() {

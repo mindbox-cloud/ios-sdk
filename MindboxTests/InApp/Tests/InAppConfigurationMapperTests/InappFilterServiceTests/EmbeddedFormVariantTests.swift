@@ -58,16 +58,14 @@ struct EmbeddedFormVariantTests {
         #expect(place(of: variants.first) == "stories-list-container")
     }
 
-    /// The name travels through JSON, so the escaped case arrives with a real newline and tab —
-    /// hence the expected value next to each input.
-    @Test("Place name keeps whatever padding it came with", arguments: [
-        ("  stories-list-container", "  stories-list-container"),
-        ("stories-list-container  ", "stories-list-container  "),
-        (#"\n stories-list-container \t"#, "\n stories-list-container \t")
+    @Test("Place name is trimmed", arguments: [
+        "  stories-list-container",
+        "stories-list-container  ",
+        #"\n stories-list-container \t"#
     ])
-    func keepsPlaceNamePadding(place: String, expected: String) throws {
+    func trimsPlaceName(place: String) throws {
         let variants = try filter(embeddedVariant(place: place))
-        #expect(self.place(of: variants.first) == expected)
+        #expect(self.place(of: variants.first) == "stories-list-container")
     }
 
     @Test("Place name case is preserved")
@@ -77,7 +75,7 @@ struct EmbeddedFormVariantTests {
     }
 
     @Test("A variant that cannot address a block is dropped", arguments: [
-        nil, ""
+        nil, "", "   "
     ] as [String?])
     func dropsVariantWithoutPlace(place: String?) throws {
         #expect(try filter(embeddedVariant(place: place)).isEmpty)

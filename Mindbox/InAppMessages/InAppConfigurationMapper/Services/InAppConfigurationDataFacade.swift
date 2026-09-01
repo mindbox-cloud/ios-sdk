@@ -19,6 +19,12 @@ protocol InAppConfigurationDataFacadeProtocol {
     func collectTargetingFailures(forFailedTargetingInappIds failedTargetingInappIds: Set<String>, tagsByInappId: [String: [String: String]])
     func downloadImage(withUrl url: String, inappId: String, tags: [String: String]?, completion: @escaping (Result<UIImage, MindboxError>) -> Void)
     func trackTargeting(id: String?, tags: [String: String]?)
+
+    /// Sends what the pass buffered — targeting and image failures alike — as one `Inapp.ShowFailure`.
+    func sendCollectedFailures()
+
+    /// Drops what the pass buffered: it picked something to show, so there is no "why nothing was shown".
+    func discardCollectedFailures()
 }
 
 extension InAppConfigurationDataFacadeProtocol {
@@ -116,6 +122,14 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
                 Logger.common(message: "Track InApp.Targeting failed with error: \(error)", level: .error, category: .inAppMessages)
             }
         }
+    }
+
+    func sendCollectedFailures() {
+        failureManager.sendFailures()
+    }
+
+    func discardCollectedFailures() {
+        failureManager.clearFailures()
     }
 }
 

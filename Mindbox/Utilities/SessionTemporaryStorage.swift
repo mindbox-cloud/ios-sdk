@@ -35,11 +35,7 @@ final class SessionTemporaryStorage {
 
     @Locked var lastInappClickedID: String?
 
-    @Locked var vouchedInappIds: Set<String> = []
-
-    /// `Inapp.Show` dedup for blocks, in sync with Android down to the name: a rebuilt page re-draws
-    /// what the user saw. Local show history deliberately stays per rendered page on both platforms.
-    @Locked var blockShowsReportedInSession: Set<String> = []
+    @Locked var ledger = InappSessionLedger()
 
     /// Last track-visit data (source and requestUrl only)
     @Locked var lastTrackVisit: (source: TrackVisitSource?, requestUrl: String?)?
@@ -65,8 +61,7 @@ final class SessionTemporaryStorage {
         sessionShownInApps = []
         isUserVisitSaved = false
         lastInappClickedID = nil
-        vouchedInappIds = []
-        blockShowsReportedInSession = []
+        ledger = InappSessionLedger()
         lastTrackVisit = nil
         inAppSettings = nil
         configSessionExpirationTime = nil

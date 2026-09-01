@@ -80,7 +80,7 @@ struct ConfigCandidatesTests {
 
         _ = sut.filterForTrigger(in: candidates)
         _ = sut.filter(place: Constants.place, in: candidates)
-        _ = sut.filter(feedIds: [Constants.storyId], in: candidates)
+        _ = sut.filter(requestedIds: [Constants.storyId], in: candidates)
         _ = sut.filter(id: Constants.blockId, in: candidates)
         _ = sut.filterForTrigger(in: candidates)
 
@@ -94,7 +94,7 @@ struct ConfigCandidatesTests {
         #expect(ids(candidates.renderable).contains(Constants.storyId))
         #expect(!ids(sut.filterForTrigger(in: candidates)).contains(Constants.storyId))
         #expect(ids(sut.filterForTrigger(in: candidates)).contains(Constants.modalId))
-        #expect(ids(sut.filter(feedIds: [Constants.storyId], in: candidates)) == [Constants.storyId])
+        #expect(ids(sut.filter(requestedIds: [Constants.storyId], in: candidates)) == [Constants.storyId])
     }
 
     @Test("The AB-test cut lands in the pool, and the paths that must ignore it see the whole list")
@@ -108,7 +108,7 @@ struct ConfigCandidatesTests {
 
         #expect(ids(candidates.renderable).contains(droppedId))
         #expect(sut.filter(id: droppedId, in: candidates) != nil)
-        #expect(ids(sut.filter(feedIds: [Constants.storyId, Constants.secondStoryId], in: candidates)) == inPool.intersection([Constants.storyId, Constants.secondStoryId]))
+        #expect(ids(sut.filter(requestedIds: [Constants.storyId, Constants.secondStoryId], in: candidates)) == inPool.intersection([Constants.storyId, Constants.secondStoryId]))
     }
 
     /// The fixture plus an A/B test whose two branches cover the whole range and name one story each,

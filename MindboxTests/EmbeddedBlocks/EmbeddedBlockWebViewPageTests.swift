@@ -130,17 +130,17 @@ struct EmbeddedBlockWebViewPageTests {
         #expect(registry.count == 1)
     }
 
-    @Test("The feed's question reaches the block and the answer goes back to the page")
-    func feedQuestionReachesTheBlock() throws {
+    @Test("The page's question reaches the block and the answer goes back to it")
+    func pageQuestionReachesTheBlock() throws {
         let bed = PageBed()
 
         let question = BridgeMessage.pageRequest(.filterShowableInapps,
                                                  ["inappIds": .array([.string("one"), .string("two")])])
         bed.receive(question)
 
-        #expect(bed.feedQuestions == [["one", "two"]])
+        #expect(bed.pageQuestions == [["one", "two"]])
 
-        bed.answerFeed(["one"])
+        bed.answerPage(["one"])
 
         let answer = try #require(bed.facade.sentMessages.first)
         #expect(answer.type == .response)
@@ -311,13 +311,13 @@ private final class PageBed {
     let facade = SharedWebLayerMock()
 
     private(set) var failures = 0
-    private(set) var feedQuestions: [[String]] = []
+    private(set) var pageQuestions: [[String]] = []
     private(set) var renderedCounts: [Int] = []
     private(set) var unreadableReports = 0
     private(set) var showRequests: [(id: String, params: [String: JSONValue])] = []
     private(set) var ackCount = 0
 
-    private var feedCompletions: [([String]) -> Void] = []
+    private var pageCompletions: [([String]) -> Void] = []
 
     private lazy var bridge = MindboxWebBridge(webView: facade.webView)
 
@@ -336,8 +336,8 @@ private final class PageBed {
             self?.failures += 1
         }
         page.onShowableQuestion = { [weak self] ids, completion in
-            self?.feedQuestions.append(ids)
-            self?.feedCompletions.append(completion)
+            self?.pageQuestions.append(ids)
+            self?.pageCompletions.append(completion)
         }
         page.onContentRendered = { [weak self] count in
             self?.renderedCounts.append(count)
@@ -361,9 +361,9 @@ private final class PageBed {
         facade.messageDelegate?.webBridge(bridge, didReceiveBridgeMessage: message)
     }
 
-    func answerFeed(_ allowed: [String]) {
-        feedCompletions.forEach { $0(allowed) }
-        feedCompletions = []
+    func answerPage(_ allowed: [String]) {
+        pageCompletions.forEach { $0(allowed) }
+        pageCompletions = []
     }
 
     func reportSubresourceError(url: String?) {

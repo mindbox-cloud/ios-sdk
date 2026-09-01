@@ -55,33 +55,35 @@ struct InappPlaceFilterTests {
 
     private func ids(_ inapps: [InApp]) -> [String] { inapps.map { $0.id } }
 
+    private func candidates(_ inapps: [InApp]) -> ConfigCandidates { ConfigCandidates(renderable: inapps, inPool: inapps) }
+
     // MARK: - Addressing
 
     @Test("An in-app set up for the place is a candidate")
     func keepsInappForPlace() throws {
         let sut = try #require(sut)
-        let inapps = sut.filterInappsForPlace(place, inapps: [inapp(id: "1", variants: [embedded(place: place)])])
+        let inapps = sut.filter(place: place, in: candidates([inapp(id: "1", variants: [embedded(place: place)])]))
         #expect(ids(inapps) == ["1"])
     }
 
     @Test("An in-app set up for another place is not")
     func dropsInappForAnotherPlace() throws {
         let sut = try #require(sut)
-        let inapps = sut.filterInappsForPlace(place, inapps: [inapp(id: "1", variants: [embedded(place: "other-place")])])
+        let inapps = sut.filter(place: place, in: candidates([inapp(id: "1", variants: [embedded(place: "other-place")])]))
         #expect(inapps.isEmpty)
     }
 
     @Test("Place names are case-sensitive")
     func placeNamesAreCaseSensitive() throws {
         let sut = try #require(sut)
-        let inapps = sut.filterInappsForPlace(place, inapps: [inapp(id: "1", variants: [embedded(place: "Stories-List-Container")])])
+        let inapps = sut.filter(place: place, in: candidates([inapp(id: "1", variants: [embedded(place: "Stories-List-Container")])]))
         #expect(inapps.isEmpty)
     }
 
     @Test("A modal in-app is never a candidate for a place")
     func dropsOverlayInapp() throws {
         let sut = try #require(sut)
-        let inapps = sut.filterInappsForPlace(place, inapps: [inapp(id: "1", variants: [modal()])])
+        let inapps = sut.filter(place: place, in: candidates([inapp(id: "1", variants: [modal()])]))
         #expect(inapps.isEmpty)
     }
 
@@ -90,8 +92,7 @@ struct InappPlaceFilterTests {
     @Test("Direct call keeps the block empty on this path too")
     func dropsDirectCallInapp() throws {
         let sut = try #require(sut)
-        let inapps = sut.filterInappsForPlace(place,
-                                              inapps: [inapp(id: "1", variants: [embedded(place: place)], displayConditions: .directCall)])
+        let inapps = sut.filter(place: place, in: candidates([inapp(id: "1", variants: [embedded(place: place)], displayConditions: .directCall)]))
         #expect(inapps.isEmpty)
     }
 
@@ -102,8 +103,7 @@ struct InappPlaceFilterTests {
     ])
     func frequencyPassesForUnshownBlock(frequency: InappFrequency) throws {
         let sut = try #require(sut)
-        let inapps = sut.filterInappsForPlace(place,
-                                              inapps: [inapp(id: "unshown-block-id", variants: [embedded(place: place)], frequency: frequency)])
+        let inapps = sut.filter(place: place, in: candidates([inapp(id: "unshown-block-id", variants: [embedded(place: place)], frequency: frequency)]))
         #expect(ids(inapps) == ["unshown-block-id"])
     }
 
@@ -126,18 +126,17 @@ struct InappPlaceFilterTests {
         storage.shownDatesByInApp = ["shown-block-id": [Date()]]
         SessionTemporaryStorage.shared.sessionShownInApps = ["shown-block-id"]
 
-        let inapps = sut.filterInappsForPlace(place,
-                                              inapps: [inapp(id: "shown-block-id", variants: [embedded(place: place)], frequency: frequency)])
+        let inapps = sut.filter(place: place, in: candidates([inapp(id: "shown-block-id", variants: [embedded(place: place)], frequency: frequency)]))
         #expect(inapps.isEmpty)
     }
 
     @Test("Two candidates for one place come back with the priority one first")
     func sortsCandidatesByPriority() throws {
         let sut = try #require(sut)
-        let inapps = sut.filterInappsForPlace(place, inapps: [
+        let inapps = sut.filter(place: place, in: candidates([
             inapp(id: "regular", variants: [embedded(place: place)]),
             inapp(id: "priority", variants: [embedded(place: place)], isPriority: true)
-        ])
+        ]))
 
         #expect(ids(inapps) == ["priority", "regular"])
     }

@@ -108,57 +108,50 @@ struct EmbeddedBlockWebViewProviderTests {
         var states: [EmbeddedBlockState] = []
         bed.provider.onStateChange = { states.append($0) }
 
-        bed.page?.reportRendered(1)
         bed.page?.reportRendered(0)
 
-        #expect(states == [.ready, .empty])
+        #expect(states == [.empty])
         #expect(bed.provider.contentView == nil)
     }
 
-    // MARK: - Counting the show
+    // MARK: - Accounting for the show
 
-    /// Counted by the frequency's rule — same as the overlay path and Android; nothing else on the place path writes this history.
-    @Test("A block that drew its page counts the show")
-    func renderedBlockCountsTheShow() {
+    @Test("A block that drew its page hands the show to the accounting")
+    func renderedBlockIsAccountedFor() throws {
         let bed = EmbeddedBlockTestBed(resolution: .content(.counted()))
 
         bed.provider.start()
         bed.page?.reportRendered(3)
 
-        #expect(bed.showRecorder.recorded == [EmbeddedBlockWebContent.stub.inAppId])
+        let show = try #require(bed.accounting.shows.first)
+        #expect(bed.accounting.shows.count == 1)
+        #expect(show.inAppId == EmbeddedBlockWebContent.stub.inAppId)
+        #expect(show.frequency == EmbeddedBlockWebContent.counted().frequency)
+        #expect(show.tags == EmbeddedBlockWebContent.stub.tags)
     }
 
-    @Test("An unlimited block counts nothing")
-    func unlimitedBlockCountsNothing() {
-        let bed = EmbeddedBlockTestBed()
-
+    @Test("A show is accounted from the content the block was given, whatever the place resolves to later")
+    func showIsAccountedFromTheSnapshot() throws {
+        let bed = EmbeddedBlockTestBed(resolution: .content(.counted()))
         bed.provider.start()
+
+        bed.resolver.resolution = .content(.other)
         bed.page?.reportRendered(3)
 
-        #expect(bed.showRecorder.recorded.isEmpty)
+        let show = try #require(bed.accounting.shows.first)
+        #expect(show.inAppId == EmbeddedBlockWebContent.stub.inAppId)
+        #expect(show.frequency == EmbeddedBlockWebContent.counted().frequency)
+        #expect(show.tags == EmbeddedBlockWebContent.stub.tags)
     }
 
-    // MARK: - Reporting the show
-
-    @Test("A block that drew its page reports the show")
-    func renderedBlockReportsTheShow() {
-        let bed = EmbeddedBlockTestBed()
-
-        bed.provider.start()
-        bed.page?.reportRendered(3)
-
-        #expect(bed.showReporter.inAppIds == [EmbeddedBlockWebContent.stub.inAppId])
-        #expect(bed.showReporter.reported.first?.tags == EmbeddedBlockWebContent.stub.tags)
-    }
-
-    @Test("Nothing drawn, nothing reported")
-    func pageWithoutContentReportsNoShow() {
+    @Test("Nothing drawn, nothing accounted")
+    func pageWithoutContentIsNotAccounted() {
         let bed = EmbeddedBlockTestBed()
 
         bed.provider.start()
         bed.page?.reportRendered(0)
 
-        #expect(bed.showReporter.reported.isEmpty)
+        #expect(bed.accounting.shows.isEmpty)
     }
 
     @Test("A negative count is a failure, not an empty block")
@@ -171,18 +164,18 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.page?.reportRendered(-1)
 
         #expect(states.last == .failed)
-        #expect(bed.showReporter.reported.isEmpty)
+        #expect(bed.accounting.shows.isEmpty)
         #expect(bed.failureReporter.reasons == [.presentationFailed])
     }
 
-    @Test("A page that failed to load reports no show")
-    func failedPageReportsNoShow() {
+    @Test("A page that failed to load is not accounted")
+    func failedPageIsNotAccounted() {
         let bed = EmbeddedBlockTestBed()
 
         bed.provider.start()
         bed.page?.failLoad()
 
-        #expect(bed.showReporter.reported.isEmpty)
+        #expect(bed.accounting.shows.isEmpty)
     }
 
     @Test("An unreadable report is a failure, not a show")
@@ -192,24 +185,23 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.start()
         bed.page?.reportRenderedWithoutCount()
 
-        #expect(bed.showReporter.reported.isEmpty)
+        #expect(bed.accounting.shows.isEmpty)
         #expect(bed.failureReporter.reasons == [.presentationFailed])
     }
 
-    @Test("A page reporting itself again reports one show")
-    func repeatedReportSendsOneEvent() {
+    @Test("A page reporting itself again is accounted once")
+    func repeatedReportIsAccountedOnce() {
         let bed = EmbeddedBlockTestBed()
 
         bed.provider.start()
         bed.page?.reportRendered(3)
         bed.page?.reportRendered(4)
 
-        #expect(bed.showReporter.reported.count == 1)
+        #expect(bed.accounting.shows.count == 1)
     }
 
-    /// In sync with Android: one show per in-app per session, while the local history stays per rendered page.
-    @Test("A page rebuilt in the same session reports no second show")
-    func rebuiltPageInSessionReportsNoSecondShow() {
+    @Test("A page rebuilt for the same content hands its show to the accounting again")
+    func rebuiltPageIsHandedToAccountingAgain() {
         let bed = EmbeddedBlockTestBed(resolution: .content(.counted()))
         bed.provider.start()
         bed.page?.reportRendered(3)
@@ -217,12 +209,33 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.reload()
         bed.page?.reportRendered(3)
 
-        #expect(bed.showReporter.reported.count == 1)
-        #expect(bed.showRecorder.recorded.count == 2)
+        #expect(bed.accounting.shows.count == 2)
     }
 
-    @Test("Another in-app at the place reports its own show")
-    func anotherInappAtThePlaceReportsItsOwnShow() {
+    @Test("A block show is accounted at the block's place")
+    func showIsAccountedAtThePlace() {
+        let bed = EmbeddedBlockTestBed(placeSystemName: "the-place")
+
+        bed.provider.start()
+        bed.page?.reportRendered(3)
+
+        #expect(bed.accounting.places == ["the-place"])
+    }
+
+    @Test("A page shown again on return is accounted once")
+    func returningBlockIsAccountedOnce() {
+        let bed = EmbeddedBlockTestBed(resolution: .content(.counted()))
+
+        bed.provider.start()
+        bed.page?.reportRendered(3)
+        bed.provider.stop()
+        bed.provider.start()
+
+        #expect(bed.accounting.shows.count == 1)
+    }
+
+    @Test("A page rebuilt for another in-app hands its show to the accounting again")
+    func pageForAnotherInappIsHandedToAccountingAgain() {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
         bed.page?.reportRendered(1)
@@ -231,89 +244,21 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.announceNewConfig()
         bed.page?.reportRendered(1)
 
-        #expect(bed.showReporter.inAppIds == [EmbeddedBlockWebContent.stub.inAppId,
-                                              EmbeddedBlockWebContent.other.inAppId])
+        #expect(bed.accounting.shownIds == [EmbeddedBlockWebContent.stub.inAppId,
+                                            EmbeddedBlockWebContent.other.inAppId])
     }
 
-    @Test("A new session reports the show again")
-    func newSessionReportsTheShowAgain() {
+    @Test("The block's timeToDisplay is the selection's processing plus the page's rendering")
+    func timeToDisplayAddsProcessingToRendering() throws {
         let bed = EmbeddedBlockTestBed()
-        bed.provider.start()
-        bed.page?.reportRendered(1)
-
-        SessionTemporaryStorage.shared.blockShowsReportedInSession = []
-        bed.provider.reload()
-        bed.page?.reportRendered(1)
-
-        #expect(bed.showReporter.reported.count == 2)
-    }
-
-    /// The backend parses one format for overlay and block alike — the value is a real measurement, so only its shape is pinned.
-    @Test("The reported show carries a timeToDisplay in the overlay's format")
-    func reportedShowCarriesTimeToDisplay() throws {
-        let bed = EmbeddedBlockTestBed()
+        bed.resolver.processingDuration = 2
 
         bed.provider.start()
+        bed.clock.advance(0.75)
         bed.page?.reportRendered(3)
 
-        let timeToDisplay = try #require(bed.showReporter.reported.first?.timeToDisplay)
-        #expect(timeToDisplay.range(of: #"^\d+:\d{2}:\d{2}\.\d{7}$"#, options: .regularExpression) != nil,
-                "timeToDisplay '\(timeToDisplay)' is not the format toTimeSpan() produces")
-    }
-
-    @Test("A page that drew nothing counts no show")
-    func emptyPageCountsNoShow() {
-        let bed = EmbeddedBlockTestBed(resolution: .content(.counted()))
-
-        bed.provider.start()
-        bed.page?.reportRendered(0)
-
-        #expect(bed.showRecorder.recorded.isEmpty)
-    }
-
-    @Test("A page that failed to load counts no show")
-    func failedPageCountsNoShow() {
-        let bed = EmbeddedBlockTestBed(resolution: .content(.counted()))
-
-        bed.provider.start()
-        bed.page?.failLoad()
-
-        #expect(bed.showRecorder.recorded.isEmpty)
-    }
-
-    @Test("A page reporting itself again counts one show")
-    func repeatedReportCountsOneShow() {
-        let bed = EmbeddedBlockTestBed(resolution: .content(.counted()))
-
-        bed.provider.start()
-        bed.page?.reportRendered(3)
-        bed.page?.reportRendered(4)
-
-        #expect(bed.showRecorder.recorded.count == 1)
-    }
-
-    @Test("A page shown again on return counts no second show")
-    func returningBlockCountsNoSecondShow() {
-        let bed = EmbeddedBlockTestBed(resolution: .content(.counted()))
-
-        bed.provider.start()
-        bed.page?.reportRendered(3)
-        bed.provider.stop()
-        bed.provider.start()
-
-        #expect(bed.showRecorder.recorded.count == 1)
-    }
-
-    @Test("A page built again counts its own show")
-    func rebuiltPageCountsItsOwnShow() {
-        let bed = EmbeddedBlockTestBed(resolution: .content(.counted()))
-
-        bed.provider.start()
-        bed.page?.reportRendered(3)
-        bed.provider.reload()
-        bed.page?.reportRendered(3)
-
-        #expect(bed.showRecorder.recorded.count == 2)
+        let show = try #require(bed.accounting.shows.first)
+        #expect(show.timeToDisplay == 2.75)
     }
 
     // MARK: - Load failure
@@ -379,6 +324,63 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.failureReporter.reasons == [.presentationFailed])
     }
 
+    @Test("A delayed answer keeps the block loading and tells the container")
+    func delayedAnswerKeepsTheBlockLoading() {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.isDeferred = true
+        var delayedCalls = 0
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onContentDelayed = { delayedCalls += 1 }
+        bed.provider.onStateChange = { states.append($0) }
+        bed.provider.start()
+
+        bed.provider.contentIsDelayed()
+
+        #expect(bed.provider.isAwaitingDelayedContent)
+        #expect(delayedCalls == 1)
+        #expect(states == [.loading])
+
+        bed.provider.apply(.content(.stub), processingDuration: 0)
+
+        #expect(!bed.provider.isAwaitingDelayedContent)
+    }
+
+    @Test("A block the SDK never answered reports one failure without an in-app")
+    func unansweredBlockReportsOneUnattributedFailure() {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.isDeferred = true
+        bed.provider.start()
+
+        bed.provider.reportAnswerTimedOut(waited: 30)
+
+        #expect(bed.failureReporter.unansweredWaits == [30])
+        #expect(bed.failureReporter.reported.isEmpty)
+    }
+
+    @Test("A second unanswered wait at the same place in one session reports nothing")
+    func secondUnansweredWaitIsSilent() {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.isDeferred = true
+        bed.provider.start()
+
+        bed.provider.reportAnswerTimedOut(waited: 30)
+        bed.provider.reportAnswerTimedOut(waited: 30)
+
+        #expect(bed.failureReporter.unansweredWaits.count == 1)
+    }
+
+    @Test("Another place's unanswered wait is reported on its own")
+    func anotherPlacesUnansweredWaitIsReported() {
+        let first = EmbeddedBlockTestBed(placeSystemName: "first-place")
+        let second = EmbeddedBlockTestBed(placeSystemName: "second-place")
+
+        first.provider.reportAnswerTimedOut(waited: 30)
+        second.provider.reportAnswerTimedOut(waited: 30)
+
+        #expect(first.failureReporter.unansweredWaits.count == 1)
+        #expect(second.failureReporter.unansweredWaits.count == 1)
+    }
+
     @Test("An empty place reports nothing")
     func emptyPlaceReportsNothing() {
         let bed = EmbeddedBlockTestBed(resolution: .empty)
@@ -420,9 +422,39 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.pageFactory.pages.count == 1)
     }
 
+    @Test("A config that changed only the frequency or tags leaves the page alone")
+    func metadataOnlyChangeIsNotPushedToThePage() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.resolver.resolution = .content(.counted())
+        bed.announceNewConfig()
+        bed.page?.reportRendered(0)
+
+        #expect(bed.page?.initDataPushes.isEmpty == true)
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(states.isEmpty)
+    }
+
+    @Test("A show is accounted with the frequency the config moved to while the page was loading")
+    func snapshotFollowsAMetadataOnlyChange() throws {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+
+        bed.resolver.resolution = .content(.counted())
+        bed.announceNewConfig()
+        bed.page?.reportRendered(1)
+
+        let show = try #require(bed.accounting.shows.first)
+        #expect(show.frequency == EmbeddedBlockWebContent.counted().frequency)
+        #expect(bed.page?.initDataPushes.isEmpty == true)
+    }
+
     // MARK: - The data push's confirmation
 
-    /// A feed silently showing yesterday's stories is the failure nobody files a report about — same remedy as Android's.
     @Test("A page that never confirms the data push is rebuilt")
     func silentDataPushRebuildsThePage() {
         let bed = EmbeddedBlockTestBed()
@@ -625,7 +657,9 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.pageFactory.pages.count == 1)
     }
 
-    @Test("The same answer revives a page that was collapsed by a dropped place")
+    /// A data push cannot revive a collapsed block: the page answers `initDataUpdated` and stays as it
+    /// is, so the block would wait for a report that never comes. It is rebuilt instead, like Android.
+    @Test("The same answer revives a page that was collapsed by a dropped place, by rebuilding it")
     func sameAnswerRevivesACollapsedPage() {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
@@ -638,10 +672,84 @@ struct EmbeddedBlockWebViewProviderTests {
         var states: [EmbeddedBlockState] = []
         bed.provider.onStateChange = { states.append($0) }
         bed.announceNewConfig()
+        bed.page?.reportRendered(1)
 
-        #expect(bed.page?.initDataPushes.count == 1)
-        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.pageFactory.pages.count == 2)
+        #expect(bed.pageFactory.pages.first?.initDataPushes.isEmpty == true)
+        #expect(states == [.loading, .ready])
+    }
+
+    @Test("A block collapsed by its own page is rebuilt for new data, not told about it")
+    func collapsedBlockIsRebuiltForNewData() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(0)
+
+        bed.deliverSamePageWithNewData()
+
+        #expect(bed.pageFactory.pages.count == 2)
+        #expect(bed.pageFactory.pages.first?.initDataPushes.isEmpty == true)
+    }
+
+    @Test("A shown block is not collapsed by a later report of nothing")
+    func shownBlockIgnoresALaterEmptyReport() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(2)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.page?.reportRendered(0)
+
         #expect(states.isEmpty)
+        #expect(bed.provider.contentView != nil)
+    }
+
+    /// One show must not carry both `Inapp.Show` and `Inapp.ShowFailure`: the show is already accounted
+    /// for when the repeat arrives.
+    @Test("A shown block is not failed by a later unreadable report")
+    func shownBlockIgnoresALaterUnreadableReport() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(2)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.page?.reportRenderedWithoutCount()
+
+        #expect(bed.failureReporter.reported.isEmpty)
+        #expect(bed.accounting.shows.count == 1)
+        #expect(states.isEmpty)
+    }
+
+    /// The latch closes on drawn content only: a page that reports nothing first and draws later — it was
+    /// still waiting for its answer about which in-apps it may draw — is still heard.
+    @Test("A page that drew nothing and then drew something is heard")
+    func pageThatDrawsAfterReportingNothingIsHeard() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.page?.reportRendered(0)
+        bed.page?.reportRendered(2)
+
+        #expect(states == [.empty, .ready])
+        #expect(bed.accounting.shownIds == [EmbeddedBlockWebContent.stub.inAppId])
+    }
+
+    @Test("A data push lets the page report itself again")
+    func dataPushReopensTheReport() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(2)
+        bed.deliverSamePageWithNewData()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.page?.reportRendered(0)
+
+        #expect(states == [.empty])
     }
 
     @Test("An operation revives a block that had settled as empty")
@@ -670,54 +778,39 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.resolver.resolveCount == resolvesBefore)
     }
 
-    // MARK: - Which in-apps the feed may draw
+    // MARK: - Which in-apps the page may draw
 
     @Test("A loading block answers which in-apps it may draw")
     func loadingBlockAnswersTargeting() {
         let bed = EmbeddedBlockTestBed()
-        bed.feed.allowed = ["story-1"]
+        bed.inappService.allowed = ["story-1"]
         bed.provider.start()
 
         bed.page?.send(.filterShowableInapps, ["inappIds": .array([.string("story-1"), .string("story-2")])])
 
-        #expect(bed.feed.askedIds == [["story-1", "story-2"]])
+        #expect(bed.inappService.askedIds == [["story-1", "story-2"]])
         #expect(bed.page?.responses.map(\.payload) == [.object(["inappIds": .array([.string("story-1")])])])
     }
 
-    @Test("A delivered answer is vouched for once")
-    func deliveredAnswerIsVouchedFor() {
+    @Test("The question names the block's own in-app")
+    func questionNamesTheBlocksInapp() {
         let bed = EmbeddedBlockTestBed()
-        bed.feed.allowed = ["story-1", "story-2"]
-        bed.provider.start()
-
-        bed.page?.send(.filterShowableInapps, ["inappIds": .array([.string("story-1"), .string("story-2")])])
-
-        #expect(bed.feed.vouchCount == 1)
-    }
-
-    @Test("An answer landing after a stop is not vouched for")
-    func droppedAnswerIsNotVouchedFor() {
-        let bed = EmbeddedBlockTestBed()
-        bed.feed.allowed = ["story-1"]
-        bed.feed.isDeferred = true
         bed.provider.start()
 
         bed.page?.send(.filterShowableInapps, ["inappIds": .array([.string("story-1")])])
-        bed.provider.stop()
-        bed.feed.flush()
 
-        #expect(bed.feed.vouchCount == 0)
+        #expect(bed.inappService.askedBy == [EmbeddedBlockWebContent.stub.inAppId])
     }
 
     @Test("An answer landing after a stop is dropped")
     func answerAfterStopIsDropped() {
         let bed = EmbeddedBlockTestBed()
-        bed.feed.isDeferred = true
+        bed.inappService.isDeferred = true
         bed.provider.start()
 
         bed.page?.send(.filterShowableInapps, ["inappIds": .array([.string("story-1")])])
         bed.provider.stop()
-        bed.feed.flush()
+        bed.inappService.flush()
 
         #expect(bed.page?.responses.isEmpty == true)
     }
@@ -734,7 +827,7 @@ struct EmbeddedBlockWebViewProviderTests {
 
         bed.page?.send(.showInApp, ["inappId": .string("story-id")])
 
-        #expect(bed.feed.shown.map(\.id) == ["story-id"])
+        #expect(bed.inappService.shown.map(\.id) == ["story-id"])
         #expect(states.isEmpty)
     }
 
@@ -747,7 +840,7 @@ struct EmbeddedBlockWebViewProviderTests {
                                            "lastContentUpdateDateTimeUtc": .string("2026-08-13T09:00:00.000000Z")]
         bed.page?.send(.showInApp, ["inappId": .string("story-id"), "params": .object(params)])
 
-        #expect(bed.feed.shown.first?.params == params)
+        #expect(bed.inappService.shown.first?.params == params)
     }
 
     @Test("A stopped block does not answer at all")
@@ -758,7 +851,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.stop()
         bed.page?.send(.showInApp, ["inappId": .string("story-id")])
 
-        #expect(bed.feed.shown.isEmpty)
+        #expect(bed.inappService.shown.isEmpty)
     }
 
     @Test("A block collapsed as empty does not act on a show request")
@@ -769,7 +862,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.page?.reportRendered(0)
         bed.page?.send(.showInApp, ["inappId": .string("story-id")])
 
-        #expect(bed.feed.shown.isEmpty)
+        #expect(bed.inappService.shown.isEmpty)
     }
 
     @Test("A failed block does not act on a show request")
@@ -780,7 +873,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.page?.failLoad()
         bed.page?.send(.showInApp, ["inappId": .string("story-id")])
 
-        #expect(bed.feed.shown.isEmpty)
+        #expect(bed.inappService.shown.isEmpty)
     }
 
     @Test("A block broken by an unreadable report does not act on a show request")
@@ -791,7 +884,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.page?.reportRenderedWithoutCount()
         bed.page?.send(.showInApp, ["inappId": .string("story-id")])
 
-        #expect(bed.feed.shown.isEmpty)
+        #expect(bed.inappService.shown.isEmpty)
     }
 
     @Test("A new attempt after a failure acts again")
@@ -804,7 +897,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.start()
         bed.page?.send(.showInApp, ["inappId": .string("story-id")])
 
-        #expect(bed.feed.shown.map(\.id) == ["story-id"])
+        #expect(bed.inappService.shown.map(\.id) == ["story-id"])
     }
 
     @Test("A message the block does not own leaves its state alone")
@@ -891,21 +984,6 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.provider.contentView === bed.page?.view)
     }
 
-    @Test("A return resumes the page of a block that had collapsed as empty")
-    func returnResumesACollapsedPage() {
-        let bed = EmbeddedBlockTestBed()
-
-        bed.provider.start()
-        bed.page?.reportRendered(0)
-        bed.provider.stop()
-        bed.provider.start()
-        bed.page?.reportRendered(2)
-
-        #expect(bed.resolver.resolveCount == 2)
-        #expect(bed.pageFactory.pages.count == 1)
-        #expect(bed.provider.contentView === bed.page?.view)
-    }
-
     @Test("Page rendered before the block left the window is shown again without a reload")
     func renderedPageIsShownAgainWithoutReload() {
         let bed = EmbeddedBlockTestBed()
@@ -937,7 +1015,7 @@ struct EmbeddedBlockWebViewProviderTests {
                                              frequency: .unlimited,
                                              tags: EmbeddedBlockWebContent.stub.tags,
                                              params: ["fresh": .bool(true)])
-        bed.provider.apply(.content(sameId))
+        bed.provider.apply(.content(sameId), processingDuration: 0)
 
         #expect(bed.pageFactory.pages.count == 1)
         #expect(bed.page?.initDataPushes == [["fresh": .bool(true)]])
@@ -951,7 +1029,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.stop()
 
         bed.resolver.resolution = .content(.other)
-        bed.provider.apply(.content(.other))
+        bed.provider.apply(.content(.other), processingDuration: 0)
         var states: [EmbeddedBlockState] = []
         bed.provider.onStateChange = { states.append($0) }
         bed.provider.start()
@@ -983,7 +1061,7 @@ struct EmbeddedBlockWebViewProviderTests {
         let bed = EmbeddedBlockTestBed(resolution: .empty)
         bed.provider.start()
         bed.provider.stop()
-        bed.provider.apply(.empty)
+        bed.provider.apply(.empty, processingDuration: 0)
 
         bed.provider.start()
 
@@ -995,7 +1073,7 @@ struct EmbeddedBlockWebViewProviderTests {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
         bed.provider.abandonAttempt()
-        bed.provider.apply(.content(.other))
+        bed.provider.apply(.content(.other), processingDuration: 0)
 
         bed.provider.reload()
         #expect(bed.pageFactory.contents.last == .stub)
@@ -1013,7 +1091,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.start()
         bed.provider.abandonAttempt()
 
-        bed.provider.apply(.content(.other))
+        bed.provider.apply(.content(.other), processingDuration: 0)
         bed.provider.start()
 
         #expect(bed.resolver.resolveCount == 2)
@@ -1106,17 +1184,20 @@ struct EmbeddedBlockWebViewProviderTests {
     }
 
     @Test("The show reports the time the render took, not the time spent off screen")
-    func showReportsTheRenderTimeNotTheAbsence() async throws {
+    func showReportsTheRenderTimeNotTheAbsence() throws {
         let bed = EmbeddedBlockTestBed()
+        bed.resolver.processingDuration = 2
+
         bed.provider.start()
+        bed.clock.advance(0.75)
         bed.provider.stop()
         bed.page?.reportRendered(1)
 
-        try await Task.sleep(nanoseconds: 1_200_000_000)
+        bed.clock.advance(8)
         bed.provider.start()
 
-        #expect(bed.showReporter.reported.count == 1)
-        #expect(bed.showReporter.reported.first?.timeToDisplay.hasPrefix("0:00:00.") == true)
+        let show = try #require(bed.accounting.shows.first)
+        #expect(show.timeToDisplay == 2.75)
     }
 
     @Test("Failed block tries again when it comes back")

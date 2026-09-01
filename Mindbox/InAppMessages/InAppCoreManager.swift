@@ -148,7 +148,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
         }
 
         let triggerTimestamp = CACurrentMediaTime()
-        
+
         self.configManager.handleInapps(event: event.applicationEvent) { inapp in
             let processingDuration = CACurrentMediaTime() - triggerTimestamp
             self.onReceivedInAppResponse(inapp: inapp, processingDuration: processingDuration) {
@@ -164,10 +164,8 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
     }
 
     private func onReceivedInAppResponse(inapp: InAppFormData?, processingDuration: TimeInterval, completion: @escaping () -> Void) {
-        let failureManager = DI.injectOrFail(InappShowFailureManagerProtocol.self)
         guard let inapp = inapp else {
             Logger.common(message: "No in-app messages to show", level: .info, category: .inAppMessages)
-            failureManager.sendFailures()
             completion()
             return
         }

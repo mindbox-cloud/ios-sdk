@@ -29,6 +29,8 @@ class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
     @Locked public var collectedTargetingFailureIds: [Set<String>] = []
     @Locked public var collectedTagsByInappId: [[String: [String: String]]] = []
     @Locked public var fetchDependenciesCalls = 0
+    @Locked public var sendCollectedFailuresCalls = 0
+    @Locked public var discardCollectedFailuresCalls = 0
 
     init(segmentationService: SegmentationServiceProtocol,
          targetingChecker: InAppTargetingCheckerProtocol,
@@ -75,6 +77,14 @@ class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
         collectedTagsByInappId.append(tagsByInappId)
     }
 
+    func discardCollectedFailures() {
+        discardCollectedFailuresCalls += 1
+    }
+
+    func sendCollectedFailures() {
+        sendCollectedFailuresCalls += 1
+    }
+
     func trackTargeting(id: String?, tags: [String: String]?) {
         trackTargetingCalls.append((id: id, tags: tags))
         if let id = id {
@@ -99,5 +109,7 @@ class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
     func cleanCollectedTargetingFailureIds() {
         collectedTargetingFailureIds = []
         collectedTagsByInappId = []
+        sendCollectedFailuresCalls = 0
+        discardCollectedFailuresCalls = 0
     }
 }

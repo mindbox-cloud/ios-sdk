@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import QuartzCore
 import MindboxLogger
 
 protocol InAppConfigurationDelegate: AnyObject {
@@ -16,10 +17,17 @@ protocol InAppConfigurationDelegate: AnyObject {
 protocol InAppConfigurationManagerProtocol: AnyObject {
     var delegate: InAppConfigurationDelegate? { get set }
 
+    /// Whether a config is in hand: what a caller still waiting for an answer is stuck on otherwise.
+    var hasConfig: Bool { get }
+
     func prepareConfiguration()
     func handleInapps(event: ApplicationEvent?, _ completion: @escaping (InAppFormData?) -> Void)
-    func selectInappForPlace(_ place: String, trigger: ApplicationEvent?, _ completion: @escaping (InAppTransitionData?) -> Void)
-    func getShowableInappIds(_ ids: [String], _ completion: @escaping (FeedAnswer) -> Void)
+    /// `processingDuration` runs from this call, the wait for a config included: a block's `timeToDisplay`
+    /// counts from the moment it asked for content (in sync with Android).
+    func selectInappForPlace(_ place: String,
+                             trigger: ApplicationEvent?,
+                             _ completion: @escaping (InAppTransitionData?, _ processingDuration: TimeInterval) -> Void)
+    func getShowableInappIds(_ ids: [String], askedBy blockInappId: String, _ completion: @escaping ([String]) -> Void)
     func getInAppToShowById(_ id: String, params: [String: JSONValue], _ completion: @escaping (InAppFormData?) -> Void)
     func getEmbeddedPlaces(_ completion: @escaping ([String: Set<String>]?) -> Void)
     func resetInappManager()
@@ -35,6 +43,8 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
 
     /// Confined to `queue`, like `configResponse`.
     private var configCandidates: ConfigCandidates?
+
+    @Locked private(set) var hasConfig = false
 
     private static let defaultConfigWaitBudget: TimeInterval = 30
 
@@ -60,6 +70,8 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     private let webViewPrewarmService: InAppWebViewPrewarmServiceProtocol
     private let inappFilterService: InappFilterProtocol
 
+    private let now: () -> TimeInterval
+
     init(
         inAppConfigAPI: InAppConfigurationAPI,
         inAppConfigRepository: InAppConfigurationRepository,
@@ -68,7 +80,8 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         featureToggleManager: FeatureToggleManager,
         webViewPrewarmService: InAppWebViewPrewarmServiceProtocol,
         inappFilterService: InappFilterProtocol,
-        configWaitBudget: TimeInterval = InAppConfigurationManager.defaultConfigWaitBudget
+        configWaitBudget: TimeInterval = InAppConfigurationManager.defaultConfigWaitBudget,
+        now: @escaping () -> TimeInterval = { CACurrentMediaTime() }
     ) {
         self.inAppConfigRepository = inAppConfigRepository
         self.inappMapper = inappMapper
@@ -78,6 +91,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         self.webViewPrewarmService = webViewPrewarmService
         self.inappFilterService = inappFilterService
         self.configWaitBudget = configWaitBudget
+        self.now = now
     }
 
     weak var delegate: InAppConfigurationDelegate?
@@ -103,25 +117,30 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     
     /// Waits for the first config rather than answering nil early: an early "nothing to show"
     /// collapses the block for the screen's whole life — nothing retries.
-    func selectInappForPlace(_ place: String, trigger: ApplicationEvent?, _ completion: @escaping (InAppTransitionData?) -> Void) {
+    func selectInappForPlace(_ place: String,
+                             trigger: ApplicationEvent?,
+                             _ completion: @escaping (InAppTransitionData?, _ processingDuration: TimeInterval) -> Void) {
+        let requestedAt = now()
         awaitConfig("place '\(place)'") { [weak self] candidates in
             guard let self = self, let inappMapper = self.inappMapper, let candidates = candidates else {
-                completion(nil)
+                completion(nil, 0)
                 return
             }
 
-            inappMapper.selectInappForPlace(place, trigger: trigger, candidates, completion)
+            inappMapper.selectInappForPlace(place, trigger: trigger, candidates) { [now] inapp in
+                completion(inapp, now() - requestedAt)
+            }
         }
     }
 
-    func getShowableInappIds(_ ids: [String], _ completion: @escaping (FeedAnswer) -> Void) {
-        awaitConfig("a feed asking about \(ids.count) in-app(s)") { [weak self] candidates in
+    func getShowableInappIds(_ ids: [String], askedBy blockInappId: String, _ completion: @escaping ([String]) -> Void) {
+        awaitConfig("a page asking about \(ids.count) in-app(s)") { [weak self] candidates in
             guard let self = self, let inappMapper = self.inappMapper, let candidates = candidates else {
-                completion(.nothing)
+                completion([])
                 return
             }
 
-            inappMapper.getShowableInappIds(ids, candidates, completion)
+            inappMapper.getShowableInappIds(ids, askedBy: blockInappId, candidates, completion)
         }
     }
 
@@ -149,9 +168,9 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             for inapp in config.inapps?.elements ?? [] {
                 let inappPlaces = (inapp.form.variants ?? []).compactMap { variant -> String? in
                     guard case .embedded(let embedded) = variant else { return nil }
-                    // Exactly the string the selection will compare, untrimmed, or the gate would
-                    // close on a place the resolve behind it would serve.
-                    let place = embedded.placeSystemName
+                    // Must trim the way the selection trims, or the gate would close on a place
+                    // the resolve behind it would serve.
+                    let place = embedded.placeSystemName?.trimmingCharacters(in: .whitespacesAndNewlines)
                     return place?.isEmpty == false ? place : nil
                 }
 
@@ -258,6 +277,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         }
 
         configCandidates = configResponse.map { inappFilterService.candidates(from: $0) }
+        hasConfig = configCandidates != nil
         hasConcludedDownload = true
 
         let waiters = configWaiters

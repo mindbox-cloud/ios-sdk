@@ -20,38 +20,35 @@ protocol EmbeddedBlockContentProviderMaking {
 final class EmbeddedBlockContentProviderFactory: EmbeddedBlockContentProviderMaking {
 
     private let registry: EmbeddedBlockPlaceRegistering
-    private let feed: EmbeddedBlockFeedServing
+    private let inappService: EmbeddedBlockInappServing
     private let failureManager: InappShowFailureManagerProtocol
+    private let accounting: InappShowAccounting
 
     init(registry: EmbeddedBlockPlaceRegistering,
-         feed: EmbeddedBlockFeedServing,
-         failureManager: InappShowFailureManagerProtocol) {
+         inappService: EmbeddedBlockInappServing,
+         failureManager: InappShowFailureManagerProtocol,
+         accounting: InappShowAccounting) {
         self.registry = registry
-        self.feed = feed
+        self.inappService = inappService
         self.failureManager = failureManager
+        self.accounting = accounting
     }
 
     func makeProvider(placeSystemName: String) -> EmbeddedBlockWebViewProvider {
         EmbeddedBlockWebViewProvider(placeSystemName: placeSystemName,
                                      registry: registry,
-                                     feed: feed,
+                                     inappService: inappService,
                                      makePage: { EmbeddedBlockWebViewPage(content: $0) },
-                                     recordShow: { DI.injectOrFail(InAppTrackingServiceProtocol.self).trackInAppShown(id: $0) },
-                                     reportShow: { content, timeToDisplay in
-                                         do {
-                                             try DI.injectOrFail(InAppMessagesTracker.self)
-                                                 .trackView(id: content.inAppId,
-                                                            timeToDisplay: timeToDisplay,
-                                                            tags: content.tags)
-                                         } catch {
-                                             Logger.common(message: "[EmbeddedBlock] Failed to track a show of in-app \(content.inAppId): \(error)",
-                                                           level: .error, category: .embeddedBlocks)
-                                         }
-                                     },
+                                     accounting: accounting,
                                      reportFailure: { [failureManager] content, reason, details in
                                          // Captured, not read through the factory: a provider outliving it
                                          // would otherwise drop the failure it is reporting.
                                          Self.report(failure: reason, details: details, for: content, to: failureManager)
+                                     },
+                                     reportUnansweredWait: { [failureManager, inappService] waited in
+                                         failureManager.sendWaitBudgetExceeded(place: placeSystemName,
+                                                                               waited: waited,
+                                                                               phase: inappService.hasConfig ? .resolvePending : .configMissing)
                                      })
     }
 
