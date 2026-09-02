@@ -34,7 +34,12 @@ enum DisplayConditions: Decodable, Equatable {
 
     init(from decoder: Decoder) throws {
         guard let container = try? decoder.container(keyedBy: CodingKeys.self) else {
-            Logger.common(message: "[DisplayConditions] Value is not an object. Showing as before.",
+            if let single = try? decoder.singleValueContainer(), single.decodeNil() {
+                self = .unrestricted
+                return
+            }
+
+            Logger.common(message: "[DisplayConditions] displayConditions is not an object — showing without conditions.",
                           level: .error, category: .inAppMessages)
             self = .unrestricted
             return

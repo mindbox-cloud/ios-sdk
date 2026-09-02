@@ -135,13 +135,19 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     }
 
     func getShowableInappIds(_ ids: [String], askedBy blockInappId: String, _ completion: @escaping ([String]) -> Void) {
+        let requestedAt = now()
         awaitConfig("a page asking about \(ids.count) in-app(s)", givingUpAfter: configWaitBudget) { [weak self] candidates in
             guard let self = self, let inappMapper = self.inappMapper, let candidates = candidates else {
                 completion([])
                 return
             }
 
-            inappMapper.getShowableInappIds(ids, askedBy: blockInappId, candidates, completion)
+            inappMapper.getShowableInappIds(ids, askedBy: blockInappId, candidates) { [now] allowed in
+                let elapsed = String(format: "%.2f", now() - requestedAt)
+                Logger.common(message: "[EmbeddedBlock] Answered the page's question about \(ids.count) in-app(s) in \(elapsed)s: \(allowed.count) allowed",
+                              category: .embeddedBlocks)
+                completion(allowed)
+            }
         }
     }
 
