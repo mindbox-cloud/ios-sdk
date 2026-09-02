@@ -8,8 +8,87 @@
 
 import XCTest
 import UIKit
+import Testing
 @testable import Mindbox
 @testable import MindboxLogger
+
+// Shares SessionTemporaryStorage with the whole serial test target; erased in init.
+@Suite("Inapp show failure network dedup", .tags(.inappSelection))
+struct InappShowFailureNetworkDedupTests {
+
+    private let repository = InappShowFailureDatabaseRepositoryMock()
+    private let manager: InappShowFailureManager
+
+    init() {
+        SessionTemporaryStorage.shared.erase()
+        manager = InappShowFailureManager(databaseRepository: repository,
+                                          featureToggleManager: FeatureToggleManager())
+    }
+
+    private func settledEventsCount(reaching expected: Int) async throws -> Int {
+        for _ in 0..<100 where repository.createdEvents.count < expected {
+            try await Task.sleep(nanoseconds: 20_000_000)
+        }
+        try await Task.sleep(nanoseconds: 100_000_000)
+        return repository.createdEvents.count
+    }
+
+    @Test("The same network failure is reported once per session, later passes stay silent")
+    func sameNetworkFailureIsReportedOnce() async throws {
+        manager.addFailure(inappId: "inapp-1", reason: .customerSegmentRequestFailed, details: nil, tags: nil)
+        manager.sendFailures()
+        manager.addFailure(inappId: "inapp-1", reason: .customerSegmentRequestFailed, details: nil, tags: nil)
+        manager.sendFailures()
+
+        #expect(try await settledEventsCount(reaching: 1) == 1)
+    }
+
+    @Test("A different reason for the same in-app is its own report")
+    func differentReasonIsItsOwnReport() async throws {
+        manager.addFailure(inappId: "inapp-1", reason: .customerSegmentRequestFailed, details: nil, tags: nil)
+        manager.sendFailures()
+        manager.addFailure(inappId: "inapp-1", reason: .geoRequestFailed, details: nil, tags: nil)
+        manager.sendFailures()
+
+        #expect(try await settledEventsCount(reaching: 2) == 2)
+    }
+
+    @Test("A failure that is not a network outage repeats freely")
+    func nonNetworkFailureRepeats() async throws {
+        manager.addFailure(inappId: "inapp-1", reason: .presentationFailed, details: nil, tags: nil)
+        manager.sendFailures()
+        manager.addFailure(inappId: "inapp-1", reason: .presentationFailed, details: nil, tags: nil)
+        manager.sendFailures()
+
+        #expect(try await settledEventsCount(reaching: 2) == 2)
+    }
+
+    @Test("A network failure whose enqueue failed retries later instead of being suppressed as a duplicate")
+    func failedEnqueueDoesNotBurnTheDedupSlot() async throws {
+        repository.createError = InappShowFailureRepositoryError.createFailed
+        manager.addFailure(inappId: "inapp-1", reason: .customerSegmentRequestFailed, details: nil, tags: nil)
+        manager.sendFailures()
+        #expect(try await settledEventsCount(reaching: 0) == 0)
+
+        repository.createError = nil
+        manager.sendFailures()
+
+        #expect(try await settledEventsCount(reaching: 1) == 1)
+    }
+
+    @Test("A new session reports the same outage again")
+    func newSessionReportsAgain() async throws {
+        manager.addFailure(inappId: "inapp-1", reason: .customerSegmentRequestFailed, details: nil, tags: nil)
+        manager.sendFailures()
+        #expect(try await settledEventsCount(reaching: 1) == 1)
+
+        SessionTemporaryStorage.shared.erase()
+
+        manager.addFailure(inappId: "inapp-1", reason: .customerSegmentRequestFailed, details: nil, tags: nil)
+        manager.sendFailures()
+        #expect(try await settledEventsCount(reaching: 2) == 2)
+    }
+}
 
 final class InappShowFailureManagerTests: XCTestCase {
     private var databaseRepository: InappShowFailureDatabaseRepositoryMock!
@@ -18,6 +97,7 @@ final class InappShowFailureManagerTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
+        SessionTemporaryStorage.shared.erase()
         databaseRepository = InappShowFailureDatabaseRepositoryMock()
         featureToggleManager = FeatureToggleManager()
         manager = InappShowFailureManager(
