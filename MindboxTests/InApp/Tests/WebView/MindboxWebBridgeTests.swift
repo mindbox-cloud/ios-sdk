@@ -264,3 +264,93 @@ struct MindboxWebBridgeMessageGateTests {
         #expect(spy.received.count == 2)
     }
 }
+
+@Suite("MindboxWebBridge blanket answers", .tags(.webView))
+@MainActor
+struct MindboxWebBridgeBlanketAnswerTests {
+
+    private final class EvaluationSpyWebView: WKWebView {
+        private(set) var scripts: [String] = []
+        override func evaluateJavaScript(_ javaScriptString: String, completionHandler: (@MainActor @Sendable (Any?, (any Error)?) -> Void)? = nil) {
+            scripts.append(javaScriptString)
+            completionHandler?(true, nil)
+        }
+    }
+
+    private final class FakeScriptMessage: WKScriptMessage {
+        private let fakeName: String
+        private let fakeBody: Any
+
+        init(name: String, body: Any) {
+            self.fakeName = name
+            self.fakeBody = body
+            super.init()
+        }
+
+        override var name: String { fakeName }
+        override var body: Any { fakeBody }
+    }
+
+    private let webView = EvaluationSpyWebView(frame: .zero, configuration: WKWebViewConfiguration())
+    private let navigationFactory = WKWebView(frame: .zero, configuration: WKWebViewConfiguration())
+    private let bridge: MindboxWebBridge
+
+    init() {
+        bridge = MindboxWebBridge(webView: webView)
+        bridge.expectContentNavigation(nil)
+        // swiftlint:disable:next force_unwrapping
+        bridge.webView(webView, didCommit: navigationFactory.loadHTMLString("<html></html>", baseURL: nil)!)
+    }
+
+    private func post(_ message: BridgeMessage) throws {
+        let body = try #require(message.jsonString())
+        bridge.userContentController(
+            webView.configuration.userContentController,
+            didReceive: FakeScriptMessage(name: Constants.WebViewBridgeJS.handlerName, body: body)
+        )
+    }
+
+    private func sentEnvelopes() -> [[String: Any]] {
+        webView.scripts.compactMap { script in
+            guard let start = script.range(of: ".emit("),
+                  let end = script.range(of: ");return", options: .backwards),
+                  let unescaped = (try? JSONSerialization.jsonObject(with: Data(script[start.upperBound..<end.lowerBound].utf8),
+                                                                     options: .fragmentsAllowed)) as? String else { return nil }
+
+            return (try? JSONSerialization.jsonObject(with: Data(unescaped.utf8))) as? [String: Any]
+        }
+    }
+
+    private func payloadObject(of envelope: [String: Any]) -> [String: Any]? {
+        (envelope["payload"] as? String).flatMap { (try? JSONSerialization.jsonObject(with: Data($0.utf8))) as? [String: Any] }
+    }
+
+    @Test("A request for an action outside the vocabulary is refused with an error envelope, not acknowledged")
+    func unknownActionIsRefused() throws {
+        let request = try #require(BridgeMessage(type: .request, action: "totally.new", payload: "{}"))
+
+        try post(request)
+
+        let envelopes = sentEnvelopes()
+        #expect(envelopes.count == 1)
+        let envelope = try #require(envelopes.last)
+        #expect(envelope["type"] as? String == "error")
+        #expect(envelope["action"] as? String == "totally.new")
+        #expect(envelope["id"] as? String == request.id.uuidString.lowercased())
+        let payload = try #require(payloadObject(of: envelope))
+        #expect(payload["error"] as? String == "unknown action 'totally.new'")
+    }
+
+    @Test("A known non-deferred request keeps its blanket success")
+    func knownNonDeferredRequestIsAcknowledged() throws {
+        let request = try #require(BridgeMessage(type: .request, action: "log", payload: #"{"message":"hi"}"#))
+
+        try post(request)
+
+        let envelope = try #require(sentEnvelopes().last)
+        #expect(envelope["type"] as? String == "response")
+        #expect(envelope["id"] as? String == request.id.uuidString.lowercased())
+        let payload = try #require(payloadObject(of: envelope))
+        #expect(payload["success"] as? Bool == true)
+    }
+}
