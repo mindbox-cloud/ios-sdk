@@ -193,9 +193,8 @@ extension EmbeddedBlockWebViewPage: WebBridgeMessageDelegate {
             registerForBroadcasts()
         }
 
-        // An action nobody owns is not an error: the web vocabulary is allowed to be newer than
-        // the SDK. Messages that are not requests are the registry's to swallow — both hosts hand
-        // it everything the dispatcher matched.
+        // Journaling only: the dispatcher already refused an unknown action to the page. Messages
+        // that are not requests are the registry's to swallow — both hosts hand it everything.
         guard actionRegistry.handle(message, host: self) else {
             Logger.common(message: "[EmbeddedBlock] Unknown bridge action '\(message.action)'",
                           category: .embeddedBlocks)

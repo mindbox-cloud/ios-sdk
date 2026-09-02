@@ -56,7 +56,21 @@ final class RequestMessageHandler: BridgeMessageHandler {
             category: .webViewInAppMessages
         )
 
-        if !(message.parsedAction?.isDeferred ?? false) {
+        guard let action = message.parsedAction else {
+            // Refused, not acknowledged — in sync with Android and the bridge contract.
+            let refusal = BridgeMessage(
+                type: .error,
+                action: message.action,
+                payload: .object(["error": .string("unknown action '\(message.action)'")]),
+                id: message.id
+            )
+
+            bridge.send(refusal)
+            bridge.messageDelegate?.webBridge(bridge, didReceiveBridgeMessage: message)
+            return
+        }
+
+        if !action.isDeferred {
             let response = BridgeMessage(
                 type: .response,
                 action: message.action,
