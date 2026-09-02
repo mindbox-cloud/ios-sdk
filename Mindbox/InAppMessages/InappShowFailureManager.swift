@@ -141,11 +141,36 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
         }
         
         queue.async { [self] in
-            guard !failures.isEmpty, enqueue(failures.map(InAppShowError.inapp)) else {
+            guard !failures.isEmpty else { return }
+
+            // One outage is one report per session, in sync with Android; checked and recorded under one lock hold.
+            let toSend = SessionTemporaryStorage.shared.$ledger.mutate { ledger in
+                failures.filter { failure in
+                    guard targetingFailurePriority(for: failure.failureReason) != nil else { return true }
+
+                    return ledger.recordNetworkFailure(failure.inappId, reason: failure.failureReason.rawValue)
+                }
+            }
+
+            if toSend.count < failures.count {
+                Logger.common(message: "[InappShowFailureManager] Suppressed \(failures.count - toSend.count) network failure(s) already reported this session",
+                              level: .debug, category: .inAppMessages)
+            }
+
+            guard !toSend.isEmpty else {
+                failures.removeAll()
                 return
             }
 
-            Logger.common(message: "[InappShowFailureManager] Inapp.ShowFailure event sent with \(failures.count) failure(s)",
+            guard enqueue(toSend.map(InAppShowError.inapp)) else {
+                // Un-record, so the kept buffer's retry is not suppressed as a duplicate.
+                SessionTemporaryStorage.shared.$ledger.mutate { ledger in
+                    toSend.forEach { ledger.reportedNetworkFailures.remove(ReportedNetworkFailure(inappId: $0.inappId, reason: $0.failureReason.rawValue)) }
+                }
+                return
+            }
+
+            Logger.common(message: "[InappShowFailureManager] Inapp.ShowFailure event sent with \(toSend.count) failure(s)",
                           category: .inAppMessages)
             failures.removeAll()
         }
