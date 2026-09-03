@@ -887,6 +887,33 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(states.isEmpty)
     }
 
+    @Test("The page hears the show's outcome once it is known, not on handover")
+    func pageHearsTheShowOutcome() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+
+        bed.page?.send(.showInApp, ["inappId": .string("story-id")])
+        #expect(bed.page?.showInAppResponses.isEmpty == true)
+        #expect(bed.page?.showInAppRefusals.isEmpty == true)
+
+        bed.inappService.finishShow(.success(()))
+
+        #expect(bed.page?.showInAppResponses == [.object(["success": .bool(true)])])
+    }
+
+    @Test("A show that failed reaches the page as its reason")
+    func failedShowReachesThePageAsItsReason() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+
+        bed.page?.send(.showInApp, ["inappId": .string("story-id")])
+        bed.inappService.finishShow(.failure(.showFailed))
+
+        #expect(bed.page?.showInAppRefusals == ["show_failed"])
+    }
+
     @Test("The params the page sent are passed on as they are")
     func paramsArePassedOnUntouched() {
         let bed = EmbeddedBlockTestBed()

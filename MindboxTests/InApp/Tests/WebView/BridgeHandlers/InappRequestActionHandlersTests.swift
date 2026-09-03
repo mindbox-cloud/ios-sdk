@@ -162,6 +162,21 @@ struct ShowInAppActionHandlerTests {
         #expect(shown.params.isEmpty)
     }
 
+    @Test("A show that did not happen is refused with the contract's reason",
+          arguments: [ShowInAppRefusal.unknownInapp, .sourceDismissed, .showFailed])
+    func refusedShowCarriesTheReason(refusal: ShowInAppRefusal) throws {
+        let host = InappRequestHostSpy()
+        let message = BridgeMessage.request(.showInApp, payload: .object(["inappId": .string("some-id")]))
+
+        ShowInAppActionHandler().handle(message, host: host)
+        host.finishShow(.failure(refusal))
+
+        let response = try #require(host.sent.first)
+        #expect(response.type == .error)
+        #expect(response.id == message.id)
+        #expect(response.payload == .object(["error": .string(refusal.rawValue)]))
+    }
+
     @Test("A request without an id is refused", arguments: [
         JSONValue.object([:]),
         .object(["inappId": .string("")]),

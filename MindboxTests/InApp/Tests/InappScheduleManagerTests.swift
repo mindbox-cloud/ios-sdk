@@ -589,6 +589,46 @@ struct InappScheduleManagerTests {
         #expect(trackingServiceMock.saveInappStateChangeCallCount == 2)
     }
 
+    @Test("A show on request answers success once the window is on screen", .tags(.inAppSchedule))
+    func showInAppNow_answersSuccessWhenPresented() async {
+        let manager = makeSpiedManager(tracker: InAppMessagesTrackerSpyMock())
+        let inapp = createInAppFormData(id: "direct-answered", isPriority: false, delayTime: nil)
+        var outcomes: [Result<Void, InAppPresentationError>] = []
+
+        manager.showInAppNow(inapp, processingDuration: 0) { outcomes.append($0) }
+        for _ in 0..<2 {
+            await withCheckedContinuation { continuation in DispatchQueue.main.async { continuation.resume() } }
+        }
+        #expect(outcomes.isEmpty)
+
+        presentationManagerMock.receivedOnPresent?()
+
+        #expect(outcomes.count == 1)
+        if case .success = outcomes.first {} else {
+            Issue.record("Expected success, got \(String(describing: outcomes.first))")
+        }
+    }
+
+    @Test("A show on request answers the presentation error when the show failed", .tags(.inAppSchedule))
+    func showInAppNow_answersTheErrorWhenFailed() async {
+        let manager = makeSpiedManager(tracker: InAppMessagesTrackerSpyMock())
+        let inapp = createInAppFormData(id: "direct-failed", isPriority: false, delayTime: nil)
+        var outcomes: [Result<Void, InAppPresentationError>] = []
+
+        manager.showInAppNow(inapp, processingDuration: 0) { outcomes.append($0) }
+        for _ in 0..<2 {
+            await withCheckedContinuation { continuation in DispatchQueue.main.async { continuation.resume() } }
+        }
+
+        presentationManagerMock.receivedOnError?(.failed("no window"))
+        presentationManagerMock.receivedOnError?(.failed("again"))
+
+        #expect(outcomes.count == 1)
+        if case .failure(.failed("no window")) = outcomes.first {} else {
+            Issue.record("Expected the first presentation error, got \(String(describing: outcomes.first))")
+        }
+    }
+
     @Test("A show on request reports a presentation error", .tags(.inAppSchedule))
     func showInAppNow_reportsAnError() async {
         let trackerSpy = InAppMessagesTrackerSpyMock()

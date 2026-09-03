@@ -108,6 +108,32 @@ struct EmbeddedBlockInappServiceTests {
         #expect(outcomes.first?.refusal == .unknownInapp)
     }
 
+    @Test("A show that opened answers success")
+    func openedShowAnswersSuccess() {
+        var outcomes: [Result<Void, ShowInAppRefusal>] = []
+        let service = EmbeddedBlockInappService(
+            fetchInappToShow: { id, _, completion in completion(Self.formData(id: id)) },
+            showNow: { _, _, completion in completion(.success(())) }
+        )
+
+        service.showInapp(id: "story-1", params: [:]) { outcomes.append($0) }
+
+        #expect(outcomes.map(\.isSuccess) == [true])
+    }
+
+    @Test("A show that failed on the way to the screen answers show_failed")
+    func failedShowAnswersShowFailed() {
+        var outcomes: [Result<Void, ShowInAppRefusal>] = []
+        let service = EmbeddedBlockInappService(
+            fetchInappToShow: { id, _, completion in completion(Self.formData(id: id)) },
+            showNow: { _, _, completion in completion(.failure(.failedToLoadWindow)) }
+        )
+
+        service.showInapp(id: "story-1", params: [:]) { outcomes.append($0) }
+
+        #expect(outcomes.first?.refusal == .showFailed)
+    }
+
     private static func formData(id: String) -> InAppFormData {
         let modal = ModalFormVariant(content: InappFormVariantContent(background: ContentBackground(layers: []), elements: nil))
         return InAppFormData(inAppId: id,
