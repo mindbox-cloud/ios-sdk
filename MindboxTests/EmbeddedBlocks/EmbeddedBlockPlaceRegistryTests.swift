@@ -507,6 +507,95 @@ struct EmbeddedBlockPlaceRegistryTests {
         #expect(block.delayedCount == 1)
     }
 
+    // MARK: - The show budget
+
+    @Test("A winner takes the place's slot before it is delivered")
+    func winnerTakesThePlaceSlot() {
+        let rig = Rig()
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+
+        rig.registry.blockAppeared("stories")
+
+        #expect(rig.budget.reservations == [.init(owner: .place("stories"),
+                                                  inAppId: EmbeddedBlockWebContent.stub.inAppId,
+                                                  isPriority: false,
+                                                  frequency: .unlimited)])
+        #expect(block.applied == [.content(.stub)])
+    }
+
+    @Test("A winner the budget refuses is delivered as empty")
+    func refusedWinnerIsDeliveredAsEmpty() {
+        let rig = Rig()
+        rig.budget.refusedInAppIds = [EmbeddedBlockWebContent.stub.inAppId]
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+
+        rig.registry.blockAppeared("stories")
+
+        #expect(block.applied == [.empty])
+    }
+
+    @Test("An in-app the place already shows needs no new slot")
+    func shownInappNeedsNoSlot() {
+        let rig = Rig()
+        SessionTemporaryStorage.shared.$ledger.mutate { $0.placeShownInappId["stories"] = EmbeddedBlockWebContent.stub.inAppId }
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+
+        rig.registry.blockAppeared("stories")
+
+        #expect(rig.budget.reservations.isEmpty)
+        #expect(block.applied == [.content(.stub)])
+    }
+
+    @Test("A delayed winner takes its slot when the delay runs out, not before")
+    func delayedWinnerTakesItsSlotAfterTheDelay() {
+        let rig = Rig()
+        rig.resolver.resolution = .content(.delayed("00:00:05"))
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+
+        rig.registry.blockAppeared("stories")
+        #expect(rig.budget.reservations.isEmpty)
+
+        rig.delayScheduler.fireAll()
+
+        #expect(rig.budget.reservations.map(\.inAppId) == [EmbeddedBlockWebContent.delayed().inAppId])
+        #expect(block.applied == [.content(.delayed("00:00:05"))])
+    }
+
+    @Test("An empty answer gives the place's slot back")
+    func emptyAnswerGivesTheSlotBack() {
+        let rig = Rig()
+        rig.resolver.resolution = .empty
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+
+        rig.registry.blockAppeared("stories")
+
+        #expect(rig.budget.releases == [.place("stories")])
+    }
+
+    @Test("The slot is given back when the last attempt at the place has ended")
+    func slotIsGivenBackAfterTheLastAttempt() {
+        let rig = Rig()
+        let first = BlockFake()
+        let second = BlockFake()
+        rig.registry.register(first, place: "stories")
+        rig.registry.register(second, place: "stories")
+        rig.registry.blockAppeared("stories")
+
+        first.holdsAnAttempt = false
+        rig.registry.blockAttemptEnded("stories")
+        #expect(rig.budget.releases.isEmpty)
+
+        second.holdsAnAttempt = false
+        rig.registry.blockAttemptEnded("stories")
+
+        #expect(rig.budget.releases == [.place("stories")])
+    }
+
     // MARK: - Lifetime
 
     @Test("A place whose only block has died resolves nothing")

@@ -127,6 +127,17 @@ struct EmbeddedBlockResolverTests {
         }
     }
 
+    @Test("The resolution carries the in-app's priority to the place's budget check")
+    func resolutionCarriesThePriority() throws {
+        let resolution = EmbeddedBlockResolver.resolution(from: try embeddedInapp(params: [:], isPriority: true),
+                                                          place: "stories-list-container")
+
+        guard case .content(let content) = resolution else {
+            Issue.record("Expected content, got \(resolution)")
+            return
+        }
+        #expect(content.isPriority)
+    }
 }
 
 /// A loader that answers only when asked to: this is how the resolver's behaviour while a load is

@@ -603,6 +603,66 @@ struct InappScheduleManagerTests {
         #expect(!SessionTemporaryStorage.shared.isPresentingInAppMessage)
     }
 
+    // MARK: - The show budget
+
+    /// A two-second delay keeps the production timer out of the way; the eligible show is driven by hand.
+    private func showScheduled(_ inapp: InAppFormData) {
+        scheduleManager.scheduleInApp(inapp, processingDuration: 0)
+
+        var presentationTime: TimeInterval?
+        scheduleManager.queue.sync {
+            presentationTime = self.scheduleManager.inappsByPresentationTime.keys.first
+        }
+        if let presentationTime {
+            scheduleManager.showEligibleInapp(presentationTime)
+        }
+        scheduleManager.queue.sync {}
+    }
+
+    @Test("A scheduled in-app past the session limit is not presented", .tags(.inAppSchedule))
+    func showEligibleInapp_pastSessionLimit_isNotPresented() {
+        SessionTemporaryStorage.shared.inAppSettings = Settings.InAppSettings(maxInappsPerSession: 1, maxInappsPerDay: nil, minIntervalBetweenShows: nil)
+        SessionTemporaryStorage.shared.sessionShownInApps = ["already-shown"]
+
+        showScheduled(createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02"))
+
+        #expect(presentationManagerMock.presentCallsCount == 0)
+        #expect(SessionTemporaryStorage.shared.showBudget.reservations.isEmpty)
+    }
+
+    @Test("A presented in-app holds its slot until the window reports itself", .tags(.inAppSchedule))
+    func showEligibleInapp_holdsTheSlotUntilPresented() {
+        showScheduled(createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02"))
+
+        #expect(presentationManagerMock.presentCallsCount == 1)
+        #expect(SessionTemporaryStorage.shared.showBudget.reservations[.overlay]?.inAppId == "1")
+
+        presentationManagerMock.receivedOnPresent?()
+
+        #expect(SessionTemporaryStorage.shared.showBudget.reservations.isEmpty)
+        #expect(SessionTemporaryStorage.shared.sessionShownInApps == ["1"])
+    }
+
+    @Test("A presentation error gives the slot back", .tags(.inAppSchedule))
+    func showEligibleInapp_errorGivesTheSlotBack() {
+        showScheduled(createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02"))
+
+        presentationManagerMock.receivedOnError?(.failed("no window"))
+
+        #expect(SessionTemporaryStorage.shared.showBudget.reservations.isEmpty)
+        #expect(SessionTemporaryStorage.shared.sessionShownInApps.isEmpty)
+    }
+
+    @Test("Another in-app on screen blocks the show without taking a slot", .tags(.inAppSchedule))
+    func showEligibleInapp_whileAnotherIsOnScreen_isNotPresented() {
+        SessionTemporaryStorage.shared.isPresentingInAppMessage = true
+
+        showScheduled(createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02"))
+
+        #expect(presentationManagerMock.presentCallsCount == 0)
+        #expect(SessionTemporaryStorage.shared.showBudget.reservations.isEmpty)
+    }
+
     // MARK: - Helpers
 
     private func createInAppFormData(id: String,

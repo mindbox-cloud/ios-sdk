@@ -114,6 +114,62 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.provider.contentView == nil)
     }
 
+    // MARK: - The place's slot
+
+    @Test("A block that started took the place's slot and keeps it while loading")
+    func loadingBlockKeepsTheSlot() {
+        let bed = EmbeddedBlockTestBed(placeSystemName: "promo")
+
+        bed.provider.start()
+
+        #expect(bed.budget.reservedOwners == [.place("promo")])
+        #expect(bed.budget.releases.isEmpty)
+    }
+
+    @Test("A page that failed to load gives the place's slot back")
+    func failedPageGivesTheSlotBack() {
+        let bed = EmbeddedBlockTestBed(placeSystemName: "promo")
+
+        bed.provider.start()
+        bed.page?.failLoad()
+
+        #expect(bed.budget.releases == [.place("promo")])
+    }
+
+    @Test("A page that drew nothing gives the place's slot back")
+    func emptyPageGivesTheSlotBack() {
+        let bed = EmbeddedBlockTestBed(placeSystemName: "promo")
+
+        bed.provider.start()
+        bed.page?.reportRendered(0)
+
+        #expect(bed.budget.releases == [.place("promo")])
+    }
+
+    @Test("A block leaving the screen keeps the place's slot")
+    func stoppedBlockKeepsTheSlot() {
+        let bed = EmbeddedBlockTestBed(placeSystemName: "promo")
+
+        bed.provider.start()
+        bed.provider.stop()
+
+        #expect(bed.budget.releases.isEmpty)
+    }
+
+    @Test("A torn-down or abandoned block gives the place's slot back", arguments: [true, false])
+    func goneBlockGivesTheSlotBack(isTornDown: Bool) {
+        let bed = EmbeddedBlockTestBed(placeSystemName: "promo")
+
+        bed.provider.start()
+        if isTornDown {
+            bed.provider.teardown()
+        } else {
+            bed.provider.abandonAttempt()
+        }
+
+        #expect(bed.budget.releases == [.place("promo")])
+    }
+
     // MARK: - Accounting for the show
 
     @Test("A block that drew its page hands the show to the accounting")
