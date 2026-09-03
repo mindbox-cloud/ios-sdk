@@ -17,6 +17,10 @@ class InappFrequencyValidator {
     }
 
     func isValid(frequency: InappFrequency?, id: String) -> Bool {
+        isValid(frequency: frequency, id: id, shownInSession: SessionTemporaryStorage.shared.sessionShownInApps)
+    }
+
+    func isValid(frequency: InappFrequency?, id: String, shownInSession: [String]) -> Bool {
         guard let frequency = frequency else {
             return false
         }
@@ -27,7 +31,7 @@ class InappFrequencyValidator {
                 return validator.isValid(item: periodicFrequency, id: id)
             case .once(let onceFrequency):
                 let validator = OnceFrequencyValidator(persistenceStorage: persistenceStorage)
-                return validator.isValid(item: onceFrequency, id: id)
+                return validator.isValid(item: onceFrequency, id: id, shownInSession: shownInSession)
             case .unlimited:
                 Logger.common(message: "[Inapp frequency] Current frequency is [unlimited]. Valid = true. Inapp ID: \(id)",
                               level: .debug, category: .inAppMessages)
@@ -45,14 +49,14 @@ class OnceFrequencyValidator {
         self.persistenceStorage = persistenceStorage
     }
 
-    func isValid(item: OnceFrequency, id: String) -> Bool {
+    func isValid(item: OnceFrequency, id: String, shownInSession: [String]) -> Bool {
         let shownDatesByInApp = persistenceStorage.shownDatesByInApp ?? [:]
         var result = false
         switch item.kind {
             case .lifetime:
                 result = shownDatesByInApp[id] == nil
             case .session:
-                if SessionTemporaryStorage.shared.sessionShownInApps.contains(id) {
+                if shownInSession.contains(id) {
                     Logger.common(message: "[Inapp frequency] Inapp ID \(id) is already shown in this session. Skip this in-app.",
                                   level: .debug, category: .inAppMessages)
                     result = false

@@ -38,7 +38,6 @@ final class InAppTrackingServiceTests: XCTestCase {
         trackingService.trackInAppShown(id: inAppId)
         
         // Then
-        XCTAssertEqual(SessionTemporaryStorage.shared.sessionShownInApps, [inAppId])
         XCTAssertEqual(persistenceStorage.shownDatesByInApp?[inAppId]?.count, 1)
         XCTAssertNotNil(persistenceStorage.shownDatesByInApp?[inAppId]?.first)
         if let storedDate = persistenceStorage.shownDatesByInApp?[inAppId]?.first {
@@ -57,7 +56,6 @@ final class InAppTrackingServiceTests: XCTestCase {
         trackingService.trackInAppShown(id: inAppId)
         
         // Then
-        XCTAssertEqual(SessionTemporaryStorage.shared.sessionShownInApps, [inAppId, inAppId, inAppId])
         XCTAssertEqual(persistenceStorage.shownDatesByInApp?[inAppId]?.count, 3)
         XCTAssertNotNil(persistenceStorage.shownDatesByInApp?[inAppId])
         if let dates = persistenceStorage.shownDatesByInApp?[inAppId] {
@@ -78,7 +76,6 @@ final class InAppTrackingServiceTests: XCTestCase {
         trackingService.trackInAppShown(id: inAppId2)
         
         // Then
-        XCTAssertEqual(SessionTemporaryStorage.shared.sessionShownInApps, [inAppId1, inAppId2])
         XCTAssertEqual(persistenceStorage.shownDatesByInApp?[inAppId1]?.count, 1)
         XCTAssertEqual(persistenceStorage.shownDatesByInApp?[inAppId2]?.count, 1)
         
@@ -136,7 +133,6 @@ final class InAppTrackingServiceTests: XCTestCase {
         customTrackingService.trackInAppShown(id: inAppId)
         
         // Then
-        XCTAssertEqual(SessionTemporaryStorage.shared.sessionShownInApps, [inAppId])
         XCTAssertEqual(persistenceStorage.shownDatesByInApp?[inAppId]?.count, 1)
         XCTAssertNotNil(persistenceStorage.shownDatesByInApp?[inAppId]?.first)
         if let storedDate = persistenceStorage.shownDatesByInApp?[inAppId]?.first {

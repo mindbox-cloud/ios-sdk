@@ -174,6 +174,7 @@ final class EmbeddedBlockWebViewProvider {
         outcome = .failed
         pendingResolution = nil
         dropPage()
+        registry.blockAttemptEnded(placeSystemName)
     }
 
     func teardown() {
@@ -182,6 +183,7 @@ final class EmbeddedBlockWebViewProvider {
         pendingResolution = nil
         pendingFailureReport = nil
         dropPage()
+        registry.blockAttemptEnded(placeSystemName)
     }
 
     func reload() {
@@ -407,6 +409,10 @@ final class EmbeddedBlockWebViewProvider {
     private func settle(_ newOutcome: EmbeddedBlockState) {
         outcome = newOutcome
 
+        if !isAttemptAlive {
+            registry.blockAttemptEnded(placeSystemName)
+        }
+
         guard isStarted else { return }
 
         onStateChange?(newOutcome)
@@ -551,4 +557,6 @@ final class EmbeddedBlockWebViewProvider {
 extension EmbeddedBlockWebViewProvider: EmbeddedBlockPlaceHandling {
 
     var isActive: Bool { isStarted }
+
+    var holdsAnAttempt: Bool { (isStarted || isPaused) && isAttemptAlive }
 }

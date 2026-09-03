@@ -35,11 +35,9 @@ extension MBContainer {
             let inappFilterService = DI.injectOrFail(InappFilterProtocol.self)
             let targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
             let dataFacade = DI.injectOrFail(InAppConfigurationDataFacadeProtocol.self)
-            let presentationValidator = DI.injectOrFail(InAppPresentationValidatorProtocol.self)
             return InappMapper(targetingChecker: targetingChecker,
                                inappFilterService: inappFilterService,
-                               dataFacade: dataFacade,
-                               presentationValidator: presentationValidator)
+                               dataFacade: dataFacade)
         }
 
         register(InAppConfigurationManagerProtocol.self) {

@@ -19,6 +19,7 @@ struct InappScheduleManagerTests {
     private var presentationManagerMock: InAppPresentationManagerMock
     private var trackingServiceMock: InAppTrackingServiceMock
     private var failureManagerMock: InappShowFailureManagerMock
+    private var budget: InappShowBudget
 
     init() {
         TestConfiguration.configure()
@@ -26,11 +27,12 @@ struct InappScheduleManagerTests {
         presentationManagerMock = InAppPresentationManagerMock()
         trackingServiceMock = InAppTrackingServiceMock()
         failureManagerMock = InappShowFailureManagerMock()
+        budget = InappShowBudget(persistenceStorage: DI.injectOrFail(PersistenceStorage.self), trackingService: trackingServiceMock)
 
         scheduleManager = InappScheduleManager(
             presentationManager: presentationManagerMock,
-            presentationValidator: DI.injectOrFail(InAppPresentationValidatorProtocol.self),
-            accountant: InappShowAccountant(tracker: DI.injectOrFail(InAppMessagesTracker.self), trackingService: trackingServiceMock),
+            budget: budget,
+            accountant: InappShowAccountant(tracker: DI.injectOrFail(InAppMessagesTracker.self), budget: budget),
             failureManager: failureManagerMock
         )
 
@@ -454,8 +456,8 @@ struct InappScheduleManagerTests {
     private func makeSpiedManager(tracker: InAppMessagesTrackerSpyMock) -> InappScheduleManager {
         InappScheduleManager(
             presentationManager: presentationManagerMock,
-            presentationValidator: DI.injectOrFail(InAppPresentationValidatorProtocol.self),
-            accountant: InappShowAccountant(tracker: tracker, trackingService: trackingServiceMock),
+            budget: budget,
+            accountant: InappShowAccountant(tracker: tracker, budget: budget),
             failureManager: failureManagerMock
         )
     }

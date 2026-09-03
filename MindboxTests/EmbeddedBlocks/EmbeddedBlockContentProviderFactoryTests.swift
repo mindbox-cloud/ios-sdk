@@ -28,6 +28,7 @@ struct EmbeddedBlockContentProviderFactoryTests {
     func providerPullsThroughTheSharedRegistry() {
         let resolver = EmbeddedBlockResolverMock(resolution: .empty)
         let registry = EmbeddedBlockPlaceRegistry(resolver: resolver,
+                                                  budget: InappShowBudgetMock(),
                                                   notificationCenter: NotificationCenter(),
                                                   fetchEmbeddedPlaces: { $0(nil) })
         let factory = EmbeddedBlockContentProviderFactory(registry: registry,
@@ -73,6 +74,7 @@ struct EmbeddedBlockContentProviderFactoryTests {
         let inappService = EmbeddedBlockInappServiceMock()
         inappService.hasConfig = hasConfig
         let registry = EmbeddedBlockPlaceRegistry(resolver: EmbeddedBlockResolverMock(resolution: .empty),
+                                                  budget: InappShowBudgetMock(),
                                                   notificationCenter: NotificationCenter(),
                                                   fetchEmbeddedPlaces: { $0(nil) })
         let factory = EmbeddedBlockContentProviderFactory(registry: registry,
@@ -100,6 +102,7 @@ struct EmbeddedBlockContentProviderFactoryTests {
     /// need no real web view.
     private func makeFactory() -> EmbeddedBlockContentProviderFactory {
         let registry = EmbeddedBlockPlaceRegistry(resolver: EmbeddedBlockResolverMock(resolution: .empty),
+                                                  budget: InappShowBudgetMock(),
                                                   notificationCenter: NotificationCenter(),
                                                   fetchEmbeddedPlaces: { $0(nil) })
         return EmbeddedBlockContentProviderFactory(registry: registry,

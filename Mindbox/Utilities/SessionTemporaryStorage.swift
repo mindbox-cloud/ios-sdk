@@ -23,7 +23,7 @@ final class SessionTemporaryStorage {
     @Locked var segmentationRequestResult: Result<[SegmentationCheckResponse.CustomerSegmentation]?, MindboxError>?
     @Locked var isPresentingInAppMessage = false
     @Locked var pushPermissionStatus: UNAuthorizationStatus = .denied
-    @Locked var sessionShownInApps: [String] = []
+    @Locked var showBudget = InappShowBudgetState()
     @Locked var isInstalledFromPersistenceStorageBeforeInitSDK: Bool = false
     @Locked var isInitializationCalled = false {
         didSet {
@@ -47,6 +47,11 @@ final class SessionTemporaryStorage {
 
     private init() {}
 
+    var sessionShownInApps: [String] {
+        get { showBudget.shownInSession }
+        set { $showBudget.mutate { $0.shownInSession = newValue } }
+    }
+
     var customOperations: Set<String> {
         observedCustomOperations.union([viewCategoryOperation, viewProductOperation].compactMap { $0 })
     }
@@ -58,7 +63,7 @@ final class SessionTemporaryStorage {
         geoRequestResult = nil
         segmentationRequestResult = nil
         isPresentingInAppMessage = false
-        sessionShownInApps = []
+        showBudget = InappShowBudgetState()
         isUserVisitSaved = false
         lastInappClickedID = nil
         ledger = InappSessionLedger()

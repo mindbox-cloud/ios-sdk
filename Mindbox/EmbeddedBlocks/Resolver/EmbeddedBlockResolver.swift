@@ -94,6 +94,7 @@ final class EmbeddedBlockResolver: EmbeddedBlockResolving {
                                                 baseUrl: layer.baseUrl,
                                                 contentUrl: layer.contentUrl,
                                                 frequency: inapp.frequency,
+                                                isPriority: inapp.isPriority,
                                                 tags: inapp.tags,
                                                 params: layer.params,
                                                 delayTime: inapp.delayTime))

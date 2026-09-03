@@ -23,6 +23,8 @@ struct EmbeddedBlockWebContent: Equatable {
 
     let frequency: InappFrequency?
 
+    let isPriority: Bool
+
     let tags: [String: String]?
 
     let params: [String: JSONValue]
@@ -34,6 +36,7 @@ struct EmbeddedBlockWebContent: Equatable {
          baseUrl: String,
          contentUrl: String,
          frequency: InappFrequency?,
+         isPriority: Bool = false,
          tags: [String: String]?,
          params: [String: JSONValue],
          delayTime: String? = nil) {
@@ -41,6 +44,7 @@ struct EmbeddedBlockWebContent: Equatable {
         self.baseUrl = baseUrl
         self.contentUrl = contentUrl
         self.frequency = frequency
+        self.isPriority = isPriority
         self.tags = tags
         self.params = params
         self.delayTime = delayTime

@@ -30,7 +30,7 @@ protocol InappScheduleManagerProtocol {
 final class InappScheduleManager: InappScheduleManagerProtocol {
     
     let presentationManager: InAppPresentationManagerProtocol
-    let presentationValidator: InAppPresentationValidatorProtocol
+    let budget: InappShowBudgeting
     let accountant: InappShowAccounting
     let failureManager: InappShowFailureManagerProtocol
     
@@ -38,11 +38,11 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
     var inappsByPresentationTime: [TimeInterval: [ScheduledInapp]] = [:]
     
     init(presentationManager: InAppPresentationManagerProtocol,
-         presentationValidator: InAppPresentationValidatorProtocol,
+         budget: InappShowBudgeting,
          accountant: InappShowAccounting,
          failureManager: InappShowFailureManagerProtocol) {
         self.presentationManager = presentationManager
-        self.presentationValidator = presentationValidator
+        self.budget = budget
         self.accountant = accountant
         self.failureManager = failureManager
         addObserver()
@@ -104,10 +104,7 @@ internal extension InappScheduleManager {
                 $0.inapp.isPriority && !$1.inapp.isPriority
             }
             
-            if let firstInapp = sortedScheduledInapps.first,
-                self.presentationValidator.canPresentInApp(isPriority: firstInapp.inapp.isPriority,
-                                                           frequency: firstInapp.inapp.frequency,
-                                                           id: firstInapp.inapp.inAppId) {
+            if let firstInapp = sortedScheduledInapps.first, self.mayPresent(firstInapp.inapp) {
                 let stopwatch = ForegroundStopwatch()
                 self.presentInapp(firstInapp.inapp, stopwatch: stopwatch, processingDuration: firstInapp.processingDuration)
             }
@@ -121,6 +118,16 @@ internal extension InappScheduleManager {
         }
     }
     
+    private func mayPresent(_ inapp: InAppFormData) -> Bool {
+        guard !SessionTemporaryStorage.shared.isPresentingInAppMessage else {
+            Logger.common(message: "[InappScheduleManager] Another in-app is already being shown, skipping \(inapp.inAppId)",
+                          level: .debug, category: .inAppMessages)
+            return false
+        }
+
+        return budget.reserve(.overlay, inAppId: inapp.inAppId, isPriority: inapp.isPriority, frequency: inapp.frequency)
+    }
+
     private func trackShow(_ inapp: InAppFormData, timeToDisplay: TimeInterval) {
         accountant.recordShow(InappShow(inAppId: inapp.inAppId,
                                         frequency: inapp.frequency,
@@ -187,6 +194,7 @@ internal extension InappScheduleManager {
                 didHandleOnError = true
 
                 SessionTemporaryStorage.shared.isPresentingInAppMessage = false
+                self.budget.release(.overlay)
                 self.failureManager.addFailure(
                     inappId: inapp.inAppId,
                     reason: error.failureReason,

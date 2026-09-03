@@ -30,8 +30,8 @@ struct TimeToDisplayBackgroundTests {
 
         scheduleManager = InappScheduleManager(
             presentationManager: presentationManagerMock,
-            presentationValidator: DI.injectOrFail(InAppPresentationValidatorProtocol.self),
-            accountant: InappShowAccountant(tracker: trackerMock, trackingService: InAppTrackingServiceMock()),
+            budget: DI.injectOrFail(InappShowBudgeting.self),
+            accountant: InappShowAccountant(tracker: trackerMock, budget: DI.injectOrFail(InappShowBudgeting.self)),
             failureManager: InappShowFailureManagerMock()
         )
 

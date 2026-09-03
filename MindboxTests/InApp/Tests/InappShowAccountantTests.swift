@@ -14,12 +14,12 @@ import Foundation
 struct InappShowAccountantTests {
 
     private let tracker = InAppMessagesTrackerSpyMock()
-    private let trackingService = InAppTrackingServiceMock()
+    private let budget = InappShowBudgetMock()
     private let accountant: InappShowAccountant
 
     init() {
         SessionTemporaryStorage.shared.erase()
-        accountant = InappShowAccountant(tracker: tracker, trackingService: trackingService)
+        accountant = InappShowAccountant(tracker: tracker, budget: budget)
     }
 
     private func show(_ frequency: InappFrequency, id: String = "inapp-1") -> InappShow {
@@ -35,36 +35,45 @@ struct InappShowAccountantTests {
         #expect(tracker.lastTimeToDisplay == "00:00:01.5000000")
     }
 
-    @Test("A counted show writes the history")
-    func countedShowWritesHistory() {
-        accountant.recordShow(show(.once(OnceFrequency(kind: .session))))
+    @Test("A show turns the overlay's slot into a recorded show")
+    func showCommitsTheOverlaySlot() {
+        let frequency: InappFrequency = .once(OnceFrequency(kind: .session))
 
-        #expect(trackingService.trackInAppShownCallCount == 1)
-        #expect(trackingService.lastTrackedInAppId == "inapp-1")
+        accountant.recordShow(show(frequency))
+
+        #expect(budget.commits == [.init(owner: .overlay, inAppId: "inapp-1", frequency: frequency)])
     }
 
-    @Test("An unlimited show sends the event and writes nothing")
-    func unlimitedShowWritesNothing() {
+    @Test("The budget, not the accountant, decides what an unlimited show writes")
+    func unlimitedShowIsCommittedWithItsFrequency() {
         accountant.recordShow(show(.unlimited))
 
+        #expect(budget.commits == [.init(owner: .overlay, inAppId: "inapp-1", frequency: .unlimited)])
+    }
+
+    @Test("A cooldown is handed to the budget with its frequency")
+    func cooldownGoesToTheBudget() {
+        accountant.recordCooldown(frequency: .once(OnceFrequency(kind: .lifetime)))
+
+        #expect(budget.cooldowns == [.once(OnceFrequency(kind: .lifetime))])
+    }
+
+    @Test("A block show turns the place's slot into a recorded show")
+    func blockShowCommitsThePlaceSlot() {
+        accountant.recordBlockShow(show(.unlimited), at: "place")
+
         #expect(tracker.trackViewCallCount == 1)
-        #expect(trackingService.trackInAppShownCallCount == 0)
-        #expect(trackingService.saveInappStateChangeCallCount == 0)
+        #expect(budget.commits == [.init(owner: .place("place"), inAppId: "inapp-1", frequency: .unlimited)])
     }
 
-    @Test("A counted show moves the cooldown")
-    func countedShowMovesTheCooldown() {
-        accountant.recordShow(show(.once(OnceFrequency(kind: .session))))
-
-        #expect(trackingService.saveInappStateChangeCallCount == 1)
-    }
-
-    @Test("The same in-app at a place is accounted once")
+    @Test("The same in-app at a place is accounted once and gives the slot back")
     func sameInappAtPlaceIsAccountedOnce() {
         accountant.recordBlockShow(show(.unlimited), at: "place")
         accountant.recordBlockShow(show(.unlimited), at: "place")
 
         #expect(tracker.trackViewCallCount == 1)
+        #expect(budget.commits.count == 1)
+        #expect(budget.releases == [.place("place")])
     }
 
     @Test("Another in-app at the place is accounted")
@@ -73,6 +82,7 @@ struct InappShowAccountantTests {
         accountant.recordBlockShow(show(.unlimited, id: "inapp-2"), at: "place")
 
         #expect(tracker.trackViewCallCount == 2)
+        #expect(budget.commits.map(\.inAppId) == ["inapp-1", "inapp-2"])
     }
 
     @Test("Returning to the first in-app at the place is accounted again")
@@ -90,6 +100,7 @@ struct InappShowAccountantTests {
         accountant.recordBlockShow(show(.unlimited), at: "second-place")
 
         #expect(tracker.trackViewCallCount == 2)
+        #expect(budget.commits.map(\.owner) == [.place("first-place"), .place("second-place")])
     }
 
     @Test("A new session accounts the same in-app at the place again")
@@ -99,13 +110,5 @@ struct InappShowAccountantTests {
         accountant.recordBlockShow(show(.unlimited), at: "place")
 
         #expect(tracker.trackViewCallCount == 2)
-    }
-
-    @Test("A counted cooldown is written, an unlimited one is not")
-    func cooldownFollowsTheFrequency() {
-        accountant.recordCooldown(frequency: .once(OnceFrequency(kind: .lifetime)))
-        accountant.recordCooldown(frequency: .unlimited)
-
-        #expect(trackingService.saveInappStateChangeCallCount == 1)
     }
 }

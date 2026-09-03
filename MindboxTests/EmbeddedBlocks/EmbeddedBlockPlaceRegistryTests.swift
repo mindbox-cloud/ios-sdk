@@ -17,6 +17,7 @@ struct EmbeddedBlockPlaceRegistryTests {
 
     private final class BlockFake: EmbeddedBlockPlaceHandling {
         var isActive = true
+        var holdsAnAttempt = true
         private(set) var applied: [EmbeddedBlockResolution] = []
         private(set) var processingDurations: [TimeInterval] = []
         private(set) var delayedCount = 0
@@ -36,12 +37,16 @@ struct EmbeddedBlockPlaceRegistryTests {
         let center: NotificationCenter
         let embeddedPlaces: EmbeddedPlacesStub
         let delayScheduler: TestScheduler
+        let budget = InappShowBudgetMock()
         let registry: EmbeddedBlockPlaceRegistry
         var isInBackground = false
 
         init() {
-            // Served delays live on the shared session singleton — reset, or rigs would see each other's.
-            SessionTemporaryStorage.shared.$ledger.mutate { $0.servedPlaceDelays = [] }
+            // Served delays and shown slots live on the shared session singleton — reset, or rigs would see each other's.
+            SessionTemporaryStorage.shared.$ledger.mutate {
+                $0.servedPlaceDelays = []
+                $0.placeShownInappId = [:]
+            }
 
             let resolver = EmbeddedBlockResolverMock()
             let center = NotificationCenter()
@@ -53,6 +58,7 @@ struct EmbeddedBlockPlaceRegistryTests {
             self.delayScheduler = delayScheduler
             var background = { false }
             registry = EmbeddedBlockPlaceRegistry(resolver: resolver,
+                                                  budget: budget,
                                                   notificationCenter: center,
                                                   fetchEmbeddedPlaces: { embeddedPlaces.fetch($0) },
                                                   delayedDelivery: EmbeddedBlockDelayedDelivery(isInBackground: { background() },

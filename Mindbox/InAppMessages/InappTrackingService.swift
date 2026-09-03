@@ -25,8 +25,7 @@ final class InAppTrackingService: InAppTrackingServiceProtocol {
     
     func trackInAppShown(id: String) {
         let now = Date()
-        
-        trackInAppInSession(id: id)
+
         updateShownDates(id: id, newDate: now)
         cleanupOldDates(id: id, currentDate: now)
     }
@@ -38,10 +37,6 @@ final class InAppTrackingService: InAppTrackingServiceProtocol {
         let now = Date()
         persistenceStorage.lastInappStateChangeDate = now
         Logger.common(message: "[InAppTrackingService] Updated lastInappStateChangeDate to \(now.asDateTimeWithSeconds)", level: .info, category: .inAppMessages)
-    }
-    
-    private func trackInAppInSession(id: String) {
-        SessionTemporaryStorage.shared.$sessionShownInApps.mutate { $0.append(id) }
     }
     
     private func updateShownDates(id: String, newDate: Date) {

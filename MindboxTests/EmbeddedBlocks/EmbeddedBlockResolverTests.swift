@@ -88,7 +88,7 @@ struct EmbeddedBlockResolverTests {
 
     // MARK: - What the selection's answer becomes
 
-    private func embeddedInapp(params: [String: JSONValue]) throws -> InAppTransitionData {
+    private func embeddedInapp(params: [String: JSONValue], isPriority: Bool = false) throws -> InAppTransitionData {
         let layer = WebviewContentBackgroundLayer(baseUrl: "https://inapp.local/stories",
                                                   contentUrl: "https://mindbox.ru/block.html",
                                                   params: params)
@@ -97,7 +97,7 @@ struct EmbeddedBlockResolverTests {
         let variant = MindboxFormVariant.embedded(EmbeddedFormVariant(content: content,
                                                                       placeSystemName: "stories-list-container"))
         return InAppTransitionData(inAppId: "block-inapp-id",
-                                   isPriority: false,
+                                   isPriority: isPriority,
                                    delayTime: nil,
                                    content: variant,
                                    frequency: nil,
@@ -126,6 +126,7 @@ struct EmbeddedBlockResolverTests {
             #expect(content.params == params)
         }
     }
+
 }
 
 /// A loader that answers only when asked to: this is how the resolver's behaviour while a load is

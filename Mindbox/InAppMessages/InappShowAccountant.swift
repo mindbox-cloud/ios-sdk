@@ -19,28 +19,48 @@ struct InappShow {
 
 protocol InappShowAccounting: AnyObject {
 
-    /// `Inapp.Show` to the backend, then the local show history and the cooldown when the frequency counts shows.
+    /// `Inapp.Show` to the backend, then the overlay's slot in the show budget becomes the recorded show.
     func recordShow(_ show: InappShow)
 
     /// The moment `minIntervalBetweenShows` counts from — written when the frequency counts shows.
     func recordCooldown(frequency: InappFrequency?)
 
     /// A block's show counts when its place shows a different in-app than it showed last: 1 → 2 → 1 in
-    /// one session is three shows, the same in-app again — a rebuilt page, a rotation — is none.
+    /// one session is three shows, the same in-app again — a rebuilt page, a rotation — is none, and
+    /// gives the place's slot back.
     func recordBlockShow(_ show: InappShow, at place: String)
 }
 
 final class InappShowAccountant: InappShowAccounting {
 
     private let tracker: InAppMessagesTrackerProtocol
-    private let trackingService: InAppTrackingServiceProtocol
+    private let budget: InappShowBudgeting
 
-    init(tracker: InAppMessagesTrackerProtocol, trackingService: InAppTrackingServiceProtocol) {
+    init(tracker: InAppMessagesTrackerProtocol, budget: InappShowBudgeting) {
         self.tracker = tracker
-        self.trackingService = trackingService
+        self.budget = budget
     }
 
     func recordShow(_ show: InappShow) {
+        record(show, owner: .overlay)
+    }
+
+    func recordCooldown(frequency: InappFrequency?) {
+        budget.recordCooldown(frequency: frequency)
+    }
+
+    func recordBlockShow(_ show: InappShow, at place: String) {
+        guard SessionTemporaryStorage.shared.$ledger.mutate({ $0.recordShow(show.inAppId, at: place) }) else {
+            Logger.common(message: "[InappShowAccountant] Place '\(place)' shows in-app \(show.inAppId) again — nothing new to account for",
+                          level: .debug, category: .inAppMessages)
+            budget.release(.place(place))
+            return
+        }
+
+        record(show, owner: .place(place))
+    }
+
+    private func record(_ show: InappShow, owner: InappShowBudgetOwner) {
         do {
             try tracker.trackView(id: show.inAppId, timeToDisplay: show.timeToDisplay.toTimeSpan(), tags: show.tags)
         } catch {
@@ -48,25 +68,6 @@ final class InappShowAccountant: InappShowAccounting {
                           level: .error, category: .inAppMessages)
         }
 
-        guard InappFrequency.countsShows(show.frequency) else { return }
-
-        trackingService.trackInAppShown(id: show.inAppId)
-        trackingService.saveInappStateChange()
-    }
-
-    func recordCooldown(frequency: InappFrequency?) {
-        guard InappFrequency.countsShows(frequency) else { return }
-
-        trackingService.saveInappStateChange()
-    }
-
-    func recordBlockShow(_ show: InappShow, at place: String) {
-        guard SessionTemporaryStorage.shared.$ledger.mutate({ $0.recordShow(show.inAppId, at: place) }) else {
-            Logger.common(message: "[InappShowAccountant] Place '\(place)' shows in-app \(show.inAppId) again — nothing new to account for",
-                          level: .debug, category: .inAppMessages)
-            return
-        }
-
-        recordShow(show)
+        budget.commit(owner, inAppId: show.inAppId, frequency: show.frequency)
     }
 }
