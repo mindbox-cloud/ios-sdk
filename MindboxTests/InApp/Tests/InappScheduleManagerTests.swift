@@ -465,7 +465,7 @@ struct InappScheduleManagerTests {
     private func showNowAndAwaitMainQueue(_ manager: InappScheduleManager,
                                           _ inapp: InAppFormData,
                                           processingDuration: TimeInterval = 0) async {
-        manager.showInAppNow(inapp, processingDuration: processingDuration)
+        manager.showInAppNow(inapp, processingDuration: processingDuration) { _ in }
         // showInAppNow takes two main-queue turns: close the active overlay, then present.
         for _ in 0..<2 {
             await withCheckedContinuation { continuation in

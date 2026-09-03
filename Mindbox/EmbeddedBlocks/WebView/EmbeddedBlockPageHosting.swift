@@ -31,8 +31,9 @@ protocol EmbeddedBlockPageHosting: AnyObject {
     var onShowableQuestion: (([String], @escaping ([String]) -> Void) -> Void)? { get set }
 
     /// The page asks to show an in-app by id, with the params that travel into its start
-    /// payload untouched. Delivered on the main thread.
-    var onShowInAppRequest: ((String, [String: JSONValue]) -> Void)? { get set }
+    /// payload untouched. The outcome goes back through the completion once it is known.
+    /// Delivered on the main thread.
+    var onShowInAppRequest: ((String, [String: JSONValue], @escaping (Result<Void, ShowInAppRefusal>) -> Void) -> Void)? { get set }
 
     /// The page confirmed the `initDataUpdated` push. Delivered on the main thread.
     var onDataPushConfirmed: (() -> Void)? { get set }

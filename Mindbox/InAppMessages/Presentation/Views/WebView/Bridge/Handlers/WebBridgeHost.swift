@@ -137,6 +137,17 @@ protocol WebBridgeContentHosting: AnyObject {
     func bridgeDidReportUnreadableContent()
 }
 
+/// Why a `showInApp` request ended without a show. The raw values are the bridge contract's, shared
+/// with Android; a page treats any reason it does not know as "not shown".
+enum ShowInAppRefusal: String, Error {
+    /// Not in the config, or cut by the filters before it could be shown.
+    case unknownInapp = "unknown_inapp"
+    /// The requesting block no longer shows anything; its page is on its way out.
+    case sourceDismissed = "source_dismissed"
+    /// The show started and did not reach the screen.
+    case showFailed = "show_failed"
+}
+
 protocol WebBridgeInappRequestHosting: AnyObject {
 
     /// Which of `ids` are showable. Answered asynchronously and possibly never: a host that
@@ -144,6 +155,9 @@ protocol WebBridgeInappRequestHosting: AnyObject {
     func bridgeDidAskShowableInapps(_ ids: [String], completion: @escaping ([String]) -> Void)
 
     /// `params` travel into the shown in-app's start payload untouched: for the SDK they are an
-    /// opaque dictionary.
-    func bridgeDidRequestShowInApp(id: String, params: [String: JSONValue])
+    /// opaque dictionary. Answered once the outcome is known — the window is on screen, or why it
+    /// is not — and possibly never, like the question above.
+    func bridgeDidRequestShowInApp(id: String,
+                                   params: [String: JSONValue],
+                                   completion: @escaping (Result<Void, ShowInAppRefusal>) -> Void)
 }

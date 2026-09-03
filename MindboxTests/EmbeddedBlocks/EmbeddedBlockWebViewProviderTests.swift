@@ -899,8 +899,8 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.inappService.shown.first?.params == params)
     }
 
-    @Test("A stopped block does not answer at all")
-    func stoppedBlockDoesNotAnswer() {
+    @Test("A stopped block's request is refused at the presence gate, before the block hears it")
+    func stoppedBlockIsRefusedAtThePresenceGate() {
         let bed = EmbeddedBlockTestBed()
 
         bed.provider.start()
@@ -908,10 +908,11 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.page?.send(.showInApp, ["inappId": .string("story-id")])
 
         #expect(bed.inappService.shown.isEmpty)
+        #expect(bed.page?.showInAppRefusals == ["Nobody is looking at this page"])
     }
 
-    @Test("A block collapsed as empty does not act on a show request")
-    func emptyBlockDoesNotActOnShowInApp() {
+    @Test("A block collapsed as empty refuses a show request as source_dismissed")
+    func emptyBlockRefusesShowInApp() {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
 
@@ -919,10 +920,11 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.page?.send(.showInApp, ["inappId": .string("story-id")])
 
         #expect(bed.inappService.shown.isEmpty)
+        #expect(bed.page?.showInAppRefusals == ["source_dismissed"])
     }
 
-    @Test("A failed block does not act on a show request")
-    func failedBlockDoesNotActOnShowInApp() {
+    @Test("A failed block refuses a show request as source_dismissed")
+    func failedBlockRefusesShowInApp() {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
 
@@ -930,10 +932,11 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.page?.send(.showInApp, ["inappId": .string("story-id")])
 
         #expect(bed.inappService.shown.isEmpty)
+        #expect(bed.page?.showInAppRefusals == ["source_dismissed"])
     }
 
-    @Test("A block broken by an unreadable report does not act on a show request")
-    func brokenBlockDoesNotActOnShowInApp() {
+    @Test("A block broken by an unreadable report refuses a show request as source_dismissed")
+    func brokenBlockRefusesShowInApp() {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
 
@@ -941,6 +944,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.page?.send(.showInApp, ["inappId": .string("story-id")])
 
         #expect(bed.inappService.shown.isEmpty)
+        #expect(bed.page?.showInAppRefusals == ["source_dismissed"])
     }
 
     @Test("A new attempt after a failure acts again")

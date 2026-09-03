@@ -24,7 +24,7 @@ protocol InAppPresentationManagerProtocol: AnyObject {
     func dismissActiveInApp()
 }
 
-enum InAppPresentationError {
+enum InAppPresentationError: Error {
     case failedToLoadImages
     case failedToLoadWindow
     case webviewLoadFailed(String)

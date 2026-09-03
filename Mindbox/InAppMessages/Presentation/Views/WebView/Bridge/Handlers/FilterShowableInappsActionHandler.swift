@@ -33,11 +33,7 @@ final class FilterShowableInappsActionHandler: WebBridgeActionHandler {
         }
 
         guard let inappHost = host as? WebBridgeInappRequestHosting else {
-            // Left unanswered, not refused: surfaces without an in-app service may conform later, and a refusal
-            // would have to be unlearned by every page that starts relying on it.
-            Logger.common(message: "[WebView] Bridge: filterShowableInapps from '\(host.contentId)' has no in-app service to ask here, ignoring",
-                          level: .error,
-                          category: host.logCategory)
+            host.respondError("filterShowableInapps is not served on this surface", to: message)
             return
         }
 

@@ -178,6 +178,10 @@ struct EmbeddedBlockWebViewPageTests {
         let request = try #require(bed.showRequests.first)
         #expect(request.id == "story-1")
         #expect(request.params == ["k": .string("v")])
+        #expect(bed.facade.sentMessages.isEmpty)
+
+        bed.finishShow(.success(()))
+
         #expect(bed.facade.sentMessages.map(\.type) == [.response])
     }
 
@@ -318,6 +322,7 @@ private final class PageBed {
     private(set) var ackCount = 0
 
     private var pageCompletions: [([String]) -> Void] = []
+    private var showCompletions: [(Result<Void, ShowInAppRefusal>) -> Void] = []
 
     private lazy var bridge = MindboxWebBridge(webView: facade.webView)
 
@@ -345,8 +350,9 @@ private final class PageBed {
         page.onUnreadableContentReport = { [weak self] in
             self?.unreadableReports += 1
         }
-        page.onShowInAppRequest = { [weak self] id, params in
+        page.onShowInAppRequest = { [weak self] id, params, completion in
             self?.showRequests.append((id, params))
+            self?.showCompletions.append(completion)
         }
         page.onDataPushConfirmed = { [weak self] in
             self?.ackCount += 1
@@ -359,6 +365,10 @@ private final class PageBed {
 
     func receive(_ message: BridgeMessage) {
         facade.messageDelegate?.webBridge(bridge, didReceiveBridgeMessage: message)
+    }
+
+    func finishShow(_ outcome: Result<Void, ShowInAppRefusal>) {
+        showCompletions.forEach { $0(outcome) }
     }
 
     func answerPage(_ allowed: [String]) {

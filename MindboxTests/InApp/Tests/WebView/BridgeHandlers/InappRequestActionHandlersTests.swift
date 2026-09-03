@@ -102,15 +102,17 @@ struct FilterShowableInappsActionHandlerTests {
         #expect(host.sent.first?.payload == .object(["inappIds": .array([.string("id-1")])]))
     }
 
-    @Test("A host without an in-app service leaves the question unanswered")
-    func hostWithoutInappServiceStaysSilent() {
+    @Test("A host without an in-app service refuses the question instead of keeping silent")
+    func hostWithoutInappServiceRefuses() throws {
         let host = HostSpy()
 
         FilterShowableInappsActionHandler().handle(.request(.filterShowableInapps,
                                                             payload: .object(["inappIds": .array([.string("id-1")])])),
                                                    host: host)
 
-        #expect(host.sent.isEmpty)
+        let response = try #require(host.sent.first)
+        #expect(response.type == .error)
+        #expect(response.payload == .object(["error": .string("filterShowableInapps is not served on this surface")]))
     }
 }
 
@@ -122,8 +124,8 @@ struct ShowInAppActionHandlerTests {
         #expect(ShowInAppActionHandler().actions == [.showInApp])
     }
 
-    @Test("A well-formed request reaches the service and is acknowledged")
-    func requestReachesTheService() throws {
+    @Test("A well-formed request reaches the service and is answered only by the outcome")
+    func requestReachesTheServiceAndWaitsForTheOutcome() throws {
         let host = InappRequestHostSpy()
         let message = BridgeMessage.request(.showInApp, payload: .object([
             "inappId": .string("11111111-1111-1111-1111-111111111111"),
@@ -137,11 +139,15 @@ struct ShowInAppActionHandlerTests {
         let shown = try #require(host.shown.first)
         #expect(shown.id == "11111111-1111-1111-1111-111111111111")
         #expect(shown.params == ["title": .string("Сториз 1")])
+        #expect(host.sent.isEmpty)
+
+        host.finishShow(.success(()))
 
         let response = try #require(host.sent.first)
         #expect(response.type == .response)
         #expect(response.payload == .object(["success": .bool(true)]))
         #expect(response.id == message.id)
+        #expect(host.sent.count == 1)
     }
 
     @Test("Only the id is required")
@@ -154,7 +160,6 @@ struct ShowInAppActionHandlerTests {
         let shown = try #require(host.shown.first)
         #expect(shown.id == "some-id")
         #expect(shown.params.isEmpty)
-        #expect(host.sent.first?.type == .response)
     }
 
     @Test("A request without an id is refused", arguments: [
@@ -173,14 +178,16 @@ struct ShowInAppActionHandlerTests {
         #expect(response.payload == .object(["error": .string("Invalid payload: missing or empty 'inappId'")]))
     }
 
-    @Test("A host without an in-app service leaves the request unanswered")
-    func hostWithoutInappServiceStaysSilent() {
+    @Test("A host without an in-app service refuses the request instead of keeping silent")
+    func hostWithoutInappServiceRefuses() throws {
         let host = HostSpy()
 
         ShowInAppActionHandler().handle(.request(.showInApp, payload: .object(["inappId": .string("some-id")])),
                                         host: host)
 
-        #expect(host.sent.isEmpty)
+        let response = try #require(host.sent.first)
+        #expect(response.type == .error)
+        #expect(response.payload == .object(["error": .string("showInApp is not served on this surface")]))
     }
 }
 
@@ -194,6 +201,7 @@ private final class InappRequestHostSpy: HostSpy, WebBridgeInappRequestHosting {
     private(set) var shown: [(id: String, params: [String: JSONValue])] = []
 
     private var pending: [([String]) -> Void] = []
+    private var showCompletions: [(Result<Void, ShowInAppRefusal>) -> Void] = []
 
     func bridgeDidAskShowableInapps(_ ids: [String], completion: @escaping ([String]) -> Void) {
         askedIds.append(ids)
@@ -205,8 +213,17 @@ private final class InappRequestHostSpy: HostSpy, WebBridgeInappRequestHosting {
         }
     }
 
-    func bridgeDidRequestShowInApp(id: String, params: [String: JSONValue]) {
+    func bridgeDidRequestShowInApp(id: String,
+                                   params: [String: JSONValue],
+                                   completion: @escaping (Result<Void, ShowInAppRefusal>) -> Void) {
         shown.append((id, params))
+        showCompletions.append(completion)
+    }
+
+    func finishShow(_ outcome: Result<Void, ShowInAppRefusal>) {
+        let completions = showCompletions
+        showCompletions = []
+        completions.forEach { $0(outcome) }
     }
 
     func flush() {

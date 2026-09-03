@@ -153,7 +153,7 @@ final class EmbeddedBlockPageMock: EmbeddedBlockPageHosting {
 
     var onShowableQuestion: (([String], @escaping ([String]) -> Void) -> Void)?
 
-    var onShowInAppRequest: ((String, [String: JSONValue]) -> Void)?
+    var onShowInAppRequest: ((String, [String: JSONValue], @escaping (Result<Void, ShowInAppRefusal>) -> Void) -> Void)?
 
     var onDataPushConfirmed: (() -> Void)?
 
@@ -169,6 +169,9 @@ final class EmbeddedBlockPageMock: EmbeddedBlockPageHosting {
 
     fileprivate(set) var responses: [(action: String, payload: JSONValue)] = []
     fileprivate(set) var refusals: [(action: String, error: String)] = []
+
+    var showInAppResponses: [JSONValue] { responses.filter { $0.action == "showInApp" }.map(\.payload) }
+    var showInAppRefusals: [String] { refusals.filter { $0.action == "showInApp" }.map(\.error) }
     private(set) var initDataPushes: [[String: JSONValue]] = []
 
     private lazy var host = EmbeddedBlockPageMockHost(page: self)
@@ -266,8 +269,10 @@ private final class EmbeddedBlockPageMockHost: WebBridgeHost, WebBridgeContentHo
         page.onShowableQuestion?(ids, completion)
     }
 
-    func bridgeDidRequestShowInApp(id: String, params: [String: JSONValue]) {
-        page.onShowInAppRequest?(id, params)
+    func bridgeDidRequestShowInApp(id: String,
+                                   params: [String: JSONValue],
+                                   completion: @escaping (Result<Void, ShowInAppRefusal>) -> Void) {
+        page.onShowInAppRequest?(id, params, completion)
     }
 }
 
@@ -412,9 +417,17 @@ final class EmbeddedBlockInappServiceMock: EmbeddedBlockInappServing {
     private(set) var shown: [(id: String, params: [String: JSONValue])] = []
 
     private var pending: [([String]) -> Void] = []
+    private var showCompletions: [(Result<Void, ShowInAppRefusal>) -> Void] = []
 
-    func showInapp(id: String, params: [String: JSONValue]) {
+    func showInapp(id: String, params: [String: JSONValue], completion: @escaping (Result<Void, ShowInAppRefusal>) -> Void) {
         shown.append((id, params))
+        showCompletions.append(completion)
+    }
+
+    func finishShow(_ outcome: Result<Void, ShowInAppRefusal>) {
+        let completions = showCompletions
+        showCompletions = []
+        completions.forEach { $0(outcome) }
     }
 
     func showableInappIds(among ids: [String], askedBy blockInappId: String, completion: @escaping ([String]) -> Void) {

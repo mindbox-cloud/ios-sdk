@@ -22,7 +22,7 @@ final class EmbeddedBlockWebViewPage: NSObject, EmbeddedBlockPageHosting {
 
     var onShowableQuestion: (([String], @escaping ([String]) -> Void) -> Void)?
 
-    var onShowInAppRequest: ((String, [String: JSONValue]) -> Void)?
+    var onShowInAppRequest: ((String, [String: JSONValue], @escaping (Result<Void, ShowInAppRefusal>) -> Void) -> Void)?
 
     var onDataPushConfirmed: (() -> Void)?
 
@@ -165,8 +165,10 @@ extension EmbeddedBlockWebViewPage: WebBridgeInappRequestHosting {
         onShowableQuestion?(ids, completion)
     }
 
-    func bridgeDidRequestShowInApp(id: String, params: [String: JSONValue]) {
-        onShowInAppRequest?(id, params)
+    func bridgeDidRequestShowInApp(id: String,
+                                   params: [String: JSONValue],
+                                   completion: @escaping (Result<Void, ShowInAppRefusal>) -> Void) {
+        onShowInAppRequest?(id, params, completion)
     }
 }
 
