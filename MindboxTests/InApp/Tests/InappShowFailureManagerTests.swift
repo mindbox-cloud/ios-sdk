@@ -53,6 +53,30 @@ struct InappShowFailureNetworkDedupTests {
         #expect(try await settledEventsCount(reaching: 2) == 2)
     }
 
+    /// The buffer keeps one failure per in-app by priority; an outage already reported must not sit
+    /// there and shadow a fresh, lower-priority failure of the same in-app.
+    @Test("An outage already reported this session does not shadow a fresh failure of the same in-app")
+    func reportedOutageDoesNotShadowAFreshFailure() async throws {
+        manager.addFailure(inappId: "inapp-1", reason: .customerSegmentRequestFailed, details: nil, tags: nil)
+        manager.sendFailures()
+        manager.addFailure(inappId: "inapp-1", reason: .customerSegmentRequestFailed, details: nil, tags: nil)
+        manager.addFailure(inappId: "inapp-1", reason: .geoRequestFailed, details: nil, tags: nil)
+        manager.sendFailures()
+
+        #expect(try await settledEventsCount(reaching: 2) == 2)
+        #expect(repository.createdEvents.last?.body.contains(InAppShowFailureReason.geoRequestFailed.rawValue) == true)
+    }
+
+    @Test("An image download failure is reported once per session")
+    func imageDownloadFailureIsReportedOnce() async throws {
+        manager.addFailure(inappId: "inapp-1", reason: .imageDownloadFailed, details: nil, tags: nil)
+        manager.sendFailures()
+        manager.addFailure(inappId: "inapp-1", reason: .imageDownloadFailed, details: nil, tags: nil)
+        manager.sendFailures()
+
+        #expect(try await settledEventsCount(reaching: 1) == 1)
+    }
+
     @Test("A failure that is not a network outage repeats freely")
     func nonNetworkFailureRepeats() async throws {
         manager.addFailure(inappId: "inapp-1", reason: .presentationFailed, details: nil, tags: nil)

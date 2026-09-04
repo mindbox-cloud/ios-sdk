@@ -693,6 +693,30 @@ struct InappScheduleManagerTests {
         #expect(SessionTemporaryStorage.shared.sessionShownInApps.isEmpty)
     }
 
+    @Test("A show closed before it is on screen gives the slot back and spends nothing", .tags(.inAppSchedule))
+    func showEligibleInapp_closedBeforePresented_givesTheSlotBack() {
+        showScheduled(createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02"))
+
+        presentationManagerMock.receivedOnPresentationCompleted?()
+
+        #expect(SessionTemporaryStorage.shared.showBudget.reservations.isEmpty)
+        #expect(SessionTemporaryStorage.shared.sessionShownInApps.isEmpty)
+        #expect(trackingServiceMock.saveInappStateChangeCallCount == 0)
+        #expect(!SessionTemporaryStorage.shared.isPresentingInAppMessage)
+    }
+
+    @Test("A show on request that closes a loading show gives that show's slot back", .tags(.inAppSchedule))
+    func showInAppNow_closingALoadingShow_givesItsSlotBack() async {
+        showScheduled(createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02"))
+        #expect(SessionTemporaryStorage.shared.showBudget.reservations[.overlay("1")] != nil)
+
+        await showNowAndAwaitMainQueue(scheduleManager, createInAppFormData(id: "2", isPriority: false, delayTime: nil))
+        presentationManagerMock.receivedOnPresent?()
+
+        #expect(SessionTemporaryStorage.shared.showBudget.reservations.isEmpty)
+        #expect(SessionTemporaryStorage.shared.sessionShownInApps == ["2"])
+    }
+
     @Test("Another in-app on screen blocks the show without taking a slot", .tags(.inAppSchedule))
     func showEligibleInapp_whileAnotherIsOnScreen_isNotPresented() {
         SessionTemporaryStorage.shared.isPresentingInAppMessage = true

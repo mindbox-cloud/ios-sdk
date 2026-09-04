@@ -96,6 +96,27 @@ struct InappShowBudgetTests {
         #expect(reservations[.place("stories")] == nil)
     }
 
+    /// A show on request commits without a reservation; it must not touch the slot a scheduled overlay still holds.
+    @Test("A commit for one overlay leaves another overlay's slot standing")
+    func commitForAnotherOverlayKeepsTheSlot() {
+        setLimits(session: 5)
+        #expect(reserve(.overlay("a"), "a"))
+
+        budget.commit(.overlay("b"), inAppId: "b", frequency: restricted)
+
+        #expect(reservations[.overlay("a")]?.inAppId == "a")
+        #expect(shownInSession == ["b"])
+    }
+
+    @Test("A release for one overlay leaves another overlay's slot standing")
+    func releaseForAnotherOverlayKeepsTheSlot() {
+        #expect(reserve(.overlay("a"), "a"))
+
+        budget.release(.overlay("b"))
+
+        #expect(reservations[.overlay("a")]?.inAppId == "a")
+    }
+
     @Test("The same in-app reserved again by the same owner keeps its one slot")
     func sameInappKeepsItsSlot() {
         setLimits(session: 1)
