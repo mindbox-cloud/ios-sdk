@@ -96,9 +96,9 @@ final class InappShowBudgetMock: InappShowBudgeting {
 
     var reservedOwners: [InappShowBudgetOwner] { reservations.map(\.owner) }
 
-    func reserve(_ owner: InappShowBudgetOwner, inAppId: String, isPriority: Bool, frequency: InappFrequency?) -> Bool {
+    func reserve(_ owner: InappShowBudgetOwner, inAppId: String, isPriority: Bool, frequency: InappFrequency?) -> InappShowReservationOutcome {
         reservations.append(Reservation(owner: owner, inAppId: inAppId, isPriority: isPriority, frequency: frequency))
-        return !refusedInAppIds.contains(inAppId)
+        return refusedInAppIds.contains(inAppId) ? .refused : .granted
     }
 
     func commit(_ owner: InappShowBudgetOwner, inAppId: String, frequency: InappFrequency?) {

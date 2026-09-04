@@ -308,7 +308,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
             return true
         }
 
-        return budget.reserve(.place(place), inAppId: content.inAppId, isPriority: content.isPriority, frequency: content.frequency)
+        return budget.reserve(.place(place), inAppId: content.inAppId, isPriority: content.isPriority, frequency: content.frequency) != .refused
     }
 
     private func announceDelay(at place: String) {

@@ -22,6 +22,16 @@ struct InappShowReservation: Equatable {
     let reservedAt: Date
 }
 
+/// What a reservation came to. Only a `granted` slot is the caller's to give back.
+enum InappShowReservationOutcome: Equatable {
+    /// A slot was taken; `release` gives it back if the show does not happen.
+    case granted
+    /// Nothing new was taken: the owner already holds a slot for this in-app, or a priority or `unlimited`
+    /// in-app needs none. Nothing to give back.
+    case notNeeded
+    case refused
+}
+
 /// The session's show budget as one value: what was shown and what is spoken for but not yet on
 /// screen. Reset as one with the session.
 struct InappShowBudgetState: Equatable {
@@ -34,7 +44,7 @@ protocol InappShowBudgeting: AnyObject {
     /// Checks the show budgets and takes a slot in them in one step, so nobody passes on the same count.
     /// Priority and `unlimited` in-apps pass without a slot. An owner reserving the same in-app again
     /// keeps its slot; another in-app replaces it, and a refused replacement leaves the owner with none.
-    func reserve(_ owner: InappShowBudgetOwner, inAppId: String, isPriority: Bool, frequency: InappFrequency?) -> Bool
+    func reserve(_ owner: InappShowBudgetOwner, inAppId: String, isPriority: Bool, frequency: InappFrequency?) -> InappShowReservationOutcome
 
     /// The slot became a show: it leaves the reservations and, when the frequency counts shows, enters
     /// the session count, the history and the cooldown. Without a slot the show is still recorded.
@@ -63,30 +73,30 @@ final class InappShowBudget: InappShowBudgeting {
         self.now = now
     }
 
-    func reserve(_ owner: InappShowBudgetOwner, inAppId: String, isPriority: Bool, frequency: InappFrequency?) -> Bool {
+    func reserve(_ owner: InappShowBudgetOwner, inAppId: String, isPriority: Bool, frequency: InappFrequency?) -> InappShowReservationOutcome {
         SessionTemporaryStorage.shared.$showBudget.mutate { state in
             if state.reservations[owner]?.inAppId == inAppId {
-                return true
+                return .notNeeded
             }
             state.reservations.removeValue(forKey: owner)
 
             let frequencyValidator = InappFrequencyValidator(persistenceStorage: persistenceStorage)
             guard frequencyValidator.isValid(frequency: frequency, id: inAppId, shownInSession: state.shownInSession) else {
-                return false
+                return .refused
             }
 
             if isPriority || !InappFrequency.countsShows(frequency) {
                 Logger.common(message: "[ShowBudget] \(isPriority ? "Priority" : "Unlimited") in-app \(inAppId) passes the show budgets without a slot",
                               level: .debug, category: .inAppMessages)
-                return true
+                return .notNeeded
             }
 
             guard isUnderSessionLimit(state), isUnderDailyLimit(state), hasElapsedMinimumInterval(state) else {
-                return false
+                return .refused
             }
 
             state.reservations[owner] = InappShowReservation(inAppId: inAppId, reservedAt: now())
-            return true
+            return .granted
         }
     }
 

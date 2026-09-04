@@ -51,7 +51,7 @@ struct InappShowBudgetTests {
                          _ inAppId: String,
                          frequency: InappFrequency? = .once(OnceFrequency(kind: .session)),
                          priority: Bool = false) -> Bool {
-        budget.reserve(owner, inAppId: inAppId, isPriority: priority, frequency: frequency)
+        budget.reserve(owner, inAppId: inAppId, isPriority: priority, frequency: frequency) != .refused
     }
 
     // MARK: - Reservations against the budgets
@@ -154,7 +154,7 @@ struct InappShowBudgetTests {
         storage.shownDatesByInApp = ["x": [clock.now]]
         storage.lastInappStateChangeDate = clock.now
 
-        #expect(reserve(.overlay("a"), "a", frequency: frequency, priority: priority))
+        #expect(budget.reserve(.overlay("a"), inAppId: "a", isPriority: priority, frequency: frequency) == .notNeeded)
         #expect(reservations.isEmpty)
     }
 
