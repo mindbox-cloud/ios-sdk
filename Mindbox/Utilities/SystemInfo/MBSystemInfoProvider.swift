@@ -82,8 +82,8 @@ final class MBSystemInfoProvider: SystemInfoProvider {
         }
     }
 
-    func getGrantedPermissions() -> [String: PermissionStatus] {
-        return permissionProvider.getGrantedPermissions()
+    func getGrantedPermissions(_ completion: @escaping ([String: PermissionStatus]) -> Void) {
+        permissionProvider.getGrantedPermissions(completion)
     }
 
     func getBasicSystemInfo() -> [String: Any] {

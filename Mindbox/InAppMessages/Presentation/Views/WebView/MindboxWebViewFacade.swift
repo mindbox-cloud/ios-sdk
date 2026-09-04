@@ -17,7 +17,7 @@ public protocol InappWebViewFacadeProtocol: AnyObject {
     func applyViewSettings(scrollViewDelegate: UIScrollViewDelegate?)
     func cleanWebView()
 
-    func makeStartPayload() -> JSONValue
+    func makeStartPayload(_ completion: @escaping (JSONValue) -> Void)
 
     /// Pushes the start payload again, unprompted, after the config behind this page changed.
     /// `params` replace the ones the page was created with — the config owns that part of the payload.
@@ -173,12 +173,12 @@ public final class MindboxWebViewFacade: InappWebViewFacadeProtocol {
         webView.scrollView.contentInsetAdjustmentBehavior = .never
     }
     
-    public func makeStartPayload() -> JSONValue {
+    public func makeStartPayload(_ completion: @escaping (JSONValue) -> Void) {
         WebViewStartPayloadBuilder(contentId: inAppId,
                                    operation: operation,
                                    customParams: params,
                                    insetsSource: webView,
-                                   logError: logError).build()
+                                   logError: logError).build(completion)
     }
     
     public func sendInitDataUpdated(params: [String: JSONValue]) {
@@ -187,9 +187,15 @@ public final class MindboxWebViewFacade: InappWebViewFacadeProtocol {
 
             self.params = params
 
-            self.bridge.send(BridgeMessage(type: .request,
-                                           action: BridgeMessage.Action.initDataUpdated,
-                                           payload: self.makeStartPayload()))
+            self.makeStartPayload { [weak self] payload in
+                // The payload is assembled after a system round trip; a close or a newer update in
+                // between makes this one stale, and the newer one carries its own payload.
+                guard let self, !self.isClosed, self.params == params else { return }
+
+                self.bridge.send(BridgeMessage(type: .request,
+                                               action: BridgeMessage.Action.initDataUpdated,
+                                               payload: payload))
+            }
         }
     }
 

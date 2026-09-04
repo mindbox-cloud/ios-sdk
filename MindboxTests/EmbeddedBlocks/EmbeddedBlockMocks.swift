@@ -253,8 +253,8 @@ private final class EmbeddedBlockPageMockHost: WebBridgeHost, WebBridgeContentHo
         }
     }
 
-    func makeStartPayload() -> JSONValue {
-        .string("{}")
+    func makeStartPayload(_ completion: @escaping (JSONValue) -> Void) {
+        completion(.string("{}"))
     }
 
     func bridgeDidRenderContent(count: Int) {
@@ -311,9 +311,9 @@ final class SharedWebLayerMock: InappWebViewFacadeProtocol {
 
     private(set) var startPayloadRequests = 0
 
-    func makeStartPayload() -> JSONValue {
+    func makeStartPayload(_ completion: @escaping (JSONValue) -> Void) {
         startPayloadRequests += 1
-        return .string("{}")
+        completion(.string("{}"))
     }
 
     func sendInitDataUpdated(params: [String: JSONValue]) {

@@ -89,8 +89,8 @@ extension MBContainer {
         }
 
         register(PermissionProvider.self) {
-            let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
-            return MBPermissionProvider(persistenceStorage: persistenceStorage)
+            let notificationStatus = DI.injectOrFail(UNAuthorizationStatusProviding.self)
+            return MBPermissionProvider(notificationStatus: notificationStatus)
         }
 
         register(SystemInfoProvider.self) {

@@ -139,8 +139,8 @@ extension EmbeddedBlockWebViewPage: WebBridgeHost {
         facade.sendToJS(message)
     }
 
-    func makeStartPayload() -> JSONValue {
-        facade.makeStartPayload()
+    func makeStartPayload(_ completion: @escaping (JSONValue) -> Void) {
+        facade.makeStartPayload(completion)
     }
 }
 

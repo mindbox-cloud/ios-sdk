@@ -194,8 +194,12 @@ extension TransparentView: WebBridgeHost {
         facade?.sendToJS(message)
     }
 
-    func makeStartPayload() -> JSONValue {
-        facade?.makeStartPayload() ?? .string("{}")
+    func makeStartPayload(_ completion: @escaping (JSONValue) -> Void) {
+        guard let facade else {
+            completion(.string("{}"))
+            return
+        }
+        facade.makeStartPayload(completion)
     }
 }
 

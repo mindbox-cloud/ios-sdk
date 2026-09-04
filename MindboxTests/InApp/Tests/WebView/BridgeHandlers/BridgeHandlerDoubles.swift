@@ -33,8 +33,8 @@ class HostSpy: WebBridgeHost {
         sent.append(message)
     }
 
-    func makeStartPayload() -> JSONValue {
-        startPayload
+    func makeStartPayload(_ completion: @escaping (JSONValue) -> Void) {
+        completion(startPayload)
     }
 }
 

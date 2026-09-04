@@ -172,8 +172,8 @@ private final class ContentHostSpy: WebBridgeHost, WebBridgeContentHosting {
         sent.append(message)
     }
 
-    func makeStartPayload() -> JSONValue {
-        .string("{}")
+    func makeStartPayload(_ completion: @escaping (JSONValue) -> Void) {
+        completion(.string("{}"))
     }
 
     func bridgeDidRenderContent(count: Int) {

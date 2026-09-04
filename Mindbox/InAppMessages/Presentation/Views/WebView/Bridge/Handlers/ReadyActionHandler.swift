@@ -22,6 +22,8 @@ final class ReadyActionHandler: WebBridgeActionHandler {
     let actions: Set<BridgeMessage.Action> = [.ready]
 
     func handle(_ message: BridgeMessage, host: WebBridgeHost) {
-        host.respond(to: message, payload: host.makeStartPayload())
+        host.makeStartPayload { [weak host] payload in
+            host?.respond(to: message, payload: payload)
+        }
     }
 }

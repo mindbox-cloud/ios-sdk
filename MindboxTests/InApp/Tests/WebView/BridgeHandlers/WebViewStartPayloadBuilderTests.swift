@@ -25,12 +25,15 @@ struct WebViewStartPayloadBuilderTests {
 
     private func build(contentId: String = "content-1",
                        operation: (name: String, body: String)? = nil,
-                       customParams: [String: JSONValue]? = nil) throws -> [String: JSONValue] {
-        let payload = WebViewStartPayloadBuilder(contentId: contentId,
+                       customParams: [String: JSONValue]? = nil) async throws -> [String: JSONValue] {
+        let builder = WebViewStartPayloadBuilder(contentId: contentId,
                                                  operation: operation,
                                                  customParams: customParams,
                                                  insetsSource: UIView(),
-                                                 logError: { _ in }).build()
+                                                 logError: { _ in })
+        let payload = await withCheckedContinuation { continuation in
+            builder.build { continuation.resume(returning: $0) }
+        }
 
         // The contract has JS calling JSON.parse on it, so a string is the shape, not a detail.
         guard case .string(let json) = payload else {
@@ -41,9 +44,16 @@ struct WebViewStartPayloadBuilderTests {
         return try JSONDecoder().decode([String: JSONValue].self, from: data)
     }
 
+    private func object(_ value: JSONValue?) throws -> [String: JSONValue] {
+        guard case .object(let dictionary)? = value else {
+            throw BuilderTestError.valueIsNotAnObject
+        }
+        return dictionary
+    }
+
     @Test("Always carries the fields a page cannot configure itself without")
-    func carriesRequiredFields() throws {
-        let payload = try build()
+    func carriesRequiredFields() async throws {
+        let payload = try await build()
 
         for key in ["sdkVersion", "sdkVersionNumeric", "endpointId", "deviceUUID",
                     "userVisitCount", "inappId", "localStateVersion", "insets"] {
@@ -54,38 +64,36 @@ struct WebViewStartPayloadBuilderTests {
     /// The backend's spelling, and the one every other bridge payload already uses. Safe only in
     /// this order: the page that reads `inappId` and falls back to `inAppId` ships before this SDK.
     @Test("The content id travels as inappId, not the old inAppId")
-    func contentIdTravelsAsInappId() throws {
-        let payload = try build(contentId: "block-42")
+    func contentIdTravelsAsInappId() async throws {
+        let payload = try await build(contentId: "block-42")
 
         #expect(payload["inappId"] == .string("block-42"))
         #expect(payload["inAppId"] == nil)
     }
 
     @Test("Insets are reported as four named edges")
-    func insetsAreNamedEdges() throws {
-        let payload = try build()
+    func insetsAreNamedEdges() async throws {
+        let payload = try await build()
 
-        guard case .object(let insets)? = payload["insets"] else {
-            throw BuilderTestError.insetsAreNotAnObject
-        }
+        let insets = try object(payload["insets"])
 
         #expect(Set(insets.keys) == ["top", "left", "bottom", "right"])
     }
 
     @Test("The operation is included only when there is one")
-    func operationIsOptional() throws {
-        let without = try build()
+    func operationIsOptional() async throws {
+        let without = try await build()
         #expect(without["operationName"] == nil)
         #expect(without["operationBody"] == nil)
 
-        let with = try build(operation: (name: "Test.Operation", body: #"{"a":1}"#))
+        let with = try await build(operation: (name: "Test.Operation", body: #"{"a":1}"#))
         #expect(with["operationName"] == .string("Test.Operation"))
         #expect(with["operationBody"] == .string(#"{"a":1}"#))
     }
 
     @Test("Configuration params are merged at the root, not nested")
-    func customParamsMergeAtRoot() throws {
-        let payload = try build(customParams: ["catalogEntry": .string("stories-feed")])
+    func customParamsMergeAtRoot() async throws {
+        let payload = try await build(customParams: ["catalogEntry": .string("stories-feed")])
 
         #expect(payload["catalogEntry"] == .string("stories-feed"))
     }
@@ -93,9 +101,9 @@ struct WebViewStartPayloadBuilderTests {
     /// The order the fields are applied in is load-bearing: the configuration's own params are
     /// merged before the operation, so a collision resolves towards the operation.
     @Test("A configuration param cannot displace the operation")
-    func operationWinsOverCustomParams() throws {
-        let payload = try build(operation: (name: "Real.Operation", body: "{}"),
-                                customParams: ["operationName": .string("from-config")])
+    func operationWinsOverCustomParams() async throws {
+        let payload = try await build(operation: (name: "Real.Operation", body: "{}"),
+                                      customParams: ["operationName": .string("from-config")])
 
         #expect(payload["operationName"] == .string("Real.Operation"))
     }
@@ -107,22 +115,22 @@ struct WebViewStartPayloadBuilderTests {
     @Test("A param can displace a field the SDK fills in", arguments: [
         "deviceUUID", "endpointId", "inappId", "sdkVersion", "userVisitCount", "localStateVersion"
     ])
-    func customParamsDisplaceSdkFields(key: String) throws {
-        let untouched = try build()
+    func customParamsDisplaceSdkFields(key: String) async throws {
+        let untouched = try await build()
         #expect(untouched[key] != nil, "the field has to be there for the override to mean anything")
 
-        let payload = try build(customParams: [key: .string("from-the-page")])
+        let payload = try await build(customParams: [key: .string("from-the-page")])
 
         #expect(payload[key] == .string("from-the-page"))
     }
 
     @Test("A param cannot displace the track-visit fields")
-    func trackVisitWinsOverCustomParams() throws {
+    func trackVisitWinsOverCustomParams() async throws {
         let previous = SessionTemporaryStorage.shared.lastTrackVisit
         defer { SessionTemporaryStorage.shared.lastTrackVisit = previous }
         SessionTemporaryStorage.shared.lastTrackVisit = (source: .push, requestUrl: "https://real.visit")
 
-        let payload = try build(customParams: [
+        let payload = try await build(customParams: [
             "trackVisitSource": .string("from-config"),
             "trackVisitRequestUrl": .string("https://from-config")
         ])
@@ -153,21 +161,29 @@ struct WebViewStartPayloadBuilderTests {
     /// A page that receives `{}` reports its own failure; a page that receives nothing waits on
     /// an id that will never be closed.
     @Test("An unencodable payload degrades to an empty object rather than to silence")
-    func unencodablePayloadDegradesToEmptyObject() {
-        var reported: [String] = []
-        let payload = WebViewStartPayloadBuilder(contentId: "content-1",
+    func unencodablePayloadDegradesToEmptyObject() async {
+        let reported = Reported()
+        let builder = WebViewStartPayloadBuilder(contentId: "content-1",
                                                  operation: nil,
                                                  // Not representable in JSON.
                                                  customParams: ["bad": .double(.nan)],
                                                  insetsSource: nil,
-                                                 logError: { reported.append($0) }).build()
+                                                 logError: { reported.messages.append($0) })
+
+        let payload = await withCheckedContinuation { continuation in
+            builder.build { continuation.resume(returning: $0) }
+        }
 
         #expect(payload == .string("{}"))
-        #expect(reported.count == 1)
+        #expect(reported.messages.count == 1)
     }
+}
+
+private final class Reported {
+    var messages: [String] = []
 }
 
 private enum BuilderTestError: Error {
     case payloadIsNotAString
-    case insetsAreNotAnObject
+    case valueIsNotAnObject
 }
