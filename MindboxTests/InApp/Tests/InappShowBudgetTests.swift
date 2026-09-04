@@ -126,6 +126,14 @@ struct InappShowBudgetTests {
         #expect(reservations.count == 1)
     }
 
+    /// Only a fresh slot is the caller's to give back; the second answer says there is none.
+    @Test("A slot is granted once, the same reservation again is not a new one")
+    func sameReservationAgainIsNotANewSlot() {
+        #expect(budget.reserve(.overlay("a"), inAppId: "a", isPriority: false, frequency: restricted) == .granted)
+        #expect(budget.reserve(.overlay("a"), inAppId: "a", isPriority: false, frequency: restricted) == .notNeeded)
+        #expect(reservations.count == 1)
+    }
+
     @Test("Another in-app reserved by the same owner replaces its slot")
     func anotherInappReplacesTheSlot() {
         setLimits(session: 1)

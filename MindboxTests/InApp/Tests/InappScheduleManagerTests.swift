@@ -20,6 +20,15 @@ struct InappScheduleManagerTests {
     private var trackingServiceMock: InAppTrackingServiceMock
     private var failureManagerMock: InappShowFailureManagerMock
     private var budget: InappShowBudget
+    private let host: HostApp
+
+    /// The host app as the manager sees it: whether it is in the background, and a clock that can be
+    /// moved forward without waiting.
+    private final class HostApp {
+        var isInBackground = false
+        var clockOffset: TimeInterval = 0
+        var now: Date { Date().addingTimeInterval(clockOffset) }
+    }
 
     init() {
         TestConfiguration.configure()
@@ -29,11 +38,15 @@ struct InappScheduleManagerTests {
         failureManagerMock = InappShowFailureManagerMock()
         budget = InappShowBudget(persistenceStorage: DI.injectOrFail(PersistenceStorage.self), trackingService: trackingServiceMock)
 
+        let host = HostApp()
+        self.host = host
         scheduleManager = InappScheduleManager(
             presentationManager: presentationManagerMock,
             budget: budget,
             accountant: InappShowAccountant(tracker: DI.injectOrFail(InAppMessagesTracker.self), budget: budget),
-            failureManager: failureManagerMock
+            failureManager: failureManagerMock,
+            isInBackground: { host.isInBackground },
+            now: { host.now }
         )
 
         SessionTemporaryStorage.shared.erase()
@@ -725,6 +738,171 @@ struct InappScheduleManagerTests {
 
         #expect(presentationManagerMock.presentCallsCount == 0)
         #expect(SessionTemporaryStorage.shared.showBudget.reservations.isEmpty)
+    }
+
+    // MARK: - A slot taken in the background
+
+    private var reservations: [InappShowBudgetOwner: InappShowReservation] {
+        SessionTemporaryStorage.shared.showBudget.reservations
+    }
+
+    private var scheduledCount: Int {
+        var count = 0
+        scheduleManager.queue.sync { count = self.scheduleManager.inappsByPresentationTime.count }
+        return count
+    }
+
+    /// The moment came while the app was away: the timer's background branch, driven by hand.
+    private func holdScheduled(_ inapp: InAppFormData) {
+        scheduleManager.scheduleInApp(inapp, processingDuration: 0)
+
+        var presentationTime: TimeInterval?
+        scheduleManager.queue.sync {
+            presentationTime = self.scheduleManager.inappsByPresentationTime.keys.max()
+        }
+        if let presentationTime {
+            scheduleManager.holdEligibleInapp(presentationTime)
+        }
+        scheduleManager.queue.sync {}
+    }
+
+    private func comeToForeground(after seconds: TimeInterval = 5) {
+        SessionTemporaryStorage.shared.isInitializationCalled = true
+        host.clockOffset += seconds
+        scheduleManager.checkExpiredInapps()
+        scheduleManager.queue.sync {}
+    }
+
+    private func awaitHold(of inAppId: String) async {
+        for _ in 0..<40 where reservations[.overlay(inAppId)] == nil {
+            try? await Task.sleep(nanoseconds: 50_000_000)
+        }
+        scheduleManager.queue.sync {}
+    }
+
+    @Test("A timer firing in the background holds the in-app instead of presenting it", .tags(.inAppSchedule))
+    func timer_inBackground_holdsInsteadOfPresenting() async {
+        host.isInBackground = true
+
+        scheduleManager.scheduleInApp(createInAppFormData(id: "1", isPriority: false, delayTime: nil), processingDuration: 0)
+        await awaitHold(of: "1")
+
+        #expect(presentationManagerMock.presentCallsCount == 0)
+        #expect(reservations[.overlay("1")]?.inAppId == "1")
+        #expect(scheduledCount == 1)
+    }
+
+    @Test("An in-app whose moment comes in the background takes its slot and waits", .tags(.inAppSchedule))
+    func hold_takesTheSlotAndWaits() {
+        holdScheduled(createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02"))
+
+        #expect(presentationManagerMock.presentCallsCount == 0)
+        #expect(reservations[.overlay("1")]?.inAppId == "1")
+        #expect(scheduledCount == 1)
+    }
+
+    @Test("A held in-app is presented at the foreground and spends its slot once on screen", .tags(.inAppSchedule))
+    func hold_isPresentedAtTheForeground() {
+        holdScheduled(createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02"))
+
+        comeToForeground()
+
+        #expect(presentationManagerMock.presentCallsCount == 1)
+        #expect(presentationManagerMock.receivedInAppUIModel?.inAppId == "1")
+        #expect(reservations[.overlay("1")] != nil)
+        #expect(scheduledCount == 0)
+
+        presentationManagerMock.receivedOnPresent?()
+
+        #expect(reservations.isEmpty)
+        #expect(SessionTemporaryStorage.shared.sessionShownInApps == ["1"])
+    }
+
+    @Test("A block resolving while a held in-app waits finds the slot taken", .tags(.inAppSchedule))
+    func hold_keepsTheSlotFromABlock() {
+        SessionTemporaryStorage.shared.inAppSettings = Settings.InAppSettings(maxInappsPerSession: 1, maxInappsPerDay: nil, minIntervalBetweenShows: nil)
+
+        holdScheduled(createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02"))
+
+        let block = budget.reserve(.place("stories"), inAppId: "2", isPriority: false, frequency: .once(OnceFrequency(kind: .session)))
+        #expect(block == .refused)
+    }
+
+    @Test("An in-app refused its slot in the background is dropped, not retried at the foreground", .tags(.inAppSchedule))
+    func hold_refused_isDropped() {
+        SessionTemporaryStorage.shared.inAppSettings = Settings.InAppSettings(maxInappsPerSession: 1, maxInappsPerDay: nil, minIntervalBetweenShows: nil)
+        SessionTemporaryStorage.shared.sessionShownInApps = ["already-shown"]
+
+        holdScheduled(createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02"))
+        #expect(reservations.isEmpty)
+        #expect(scheduledCount == 0)
+
+        SessionTemporaryStorage.shared.sessionShownInApps = []
+        comeToForeground()
+
+        #expect(presentationManagerMock.presentCallsCount == 0)
+    }
+
+    @Test("A held in-app finding another on screen at the foreground gives its slot back", .tags(.inAppSchedule))
+    func hold_blockedAtTheForeground_givesTheSlotBack() {
+        holdScheduled(createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02"))
+        SessionTemporaryStorage.shared.isPresentingInAppMessage = true
+
+        comeToForeground()
+
+        #expect(presentationManagerMock.presentCallsCount == 0)
+        #expect(reservations.isEmpty)
+        #expect(scheduledCount == 0)
+    }
+
+    @Test("Of several held in-apps the earliest is presented and the others give their slots back", .tags(.inAppSchedule))
+    func hold_several_onlyTheEarliestIsPresented() {
+        holdScheduled(createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02"))
+        holdScheduled(createInAppFormData(id: "2", isPriority: false, delayTime: "00:00:03"))
+        #expect(reservations.count == 2)
+
+        comeToForeground()
+
+        #expect(presentationManagerMock.presentCallsCount == 1)
+        #expect(presentationManagerMock.receivedInAppUIModel?.inAppId == "1")
+        #expect(Array(reservations.keys) == [.overlay("1")])
+        #expect(scheduledCount == 0)
+    }
+
+    @Test("A held in-app closed before it is on screen gives the slot back", .tags(.inAppSchedule))
+    func hold_closedBeforePresented_givesTheSlotBack() {
+        holdScheduled(createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02"))
+        comeToForeground()
+
+        presentationManagerMock.receivedOnPresentationCompleted?()
+
+        #expect(reservations.isEmpty)
+        #expect(SessionTemporaryStorage.shared.sessionShownInApps.isEmpty)
+    }
+
+    @Test("A session expired while in-apps were held gives every slot back", .tags(.inAppSchedule))
+    func hold_sessionExpired_givesEverySlotBack() {
+        holdScheduled(createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02"))
+        holdScheduled(createInAppFormData(id: "2", isPriority: false, delayTime: "00:00:03"))
+        SessionTemporaryStorage.shared.configSessionExpirationTime = host.now
+
+        comeToForeground()
+
+        #expect(presentationManagerMock.presentCallsCount == 0)
+        #expect(reservations.isEmpty)
+        #expect(scheduledCount == 0)
+    }
+
+    /// A show on request never reserved anything, so its early close must not give back a slot
+    /// the scheduled show of the same in-app is holding.
+    @Test("A show on request closed before it is on screen leaves a held slot of the same in-app alone", .tags(.inAppSchedule))
+    func showInAppNow_closedBeforePresented_leavesAHeldSlotAlone() async {
+        holdScheduled(createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02"))
+
+        await showNowAndAwaitMainQueue(scheduleManager, createInAppFormData(id: "1", isPriority: false, delayTime: nil))
+        presentationManagerMock.receivedOnPresentationCompleted?()
+
+        #expect(reservations[.overlay("1")]?.inAppId == "1")
     }
 
     // MARK: - Helpers
