@@ -59,6 +59,13 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
         let truncatedDetails = truncatedDetails(details, inappId: inappId)
 
         queue.async { [self] in
+            if isReportedOncePerSession(reason),
+               SessionTemporaryStorage.shared.ledger.reportedNetworkFailures.contains(ReportedNetworkFailure(inappId: inappId, reason: reason.rawValue)) {
+                Logger.common(message: "[InappShowFailureManager] Ignore failure already reported this session. inappId=\(inappId), reason=\(reason.rawValue)",
+                              level: .debug, category: .inAppMessages)
+                return
+            }
+
             if let existingIndex = failures.firstIndex(where: { $0.inappId == inappId }) {
                 guard shouldReplaceFailure(currentReason: failures[existingIndex].failureReason, newReason: reason) else {
                     let existingReason = failures[existingIndex].failureReason.rawValue
@@ -146,7 +153,7 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
             // One outage is one report per session, in sync with Android; checked and recorded under one lock hold.
             let toSend = SessionTemporaryStorage.shared.$ledger.mutate { ledger in
                 failures.filter { failure in
-                    guard targetingFailurePriority(for: failure.failureReason) != nil else { return true }
+                    guard isReportedOncePerSession(failure.failureReason) else { return true }
 
                     return ledger.recordNetworkFailure(failure.inappId, reason: failure.failureReason.rawValue)
                 }
@@ -224,6 +231,16 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
         }
 
         return newPriority > currentPriority
+    }
+
+    /// The failures a resolve repeats for as long as the outage lasts — one report per session, in sync with Android.
+    private func isReportedOncePerSession(_ reason: InAppShowFailureReason) -> Bool {
+        switch reason {
+        case .customerSegmentRequestFailed, .geoRequestFailed, .productSegmentRequestFailed, .imageDownloadFailed:
+            return true
+        default:
+            return false
+        }
     }
 
     private func targetingFailurePriority(for reason: InAppShowFailureReason) -> Int? {
