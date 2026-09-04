@@ -9,8 +9,11 @@
 import Foundation
 import MindboxLogger
 
+/// Who holds a slot. An overlay is keyed by its own in-app: a show on request commits without a
+/// reservation and must not touch the slot a scheduled overlay still holds. A place holds one slot
+/// for whatever it is about to show.
 enum InappShowBudgetOwner: Hashable {
-    case overlay
+    case overlay(String)
     case place(String)
 }
 

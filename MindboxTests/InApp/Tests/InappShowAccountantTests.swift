@@ -41,14 +41,14 @@ struct InappShowAccountantTests {
 
         accountant.recordShow(show(frequency))
 
-        #expect(budget.commits == [.init(owner: .overlay, inAppId: "inapp-1", frequency: frequency)])
+        #expect(budget.commits == [.init(owner: .overlay("inapp-1"), inAppId: "inapp-1", frequency: frequency)])
     }
 
     @Test("The budget, not the accountant, decides what an unlimited show writes")
     func unlimitedShowIsCommittedWithItsFrequency() {
         accountant.recordShow(show(.unlimited))
 
-        #expect(budget.commits == [.init(owner: .overlay, inAppId: "inapp-1", frequency: .unlimited)])
+        #expect(budget.commits == [.init(owner: .overlay("inapp-1"), inAppId: "inapp-1", frequency: .unlimited)])
     }
 
     @Test("A cooldown is handed to the budget with its frequency")

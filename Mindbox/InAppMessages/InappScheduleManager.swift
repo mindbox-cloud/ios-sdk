@@ -130,7 +130,7 @@ internal extension InappScheduleManager {
             return false
         }
 
-        return budget.reserve(.overlay, inAppId: inapp.inAppId, isPriority: inapp.isPriority, frequency: inapp.frequency)
+        return budget.reserve(.overlay(inapp.inAppId), inAppId: inapp.inAppId, isPriority: inapp.isPriority, frequency: inapp.frequency)
     }
 
     private func trackShow(_ inapp: InAppFormData, timeToDisplay: TimeInterval) {
@@ -184,12 +184,17 @@ internal extension InappScheduleManager {
         SessionTemporaryStorage.shared.isPresentingInAppMessage = true
         SessionTemporaryStorage.shared.lastInappClickedID = nil
         var didHandleOnError = false
+        // Both flip on the main queue: the presentation manager delivers every callback there.
+        var didPresent = false
 
         Logger.common(message: "[InappScheduleManager] Showing in-app \(inapp.inAppId)")
 
         presentationManager.present(
             inAppFormData: inapp,
-            onPresented: onPresented,
+            onPresented: {
+                didPresent = true
+                onPresented()
+            },
             onTapAction: { [delegate] url, payload in
                 delegate?.inAppMessageTapAction(
                     id: inapp.inAppId,
@@ -200,7 +205,11 @@ internal extension InappScheduleManager {
             onPresentationCompleted: { [delegate] in
                 SessionTemporaryStorage.shared.isPresentingInAppMessage = false
                 delegate?.inAppMessageDismissed(id: inapp.inAppId)
-                onDismissed()
+                if didPresent {
+                    onDismissed()
+                } else {
+                    self.budget.release(.overlay(inapp.inAppId))
+                }
             },
             onError: { error in
                 guard !didHandleOnError else {
@@ -209,7 +218,7 @@ internal extension InappScheduleManager {
                 didHandleOnError = true
 
                 SessionTemporaryStorage.shared.isPresentingInAppMessage = false
-                self.budget.release(.overlay)
+                self.budget.release(.overlay(inapp.inAppId))
                 self.failureManager.addFailure(
                     inappId: inapp.inAppId,
                     reason: error.failureReason,

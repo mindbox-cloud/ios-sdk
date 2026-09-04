@@ -61,7 +61,7 @@ struct InappShowBudgetTests {
         setLimits(session: 1)
 
         #expect(reserve(.place("stories"), "a"))
-        #expect(!reserve(.overlay, "b"))
+        #expect(!reserve(.overlay("b"), "b"))
         #expect(Array(reservations.keys) == [.place("stories")])
     }
 
@@ -70,7 +70,7 @@ struct InappShowBudgetTests {
         setLimits(day: 1)
 
         #expect(reserve(.place("stories"), "a"))
-        #expect(!reserve(.overlay, "b"))
+        #expect(!reserve(.overlay("b"), "b"))
     }
 
     @Test("A reservation starts the minimum interval")
@@ -78,11 +78,11 @@ struct InappShowBudgetTests {
         setLimits(interval: "00:05:00")
 
         #expect(reserve(.place("stories"), "a"))
-        #expect(!reserve(.overlay, "b"))
+        #expect(!reserve(.overlay("b"), "b"))
 
         clock.now = clock.now.addingTimeInterval(301)
 
-        #expect(reserve(.overlay, "b"))
+        #expect(reserve(.overlay("b"), "b"))
     }
 
     @Test("A released slot is free again")
@@ -92,7 +92,7 @@ struct InappShowBudgetTests {
 
         budget.release(.place("stories"))
 
-        #expect(reserve(.overlay, "b"))
+        #expect(reserve(.overlay("b"), "b"))
         #expect(reservations[.place("stories")] == nil)
     }
 
@@ -133,7 +133,7 @@ struct InappShowBudgetTests {
         storage.shownDatesByInApp = ["x": [clock.now]]
         storage.lastInappStateChangeDate = clock.now
 
-        #expect(reserve(.overlay, "a", frequency: frequency, priority: priority))
+        #expect(reserve(.overlay("a"), "a", frequency: frequency, priority: priority))
         #expect(reservations.isEmpty)
     }
 
@@ -182,7 +182,7 @@ struct InappShowBudgetTests {
 
     @Test("A committed unlimited show records nothing")
     func unlimitedCommitRecordsNothing() {
-        budget.commit(.overlay, inAppId: "a", frequency: .unlimited)
+        budget.commit(.overlay("a"), inAppId: "a", frequency: .unlimited)
 
         #expect(shownInSession.isEmpty)
         #expect(trackingService.trackInAppShownCallCount == 0)
@@ -191,7 +191,7 @@ struct InappShowBudgetTests {
 
     @Test("A commit without a reservation still records the show")
     func commitWithoutReservationRecords() {
-        budget.commit(.overlay, inAppId: "a", frequency: restricted)
+        budget.commit(.overlay("a"), inAppId: "a", frequency: restricted)
 
         #expect(shownInSession == ["a"])
         #expect(trackingService.trackInAppShownCallCount == 1)
@@ -204,7 +204,7 @@ struct InappShowBudgetTests {
 
         budget.commit(.place("stories"), inAppId: "a", frequency: restricted)
 
-        #expect(!reserve(.overlay, "b"))
+        #expect(!reserve(.overlay("b"), "b"))
     }
 
     @Test("A cooldown is written for a counted frequency only")
@@ -231,7 +231,7 @@ struct InappShowBudgetTests {
         setLimits(session: limit)
         SessionTemporaryStorage.shared.sessionShownInApps = ["a", "b"]
 
-        #expect(reserve(.overlay, "c"))
+        #expect(reserve(.overlay("c"), "c"))
     }
 
     @Test("A daily limit of zero or below means no limit", arguments: [0, -1])
@@ -239,7 +239,7 @@ struct InappShowBudgetTests {
         setLimits(day: limit)
         storage.shownDatesByInApp = ["a": [clock.now], "b": [clock.now]]
 
-        #expect(reserve(.overlay, "c"))
+        #expect(reserve(.overlay("c"), "c"))
     }
 
     @Test("Only today's shows count against the daily budget")
@@ -248,7 +248,7 @@ struct InappShowBudgetTests {
         let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: clock.now) ?? clock.now
         storage.shownDatesByInApp = ["a": [yesterday], "b": [yesterday], "c": [Date(timeIntervalSince1970: 0)]]
 
-        #expect(reserve(.overlay, "d"))
+        #expect(reserve(.overlay("d"), "d"))
     }
 
     @Test("Every show of one in-app today counts against the daily budget")
@@ -256,7 +256,7 @@ struct InappShowBudgetTests {
         setLimits(day: 2)
         storage.shownDatesByInApp = ["a": [clock.now, clock.now, clock.now]]
 
-        #expect(!reserve(.overlay, "b"))
+        #expect(!reserve(.overlay("b"), "b"))
     }
 
     @Test("An unset, zero, invalid or negative interval means no interval",
@@ -265,7 +265,7 @@ struct InappShowBudgetTests {
         setLimits(interval: interval)
         storage.lastInappStateChangeDate = clock.now
 
-        #expect(reserve(.overlay, "a"))
+        #expect(reserve(.overlay("a"), "a"))
     }
 
     @Test("The interval counts from the last recorded show")
@@ -273,10 +273,10 @@ struct InappShowBudgetTests {
         setLimits(interval: "00:00:10")
         storage.lastInappStateChangeDate = clock.now.addingTimeInterval(-5)
 
-        #expect(!reserve(.overlay, "a"))
+        #expect(!reserve(.overlay("a"), "a"))
 
         storage.lastInappStateChangeDate = clock.now.addingTimeInterval(-11)
 
-        #expect(reserve(.overlay, "a"))
+        #expect(reserve(.overlay("a"), "a"))
     }
 }

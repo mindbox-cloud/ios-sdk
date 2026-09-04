@@ -42,7 +42,7 @@ final class InappShowAccountant: InappShowAccounting {
     }
 
     func recordShow(_ show: InappShow) {
-        record(show, owner: .overlay)
+        record(show, owner: .overlay(show.inAppId))
     }
 
     func recordCooldown(frequency: InappFrequency?) {

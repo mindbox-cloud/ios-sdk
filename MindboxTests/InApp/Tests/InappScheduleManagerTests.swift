@@ -675,7 +675,7 @@ struct InappScheduleManagerTests {
         showScheduled(createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02"))
 
         #expect(presentationManagerMock.presentCallsCount == 1)
-        #expect(SessionTemporaryStorage.shared.showBudget.reservations[.overlay]?.inAppId == "1")
+        #expect(SessionTemporaryStorage.shared.showBudget.reservations[.overlay("1")]?.inAppId == "1")
 
         presentationManagerMock.receivedOnPresent?()
 
