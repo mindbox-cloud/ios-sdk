@@ -8,6 +8,7 @@
 
 import Testing
 import UIKit
+import UserNotifications
 @_spi(Internal) @testable import Mindbox
 
 /// Pins what a page is told at start-up.
@@ -51,12 +52,33 @@ struct WebViewStartPayloadBuilderTests {
         return dictionary
     }
 
+    /// The test container answers `.authorized` for notifications by default; this swaps in another
+    /// answer for the duration of `body` and rebuilds the container afterwards.
+    private func withNotificationAuthorization<T>(_ status: UNAuthorizationStatus,
+                                                  _ body: () async throws -> T) async throws -> T {
+        let base = MBInject.buildTestContainer
+        defer {
+            MBInject.buildTestContainer = base
+            MBInject.mode = .test
+        }
+        MBInject.buildTestContainer = {
+            let container = base()
+            container.register(UNAuthorizationStatusProviding.self, scope: .transient) {
+                MockUNAuthorizationStatusProvider(status: status)
+            }
+            return container
+        }
+        MBInject.mode = .test
+
+        return try await body()
+    }
+
     @Test("Always carries the fields a page cannot configure itself without")
     func carriesRequiredFields() async throws {
         let payload = try await build()
 
         for key in ["sdkVersion", "sdkVersionNumeric", "endpointId", "deviceUUID",
-                    "userVisitCount", "inappId", "localStateVersion", "insets"] {
+                    "userVisitCount", "inappId", "localStateVersion", "insets", "permissions"] {
             #expect(payload[key] != nil, "'\(key)' is missing from the start payload")
         }
     }
@@ -78,6 +100,42 @@ struct WebViewStartPayloadBuilderTests {
         let insets = try object(payload["insets"])
 
         #expect(Set(insets.keys) == ["top", "left", "bottom", "right"])
+    }
+
+    // MARK: - Permissions
+
+    /// In sync with Android: the key is always there, so a page reads one shape whether or not
+    /// anything is granted. Only notifications are under the test's control — the camera and the
+    /// rest are asked of the simulator as they are.
+    @Test("permissions is present even when notifications are not granted")
+    func permissionsIsPresentWhenNotificationsAreNotGranted() async throws {
+        try await withNotificationAuthorization(.denied) {
+            let payload = try await build()
+
+            let permissions = try object(payload["permissions"])
+            #expect(permissions["notifications"] == nil)
+        }
+    }
+
+    @Test("A granted permission travels as an object with a status")
+    func grantedPermissionTravelsAsStatusObject() async throws {
+        let payload = try await build()
+
+        let permissions = try object(payload["permissions"])
+        #expect(permissions["notifications"] == .object(["status": .string("granted")]))
+    }
+
+    /// The stored flag is refreshed only when the app comes to the foreground; a permission the
+    /// user grants from a page would stay invisible to the next page until then.
+    @Test("The notifications status is asked of the system, not read from the stored flag")
+    func notificationsStatusIsAskedLive() async throws {
+        let storage = DI.injectOrFail(PersistenceStorage.self)
+        storage.isNotificationsEnabled = false
+
+        let payload = try await build()
+
+        let permissions = try object(payload["permissions"])
+        #expect(permissions["notifications"] == .object(["status": .string("granted")]))
     }
 
     @Test("The operation is included only when there is one")
@@ -113,7 +171,7 @@ struct WebViewStartPayloadBuilderTests {
     /// Deliberate: a direct call names what this show must carry, so its params outrank the fields
     /// the SDK fills in. Pinned so the day someone protects these keys is a decision, not a slip.
     @Test("A param can displace a field the SDK fills in", arguments: [
-        "deviceUUID", "endpointId", "inappId", "sdkVersion", "userVisitCount", "localStateVersion"
+        "deviceUUID", "endpointId", "inappId", "sdkVersion", "userVisitCount", "localStateVersion", "permissions"
     ])
     func customParamsDisplaceSdkFields(key: String) async throws {
         let untouched = try await build()

@@ -54,4 +54,21 @@ struct ReadyActionHandlerTests {
 
         #expect(host.sent.count == 1)
     }
+
+    /// Part of the payload is asked of the system and arrives later; the page must not be answered
+    /// with anything before that.
+    @Test("Answers when the payload arrives, not before")
+    func answersWhenPayloadArrives() {
+        let host = HostSpy()
+        host.holdsStartPayload = true
+        host.startPayload = .object(["late": .bool(true)])
+
+        ReadyActionHandler().handle(.request(.ready), host: host)
+        #expect(host.sent.isEmpty)
+
+        host.deliverStartPayload()
+
+        #expect(host.sent.count == 1)
+        #expect(host.sent.first?.payload == .object(["late": .bool(true)]))
+    }
 }
