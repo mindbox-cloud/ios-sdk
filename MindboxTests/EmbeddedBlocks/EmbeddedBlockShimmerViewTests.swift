@@ -20,6 +20,15 @@ struct EmbeddedBlockShimmerViewTests {
 
     private let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 320, height: 480))
 
+    /// The shimmer goes here, not straight into the window: in the SDK it always sits inside the block
+    /// container, and a view placed directly into a window that is released at the end of a test
+    /// leaves the test process crashing on the next run-loop turn.
+    private let host = UIView(frame: CGRect(x: 0, y: 0, width: 320, height: 120))
+
+    init() {
+        window.addSubview(host)
+    }
+
     /// Private: the foreground notification posted here must not reach the SDK's own observers or
     /// the tests running alongside.
     private let notificationCenter = NotificationCenter()
@@ -164,7 +173,7 @@ struct EmbeddedBlockShimmerViewTests {
 
         #expect(sweep(of: shimmer) == nil)
 
-        window.addSubview(shimmer)
+        host.addSubview(shimmer)
         #expect(sweep(of: shimmer) != nil)
 
         shimmer.removeFromSuperview()
@@ -174,7 +183,7 @@ struct EmbeddedBlockShimmerViewTests {
     @Test("A start while already sweeping never stacks a second sweep")
     func repeatedStartKeepsOneSweep() {
         let shimmer = makeShimmer()
-        window.addSubview(shimmer)
+        host.addSubview(shimmer)
 
         // The foreground notification is a second start request on a shimmer already on screen.
         enterForeground()
@@ -186,7 +195,7 @@ struct EmbeddedBlockShimmerViewTests {
     @Test("Returning to the foreground restarts a sweep the system has dropped")
     func foregroundRestartsADroppedSweep() {
         let shimmer = makeShimmer()
-        window.addSubview(shimmer)
+        host.addSubview(shimmer)
         // The system removes infinite animations while the app is in the background.
         shimmer.gradientLayer.removeAllAnimations()
         #expect(sweep(of: shimmer) == nil)
@@ -211,11 +220,11 @@ struct EmbeddedBlockShimmerViewTests {
     func shimmersShareOneBeat() throws {
         let first = makeShimmer()
         let second = makeShimmer()
-        window.addSubview(first)
+        host.addSubview(first)
         let firstSweep = try #require(sweep(of: first))
 
         // The second one comes later, mid-cycle of the first.
-        window.addSubview(second)
+        host.addSubview(second)
         let secondSweep = try #require(sweep(of: second))
 
         #expect(firstSweep.beginTime == secondSweep.beginTime)
@@ -231,11 +240,11 @@ struct EmbeddedBlockShimmerViewTests {
     @Test("Re-entering a window keeps the beat rather than starting a cycle of its own")
     func reEnteringAWindowKeepsTheBeat() throws {
         let shimmer = makeShimmer()
-        window.addSubview(shimmer)
+        host.addSubview(shimmer)
         let before = try #require(sweep(of: shimmer)).beginTime
 
         shimmer.removeFromSuperview()
-        window.addSubview(shimmer)
+        host.addSubview(shimmer)
         let after = try #require(sweep(of: shimmer)).beginTime
 
         #expect(before == after)
