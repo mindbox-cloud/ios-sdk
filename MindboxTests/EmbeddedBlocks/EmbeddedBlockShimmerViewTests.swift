@@ -20,8 +20,17 @@ struct EmbeddedBlockShimmerViewTests {
 
     private let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 320, height: 480))
 
+    /// Private: the foreground notification posted here must not reach the SDK's own observers or
+    /// the tests running alongside.
+    private let notificationCenter = NotificationCenter()
+
     private func makeShimmer() -> EmbeddedBlockShimmerView {
-        EmbeddedBlockShimmerView(frame: CGRect(x: 0, y: 0, width: 320, height: 120))
+        EmbeddedBlockShimmerView(frame: CGRect(x: 0, y: 0, width: 320, height: 120),
+                                 notificationCenter: notificationCenter)
+    }
+
+    private func enterForeground() {
+        notificationCenter.post(name: UIApplication.willEnterForegroundNotification, object: nil)
     }
 
     private func sweep(of shimmer: EmbeddedBlockShimmerView) -> CAKeyframeAnimation? {
@@ -162,6 +171,18 @@ struct EmbeddedBlockShimmerViewTests {
         #expect(sweep(of: shimmer) == nil)
     }
 
+    @Test("A start while already sweeping never stacks a second sweep")
+    func repeatedStartKeepsOneSweep() {
+        let shimmer = makeShimmer()
+        window.addSubview(shimmer)
+
+        // The foreground notification is a second start request on a shimmer already on screen.
+        enterForeground()
+        enterForeground()
+
+        #expect(shimmer.gradientLayer.animationKeys() == [EmbeddedBlockShimmerView.animationKey])
+    }
+
     @Test("Returning to the foreground restarts a sweep the system has dropped")
     func foregroundRestartsADroppedSweep() {
         let shimmer = makeShimmer()
@@ -170,7 +191,7 @@ struct EmbeddedBlockShimmerViewTests {
         shimmer.gradientLayer.removeAllAnimations()
         #expect(sweep(of: shimmer) == nil)
 
-        NotificationCenter.default.post(name: UIApplication.willEnterForegroundNotification, object: nil)
+        enterForeground()
 
         #expect(sweep(of: shimmer) != nil)
     }
@@ -179,7 +200,7 @@ struct EmbeddedBlockShimmerViewTests {
     func foregroundLeavesAnOffScreenShimmerAlone() {
         let shimmer = makeShimmer()
 
-        NotificationCenter.default.post(name: UIApplication.willEnterForegroundNotification, object: nil)
+        enterForeground()
 
         #expect(sweep(of: shimmer) == nil)
     }

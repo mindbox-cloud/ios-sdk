@@ -492,22 +492,20 @@ final class EmbeddedBlockWebViewProvider {
         }
     }
 
-    private func applyContentRendered(_ count: Int) {
+    private func applyContentRendered(_ renderedCount: Int) {
         guard !didReportShownContent else {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the page reported itself again with nothing asked of it — ignoring",
                           category: .embeddedBlocks)
             return
         }
 
-        // `count` is a number the page reported, not a collection: there is no `isEmpty` to prefer.
-        // swiftlint:disable:next empty_count
-        guard count > 0 else {
+        guard renderedCount > 0 else {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': page rendered nothing", category: .embeddedBlocks)
             settle(.empty)
             return
         }
 
-        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': page rendered \(count) item(s)", category: .embeddedBlocks)
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': page rendered \(renderedCount) item(s)", category: .embeddedBlocks)
         didReportShownContent = true
         renderedElapsed = processingDuration + presentationStopwatch.elapsed
         settle(.ready)

@@ -25,13 +25,14 @@ import UIKit
 ///
 /// Several shimmers on one screen move to one beat: each animation is anchored to a clock shared
 /// by the whole process, so a block that appears later joins the sweep already in progress instead
-/// of starting its own.
+/// of starting its own. The beat holds as long as the host leaves the layer clock alone: an ancestor
+/// layer with its own `speed` or `timeOffset` shifts the shimmers under it.
 ///
 /// What is deliberately left out is the design's layer blur. It is about 5.6% of the block's
-/// width, which against a gradient layer almost three blocks wide is under 2% of the ramp it would
-/// soften — a change of a few hundredths in an opacity that is 8% to begin with. Core Animation
-/// offers no public blur for a layer on iOS, and the result would be indistinguishable from the
-/// plain linear ramp anyway.
+/// width — under 2% of the gradient layer, about a tenth of the ramp it would soften — and it
+/// would move an opacity that is 8% to begin with by a few hundredths. Core Animation offers no
+/// public blur for a layer on iOS, and the result would be indistinguishable from the plain
+/// linear ramp anyway.
 final class EmbeddedBlockShimmerView: UIView {
 
     /// The design's numbers. Positions are fractions of the block's width (`W`).
@@ -113,38 +114,46 @@ final class EmbeddedBlockShimmerView: UIView {
     /// — or a block that shows up a screen later — are at the same point of the same cycle.
     static let beatEpoch: CFTimeInterval = CACurrentMediaTime()
 
-    static let animationKey = "embeddedBlockShimmer"
-
     // MARK: - State
+
+    static let animationKey = "embeddedBlockShimmer"
 
     let gradientLayer = CAGradientLayer()
 
+    private let notificationCenter: NotificationCenter
+
+    /// `.unspecified` and `.light` alike take the light tint; on iOS 12 the style is always `.light`.
     private var isDarkAppearance: Bool {
-        if #available(iOS 13.0, *) {
-            return traitCollection.userInterfaceStyle == .dark
-        }
-        return false
+        traitCollection.userInterfaceStyle == .dark
     }
 
     // MARK: - Life cycle
 
-    override init(frame: CGRect) {
+    /// - Parameter notificationCenter: Where the app's foreground notification comes from. Injected
+    ///   so that tests do not have to post to the process-wide center.
+    init(frame: CGRect = .zero, notificationCenter: NotificationCenter = .default) {
+        self.notificationCenter = notificationCenter
         super.init(frame: frame)
         setUp()
     }
 
+    @available(*, unavailable, message: "The shimmer is not created from storyboards")
     required init?(coder: NSCoder) {
-        super.init(coder: coder)
-        setUp()
+        return nil
     }
 
     deinit {
-        NotificationCenter.default.removeObserver(self)
+        notificationCenter.removeObserver(self)
     }
 
+    /// A resize snaps: the implicit 0.25 s action a standalone sublayer gets would make the tint
+    /// grow into new bounds instead of filling them at once.
     override func layoutSubviews() {
         super.layoutSubviews()
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
         gradientLayer.frame = bounds
+        CATransaction.commit()
     }
 
     override func didMoveToWindow() {
@@ -173,10 +182,10 @@ final class EmbeddedBlockShimmerView: UIView {
         applyColors()
         layer.addSublayer(gradientLayer)
 
-        NotificationCenter.default.addObserver(self,
-                                               selector: #selector(applicationWillEnterForeground),
-                                               name: UIApplication.willEnterForegroundNotification,
-                                               object: nil)
+        notificationCenter.addObserver(self,
+                                       selector: #selector(applicationWillEnterForeground),
+                                       name: UIApplication.willEnterForegroundNotification,
+                                       object: nil)
     }
 
     private func applyColors() {
