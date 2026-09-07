@@ -249,8 +249,7 @@ extension TransparentView: WebBridgeMessageDelegate {
             webPageRegistry.register(self)
         }
 
-        // Every action a page can send is owned by a handler now. An action nobody owns is
-        // not an error: the web vocabulary is allowed to be newer than the SDK.
+        // Journaling only: the dispatcher already refused an unknown action to the page.
         guard actionRegistry.handle(message, host: self) else {
             Logger.common(
                 message: "[WebView] Unknown action: \(action) with \(data)",
