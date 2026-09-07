@@ -257,11 +257,15 @@ internal extension InappScheduleManager {
                     payload: payload
                 )
             },
-            onPresentationCompleted: { [delegate] in
+            onPresentationCompleted: { [delegate] wasDiscarded in
                 SessionTemporaryStorage.shared.isPresentingInAppMessage = false
-                delegate?.inAppMessageDismissed(id: inapp.inAppId)
+                if !wasDiscarded {
+                    delegate?.inAppMessageDismissed(id: inapp.inAppId)
+                }
                 if didPresent {
-                    onDismissed()
+                    if !wasDiscarded {
+                        onDismissed()
+                    }
                     return
                 }
 

@@ -15,13 +15,18 @@ protocol InAppPresentationManagerProtocol: AnyObject {
         inAppFormData: InAppFormData,
         onPresented: @escaping () -> Void,
         onTapAction: @escaping InAppMessageTapAction,
-        onPresentationCompleted: @escaping () -> Void,
+        onPresentationCompleted: @escaping (_ wasDiscarded: Bool) -> Void,
         onError: @escaping (InAppPresentationError) -> Void
     )
 
     /// Closes the overlay on screen, if any, through its normal completion path, exactly as a
     /// user's close would. Main thread only.
     func dismissActiveInApp()
+
+    /// Closes the overlay because the session it belonged to is over. The show's completion still runs, so a
+    /// request waiting behind it is answered, but this is not the user's close: no cooldown is written and the
+    /// host is not told the in-app was dismissed, in sync with Android. Main thread only.
+    func discardActiveInApp()
 }
 
 enum InAppPresentationError: Error {
@@ -64,7 +69,7 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
 
     /// The token lets a finishing show release only its own slot, never a newer show's.
     /// Main-confined, like the shows.
-    private var activePresentation: (token: UUID, complete: () -> Void)?
+    private var activePresentation: (token: UUID, complete: (Bool) -> Void)?
 
     init(displayUseCase: PresentationDisplayUseCaseProtocol) {
         self.displayUseCase = displayUseCase
@@ -73,7 +78,16 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
     }
 
     func dismissActiveInApp() {
-        displayUseCase.dismissInAppUIModel(onClose: activePresentation?.complete ?? {})
+        completeActivePresentation(wasDiscarded: false)
+    }
+
+    func discardActiveInApp() {
+        completeActivePresentation(wasDiscarded: true)
+    }
+
+    private func completeActivePresentation(wasDiscarded: Bool) {
+        let complete = activePresentation?.complete
+        displayUseCase.dismissInAppUIModel(onClose: { complete?(wasDiscarded) })
     }
 
     private func addObserverToDismissInApp() {
@@ -83,7 +97,7 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
             queue: nil
         ) { [weak self] _ in
             DispatchQueue.main.async {
-                self?.displayUseCase.dismissInAppUIModel(onClose: { })
+                self?.discardActiveInApp()
             }
         }
     }
@@ -92,7 +106,7 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
         inAppFormData: InAppFormData,
         onPresented: @escaping () -> Void,
         onTapAction: @escaping InAppMessageTapAction,
-        onPresentationCompleted: @escaping () -> Void,
+        onPresentationCompleted: @escaping (_ wasDiscarded: Bool) -> Void,
         onError: @escaping (InAppPresentationError) -> Void
     ) {
         let callbackGuard = PresentationCallbackGuard()
@@ -111,11 +125,11 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
                 }
             }
         }
-        let safeOnPresentationCompleted: () -> Void = {
+        let safeOnPresentationCompleted: (Bool) -> Void = { wasDiscarded in
             DispatchQueue.main.async {
                 releaseActivePresentation()
                 callbackGuard.finishSuccessfully {
-                    onPresentationCompleted()
+                    onPresentationCompleted(wasDiscarded)
                 }
             }
         }
@@ -132,7 +146,7 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
                 self.displayUseCase.onPresented(id: inAppFormData.inAppId, onPresented)
             }, onTapAction: onTapAction,
             onClose: {
-                self.displayUseCase.dismissInAppUIModel(onClose: safeOnPresentationCompleted)
+                self.displayUseCase.dismissInAppUIModel(onClose: { safeOnPresentationCompleted(false) })
             },
             onError: safeOnError)
         }
