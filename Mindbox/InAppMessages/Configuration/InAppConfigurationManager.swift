@@ -115,13 +115,12 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         }
     }
     
-    /// Waits for the first config rather than answering nil early: an early "nothing to show"
-    /// collapses the block for the screen's whole life — nothing retries.
+    /// No cap of its own: the block owns the give-up, and a second timer here raced it.
     func selectInappForPlace(_ place: String,
                              trigger: ApplicationEvent?,
                              _ completion: @escaping (InAppTransitionData?, _ processingDuration: TimeInterval) -> Void) {
         let requestedAt = now()
-        awaitConfig("place '\(place)'") { [weak self] candidates in
+        awaitConfig("place '\(place)'", givingUpAfter: nil) { [weak self] candidates in
             guard let self = self, let inappMapper = self.inappMapper, let candidates = candidates else {
                 completion(nil, 0)
                 return
@@ -134,7 +133,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     }
 
     func getShowableInappIds(_ ids: [String], askedBy blockInappId: String, _ completion: @escaping ([String]) -> Void) {
-        awaitConfig("a page asking about \(ids.count) in-app(s)") { [weak self] candidates in
+        awaitConfig("a page asking about \(ids.count) in-app(s)", givingUpAfter: configWaitBudget) { [weak self] candidates in
             guard let self = self, let inappMapper = self.inappMapper, let candidates = candidates else {
                 completion([])
                 return
@@ -145,7 +144,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     }
 
     func getInAppToShowById(_ id: String, params: [String: JSONValue], _ completion: @escaping (InAppFormData?) -> Void) {
-        awaitConfig("showing in-app \(id)") { [weak self] candidates in
+        awaitConfig("showing in-app \(id)", givingUpAfter: configWaitBudget) { [weak self] candidates in
             guard let self = self, let inappMapper = self.inappMapper, let candidates = candidates else {
                 completion(nil)
                 return
@@ -204,7 +203,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         }
     }
 
-    private func awaitConfig(_ what: String, _ completion: @escaping (ConfigCandidates?) -> Void) {
+    private func awaitConfig(_ what: String, givingUpAfter cap: TimeInterval?, _ completion: @escaping (ConfigCandidates?) -> Void) {
         queue.async {
             if let candidates = self.configCandidates {
                 completion(candidates)
@@ -225,11 +224,13 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             self.nextConfigWaiterToken += 1
             self.configWaiters[token] = completion
 
-            self.queue.asyncAfter(deadline: .now() + self.configWaitBudget) {
+            guard let cap else { return }
+
+            self.queue.asyncAfter(deadline: .now() + cap) {
                 // Whoever answers first takes the waiter out, so nobody is answered twice.
                 guard let waiter = self.configWaiters.removeValue(forKey: token) else { return }
 
-                Logger.common(message: "[InAppConfigurationManager] Gave up waiting \(self.configWaitBudget)s for a config, \(what) gets nothing",
+                Logger.common(message: "[InAppConfigurationManager] Gave up waiting \(cap)s for a config, \(what) gets nothing",
                               level: .error, category: .inAppMessages)
                 waiter(nil)
             }
