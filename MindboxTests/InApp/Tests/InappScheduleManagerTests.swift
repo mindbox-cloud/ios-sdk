@@ -486,9 +486,13 @@ struct InappScheduleManagerTests {
     private func showNowAndAwaitMainQueue(_ manager: InappScheduleManager,
                                           _ inapp: InAppFormData,
                                           processingDuration: TimeInterval = 0) async {
-        manager.showInAppNow(inapp, processingDuration: processingDuration)
+        manager.showInAppNow(inapp, processingDuration: processingDuration) { _ in }
         // showInAppNow takes two main-queue turns: close the active overlay, then present.
-        for _ in 0..<2 {
+        await awaitMainQueue(turns: 2)
+    }
+
+    private func awaitMainQueue(turns: Int = 1) async {
+        for _ in 0..<turns {
             await withCheckedContinuation { continuation in
                 DispatchQueue.main.async { continuation.resume() }
             }
@@ -614,6 +618,122 @@ struct InappScheduleManagerTests {
 
         presentationManagerMock.receivedOnPresentationCompleted?()
         #expect(trackingServiceMock.saveInappStateChangeCallCount == 2)
+    }
+
+    @Test("A show on request answers success once the window is on screen", .tags(.inAppSchedule))
+    func showInAppNow_answersSuccessWhenPresented() async {
+        let manager = makeSpiedManager(tracker: InAppMessagesTrackerSpyMock())
+        let inapp = createInAppFormData(id: "direct-answered", isPriority: false, delayTime: nil)
+        var outcomes: [Result<Void, InAppPresentationError>] = []
+
+        manager.showInAppNow(inapp, processingDuration: 0) { outcomes.append($0) }
+        for _ in 0..<2 {
+            await withCheckedContinuation { continuation in DispatchQueue.main.async { continuation.resume() } }
+        }
+        #expect(outcomes.isEmpty)
+
+        presentationManagerMock.receivedOnPresent?()
+
+        #expect(outcomes.count == 1)
+        if case .success = outcomes.first {} else {
+            Issue.record("Expected success, got \(String(describing: outcomes.first))")
+        }
+    }
+
+    @Test("A show on request answers the presentation error when the show failed", .tags(.inAppSchedule))
+    func showInAppNow_answersTheErrorWhenFailed() async {
+        let manager = makeSpiedManager(tracker: InAppMessagesTrackerSpyMock())
+        let inapp = createInAppFormData(id: "direct-failed", isPriority: false, delayTime: nil)
+        var outcomes: [Result<Void, InAppPresentationError>] = []
+
+        manager.showInAppNow(inapp, processingDuration: 0) { outcomes.append($0) }
+        for _ in 0..<2 {
+            await withCheckedContinuation { continuation in DispatchQueue.main.async { continuation.resume() } }
+        }
+
+        presentationManagerMock.receivedOnError?(.failed("no window"))
+        presentationManagerMock.receivedOnError?(.failed("again"))
+
+        #expect(outcomes.count == 1)
+        if case .failure(.failed("no window")) = outcomes.first {} else {
+            Issue.record("Expected the first presentation error, got \(String(describing: outcomes.first))")
+        }
+    }
+
+    @Test("A show on request whose window fails after it was on screen is answered once", .tags(.inAppSchedule))
+    func showInAppNow_errorAfterPresented_answersOnce() async {
+        let manager = makeSpiedManager(tracker: InAppMessagesTrackerSpyMock())
+        let inapp = createInAppFormData(id: "direct-late-error", isPriority: false, delayTime: nil)
+        var outcomes: [Result<Void, InAppPresentationError>] = []
+
+        manager.showInAppNow(inapp, processingDuration: 0) { outcomes.append($0) }
+        await awaitMainQueue(turns: 2)
+
+        presentationManagerMock.receivedOnPresent?()
+        presentationManagerMock.receivedOnError?(.webviewPresentationFailed("bridge gone"))
+
+        #expect(outcomes.count == 1)
+        #expect(failureManagerMock.addFailureCallCount == 1)
+    }
+
+    @Test("A window reporting itself on screen twice is one show and one answer", .tags(.inAppSchedule))
+    func showInAppNow_presentedTwice_isOneShow() async {
+        let trackerSpy = InAppMessagesTrackerSpyMock()
+        let manager = makeSpiedManager(tracker: trackerSpy)
+        let inapp = createInAppFormData(id: "direct-twice", isPriority: false, delayTime: nil)
+        var outcomes: [Result<Void, InAppPresentationError>] = []
+
+        manager.showInAppNow(inapp, processingDuration: 0) { outcomes.append($0) }
+        await awaitMainQueue(turns: 2)
+
+        presentationManagerMock.receivedOnPresent?()
+        presentationManagerMock.receivedOnPresent?()
+
+        #expect(outcomes.count == 1)
+        #expect(trackerSpy.trackViewCallCount == 1)
+        #expect(SessionTemporaryStorage.shared.sessionShownInApps == ["direct-twice"])
+    }
+
+    /// In sync with Android: one terminal answer per request.
+    @Test("A show on request closed before it is on screen answers its request with an error", .tags(.inAppSchedule))
+    func showInAppNow_closedBeforePresented_answersWithAnError() async {
+        let manager = makeSpiedManager(tracker: InAppMessagesTrackerSpyMock())
+        let inapp = createInAppFormData(id: "direct-closed", isPriority: false, delayTime: nil)
+        var outcomes: [Result<Void, InAppPresentationError>] = []
+
+        manager.showInAppNow(inapp, processingDuration: 0) { outcomes.append($0) }
+        for _ in 0..<2 {
+            await withCheckedContinuation { continuation in DispatchQueue.main.async { continuation.resume() } }
+        }
+
+        presentationManagerMock.receivedOnPresentationCompleted?()
+
+        #expect(outcomes.count == 1)
+        if case .failure = outcomes.first {} else {
+            Issue.record("Expected an error, got \(String(describing: outcomes.first))")
+        }
+        #expect(failureManagerMock.addFailureCallCount == 0)
+        #expect(failureManagerMock.sendFailuresCallCount == 0)
+    }
+
+    @Test("A show on request that closes a loading show answers that show's request with an error", .tags(.inAppSchedule))
+    func showInAppNow_closingALoadingShow_answersItsRequest() async {
+        let manager = makeSpiedManager(tracker: InAppMessagesTrackerSpyMock())
+        var firstOutcomes: [Result<Void, InAppPresentationError>] = []
+        manager.showInAppNow(createInAppFormData(id: "first", isPriority: false, delayTime: nil), processingDuration: 0) {
+            firstOutcomes.append($0)
+        }
+        for _ in 0..<2 {
+            await withCheckedContinuation { continuation in DispatchQueue.main.async { continuation.resume() } }
+        }
+        presentationManagerMock.hasActivePresentation = true
+
+        await showNowAndAwaitMainQueue(manager, createInAppFormData(id: "second", isPriority: false, delayTime: nil))
+
+        #expect(firstOutcomes.count == 1)
+        if case .failure = firstOutcomes.first {} else {
+            Issue.record("Expected the first request to be answered with an error, got \(String(describing: firstOutcomes.first))")
+        }
     }
 
     @Test("A show on request reports a presentation error", .tags(.inAppSchedule))
