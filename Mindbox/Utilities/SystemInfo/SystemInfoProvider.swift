@@ -27,8 +27,8 @@ protocol SystemInfoProvider {
     /// Get safe area insets from a specific view
     func getSafeAreaInsets(from view: UIView?) -> UIEdgeInsets
 
-    /// Get granted permissions only
-    func getGrantedPermissions() -> [String: PermissionStatus]
+    /// Get granted permissions only; the completion runs on the main queue
+    func getGrantedPermissions(_ completion: @escaping ([String: PermissionStatus]) -> Void)
 
     /// Get all basic system info as dictionary (theme, platform, locale, version)
     /// Note: Does not include insets or permissions by default

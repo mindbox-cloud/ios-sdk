@@ -11,9 +11,6 @@ import Foundation
 /// Protocol for providing permission status information
 /// Implementations should provide status for various system permissions
 protocol PermissionProvider {
-    /// Get notification permission status
-    func getNotificationPermissionStatus() -> PermissionStatus
-
     /// Get camera permission status
     func getCameraPermissionStatus() -> PermissionStatus
 
@@ -27,6 +24,8 @@ protocol PermissionProvider {
     func getLocationPermissionStatus() -> PermissionStatus
 
     /// Get all granted permissions as a dictionary
-    /// Only includes permissions with .granted status
-    func getGrantedPermissions() -> [String: PermissionStatus]
+    /// Only includes permissions with .granted status. The notifications status is asked of the
+    /// system rather than read from a stored flag, so the answer arrives later; the completion
+    /// runs on the main queue.
+    func getGrantedPermissions(_ completion: @escaping ([String: PermissionStatus]) -> Void)
 }

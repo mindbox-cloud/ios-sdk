@@ -265,7 +265,7 @@ public struct BridgeMessage: Codable {
         ///     "trackVisitSource": "link",
         ///     "trackVisitRequestUrl": "https://example.com/page",
         ///     "permissions": {
-        ///       "pushNotifications": { "granted": true }
+        ///       "notifications": { "status": "granted" }
         ///     },
         ///     "insets": { "top": 47, "left": 0, "bottom": 34, "right": 0 },
         ///     "theme": "light",
@@ -279,8 +279,10 @@ public struct BridgeMessage: Codable {
         /// > JS must parse it with `JSON.parse()` to access the fields.
         /// >
         /// > Fields `operationName`, `operationBody`, `trackVisitSource`,
-        /// > `trackVisitRequestUrl`, `permissions`, `firstInitializationDateTime`,
+        /// > `trackVisitRequestUrl`, `firstInitializationDateTime`,
         /// > `version` (app version) are optional and included only when available.
+        /// > `permissions` is always present and lists granted permissions only, `{}` when
+        /// > there are none — in sync with Android.
         /// > Custom params from in-app configuration are merged at root level.
         case ready
 

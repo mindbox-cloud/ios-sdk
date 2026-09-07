@@ -71,19 +71,22 @@ struct WebViewStartPayloadBuilder {
         return config.merging(fromCaller) { _, caller in caller }
     }
 
-    func build() -> JSONValue {
+    /// The completion runs on the main queue, once the system has answered about permissions.
+    func build(_ completion: @escaping (JSONValue) -> Void) {
         let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         let systemInfoProvider = DI.injectOrFail(SystemInfoProvider.self)
 
-        // The order is load-bearing: the configuration's own params are merged before the
-        // operation and track-visit fields, which therefore win over a colliding key.
-        var params = baseParams(persistenceStorage: persistenceStorage)
-        addSystemInfo(to: &params, systemInfoProvider: systemInfoProvider)
-        mergeCustomParams(into: &params)
-        addOperationParams(to: &params)
-        addTrackVisitParams(to: &params)
+        systemInfoProvider.getGrantedPermissions { permissions in
+            // The order is load-bearing: the configuration's own params are merged before the
+            // operation and track-visit fields, which therefore win over a colliding key.
+            var params = self.baseParams(persistenceStorage: persistenceStorage)
+            self.addSystemInfo(to: &params, systemInfoProvider: systemInfoProvider, permissions: permissions)
+            self.mergeCustomParams(into: &params)
+            self.addOperationParams(to: &params)
+            self.addTrackVisitParams(to: &params)
 
-        return serialize(params)
+            completion(self.serialize(params))
+        }
     }
 }
 
@@ -114,7 +117,9 @@ private extension WebViewStartPayloadBuilder {
         params[PayloadKey.operationBody] = operation.body
     }
 
-    func addSystemInfo(to params: inout [String: Any], systemInfoProvider: SystemInfoProvider) {
+    func addSystemInfo(to params: inout [String: Any],
+                       systemInfoProvider: SystemInfoProvider,
+                       permissions: [String: PermissionStatus]) {
         params.merge(systemInfoProvider.getBasicSystemInfo()) { _, new in new }
 
         let insets = systemInfoProvider.getSafeAreaInsets(from: insetsSource)
@@ -125,10 +130,8 @@ private extension WebViewStartPayloadBuilder {
             PayloadKey.Insets.right: insets.right
         ]
 
-        let permissions = systemInfoProvider.getGrantedPermissions()
-        if !permissions.isEmpty {
-            params[PayloadKey.permissions] = permissions.mapValues { $0.toDictionary() }
-        }
+        // Always present, in sync with Android: a page reads one shape whether or not anything is granted.
+        params[PayloadKey.permissions] = permissions.mapValues { $0.toDictionary() }
     }
 
     func mergeCustomParams(into params: inout [String: Any]) {

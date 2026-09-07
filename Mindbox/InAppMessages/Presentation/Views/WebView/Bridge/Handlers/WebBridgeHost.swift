@@ -47,8 +47,9 @@ protocol WebBridgeHost: AnyObject {
     /// Built by the host rather than by the handler: what goes in depends on what the page is —
     /// an in-app knows its operation, a block knows its configuration entry — while answering
     /// `ready` with it is the same everywhere. Snapshot at the moment of asking, so a page that
-    /// asks again is told what is true now.
-    func makeStartPayload() -> JSONValue
+    /// asks again is told what is true now. Part of it is asked of the system, so the answer
+    /// arrives through the completion, on the main queue.
+    func makeStartPayload(_ completion: @escaping (JSONValue) -> Void)
 }
 
 // MARK: - Answering a request
