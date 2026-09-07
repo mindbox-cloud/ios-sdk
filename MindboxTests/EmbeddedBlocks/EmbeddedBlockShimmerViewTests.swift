@@ -10,8 +10,6 @@ import Testing
 import UIKit
 @testable import Mindbox
 
-/// The stock placeholder against its design: a mask of one tint whose opacity alone changes, sized
-/// in fractions of the block, sweeping once per cycle, and in step with every other shimmer around.
 @Suite("Embedded block shimmer", .tags(.embeddedBlocks))
 @MainActor
 struct EmbeddedBlockShimmerViewTests {
@@ -20,17 +18,13 @@ struct EmbeddedBlockShimmerViewTests {
 
     private let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 320, height: 480))
 
-    /// The shimmer goes here, not straight into the window: in the SDK it always sits inside the block
-    /// container, and a view placed directly into a window that is released at the end of a test
-    /// leaves the test process crashing on the next run-loop turn.
+    // A view put straight into a per-test window crashes the process on the next run-loop turn.
     private let host = UIView(frame: CGRect(x: 0, y: 0, width: 320, height: 120))
 
     init() {
         window.addSubview(host)
     }
 
-    /// Private: the foreground notification posted here must not reach the SDK's own observers or
-    /// the tests running alongside.
     private let notificationCenter = NotificationCenter()
 
     private func makeShimmer() -> EmbeddedBlockShimmerView {
@@ -115,13 +109,11 @@ struct EmbeddedBlockShimmerViewTests {
 
     @Test("At both rest positions the ramp lies outside the block, which shows a flat tint")
     func rampIsHiddenAtBothRestPositions() {
-        // The ramp is the three middle stops; the outer two are flat and may be anywhere.
         let rampAtStart = Design.startLocations[1...3]
         let rampAtEnd = Design.endLocations[1...3]
 
         #expect(rampAtStart.allSatisfy { $0 < 0 }, "before the sweep the ramp waits off the leading edge")
         #expect(rampAtEnd.allSatisfy { $0 > 1 }, "after the sweep the ramp has left past the trailing edge")
-        // And the flat outer stops still cover the block from both sides at either rest.
         #expect(Design.startLocations.first! < 0 && Design.startLocations.last! > 1)
         #expect(Design.endLocations.first! < 0 && Design.endLocations.last! > 1)
     }
@@ -185,7 +177,6 @@ struct EmbeddedBlockShimmerViewTests {
         let shimmer = makeShimmer()
         host.addSubview(shimmer)
 
-        // The foreground notification is a second start request on a shimmer already on screen.
         enterForeground()
         enterForeground()
 
@@ -196,7 +187,6 @@ struct EmbeddedBlockShimmerViewTests {
     func foregroundRestartsADroppedSweep() {
         let shimmer = makeShimmer()
         host.addSubview(shimmer)
-        // The system removes infinite animations while the app is in the background.
         shimmer.gradientLayer.removeAllAnimations()
         #expect(sweep(of: shimmer) == nil)
 
@@ -223,7 +213,6 @@ struct EmbeddedBlockShimmerViewTests {
         host.addSubview(first)
         let firstSweep = try #require(sweep(of: first))
 
-        // The second one comes later, mid-cycle of the first.
         host.addSubview(second)
         let secondSweep = try #require(sweep(of: second))
 
