@@ -22,6 +22,12 @@ struct ServedPlaceDelay: Hashable {
     let inappId: String
 }
 
+/// One outage, one `Inapp.ShowFailure` per session — the dedup key is shared with Android.
+struct ReportedNetworkFailure: Hashable {
+    let inappId: String
+    let reason: String
+}
+
 /// What this session already told the funnel and served to places, kept so nothing is repeated.
 /// Reset as one with the session.
 struct InappSessionLedger: Equatable {
@@ -42,6 +48,8 @@ struct InappSessionLedger: Equatable {
 
     /// The in-app each place showed last — a block's show is accounted when this changes.
     var placeShownInappId: [String: String] = [:]
+
+    var reportedNetworkFailures: Set<ReportedNetworkFailure> = []
 }
 
 // Ask-and-record in one step, each meant to run inside a single `$ledger.mutate`: callers live on
@@ -75,5 +83,9 @@ extension InappSessionLedger {
 
     mutating func recordUnanswered(_ place: String) -> Bool {
         placesReportedUnanswered.insert(place).inserted
+    }
+
+    mutating func recordNetworkFailure(_ inappId: String, reason: String) -> Bool {
+        reportedNetworkFailures.insert(ReportedNetworkFailure(inappId: inappId, reason: reason)).inserted
     }
 }
