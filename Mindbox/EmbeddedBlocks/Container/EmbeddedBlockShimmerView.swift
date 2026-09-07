@@ -8,39 +8,125 @@
 
 import UIKit
 
-/// The default embedded block placeholder — a neutral tile with a sweeping highlight.
+/// The default embedded block placeholder — the Mindbox UI Library "Shimmer": a translucent tint
+/// over the host's own background with a highlight sweeping across it.
 ///
 /// Fills the container entirely: the SDK knows nothing about the layout of the content to come, so
 /// the placeholder does not depict it and simply marks the reserved spot as "loading". A host that
 /// needs a skeleton of its own layout sets the container's `placeholderView`.
+///
+/// The design (Figma, Mobile Launchpad → "Шиммер вью для встроенных блоков") in one paragraph: the
+/// shimmer is a mask, not a tile. It paints no base color of its own — a single tint (near-black in
+/// light appearance, white in dark) at 8% opacity, so the same view reads on a white screen, a
+/// brand color and a dark theme alike. The highlight is the only place where that opacity changes:
+/// it dips to 4% in light (a lighter spot) and peaks at 16% in dark (a brighter spot). Every size
+/// is a fraction of the block's width, never a point value: the same file serves an 80-point
+/// avatar and a full-width banner.
+///
+/// Several shimmers on one screen move to one beat: each animation is anchored to a clock shared
+/// by the whole process, so a block that appears later joins the sweep already in progress instead
+/// of starting its own.
+///
+/// What is deliberately left out is the design's layer blur. It is about 5.6% of the block's
+/// width, which against a gradient layer almost three blocks wide is under 2% of the ramp it would
+/// soften — a change of a few hundredths in an opacity that is 8% to begin with. Core Animation
+/// offers no public blur for a layer on iOS, and the result would be indistinguishable from the
+/// plain linear ramp anyway.
 final class EmbeddedBlockShimmerView: UIView {
 
-    private enum Shimmer {
-        static let animationKey = "embeddedBlockShimmer"
-        static let animationDuration: CFTimeInterval = 1.4
+    /// The design's numbers. Positions are fractions of the block's width (`W`).
+    enum Design {
 
-        /// Outside 0…1 on purpose: fully off the leading edge at rest, off the trailing one once swept.
-        static let restingLocations: [NSNumber] = [-1.0, -0.5, 0.0]
-        static let sweptLocations: [NSNumber] = [1.0, 1.5, 2.0]
-    }
+        // MARK: Color
 
-    private let gradientLayer = CAGradientLayer()
+        /// The light-appearance tint, `#282A2F`; its opacity does the work.
+        static let lightTint = UIColor(red: 0x28 / 255.0, green: 0x2A / 255.0, blue: 0x2F / 255.0, alpha: 1.0)
 
-    private var baseColor: UIColor {
-        if #available(iOS 13.0, *) {
-            return .systemGray5
+        /// The dark-appearance tint, `#FFFFFF`.
+        static let darkTint = UIColor.white
+
+        /// The tint's opacity everywhere but the highlight, both appearances.
+        static let restingAlpha: CGFloat = 0.08
+
+        /// The highlight in light appearance dips — a spot lighter than the base.
+        static let lightHighlightAlpha: CGFloat = 0.04
+
+        /// The highlight in dark appearance peaks — a spot brighter than the base.
+        static let darkHighlightAlpha: CGFloat = 0.16
+
+        // MARK: Geometry
+
+        /// Where the tint changes opacity, as fractions of the gradient layer's width: flat, a
+        /// ramp into the highlight between 40% and 60%, flat again.
+        static let stops: [CGFloat] = [0.0, 0.4, 0.5, 0.6, 1.0]
+
+        /// The gradient layer is wider than the block so that both rest positions keep the whole
+        /// ramp out of sight and the block shows a flat 8% at either end of the cycle.
+        static let layerWidth: CGFloat = 2.96
+
+        /// The gradient layer's leading edge at rest before the sweep, in `W`.
+        static let startX: CGFloat = -1.88
+
+        /// The gradient layer's leading edge at rest after the sweep, in `W`.
+        static let endX: CGFloat = -0.083
+
+        // MARK: Timing
+
+        /// Flat at the start position before the highlight sets off.
+        static let pauseAtStart: CFTimeInterval = 0.6
+
+        /// The sweep itself, ease-in: the highlight leaves slowly and exits fast.
+        static let sweepDuration: CFTimeInterval = 1.0
+
+        /// Flat at the end position; then the layer jumps back to the start. Both rest positions
+        /// look identical, so the jump is invisible and the way back is not animated.
+        static let pauseAtEnd: CFTimeInterval = 0.6
+
+        static var cycleDuration: CFTimeInterval { pauseAtStart + sweepDuration + pauseAtEnd }
+
+        /// The stops in the block's own coordinates: `0` is its leading edge, `1` its trailing one.
+        /// Moving the gradient layer by `x` is the same as shifting every stop by `x` — and stops
+        /// are unit-less, so the animation never has to be rebuilt when the block is laid out.
+        static func locations(forLayerAt x: CGFloat) -> [CGFloat] {
+            stops.map { x + layerWidth * $0 }
         }
-        return UIColor(white: 0.90, alpha: 1.0)
+
+        static var startLocations: [CGFloat] { locations(forLayerAt: startX) }
+
+        static var endLocations: [CGFloat] { locations(forLayerAt: endX) }
+
+        /// The tint's opacity at each stop for the given appearance.
+        static func alphas(isDark: Bool) -> [CGFloat] {
+            let highlight = isDark ? darkHighlightAlpha : lightHighlightAlpha
+            return [restingAlpha, restingAlpha, highlight, restingAlpha, restingAlpha]
+        }
+
+        static func colors(isDark: Bool) -> [CGColor] {
+            let tint = isDark ? darkTint : lightTint
+            return alphas(isDark: isDark).map { tint.withAlphaComponent($0).cgColor }
+        }
     }
 
-    /// Lighter than the base in both appearances, which the system grays do not give for free: their
-    /// order flips in the dark, where `systemGray6` is the closest one to black.
-    private var highlightColor: UIColor {
+    // MARK: - Shared beat
+
+    /// The instant every shimmer counts its cycle from. One per process: two blocks side by side
+    /// — or a block that shows up a screen later — are at the same point of the same cycle.
+    static let beatEpoch: CFTimeInterval = CACurrentMediaTime()
+
+    static let animationKey = "embeddedBlockShimmer"
+
+    // MARK: - State
+
+    let gradientLayer = CAGradientLayer()
+
+    private var isDarkAppearance: Bool {
         if #available(iOS 13.0, *) {
-            return UIColor { $0.userInterfaceStyle == .dark ? .systemGray4 : .systemGray6 }
+            return traitCollection.userInterfaceStyle == .dark
         }
-        return UIColor(white: 0.96, alpha: 1.0)
+        return false
     }
+
+    // MARK: - Life cycle
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -50,6 +136,10 @@ final class EmbeddedBlockShimmerView: UIView {
     required init?(coder: NSCoder) {
         super.init(coder: coder)
         setUp()
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
 
     override func layoutSubviews() {
@@ -74,10 +164,12 @@ final class EmbeddedBlockShimmerView: UIView {
 
     private func setUp() {
         isUserInteractionEnabled = false
+        // A mask over the host's background: nothing of its own underneath the tint.
+        backgroundColor = .clear
 
         gradientLayer.startPoint = CGPoint(x: 0.0, y: 0.5)
         gradientLayer.endPoint = CGPoint(x: 1.0, y: 0.5)
-        gradientLayer.locations = Shimmer.restingLocations
+        gradientLayer.locations = Design.startLocations.map { NSNumber(value: Double($0)) }
         applyColors()
         layer.addSublayer(gradientLayer)
 
@@ -87,35 +179,55 @@ final class EmbeddedBlockShimmerView: UIView {
                                                object: nil)
     }
 
-    deinit {
-        NotificationCenter.default.removeObserver(self)
+    private func applyColors() {
+        gradientLayer.colors = Design.colors(isDark: isDarkAppearance)
     }
 
-    private func applyColors() {
-        gradientLayer.colors = [
-            baseColor.cgColor,
-            highlightColor.cgColor,
-            baseColor.cgColor
-        ]
-    }
+    // MARK: - Animation
 
     private func startShimmering() {
-        guard gradientLayer.animation(forKey: Shimmer.animationKey) == nil else { return }
+        guard gradientLayer.animation(forKey: Self.animationKey) == nil else { return }
 
-        let animation = CABasicAnimation(keyPath: "locations")
-        animation.fromValue = Shimmer.restingLocations
-        animation.toValue = Shimmer.sweptLocations
-        animation.duration = Shimmer.animationDuration
-        animation.repeatCount = .infinity
-        gradientLayer.add(animation, forKey: Shimmer.animationKey)
+        gradientLayer.add(Self.makeSweep(beginningAt: gradientLayer.convertTime(Self.beatEpoch, from: nil)),
+                          forKey: Self.animationKey)
     }
 
     private func stopShimmering() {
-        gradientLayer.removeAnimation(forKey: Shimmer.animationKey)
+        gradientLayer.removeAnimation(forKey: Self.animationKey)
+    }
+
+    /// One cycle of the design, repeated forever: rest, sweep, rest, jump back.
+    ///
+    /// `beginTime` lies in the past for every shimmer but the very first: Core Animation then picks
+    /// the cycle up at the phase the shared clock dictates rather than from the start, which is what
+    /// keeps every shimmer on screen in step.
+    static func makeSweep(beginningAt beginTime: CFTimeInterval) -> CAKeyframeAnimation {
+        let start = Design.startLocations.map { NSNumber(value: Double($0)) }
+        let end = Design.endLocations.map { NSNumber(value: Double($0)) }
+        let cycle = Design.cycleDuration
+
+        let animation = CAKeyframeAnimation(keyPath: "locations")
+        animation.values = [start, start, end, end]
+        animation.keyTimes = [
+            0.0,
+            NSNumber(value: Design.pauseAtStart / cycle),
+            NSNumber(value: (Design.pauseAtStart + Design.sweepDuration) / cycle),
+            1.0
+        ]
+        animation.timingFunctions = [
+            CAMediaTimingFunction(name: .linear),
+            CAMediaTimingFunction(name: .easeIn),
+            CAMediaTimingFunction(name: .linear)
+        ]
+        animation.duration = cycle
+        animation.repeatCount = .infinity
+        animation.beginTime = beginTime
+        return animation
     }
 
     /// The system removes infinite CA animations when the app goes to the background — after
-    /// coming back the highlight has to be started again.
+    /// coming back the sweep has to be started again. Anchored to the shared clock, it comes back
+    /// at the right phase.
     @objc
     private func applicationWillEnterForeground() {
         guard window != nil else { return }
