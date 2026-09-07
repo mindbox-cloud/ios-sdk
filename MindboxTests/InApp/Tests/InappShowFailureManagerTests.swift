@@ -88,16 +88,16 @@ struct InappShowFailureSessionDedupTests {
     @Test("A failure sent past the buffer, the block's path, is reported once per session whatever the reason",
           arguments: [InAppShowFailureReason.presentationFailed, .webviewLoadFailed, .webviewPresentationFailed])
     func failureSentPastTheBufferIsReportedOnce(reason: InAppShowFailureReason) async throws {
-        manager.sendFailure(inappId: "inapp-1", reason: reason, details: nil, tags: nil)
-        manager.sendFailure(inappId: "inapp-1", reason: reason, details: nil, tags: nil)
+        manager.sendBlockFailure(inappId: "inapp-1", reason: reason, details: nil, tags: nil)
+        manager.sendBlockFailure(inappId: "inapp-1", reason: reason, details: nil, tags: nil)
 
         #expect(try await settledEventsCount(reaching: 1) == 1)
     }
 
     @Test("A different reason sent past the buffer for the same in-app is its own report")
     func differentReasonPastTheBufferIsItsOwnReport() async throws {
-        manager.sendFailure(inappId: "inapp-1", reason: .presentationFailed, details: nil, tags: nil)
-        manager.sendFailure(inappId: "inapp-1", reason: .webviewLoadFailed, details: nil, tags: nil)
+        manager.sendBlockFailure(inappId: "inapp-1", reason: .presentationFailed, details: nil, tags: nil)
+        manager.sendBlockFailure(inappId: "inapp-1", reason: .webviewLoadFailed, details: nil, tags: nil)
 
         #expect(try await settledEventsCount(reaching: 2) == 2)
     }
@@ -105,11 +105,11 @@ struct InappShowFailureSessionDedupTests {
     @Test("A failure sent past the buffer whose enqueue failed is not suppressed as a duplicate later")
     func failedDirectEnqueueDoesNotBurnTheDedupSlot() async throws {
         repository.createError = InappShowFailureRepositoryError.createFailed
-        manager.sendFailure(inappId: "inapp-1", reason: .presentationFailed, details: nil, tags: nil)
+        manager.sendBlockFailure(inappId: "inapp-1", reason: .presentationFailed, details: nil, tags: nil)
         #expect(try await settledEventsCount(reaching: 0) == 0)
 
         repository.createError = nil
-        manager.sendFailure(inappId: "inapp-1", reason: .presentationFailed, details: nil, tags: nil)
+        manager.sendBlockFailure(inappId: "inapp-1", reason: .presentationFailed, details: nil, tags: nil)
 
         #expect(try await settledEventsCount(reaching: 1) == 1)
     }
@@ -344,12 +344,12 @@ final class InappShowFailureManagerTests: XCTestCase {
         XCTAssertEqual(failures[0].errorDetails, "segment")
     }
 
-    // MARK: - sendFailure: past the buffer
+    // MARK: - sendBlockFailure: past the buffer
 
-    func testSendFailure_isNotSwallowedByABufferedTargetingFailure() throws {
+    func testSendBlockFailure_isNotSwallowedByABufferedTargetingFailure() throws {
         manager.addFailure(inappId: "inapp-1", reason: .geoRequestFailed, details: "geo down", tags: nil)
 
-        manager.sendFailure(inappId: "inapp-1", reason: .presentationFailed, details: "page said nothing", tags: nil)
+        manager.sendBlockFailure(inappId: "inapp-1", reason: .presentationFailed, details: "page said nothing", tags: nil)
 
         assertCreatedEventsCountEventually(1)
         let event = try XCTUnwrap(databaseRepository.createdEvents.first)
@@ -359,9 +359,9 @@ final class InappShowFailureManagerTests: XCTestCase {
         XCTAssertEqual(failures[0].errorDetails, "page said nothing")
     }
 
-    func testSendFailure_leavesTheBufferIntact() throws {
+    func testSendBlockFailure_leavesTheBufferIntact() throws {
         manager.addFailure(inappId: "inapp-1", reason: .geoRequestFailed, details: "geo down", tags: nil)
-        manager.sendFailure(inappId: "inapp-1", reason: .webviewLoadFailed, details: "markup", tags: nil)
+        manager.sendBlockFailure(inappId: "inapp-1", reason: .webviewLoadFailed, details: "markup", tags: nil)
         assertCreatedEventsCountEventually(1)
 
         manager.sendFailures()
@@ -372,10 +372,10 @@ final class InappShowFailureManagerTests: XCTestCase {
         XCTAssertEqual(failures.map(\.failureReason), [.geoRequestFailed])
     }
 
-    func testSendFailure_whenFeatureDisabled_sendsNothing() {
+    func testSendBlockFailure_whenFeatureDisabled_sendsNothing() {
         applyFeatureToggle(shouldSendInAppShowError: false)
 
-        manager.sendFailure(inappId: "inapp-1", reason: .presentationFailed, details: nil, tags: nil)
+        manager.sendBlockFailure(inappId: "inapp-1", reason: .presentationFailed, details: nil, tags: nil)
 
         assertCreatedEventsCountEventually(0)
     }
@@ -384,10 +384,10 @@ final class InappShowFailureManagerTests: XCTestCase {
         XCTAssertEqual(InappShowFailureManager.errorDetailsLimit, 1000)
     }
 
-    func testSendFailure_truncatesErrorDetailsToLimit() throws {
+    func testSendBlockFailure_truncatesErrorDetailsToLimit() throws {
         let long = String(repeating: "a", count: InappShowFailureManager.errorDetailsLimit + 100)
 
-        manager.sendFailure(inappId: "inapp-1", reason: .presentationFailed, details: long, tags: nil)
+        manager.sendBlockFailure(inappId: "inapp-1", reason: .presentationFailed, details: long, tags: nil)
 
         assertCreatedEventsCountEventually(1)
         let event = try XCTUnwrap(databaseRepository.createdEvents.first)

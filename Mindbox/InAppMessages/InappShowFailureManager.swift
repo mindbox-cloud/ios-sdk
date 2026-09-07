@@ -21,15 +21,15 @@ protocol InappShowFailureManagerProtocol {
     /// it names the place instead. Sent at once, past the buffer, like the other block failures.
     func sendWaitBudgetExceeded(place: String, waited: TimeInterval, phase: EmbeddedBlockShowFailure.Phase)
 
-    /// Sends one failure at once, without joining the buffer the selection pass fills, and once per
-    /// in-app and reason per session: a block that fails the same way on every return to the screen
-    /// reports it a single time.
+    /// Sends a block's failure at once, without joining the buffer the selection pass fills, and once
+    /// per in-app and reason per session: a block that fails the same way on every return to the
+    /// screen reports it a single time. The overlay's failures go through the buffer.
     ///
     /// The buffer keeps a single failure per in-app id and only lets the three targeting reasons
     /// replace each other, so a failure that does not belong to a selection pass would be dropped
     /// whenever that id already has one buffered. In sync with Android, whose block failures also
     /// bypass their collected list.
-    func sendFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?)
+    func sendBlockFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?)
 }
 
 final class InappShowFailureManager: InappShowFailureManagerProtocol {
@@ -61,7 +61,7 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
         let truncatedDetails = truncatedDetails(details, inappId: inappId)
 
         queue.async { [self] in
-            if isReportedOncePerSession(reason),
+            if isNetworkOutage(reason),
                SessionTemporaryStorage.shared.ledger.reportedFailures.contains(ReportedFailure(inappId: inappId, reason: reason.rawValue)) {
                 Logger.common(message: "[InappShowFailureManager] Ignore failure already reported this session. inappId=\(inappId), reason=\(reason.rawValue)",
                               level: .debug, category: .inAppMessages)
@@ -88,9 +88,9 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
         }
     }
     
-    func sendFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?) {
+    func sendBlockFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?) {
         guard featureToggleManager.isFeatureEnabled(.shouldSendInAppShowError) else {
-            Logger.common(message: "[InappShowFailureManager] sendFailure ignored, feature is disabled", category: .inAppMessages)
+            Logger.common(message: "[InappShowFailureManager] sendBlockFailure ignored, feature is disabled", category: .inAppMessages)
             return
         }
 
@@ -100,15 +100,11 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
                                   tags: featureToggleManager.gatedTags(tags))
 
         queue.async { [self] in
-            let isFirstThisSession = SessionTemporaryStorage.shared.$ledger.mutate { $0.recordFailure(inappId, reason: reason.rawValue) }
-            guard isFirstThisSession else {
+            guard let sent = enqueueOncePerSession([failure], where: { _ in true }) else { return }
+
+            guard !sent.isEmpty else {
                 Logger.common(message: "[InappShowFailureManager] Ignore failure already reported this session. inappId=\(inappId), reason=\(reason.rawValue)",
                               level: .debug, category: .inAppMessages)
-                return
-            }
-
-            guard enqueue([.inapp(failure)]) else {
-                SessionTemporaryStorage.shared.$ledger.mutate { $0.reportedFailures.remove(ReportedFailure(inappId: inappId, reason: reason.rawValue)) }
                 return
             }
 
@@ -129,6 +125,31 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
             }
             return truncated
         }
+    }
+
+    /// Must be called on `queue`. Records the failures not yet reported this session and enqueues them as one
+    /// event, the check and the record under one lock hold; a failed enqueue un-records them, so the retry is
+    /// not suppressed as a duplicate. Nil when the enqueue failed.
+    private func enqueueOncePerSession(_ candidates: [InAppShowFailure],
+                                       where isReportedOnce: (InAppShowFailureReason) -> Bool) -> [InAppShowFailure]? {
+        let toSend = SessionTemporaryStorage.shared.$ledger.mutate { ledger in
+            candidates.filter { failure in
+                guard isReportedOnce(failure.failureReason) else { return true }
+
+                return ledger.recordFailure(failure.inappId, reason: failure.failureReason.rawValue)
+            }
+        }
+
+        guard !toSend.isEmpty else { return [] }
+
+        guard enqueue(toSend.map(InAppShowError.inapp)) else {
+            SessionTemporaryStorage.shared.$ledger.mutate { ledger in
+                toSend.forEach { ledger.reportedFailures.remove(ReportedFailure(inappId: $0.inappId, reason: $0.failureReason.rawValue)) }
+            }
+            return nil
+        }
+
+        return toSend
     }
 
     /// Must be called on `queue`.
@@ -162,35 +183,17 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
         queue.async { [self] in
             guard !failures.isEmpty else { return }
 
-            // One outage is one report per session, in sync with Android; checked and recorded under one lock hold.
-            let toSend = SessionTemporaryStorage.shared.$ledger.mutate { ledger in
-                failures.filter { failure in
-                    guard isReportedOncePerSession(failure.failureReason) else { return true }
+            // A network outage is one report per session, in sync with Android.
+            guard let sent = enqueueOncePerSession(failures, where: isNetworkOutage) else { return }
 
-                    return ledger.recordFailure(failure.inappId, reason: failure.failureReason.rawValue)
-                }
-            }
-
-            if toSend.count < failures.count {
-                Logger.common(message: "[InappShowFailureManager] Suppressed \(failures.count - toSend.count) network failure(s) already reported this session",
+            if sent.count < failures.count {
+                Logger.common(message: "[InappShowFailureManager] Suppressed \(failures.count - sent.count) failure(s) already reported this session",
                               level: .debug, category: .inAppMessages)
             }
-
-            guard !toSend.isEmpty else {
-                failures.removeAll()
-                return
+            if !sent.isEmpty {
+                Logger.common(message: "[InappShowFailureManager] Inapp.ShowFailure event sent with \(sent.count) failure(s)",
+                              category: .inAppMessages)
             }
-
-            guard enqueue(toSend.map(InAppShowError.inapp)) else {
-                // Un-record, so the kept buffer's retry is not suppressed as a duplicate.
-                SessionTemporaryStorage.shared.$ledger.mutate { ledger in
-                    toSend.forEach { ledger.reportedFailures.remove(ReportedFailure(inappId: $0.inappId, reason: $0.failureReason.rawValue)) }
-                }
-                return
-            }
-
-            Logger.common(message: "[InappShowFailureManager] Inapp.ShowFailure event sent with \(toSend.count) failure(s)",
-                          category: .inAppMessages)
             failures.removeAll()
         }
     }
@@ -245,7 +248,7 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
         return newPriority > currentPriority
     }
 
-    private func isReportedOncePerSession(_ reason: InAppShowFailureReason) -> Bool {
+    private func isNetworkOutage(_ reason: InAppShowFailureReason) -> Bool {
         switch reason {
         case .customerSegmentRequestFailed, .geoRequestFailed, .productSegmentRequestFailed, .imageDownloadFailed:
             return true
