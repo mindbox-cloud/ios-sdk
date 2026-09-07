@@ -13,8 +13,9 @@ class InAppPresentationManagerMock: InAppPresentationManagerProtocol {
     var receivedInAppUIModel: InAppFormData?
     var presentCallsCount = 0
     var dismissActiveCallsCount = 0
+    var discardActiveCallsCount = 0
     var receivedOnPresent: (() -> Void)?
-    var receivedOnPresentationCompleted: (() -> Void)?
+    var receivedOnPresentationCompleted: ((Bool) -> Void)?
     var receivedOnError: ((InAppPresentationError) -> Void)?
     private(set) var presentedOnMainThread: Bool?
 
@@ -24,7 +25,7 @@ class InAppPresentationManagerMock: InAppPresentationManagerProtocol {
     func present(inAppFormData: InAppFormData,
                  onPresented: @escaping () -> Void,
                  onTapAction: @escaping InAppMessageTapAction,
-                 onPresentationCompleted: @escaping () -> Void,
+                 onPresentationCompleted: @escaping (Bool) -> Void,
                  onError: @escaping (InAppPresentationError) -> Void) {
         presentCallsCount += 1
         presentedOnMainThread = Thread.isMainThread
@@ -41,6 +42,15 @@ class InAppPresentationManagerMock: InAppPresentationManagerProtocol {
         guard hasActivePresentation else { return }
 
         hasActivePresentation = false
-        receivedOnPresentationCompleted?()
+        receivedOnPresentationCompleted?(false)
+    }
+
+    func discardActiveInApp() {
+        discardActiveCallsCount += 1
+
+        guard hasActivePresentation else { return }
+
+        hasActivePresentation = false
+        receivedOnPresentationCompleted?(true)
     }
 }

@@ -535,6 +535,7 @@
 		F32CA1762E17625200CE7E63 /* InappScheduleManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F32CA1752E17625200CE7E63 /* InappScheduleManagerTests.swift */; };
 		03F556ABF25843F4E03B12D9 /* InappSessionLedgerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7A74E65031C00E64367BA99 /* InappSessionLedgerTests.swift */; };
 		104C9D4B108245A2B80315B8 /* InappShowBudgetTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60031FAE060A48CA8D1E640E /* InappShowBudgetTests.swift */; };
+		782D580EA34464DBDE25284F /* InAppPresentationManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5748B9A706D8D302F7FB945 /* InAppPresentationManagerTests.swift */; };
 		D8884D732391D8DEFC19A4C1 /* InappShowAccountantTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA57EA9FD870B3E7E22BE75D /* InappShowAccountantTests.swift */; };
 		F32CFFA42BB403C700A41E04 /* PushEnabledTargeting.swift in Sources */ = {isa = PBXBuildFile; fileRef = F32CFFA32BB403C700A41E04 /* PushEnabledTargeting.swift */; };
 		F32CFFA62BB4044E00A41E04 /* PushEnabledTargetingChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F32CFFA52BB4044E00A41E04 /* PushEnabledTargetingChecker.swift */; };
@@ -1319,6 +1320,7 @@
 		F32CA1752E17625200CE7E63 /* InappScheduleManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappScheduleManagerTests.swift; sourceTree = "<group>"; };
 		B7A74E65031C00E64367BA99 /* InappSessionLedgerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappSessionLedgerTests.swift; sourceTree = "<group>"; };
 		60031FAE060A48CA8D1E640E /* InappShowBudgetTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappShowBudgetTests.swift; sourceTree = "<group>"; };
+		F5748B9A706D8D302F7FB945 /* InAppPresentationManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppPresentationManagerTests.swift; sourceTree = "<group>"; };
 		AA57EA9FD870B3E7E22BE75D /* InappShowAccountantTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InappShowAccountantTests.swift; sourceTree = "<group>"; };
 		F32CFFA32BB403C700A41E04 /* PushEnabledTargeting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushEnabledTargeting.swift; sourceTree = "<group>"; };
 		F32CFFA52BB4044E00A41E04 /* PushEnabledTargetingChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushEnabledTargetingChecker.swift; sourceTree = "<group>"; };
@@ -2835,6 +2837,7 @@
 				F32CA1752E17625200CE7E63 /* InappScheduleManagerTests.swift */,
 				B7A74E65031C00E64367BA99 /* InappSessionLedgerTests.swift */,
 				60031FAE060A48CA8D1E640E /* InappShowBudgetTests.swift */,
+				F5748B9A706D8D302F7FB945 /* InAppPresentationManagerTests.swift */,
 				AA57EA9FD870B3E7E22BE75D /* InappShowAccountantTests.swift */,
 				327A85474E7AB7AC1884A890 /* InAppConfigurationManagerTests.swift */,
 				D55C134D9E499E94D099CD09 /* InAppCoreManagerTests.swift */,
@@ -4898,6 +4901,7 @@
 				F32CA1762E17625200CE7E63 /* InappScheduleManagerTests.swift in Sources */,
 				03F556ABF25843F4E03B12D9 /* InappSessionLedgerTests.swift in Sources */,
 				104C9D4B108245A2B80315B8 /* InappShowBudgetTests.swift in Sources */,
+				782D580EA34464DBDE25284F /* InAppPresentationManagerTests.swift in Sources */,
 				D8884D732391D8DEFC19A4C1 /* InappShowAccountantTests.swift in Sources */,
 				C560714312DC9ADC194C8714 /* InAppConfigurationManagerTests.swift in Sources */,
 				BD92D11B0743EEAE2024318A /* InAppCoreManagerTests.swift in Sources */,

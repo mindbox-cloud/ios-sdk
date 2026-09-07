@@ -472,6 +472,47 @@ struct InappScheduleManagerTests {
         #expect(failureManagerMock.addFailureCalls.first?.details == "first-error")
     }
 
+    private final class DelegateSpy: InAppMessagesDelegate {
+        private(set) var dismissedIds: [String] = []
+
+        func inAppMessageTapAction(id: String, url: URL?, payload: String) {}
+
+        func inAppMessageDismissed(id: String) {
+            dismissedIds.append(id)
+        }
+    }
+
+    /// A session reset is not a user's close: Android suppresses both the cooldown and the host callback for it.
+    @Test("A show discarded by a session reset moves no cooldown and tells the delegate nothing", .tags(.inAppSchedule))
+    func discardedShow_movesNoCooldownAndIsNotReportedDismissed() {
+        let spy = DelegateSpy()
+        scheduleManager.delegate = spy
+        scheduleManager.presentInapp(createInAppFormData(id: "discarded", isPriority: false, delayTime: nil),
+                                     stopwatch: ForegroundStopwatch())
+        presentationManagerMock.receivedOnPresent?()
+        #expect(trackingServiceMock.saveInappStateChangeCallCount == 1)
+
+        presentationManagerMock.discardActiveInApp()
+
+        #expect(trackingServiceMock.saveInappStateChangeCallCount == 1)
+        #expect(spy.dismissedIds.isEmpty)
+        #expect(!SessionTemporaryStorage.shared.isPresentingInAppMessage)
+    }
+
+    @Test("A user's close moves the cooldown and is reported to the delegate", .tags(.inAppSchedule))
+    func closedShow_movesTheCooldownAndIsReportedDismissed() {
+        let spy = DelegateSpy()
+        scheduleManager.delegate = spy
+        scheduleManager.presentInapp(createInAppFormData(id: "closed", isPriority: false, delayTime: nil),
+                                     stopwatch: ForegroundStopwatch())
+        presentationManagerMock.receivedOnPresent?()
+
+        presentationManagerMock.dismissActiveInApp()
+
+        #expect(trackingServiceMock.saveInappStateChangeCallCount == 2)
+        #expect(spy.dismissedIds == ["closed"])
+    }
+
     // MARK: - A show on request
 
     private func makeSpiedManager(tracker: InAppMessagesTrackerSpyMock) -> InappScheduleManager {
@@ -517,7 +558,7 @@ struct InappScheduleManagerTests {
         #expect(SessionTemporaryStorage.shared.isPresentingInAppMessage)
 
         presentationManagerMock.receivedOnPresent?()
-        presentationManagerMock.receivedOnPresentationCompleted?()
+        presentationManagerMock.receivedOnPresentationCompleted?(false)
 
         #expect(trackerSpy.trackViewCallCount == 1)
         #expect(trackerSpy.lastTrackedId == "direct-1")
@@ -538,7 +579,7 @@ struct InappScheduleManagerTests {
         #expect(trackingServiceMock.trackInAppShownCallCount == 1)
         #expect(trackingServiceMock.saveInappStateChangeCallCount == 1)
 
-        presentationManagerMock.receivedOnPresentationCompleted?()
+        presentationManagerMock.receivedOnPresentationCompleted?(false)
         #expect(trackingServiceMock.saveInappStateChangeCallCount == 2)
     }
 
@@ -550,7 +591,7 @@ struct InappScheduleManagerTests {
 
         manager.presentInapp(inapp, stopwatch: ForegroundStopwatch())
         presentationManagerMock.receivedOnPresent?()
-        presentationManagerMock.receivedOnPresentationCompleted?()
+        presentationManagerMock.receivedOnPresentationCompleted?(false)
 
         #expect(trackerSpy.trackViewCallCount == 1)
         #expect(trackingServiceMock.trackInAppShownCallCount == 0)
@@ -616,7 +657,7 @@ struct InappScheduleManagerTests {
         #expect(trackingServiceMock.trackInAppShownCallCount == 1)
         #expect(trackingServiceMock.saveInappStateChangeCallCount == 1)
 
-        presentationManagerMock.receivedOnPresentationCompleted?()
+        presentationManagerMock.receivedOnPresentationCompleted?(false)
         #expect(trackingServiceMock.saveInappStateChangeCallCount == 2)
     }
 
@@ -706,7 +747,7 @@ struct InappScheduleManagerTests {
             await withCheckedContinuation { continuation in DispatchQueue.main.async { continuation.resume() } }
         }
 
-        presentationManagerMock.receivedOnPresentationCompleted?()
+        presentationManagerMock.receivedOnPresentationCompleted?(false)
 
         #expect(outcomes.count == 1)
         if case .failure = outcomes.first {} else {
@@ -804,7 +845,7 @@ struct InappScheduleManagerTests {
     func showEligibleInapp_closedBeforePresented_givesTheSlotBack() async {
         await showScheduled(createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02"))
 
-        presentationManagerMock.receivedOnPresentationCompleted?()
+        presentationManagerMock.receivedOnPresentationCompleted?(false)
 
         #expect(SessionTemporaryStorage.shared.showBudget.reservations.isEmpty)
         #expect(SessionTemporaryStorage.shared.sessionShownInApps.isEmpty)
@@ -975,7 +1016,7 @@ struct InappScheduleManagerTests {
         holdScheduled(createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02"))
         await comeToForeground()
 
-        presentationManagerMock.receivedOnPresentationCompleted?()
+        presentationManagerMock.receivedOnPresentationCompleted?(false)
 
         #expect(reservations.isEmpty)
         #expect(SessionTemporaryStorage.shared.sessionShownInApps.isEmpty)
@@ -999,7 +1040,7 @@ struct InappScheduleManagerTests {
         holdScheduled(createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02"))
 
         await showNowAndAwaitMainQueue(scheduleManager, createInAppFormData(id: "1", isPriority: false, delayTime: nil))
-        presentationManagerMock.receivedOnPresentationCompleted?()
+        presentationManagerMock.receivedOnPresentationCompleted?(false)
 
         #expect(reservations[.overlay("1")]?.inAppId == "1")
     }
