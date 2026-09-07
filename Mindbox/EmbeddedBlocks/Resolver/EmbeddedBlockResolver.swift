@@ -14,6 +14,11 @@ enum EmbeddedBlockResolution: Equatable {
     case content(EmbeddedBlockWebContent)
 
     case empty
+
+    var content: EmbeddedBlockWebContent? {
+        if case .content(let content) = self { return content }
+        return nil
+    }
 }
 
 /// Works on the main thread — that is where the container waits for the answer — while the selection
@@ -94,6 +99,7 @@ final class EmbeddedBlockResolver: EmbeddedBlockResolving {
                                                 baseUrl: layer.baseUrl,
                                                 contentUrl: layer.contentUrl,
                                                 frequency: inapp.frequency,
+                                                isPriority: inapp.isPriority,
                                                 tags: inapp.tags,
                                                 params: layer.params,
                                                 delayTime: inapp.delayTime))

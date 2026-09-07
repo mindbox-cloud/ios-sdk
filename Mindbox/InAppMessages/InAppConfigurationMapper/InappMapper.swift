@@ -36,7 +36,6 @@ class InappMapper: InappMapperProtocol {
     private var targetingChecker: InAppTargetingCheckerProtocol
     private let inappFilterService: InappFilterProtocol
     private let dataFacade: InAppConfigurationDataFacadeProtocol
-    private let presentationValidator: InAppPresentationValidatorProtocol
     private let formBuilder: InappFormBuilder
 
     @Locked private var shownInappIDWithHashValue: [String: Int] = [:]
@@ -45,12 +44,10 @@ class InappMapper: InappMapperProtocol {
 
     init(targetingChecker: InAppTargetingCheckerProtocol,
          inappFilterService: InappFilterProtocol,
-         dataFacade: InAppConfigurationDataFacadeProtocol,
-         presentationValidator: InAppPresentationValidatorProtocol) {
+         dataFacade: InAppConfigurationDataFacadeProtocol) {
         self.targetingChecker = targetingChecker
         self.inappFilterService = inappFilterService
         self.dataFacade = dataFacade
-        self.presentationValidator = presentationValidator
         self.formBuilder = InappFormBuilder(dataFacade: dataFacade)
     }
 
@@ -84,17 +81,6 @@ class InappMapper: InappMapperProtocol {
 
                     guard let winner else {
                         finish(false)
-                        completion(nil)
-                        return
-                    }
-
-                    guard self.presentationValidator.isWithinShowBudgets(isPriority: winner.isPriority,
-                                                                        frequency: winner.frequency,
-                                                                        id: winner.inAppId) else {
-                        Logger.common(message: "[InappMapper] In-app \(winner.inAppId) won place '\(place)' but the show budgets are spent, the place stays empty",
-                                      level: .debug, category: .inAppMessages)
-                        // Selected all the same: spent budgets are no targeting failure, so the buffer is dropped as after the overlay's pass.
-                        finish(true)
                         completion(nil)
                         return
                     }

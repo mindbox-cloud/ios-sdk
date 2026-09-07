@@ -18,17 +18,25 @@ protocol EmbeddedBlockPlaceHandling: AnyObject {
 
     /// The place's answer is known and held back by its `delayTime`: content is coming, the SDK is not silent.
     func contentIsDelayed()
+
+    /// Loading or showing, on screen or paused off it: the block still owes the place a show or a give-up.
+    var holdsAnAttempt: Bool { get }
 }
 
-/// Called on the main thread: the registry's state is confined to it.
+/// The registry's state is confined to the main thread, and it puts every entry point there itself: two of
+/// them are driven by object lifetime — a block's `init` and the container's `deinit` — which UIKit does not
+/// promise to run on the main thread.
 ///
-/// There is no `unregister`: blocks are held weakly and drop out on their own — an explicit one
-/// would have to hop to the main thread from `deinit`, capturing an object already being torn down.
+/// There is no `unregister`: blocks are held weakly and drop out on their own.
 protocol EmbeddedBlockPlaceRegistering: AnyObject {
 
     func register(_ block: EmbeddedBlockPlaceHandling, place: String)
 
     func blockAppeared(_ place: String)
+
+    /// A block's attempt ended without a show; once no block of the place holds one, the place's slot
+    /// in the show budget is given back.
+    func blockAttemptEnded(_ place: String)
 }
 
 /// The place map and the router between blocks and the selection — in sync with Android, where the
@@ -36,7 +44,7 @@ protocol EmbeddedBlockPlaceRegistering: AnyObject {
 final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
 
     struct PlaceAnswer {
-        let resolution: EmbeddedBlockResolution
+        let content: EmbeddedBlockWebContent
         let processingDuration: TimeInterval
     }
 
@@ -91,6 +99,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
     private var embeddedPlacesInConfig: [String: Set<String>]?
 
     private let resolver: EmbeddedBlockResolving
+    private let budget: InappShowBudgeting
     private let fetchEmbeddedPlaces: EmbeddedPlacesFetching
     private let notificationCenter: NotificationCenter
     private let delayedDelivery: EmbeddedBlockDelayedDelivery<PlaceAnswer>
@@ -98,10 +107,12 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
     private var observers: [NSObjectProtocol] = []
 
     init(resolver: EmbeddedBlockResolving,
+         budget: InappShowBudgeting,
          notificationCenter: NotificationCenter = .default,
          fetchEmbeddedPlaces: @escaping EmbeddedPlacesFetching = EmbeddedBlockPlaceRegistry.fetchPlacesFromConfig,
          delayedDelivery: EmbeddedBlockDelayedDelivery<PlaceAnswer> = EmbeddedBlockDelayedDelivery()) {
         self.resolver = resolver
+        self.budget = budget
         self.notificationCenter = notificationCenter
         self.fetchEmbeddedPlaces = fetchEmbeddedPlaces
         self.delayedDelivery = delayedDelivery
@@ -132,10 +143,25 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
     // MARK: - Blocks
 
     func register(_ block: EmbeddedBlockPlaceHandling, place: String) {
-        prune(place)
-        blocksByPlace[place, default: []].append(WeakBlock(block: block))
+        let weakBlock = WeakBlock(block: block)
+        onMain {
+            $0.prune(place)
+            $0.blocksByPlace[place, default: []].append(weakBlock)
+            $0.warnIfPlaceIsShared(place)
+        }
+    }
 
-        warnIfPlaceIsShared(place)
+    private func onMain(_ work: @escaping (EmbeddedBlockPlaceRegistry) -> Void) {
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+
+                work(self)
+            }
+            return
+        }
+
+        work(self)
     }
 
     private func warnIfPlaceIsShared(_ place: String) {
@@ -151,7 +177,11 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
     }
 
     func blockAppeared(_ place: String) {
-        requestResolve(place: place, cause: .blockAppeared)
+        onMain { $0.requestResolve(place: place, cause: .blockAppeared) }
+    }
+
+    func blockAttemptEnded(_ place: String) {
+        onMain { $0.releaseSlotIfUnclaimed(place) }
     }
 
     // MARK: - Channels
@@ -236,11 +266,12 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
     private func handle(_ resolution: EmbeddedBlockResolution, at place: String, processingDuration: TimeInterval) {
         guard case .content(let content) = resolution else {
             delayedDelivery.cancel(place: place)
+            budget.release(.place(place))
             deliver(place: place, resolution: resolution, processingDuration: processingDuration)
             return
         }
 
-        let answer = PlaceAnswer(resolution: resolution, processingDuration: processingDuration)
+        let answer = PlaceAnswer(content: content, processingDuration: processingDuration)
 
         if delayedDelivery.isWaiting(place: place, for: content.inAppId) {
             Logger.common(message: "[EmbeddedBlock] Place '\(place)': in-app \(content.inAppId) is still waiting out its delay",
@@ -257,7 +288,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         // Checked here, inserted when the delay fires — both on the main thread; the ledger's
         // lock protects other readers, not this sequence.
         guard delay > 0, !SessionTemporaryStorage.shared.ledger.servedPlaceDelays.contains(served) else {
-            deliver(place: place, resolution: resolution, processingDuration: processingDuration)
+            deliverContent(content, at: place, processingDuration: processingDuration)
             return
         }
 
@@ -267,8 +298,37 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
 
         delayedDelivery.schedule(place: place, inappId: content.inAppId, answer: answer, after: delay) { [weak self] answer in
             SessionTemporaryStorage.shared.$ledger.mutate { $0.servedPlaceDelays.insert(served) }
-            self?.deliver(place: place, resolution: answer.resolution, processingDuration: answer.processingDuration)
+            self?.deliverContent(answer.content, at: place, processingDuration: answer.processingDuration)
         }
+    }
+
+    /// The slot is taken here, at the last point before a page is built, so a budget spent meanwhile costs no page load.
+    private func deliverContent(_ content: EmbeddedBlockWebContent, at place: String, processingDuration: TimeInterval) {
+        guard holdsSlot(for: content, at: place) else {
+            Logger.common(message: "[EmbeddedBlock] Place '\(place)': in-app \(content.inAppId) won it, but the show budgets are spent — the place stays empty",
+                          category: .embeddedBlocks)
+            deliver(place: place, resolution: .empty, processingDuration: processingDuration)
+            return
+        }
+
+        deliver(place: place, resolution: .content(content), processingDuration: processingDuration)
+        releaseSlotIfUnclaimed(place)
+    }
+
+    private func releaseSlotIfUnclaimed(_ place: String) {
+        prune(place)
+
+        guard !(blocksByPlace[place] ?? []).contains(where: { $0.block?.holdsAnAttempt == true }) else { return }
+
+        budget.release(.place(place))
+    }
+
+    private func holdsSlot(for content: EmbeddedBlockWebContent, at place: String) -> Bool {
+        if SessionTemporaryStorage.shared.ledger.placeShownInappId[place] == content.inAppId {
+            return true
+        }
+
+        return budget.reserve(.place(place), inAppId: content.inAppId, isPriority: content.isPriority, frequency: content.frequency) != .refused
     }
 
     private func announceDelay(at place: String) {

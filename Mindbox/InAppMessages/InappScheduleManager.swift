@@ -15,6 +15,7 @@ internal struct ScheduledInapp {
     let inapp: InAppFormData
     let timer: DispatchSourceTimer
     let processingDuration: TimeInterval
+    var holdsSlot = false
 }
 
 protocol InappScheduleManagerProtocol {
@@ -30,49 +31,56 @@ protocol InappScheduleManagerProtocol {
 final class InappScheduleManager: InappScheduleManagerProtocol {
     
     let presentationManager: InAppPresentationManagerProtocol
-    let presentationValidator: InAppPresentationValidatorProtocol
+    let budget: InappShowBudgeting
     let accountant: InappShowAccounting
     let failureManager: InappShowFailureManagerProtocol
-    
+    private let isInBackground: () -> Bool
+    private let now: () -> Date
+
     let queue = DispatchQueue(label: "com.Mindbox.delayedInAppManager", qos: .userInitiated)
     var inappsByPresentationTime: [TimeInterval: [ScheduledInapp]] = [:]
-    
+
     init(presentationManager: InAppPresentationManagerProtocol,
-         presentationValidator: InAppPresentationValidatorProtocol,
+         budget: InappShowBudgeting,
          accountant: InappShowAccounting,
-         failureManager: InappShowFailureManagerProtocol) {
+         failureManager: InappShowFailureManagerProtocol,
+         isInBackground: @escaping () -> Bool = { UIApplication.shared.applicationState == .background },
+         now: @escaping () -> Date = Date.init) {
         self.presentationManager = presentationManager
-        self.presentationValidator = presentationValidator
+        self.budget = budget
         self.accountant = accountant
         self.failureManager = failureManager
+        self.isInBackground = isInBackground
+        self.now = now
         addObserver()
     }
-    
+
     deinit {
         NotificationCenter.default.removeObserver(self)
     }
-    
+
     weak var delegate: InAppMessagesDelegate?
-    
+
     func scheduleInApp(_ inapp: InAppFormData, processingDuration: TimeInterval) {
         let delay = TimeInterval.delay(fromTimeSpan: inapp.delayTime)
-        let presentationTime = Date().addingTimeInterval(delay).timeIntervalSince1970
-        
+        let presentationTime = now().addingTimeInterval(delay).timeIntervalSince1970
+
         let timer = DispatchSource.makeTimerSource(flags: .strict, queue: queue)
         timer.schedule(deadline: .now() + delay, repeating: .never, leeway: .milliseconds(100))
         timer.setEventHandler { [weak self] in
             DispatchQueue.main.async {
-                if UIApplication.shared.applicationState == .background {
-                    Logger.common(message: "[InappScheduleManager] Skipping presentation of \(inapp.inAppId) because app is in background.")
-                    return
+                guard let self else { return }
+
+                if self.isInBackground() {
+                    self.holdEligibleInapp(presentationTime)
+                } else {
+                    self.showEligibleInapp(presentationTime)
                 }
-                
-                self?.showEligibleInapp(presentationTime)
             }
         }
-        
+
         let scheduledInapp = ScheduledInapp(inapp: inapp, timer: timer, processingDuration: processingDuration)
-        
+
         queue.async {
             self.inappsByPresentationTime[presentationTime, default: []].append(scheduledInapp)
             timer.resume()
@@ -96,31 +104,81 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
 internal extension InappScheduleManager {
     func showEligibleInapp(_ presentationTime: TimeInterval) {
         queue.async {
-            guard let scheduledInapps = self.inappsByPresentationTime[presentationTime], !scheduledInapps.isEmpty else {
-                return
-            }
-            
-            let sortedScheduledInapps = scheduledInapps.sorted {
-                $0.inapp.isPriority && !$1.inapp.isPriority
-            }
-            
-            if let firstInapp = sortedScheduledInapps.first,
-                self.presentationValidator.canPresentInApp(isPriority: firstInapp.inapp.isPriority,
-                                                           frequency: firstInapp.inapp.frequency,
-                                                           id: firstInapp.inapp.inAppId) {
-                let stopwatch = ForegroundStopwatch()
-                self.presentInapp(firstInapp.inapp, stopwatch: stopwatch, processingDuration: firstInapp.processingDuration)
-            }
-            
-            for scheduledInapp in scheduledInapps {
-                scheduledInapp.timer.cancel()
-            }
-            
-            // Gone whether it showed or not: a moment missed behind another in-app is missed, by decision — no queue, no re-arm.
-            self.inappsByPresentationTime.removeValue(forKey: presentationTime)
+            self.showWinner(at: presentationTime)
         }
     }
-    
+
+    /// On `queue`. Whether the winner goes on screen is decided on the main queue, with every other show.
+    private func showWinner(at presentationTime: TimeInterval) {
+        guard let winner = takeWinner(at: presentationTime) else { return }
+
+        DispatchQueue.main.async {
+            self.presentIfScreenIsFree(winner)
+        }
+    }
+
+    /// On the main queue, with the shows that flip `isPresentingInAppMessage`: the check and the take are one turn.
+    private func presentIfScreenIsFree(_ winner: ScheduledInapp) {
+        guard !SessionTemporaryStorage.shared.isPresentingInAppMessage else {
+            Logger.common(message: "[InappScheduleManager] Another in-app is already being shown, skipping \(winner.inapp.inAppId)",
+                          level: .debug, category: .inAppMessages)
+            giveBackSlot(of: winner)
+            return
+        }
+
+        let reservation = reserveSlot(for: winner.inapp)
+        guard reservation != .refused else { return }
+
+        presentInapp(winner.inapp,
+                     stopwatch: ForegroundStopwatch(),
+                     processingDuration: winner.processingDuration,
+                     holdsSlot: winner.holdsSlot || reservation == .granted)
+    }
+
+    /// On the main queue. The moment came in the background: the slot is taken now and the show waits for the
+    /// foreground, in sync with Android.
+    func holdEligibleInapp(_ presentationTime: TimeInterval) {
+        let isScreenTaken = SessionTemporaryStorage.shared.isPresentingInAppMessage
+        queue.async {
+            guard var winner = self.takeWinner(at: presentationTime) else { return }
+
+            guard !isScreenTaken else {
+                Logger.common(message: "[InappScheduleManager] Another in-app is on screen, dropping \(winner.inapp.inAppId)",
+                              level: .debug, category: .inAppMessages)
+                self.giveBackSlot(of: winner)
+                return
+            }
+
+            let reservation = self.reserveSlot(for: winner.inapp)
+            guard reservation != .refused else { return }
+
+            winner.holdsSlot = winner.holdsSlot || reservation == .granted
+            self.inappsByPresentationTime[presentationTime] = [winner]
+            Logger.common(message: "[InappScheduleManager] \(winner.inapp.inAppId) waits for the foreground with its slot taken",
+                          level: .debug, category: .inAppMessages)
+        }
+    }
+
+    /// A moment missed behind another in-app is missed, by decision — no queue, no re-arm.
+    private func takeWinner(at presentationTime: TimeInterval) -> ScheduledInapp? {
+        guard let scheduled = inappsByPresentationTime.removeValue(forKey: presentationTime) else { return nil }
+
+        for scheduledInapp in scheduled {
+            scheduledInapp.timer.cancel()
+        }
+        return scheduled.sorted { $0.inapp.isPriority && !$1.inapp.isPriority }.first
+    }
+
+    private func giveBackSlot(of scheduled: ScheduledInapp) {
+        guard scheduled.holdsSlot else { return }
+
+        budget.release(.overlay(scheduled.inapp.inAppId))
+    }
+
+    private func reserveSlot(for inapp: InAppFormData) -> InappShowReservationOutcome {
+        budget.reserve(.overlay(inapp.inAppId), inAppId: inapp.inAppId, isPriority: inapp.isPriority, frequency: inapp.frequency)
+    }
+
     private func trackShow(_ inapp: InAppFormData, timeToDisplay: TimeInterval) {
         accountant.recordShow(InappShow(inAppId: inapp.inAppId,
                                         frequency: inapp.frequency,
@@ -139,9 +197,13 @@ internal extension InappScheduleManager {
         presentInapp(inapp, stopwatch: ForegroundStopwatch(), processingDuration: processingDuration)
     }
 
-    func presentInapp(_ inapp: InAppFormData, stopwatch: ForegroundStopwatch, processingDuration: TimeInterval = 0) {
+    func presentInapp(_ inapp: InAppFormData,
+                      stopwatch: ForegroundStopwatch,
+                      processingDuration: TimeInterval = 0,
+                      holdsSlot: Bool = false) {
         present(
             inapp,
+            holdsSlot: holdsSlot,
             onPresented: {
                 let presentationTime = stopwatch.elapsed
                 stopwatch.stop()
@@ -156,18 +218,24 @@ internal extension InappScheduleManager {
         )
     }
 
+    /// On the main queue: the screen lock is taken here and released by the callbacks, all on main.
     private func present(_ inapp: InAppFormData,
+                         holdsSlot: Bool,
                          onPresented: @escaping () -> Void,
                          onDismissed: @escaping () -> Void) {
         SessionTemporaryStorage.shared.isPresentingInAppMessage = true
         SessionTemporaryStorage.shared.lastInappClickedID = nil
         var didHandleOnError = false
+        var didPresent = false
 
         Logger.common(message: "[InappScheduleManager] Showing in-app \(inapp.inAppId)")
 
         presentationManager.present(
             inAppFormData: inapp,
-            onPresented: onPresented,
+            onPresented: {
+                didPresent = true
+                onPresented()
+            },
             onTapAction: { [delegate] url, payload in
                 delegate?.inAppMessageTapAction(
                     id: inapp.inAppId,
@@ -178,7 +246,11 @@ internal extension InappScheduleManager {
             onPresentationCompleted: { [delegate] in
                 SessionTemporaryStorage.shared.isPresentingInAppMessage = false
                 delegate?.inAppMessageDismissed(id: inapp.inAppId)
-                onDismissed()
+                if didPresent {
+                    onDismissed()
+                } else if holdsSlot {
+                    self.budget.release(.overlay(inapp.inAppId))
+                }
             },
             onError: { error in
                 guard !didHandleOnError else {
@@ -187,6 +259,9 @@ internal extension InappScheduleManager {
                 didHandleOnError = true
 
                 SessionTemporaryStorage.shared.isPresentingInAppMessage = false
+                if holdsSlot {
+                    self.budget.release(.overlay(inapp.inAppId))
+                }
                 self.failureManager.addFailure(
                     inappId: inapp.inAppId,
                     reason: error.failureReason,
@@ -211,36 +286,28 @@ internal extension InappScheduleManager {
     func checkExpiredInapps() {
         queue.async {
             guard SessionTemporaryStorage.shared.isInitializationCalled else { return }
-            
-            if let configExpirationTime = SessionTemporaryStorage.shared.configSessionExpirationTime {
-                if configExpirationTime < Date() {
-                    
-                    for scheduledInapps in self.inappsByPresentationTime.values {
-                        for scheduledInapp in scheduledInapps {
-                            scheduledInapp.timer.cancel()
-                        }
-                    }
-                    
-                    self.inappsByPresentationTime = [:]
-                    Logger.common(message: "[InappScheduleManager] Session expired, canceling all scheduled in-app messages", level: .debug, category: .inAppMessages)
-                    return
+
+            if let configExpirationTime = SessionTemporaryStorage.shared.configSessionExpirationTime, configExpirationTime < self.now() {
+                for scheduledInapp in self.inappsByPresentationTime.values.joined() {
+                    scheduledInapp.timer.cancel()
+                    self.giveBackSlot(of: scheduledInapp)
+                }
+                self.inappsByPresentationTime = [:]
+                Logger.common(message: "[InappScheduleManager] Session expired, canceling all scheduled in-app messages", level: .debug, category: .inAppMessages)
+                return
+            }
+
+            let now = self.now().timeIntervalSince1970
+            let expiredTimes = self.inappsByPresentationTime.keys.filter { $0 <= now }
+            guard let earliestTime = expiredTimes.min() else { return }
+
+            for expiredTime in expiredTimes where expiredTime != earliestTime {
+                for scheduledInapp in self.inappsByPresentationTime.removeValue(forKey: expiredTime) ?? [] {
+                    scheduledInapp.timer.cancel()
+                    self.giveBackSlot(of: scheduledInapp)
                 }
             }
-            
-            let now = Date().timeIntervalSince1970
-            let expiredInapps = self.inappsByPresentationTime.keys.filter { $0 <= now }
-            if let earliestInapp = expiredInapps.min() {
-                self.showEligibleInapp(earliestInapp)
-                
-                for expiredInapp in expiredInapps where expiredInapp != earliestInapp {
-                    if let scheduledInapps = self.inappsByPresentationTime[expiredInapp] {
-                        for scheduledInapp in scheduledInapps {
-                            scheduledInapp.timer.cancel()
-                        }
-                    }
-                    self.inappsByPresentationTime.removeValue(forKey: expiredInapp)
-                }
-            }
+            self.showWinner(at: earliestTime)
         }
     }
 }

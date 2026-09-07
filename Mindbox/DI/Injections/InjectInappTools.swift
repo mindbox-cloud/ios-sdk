@@ -103,25 +103,25 @@ extension MBContainer {
             return InAppPresentationManager(displayUseCase: displayUseCase)
         }
         
-        register(InAppPresentationValidatorProtocol.self) {
-            let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
-            return InAppPresentationValidator(persistenceStorage: persistenceStorage)
-        }
-        
         register(InAppTrackingServiceProtocol.self) {
             let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
             return InAppTrackingService(persistenceStorage: persistenceStorage)
         }
+
+        register(InappShowBudgeting.self) {
+            InappShowBudget(persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
+                            trackingService: DI.injectOrFail(InAppTrackingServiceProtocol.self))
+        }
         
         register(InappShowAccounting.self) {
             InappShowAccountant(tracker: DI.injectOrFail(InAppMessagesTracker.self),
-                                trackingService: DI.injectOrFail(InAppTrackingServiceProtocol.self))
+                                budget: DI.injectOrFail(InappShowBudgeting.self))
         }
 
         register(InappScheduleManagerProtocol.self) {
             InappScheduleManager(
                 presentationManager: DI.injectOrFail(InAppPresentationManagerProtocol.self),
-                presentationValidator: DI.injectOrFail(InAppPresentationValidatorProtocol.self),
+                budget: DI.injectOrFail(InappShowBudgeting.self),
                 accountant: DI.injectOrFail(InappShowAccounting.self),
                 failureManager: DI.injectOrFail(InappShowFailureManagerProtocol.self)
             )
