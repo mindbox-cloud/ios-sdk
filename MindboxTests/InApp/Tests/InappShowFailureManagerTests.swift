@@ -13,8 +13,8 @@ import Testing
 @testable import MindboxLogger
 
 // Shares SessionTemporaryStorage with the whole serial test target; erased in init.
-@Suite("Inapp show failure network dedup", .tags(.inappSelection))
-struct InappShowFailureNetworkDedupTests {
+@Suite("Inapp show failure session dedup", .tags(.inappSelection))
+struct InappShowFailureSessionDedupTests {
 
     private let repository = InappShowFailureDatabaseRepositoryMock()
     private let manager: InappShowFailureManager
@@ -75,14 +75,43 @@ struct InappShowFailureNetworkDedupTests {
         #expect(try await settledEventsCount(reaching: 1) == 1)
     }
 
-    @Test("A failure that is not a network outage repeats freely")
-    func nonNetworkFailureRepeats() async throws {
+    @Test("A buffered presentation failure, the overlay's path, repeats freely")
+    func bufferedPresentationFailureRepeats() async throws {
         manager.addFailure(inappId: "inapp-1", reason: .presentationFailed, details: nil, tags: nil)
         manager.sendFailures()
         manager.addFailure(inappId: "inapp-1", reason: .presentationFailed, details: nil, tags: nil)
         manager.sendFailures()
 
         #expect(try await settledEventsCount(reaching: 2) == 2)
+    }
+
+    @Test("A failure sent past the buffer, the block's path, is reported once per session whatever the reason",
+          arguments: [InAppShowFailureReason.presentationFailed, .webviewLoadFailed, .webviewPresentationFailed])
+    func failureSentPastTheBufferIsReportedOnce(reason: InAppShowFailureReason) async throws {
+        manager.sendFailure(inappId: "inapp-1", reason: reason, details: nil, tags: nil)
+        manager.sendFailure(inappId: "inapp-1", reason: reason, details: nil, tags: nil)
+
+        #expect(try await settledEventsCount(reaching: 1) == 1)
+    }
+
+    @Test("A different reason sent past the buffer for the same in-app is its own report")
+    func differentReasonPastTheBufferIsItsOwnReport() async throws {
+        manager.sendFailure(inappId: "inapp-1", reason: .presentationFailed, details: nil, tags: nil)
+        manager.sendFailure(inappId: "inapp-1", reason: .webviewLoadFailed, details: nil, tags: nil)
+
+        #expect(try await settledEventsCount(reaching: 2) == 2)
+    }
+
+    @Test("A failure sent past the buffer whose enqueue failed is not suppressed as a duplicate later")
+    func failedDirectEnqueueDoesNotBurnTheDedupSlot() async throws {
+        repository.createError = InappShowFailureRepositoryError.createFailed
+        manager.sendFailure(inappId: "inapp-1", reason: .presentationFailed, details: nil, tags: nil)
+        #expect(try await settledEventsCount(reaching: 0) == 0)
+
+        repository.createError = nil
+        manager.sendFailure(inappId: "inapp-1", reason: .presentationFailed, details: nil, tags: nil)
+
+        #expect(try await settledEventsCount(reaching: 1) == 1)
     }
 
     @Test("A network failure whose enqueue failed retries later instead of being suppressed as a duplicate")
