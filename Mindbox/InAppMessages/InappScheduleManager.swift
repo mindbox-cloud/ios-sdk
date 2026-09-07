@@ -25,7 +25,10 @@ protocol InappScheduleManagerProtocol {
     /// Past the queue and every limit — a direct call is invited, and a tap that does nothing is a
     /// defect. Only `Inapp.Show` goes out: targeting was sent when the selection offered the in-app.
     /// `processingDuration` is the caller's time since the tap; it counts into `timeToDisplay` like the overlay pass's.
-    func showInAppNow(_ inAppFormData: InAppFormData, processingDuration: TimeInterval)
+    /// `completion` answers once: the window is on screen, or the error that kept it off.
+    func showInAppNow(_ inAppFormData: InAppFormData,
+                      processingDuration: TimeInterval,
+                      completion: @escaping (Result<Void, InAppPresentationError>) -> Void)
 }
 
 final class InappScheduleManager: InappScheduleManagerProtocol {
@@ -88,14 +91,16 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
         }
     }
 
-    func showInAppNow(_ inapp: InAppFormData, processingDuration: TimeInterval) {
+    func showInAppNow(_ inapp: InAppFormData,
+                      processingDuration: TimeInterval,
+                      completion: @escaping (Result<Void, InAppPresentationError>) -> Void) {
         DispatchQueue.main.async {
             // Dismissal completes the closed show on the next main-queue turn; presenting is deferred
             // behind it so the lock is released before the new show takes it.
             self.presentationManager.dismissActiveInApp()
 
             DispatchQueue.main.async {
-                self.presentRequestedInapp(inapp, processingDuration: processingDuration)
+                self.presentRequestedInapp(inapp, processingDuration: processingDuration, outcome: completion)
             }
         }
     }
@@ -192,15 +197,18 @@ internal extension InappScheduleManager {
         accountant.recordCooldown(frequency: inapp.frequency)
     }
 
-    private func presentRequestedInapp(_ inapp: InAppFormData, processingDuration: TimeInterval) {
+    private func presentRequestedInapp(_ inapp: InAppFormData,
+                                       processingDuration: TimeInterval,
+                                       outcome: @escaping (Result<Void, InAppPresentationError>) -> Void) {
         Logger.common(message: "[InappScheduleManager] Showing \(inapp.inAppId) on request, past the queue and its limits")
-        presentInapp(inapp, stopwatch: ForegroundStopwatch(), processingDuration: processingDuration)
+        presentInapp(inapp, stopwatch: ForegroundStopwatch(), processingDuration: processingDuration, outcome: outcome)
     }
 
     func presentInapp(_ inapp: InAppFormData,
                       stopwatch: ForegroundStopwatch,
                       processingDuration: TimeInterval = 0,
-                      holdsSlot: Bool = false) {
+                      holdsSlot: Bool = false,
+                      outcome: ((Result<Void, InAppPresentationError>) -> Void)? = nil) {
         present(
             inapp,
             holdsSlot: holdsSlot,
@@ -211,9 +219,13 @@ internal extension InappScheduleManager {
                 Logger.common(message: "[InAppMetric] inappId=\(inapp.inAppId) processingTime=\(processingDuration.toTimeSpan()) "
                     + "presentationTime=\(presentationTime.toTimeSpan()) timeToDisplay=\(timeToDisplay.toTimeSpan())")
                 self.trackShow(inapp, timeToDisplay: timeToDisplay)
+                outcome?(.success(()))
             },
             onDismissed: {
                 self.trackDismissal(inapp)
+            },
+            onFailed: { error in
+                outcome?(.failure(error))
             }
         )
     }
@@ -222,7 +234,8 @@ internal extension InappScheduleManager {
     private func present(_ inapp: InAppFormData,
                          holdsSlot: Bool,
                          onPresented: @escaping () -> Void,
-                         onDismissed: @escaping () -> Void) {
+                         onDismissed: @escaping () -> Void,
+                         onFailed: @escaping (InAppPresentationError) -> Void) {
         SessionTemporaryStorage.shared.isPresentingInAppMessage = true
         SessionTemporaryStorage.shared.lastInappClickedID = nil
         var didHandleOnError = false
@@ -233,6 +246,7 @@ internal extension InappScheduleManager {
         presentationManager.present(
             inAppFormData: inapp,
             onPresented: {
+                guard !didPresent else { return }
                 didPresent = true
                 onPresented()
             },
@@ -248,9 +262,13 @@ internal extension InappScheduleManager {
                 delegate?.inAppMessageDismissed(id: inapp.inAppId)
                 if didPresent {
                     onDismissed()
-                } else if holdsSlot {
+                    return
+                }
+
+                if holdsSlot {
                     self.budget.release(.overlay(inapp.inAppId))
                 }
+                onFailed(.failed("[InappScheduleManager] Closed before it was on screen."))
             },
             onError: { error in
                 guard !didHandleOnError else {
@@ -269,6 +287,9 @@ internal extension InappScheduleManager {
                     tags: inapp.tags
                 )
                 self.failureManager.sendFailures()
+                // Answered when it appeared; a later failure is reported, not answered again.
+                guard !didPresent else { return }
+                onFailed(error)
             }
         )
     }

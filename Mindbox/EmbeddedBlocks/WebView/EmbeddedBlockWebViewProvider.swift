@@ -314,8 +314,8 @@ final class EmbeddedBlockWebViewProvider {
         page.onShowableQuestion = { [weak self] ids, completion in
             self?.answerShowableQuestion(ids, completion: completion)
         }
-        page.onShowInAppRequest = { [weak self] inappId, params in
-            self?.showInapp(id: inappId, params: params)
+        page.onShowInAppRequest = { [weak self] inappId, params, completion in
+            self?.showInapp(id: inappId, params: params, completion: completion)
         }
         page.onDataPushConfirmed = { [weak self] in
             self?.acknowledgeDataPush()
@@ -472,17 +472,18 @@ final class EmbeddedBlockWebViewProvider {
 
     /// A page whose block has collapsed or failed is still alive and can still ask — but no user
     /// touch stands behind it, and the in-app would appear over the app out of nowhere.
-    private func showInapp(id inappId: String, params: [String: JSONValue]) {
+    private func showInapp(id inappId: String, params: [String: JSONValue], completion: @escaping (Result<Void, ShowInAppRefusal>) -> Void) {
         guard isStarted, isAttemptAlive else {
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': ignored a show request from a block that is not shown",
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': refused a show request from a block that is not shown",
                           category: .embeddedBlocks)
+            completion(.failure(.sourceDismissed))
             return
         }
 
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': showing in-app \(inappId) with \(params.count) param(s)",
                       category: .embeddedBlocks)
 
-        inappService.showInapp(id: inappId, params: params)
+        inappService.showInapp(id: inappId, params: params, completion: completion)
     }
 
     /// A question shows nothing, so it is answered for as long as the block is running — including

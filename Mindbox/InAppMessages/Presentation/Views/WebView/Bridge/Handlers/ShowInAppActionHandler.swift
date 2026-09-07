@@ -9,8 +9,8 @@
 import Foundation
 import MindboxLogger
 
-/// The success response says the request was well-formed and handed over, never that a window
-/// opened — the page does not wait for the show.
+/// One terminal answer, by the outcome: success once the window is on screen, otherwise an error
+/// naming why — in sync with Android and the bridge contract.
 final class ShowInAppActionHandler: WebBridgeActionHandler {
 
     let actions: Set<BridgeMessage.Action> = [.showInApp]
@@ -24,11 +24,7 @@ final class ShowInAppActionHandler: WebBridgeActionHandler {
         }
 
         guard let inappHost = host as? WebBridgeInappRequestHosting else {
-            // Journalled and dropped, not refused: surfaces without an in-app service may conform later, and
-            // pages must not have learned that this errors here.
-            Logger.common(message: "[WebView] Bridge: showInApp from '\(host.contentId)' has no in-app service to serve it here, ignoring",
-                          level: .error,
-                          category: host.logCategory)
+            host.respondError("showInApp is not served on this surface", to: message)
             return
         }
 
@@ -50,7 +46,13 @@ final class ShowInAppActionHandler: WebBridgeActionHandler {
                       level: .info,
                       category: host.logCategory)
 
-        inappHost.bridgeDidRequestShowInApp(id: inAppId, params: params)
-        host.respondSuccess(to: message)
+        inappHost.bridgeDidRequestShowInApp(id: inAppId, params: params) { [weak host] outcome in
+            switch outcome {
+            case .success:
+                host?.respondSuccess(to: message)
+            case .failure(let refusal):
+                host?.respondError(refusal.rawValue, to: message)
+            }
+        }
     }
 }
