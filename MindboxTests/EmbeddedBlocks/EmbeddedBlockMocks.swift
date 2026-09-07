@@ -72,6 +72,50 @@ final class InappShowAccountingMock: InappShowAccounting {
     }
 }
 
+final class InappShowBudgetMock: InappShowBudgeting {
+
+    struct Reservation: Equatable {
+        let owner: InappShowBudgetOwner
+        let inAppId: String
+        let isPriority: Bool
+        let frequency: InappFrequency?
+    }
+
+    struct Commit: Equatable {
+        let owner: InappShowBudgetOwner
+        let inAppId: String
+        let frequency: InappFrequency?
+    }
+
+    var refusedInAppIds: Set<String> = []
+
+    private(set) var reservations: [Reservation] = []
+    private(set) var commits: [Commit] = []
+    private(set) var releases: [InappShowBudgetOwner] = []
+    private(set) var releasedOnMainThread: [Bool] = []
+    private(set) var cooldowns: [InappFrequency?] = []
+
+    var reservedOwners: [InappShowBudgetOwner] { reservations.map(\.owner) }
+
+    func reserve(_ owner: InappShowBudgetOwner, inAppId: String, isPriority: Bool, frequency: InappFrequency?) -> InappShowReservationOutcome {
+        reservations.append(Reservation(owner: owner, inAppId: inAppId, isPriority: isPriority, frequency: frequency))
+        return refusedInAppIds.contains(inAppId) ? .refused : .granted
+    }
+
+    func commit(_ owner: InappShowBudgetOwner, inAppId: String, frequency: InappFrequency?) {
+        commits.append(Commit(owner: owner, inAppId: inAppId, frequency: frequency))
+    }
+
+    func release(_ owner: InappShowBudgetOwner) {
+        releases.append(owner)
+        releasedOnMainThread.append(Thread.isMainThread)
+    }
+
+    func recordCooldown(frequency: InappFrequency?) {
+        cooldowns.append(frequency)
+    }
+}
+
 final class EmbeddedBlockFailureReporterMock {
 
     private(set) var reported: [(inAppId: String, reason: InAppShowFailureReason, details: String, tags: [String: String]?)] = []
@@ -537,6 +581,7 @@ final class EmbeddedBlockTestBed {
     let pageFactory: EmbeddedBlockPageFactoryMock
     let provider: EmbeddedBlockWebViewProvider
     let accounting: InappShowAccountingMock
+    let budget = InappShowBudgetMock()
     let failureReporter: EmbeddedBlockFailureReporterMock
     let ackScheduler: EmbeddedBlockAckSchedulerMock
 
@@ -563,6 +608,7 @@ final class EmbeddedBlockTestBed {
         let failureReporter = EmbeddedBlockFailureReporterMock()
         let ackScheduler = EmbeddedBlockAckSchedulerMock()
         let registry = EmbeddedBlockPlaceRegistry(resolver: resolver,
+                                                  budget: budget,
                                                   notificationCenter: center,
                                                   fetchEmbeddedPlaces: { embeddedPlaces.fetch($0) })
 

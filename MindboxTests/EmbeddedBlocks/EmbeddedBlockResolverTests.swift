@@ -88,7 +88,7 @@ struct EmbeddedBlockResolverTests {
 
     // MARK: - What the selection's answer becomes
 
-    private func embeddedInapp(params: [String: JSONValue]) throws -> InAppTransitionData {
+    private func embeddedInapp(params: [String: JSONValue], isPriority: Bool = false) throws -> InAppTransitionData {
         let layer = WebviewContentBackgroundLayer(baseUrl: "https://inapp.local/stories",
                                                   contentUrl: "https://mindbox.ru/block.html",
                                                   params: params)
@@ -97,7 +97,7 @@ struct EmbeddedBlockResolverTests {
         let variant = MindboxFormVariant.embedded(EmbeddedFormVariant(content: content,
                                                                       placeSystemName: "stories-list-container"))
         return InAppTransitionData(inAppId: "block-inapp-id",
-                                   isPriority: false,
+                                   isPriority: isPriority,
                                    delayTime: nil,
                                    content: variant,
                                    frequency: nil,
@@ -125,6 +125,18 @@ struct EmbeddedBlockResolverTests {
             #expect(content.inAppId == "block-inapp-id")
             #expect(content.params == params)
         }
+    }
+
+    @Test("The resolution carries the in-app's priority to the place's budget check")
+    func resolutionCarriesThePriority() throws {
+        let resolution = EmbeddedBlockResolver.resolution(from: try embeddedInapp(params: [:], isPriority: true),
+                                                          place: "stories-list-container")
+
+        guard case .content(let content) = resolution else {
+            Issue.record("Expected content, got \(resolution)")
+            return
+        }
+        #expect(content.isPriority)
     }
 }
 

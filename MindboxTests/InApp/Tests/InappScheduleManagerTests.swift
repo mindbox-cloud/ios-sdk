@@ -19,6 +19,16 @@ struct InappScheduleManagerTests {
     private var presentationManagerMock: InAppPresentationManagerMock
     private var trackingServiceMock: InAppTrackingServiceMock
     private var failureManagerMock: InappShowFailureManagerMock
+    private var budget: InappShowBudget
+    private let host: HostApp
+
+    /// The host app as the manager sees it: whether it is in the background, and a clock that can be
+    /// moved forward without waiting.
+    private final class HostApp {
+        var isInBackground = false
+        var clockOffset: TimeInterval = 0
+        var now: Date { Date().addingTimeInterval(clockOffset) }
+    }
 
     init() {
         TestConfiguration.configure()
@@ -26,12 +36,17 @@ struct InappScheduleManagerTests {
         presentationManagerMock = InAppPresentationManagerMock()
         trackingServiceMock = InAppTrackingServiceMock()
         failureManagerMock = InappShowFailureManagerMock()
+        budget = InappShowBudget(persistenceStorage: DI.injectOrFail(PersistenceStorage.self), trackingService: trackingServiceMock)
 
+        let host = HostApp()
+        self.host = host
         scheduleManager = InappScheduleManager(
             presentationManager: presentationManagerMock,
-            presentationValidator: DI.injectOrFail(InAppPresentationValidatorProtocol.self),
-            accountant: InappShowAccountant(tracker: DI.injectOrFail(InAppMessagesTracker.self), trackingService: trackingServiceMock),
-            failureManager: failureManagerMock
+            budget: budget,
+            accountant: InappShowAccountant(tracker: DI.injectOrFail(InAppMessagesTracker.self), budget: budget),
+            failureManager: failureManagerMock,
+            isInBackground: { host.isInBackground },
+            now: { host.now }
         )
 
         SessionTemporaryStorage.shared.erase()
@@ -40,7 +55,7 @@ struct InappScheduleManagerTests {
     // MARK: - No delay
 
     @Test("In-app without delay is presented exactly once and the queue is cleaned up", .tags(.inAppSchedule))
-    func scheduleInapp_noDelay_schedulesCorrectly() {
+    func scheduleInapp_noDelay_schedulesCorrectly() async {
         #expect(scheduleManager.inappsByPresentationTime.isEmpty)
 
         let inapp = createInAppFormData(id: "1", isPriority: false, delayTime: nil)
@@ -62,6 +77,7 @@ struct InappScheduleManagerTests {
         if let presentationTime {
             scheduleManager.showEligibleInapp(presentationTime)
         }
+        await awaitSchedule()
 
         scheduleManager.queue.sync {
             #expect(self.presentationManagerMock.presentCallsCount == 1)
@@ -73,7 +89,7 @@ struct InappScheduleManagerTests {
     // MARK: - Small delay (logic-level, not real time)
 
     @Test("In-app with small delay is scheduled and presented when eligible", .tags(.inAppSchedule))
-    func scheduleInApp_smallDelay_schedulesCorrectly() {
+    func scheduleInApp_smallDelay_schedulesCorrectly() async {
         #expect(scheduleManager.inappsByPresentationTime.isEmpty)
 
         let inapp = createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02")
@@ -96,6 +112,7 @@ struct InappScheduleManagerTests {
         }
 
         scheduleManager.showEligibleInapp(time)
+        await awaitSchedule()
 
         scheduleManager.queue.sync {
             #expect(self.presentationManagerMock.presentCallsCount == 1)
@@ -107,7 +124,7 @@ struct InappScheduleManagerTests {
     // MARK: - Multiple in-apps with different times
 
     @Test("Multiple in-apps with different delays schedule correctly and only earliest is shown", .tags(.inAppSchedule))
-    func scheduleMultipleInapp_smallDelay_schedulesCorrectly() {
+    func scheduleMultipleInapp_smallDelay_schedulesCorrectly() async {
         #expect(scheduleManager.inappsByPresentationTime.isEmpty)
 
         let inapp1 = createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02")
@@ -142,6 +159,7 @@ struct InappScheduleManagerTests {
         for time in sortedTimes {
             scheduleManager.showEligibleInapp(time)
         }
+        await awaitSchedule()
 
         scheduleManager.queue.sync {
             #expect(self.scheduleManager.inappsByPresentationTime.isEmpty)
@@ -151,12 +169,13 @@ struct InappScheduleManagerTests {
     }
 
     @Test("A delayed in-app whose time comes while another is on screen is dropped, closing that one does not show it", .tags(.inAppSchedule))
-    func scheduleInapp_missedMomentBehindAnotherInapp_isDropped() throws {
+    func scheduleInapp_missedMomentBehindAnotherInapp_isDropped() async throws {
         let onScreen = createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02")
         let late = createInAppFormData(id: "2", isPriority: false, delayTime: "00:00:02")
         scheduleManager.scheduleInApp(onScreen, processingDuration: 0)
         let onScreenTime = try #require(scheduleManager.queue.sync { scheduleManager.inappsByPresentationTime.keys.first })
         scheduleManager.showEligibleInapp(onScreenTime)
+        await awaitSchedule()
         scheduleManager.queue.sync {
             #expect(self.presentationManagerMock.receivedInAppUIModel?.inAppId == onScreen.inAppId)
         }
@@ -164,6 +183,7 @@ struct InappScheduleManagerTests {
         scheduleManager.scheduleInApp(late, processingDuration: 0)
         let lateTime = try #require(scheduleManager.queue.sync { scheduleManager.inappsByPresentationTime.keys.first })
         scheduleManager.showEligibleInapp(lateTime)
+        await awaitSchedule()
         scheduleManager.queue.sync {
             #expect(self.presentationManagerMock.presentCallsCount == 1)
             #expect(self.scheduleManager.inappsByPresentationTime.isEmpty)
@@ -232,7 +252,7 @@ struct InappScheduleManagerTests {
     // MARK: - Invalid / zero delay
 
     @Test("Invalid delay string falls back to zero and in-app is presented", .tags(.inAppSchedule))
-    func scheduleInapp_withInvalidDelayTime_usesDefaultDelay() {
+    func scheduleInapp_withInvalidDelayTime_usesDefaultDelay() async {
         let inapp = createInAppFormData(id: "1", isPriority: false, delayTime: "invalid_time")
         scheduleManager.scheduleInApp(inapp, processingDuration: 0)
 
@@ -247,6 +267,7 @@ struct InappScheduleManagerTests {
         if let presentationTime {
             scheduleManager.showEligibleInapp(presentationTime)
         }
+        await awaitSchedule()
 
         scheduleManager.queue.sync {
             #expect(self.presentationManagerMock.presentCallsCount == 1)
@@ -256,7 +277,7 @@ struct InappScheduleManagerTests {
     }
 
     @Test("Zero delay is treated as immediate and in-app is presented", .tags(.inAppSchedule))
-    func scheduleInapp_withZeroDelay_schedulesCorrectly() {
+    func scheduleInapp_withZeroDelay_schedulesCorrectly() async {
         let inapp = createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:00")
         scheduleManager.scheduleInApp(inapp, processingDuration: 0)
 
@@ -271,6 +292,7 @@ struct InappScheduleManagerTests {
         if let presentationTime {
             scheduleManager.showEligibleInapp(presentationTime)
         }
+        await awaitSchedule()
 
         scheduleManager.queue.sync {
             #expect(self.presentationManagerMock.presentCallsCount == 1)
@@ -315,7 +337,7 @@ struct InappScheduleManagerTests {
     // MARK: - Priority selection
 
     @Test("When multiple in-apps share the same time, priority one is shown", .tags(.inAppSchedule))
-    func multipleInAppsOnSameTime_schedulesCorrectly_shownSecond() {
+    func multipleInAppsOnSameTime_schedulesCorrectly_shownSecond() async {
         #expect(scheduleManager.inappsByPresentationTime.isEmpty)
 
         let inapp1 = createInAppFormData(id: "1", isPriority: false, delayTime: "01:00:00")
@@ -354,6 +376,7 @@ struct InappScheduleManagerTests {
         }
 
         scheduleManager.showEligibleInapp(time)
+        await awaitSchedule()
 
         scheduleManager.queue.sync {
             #expect(self.scheduleManager.inappsByPresentationTime.isEmpty)
@@ -454,8 +477,8 @@ struct InappScheduleManagerTests {
     private func makeSpiedManager(tracker: InAppMessagesTrackerSpyMock) -> InappScheduleManager {
         InappScheduleManager(
             presentationManager: presentationManagerMock,
-            presentationValidator: DI.injectOrFail(InAppPresentationValidatorProtocol.self),
-            accountant: InappShowAccountant(tracker: tracker, trackingService: trackingServiceMock),
+            budget: budget,
+            accountant: InappShowAccountant(tracker: tracker, budget: budget),
             failureManager: failureManagerMock
         )
     }
@@ -470,6 +493,12 @@ struct InappScheduleManagerTests {
                 DispatchQueue.main.async { continuation.resume() }
             }
         }
+    }
+
+    /// The schedule hands its winner to the main queue: drain `queue`, then one main-queue turn.
+    private func awaitSchedule() async {
+        scheduleManager.queue.sync {}
+        await awaitMainQueue()
     }
 
     @Test("An unlimited show on request sends the event but records nothing", .tags(.inAppSchedule))
@@ -599,6 +628,260 @@ struct InappScheduleManagerTests {
         #expect(failureManagerMock.addFailureCallCount == 1)
         #expect(failureManagerMock.sendFailuresCallCount == 1)
         #expect(!SessionTemporaryStorage.shared.isPresentingInAppMessage)
+    }
+
+    // MARK: - The show budget
+
+    /// A two-second delay keeps the production timer out of the way; the eligible show is driven by hand.
+    private func showScheduled(_ inapp: InAppFormData) async {
+        scheduleManager.scheduleInApp(inapp, processingDuration: 0)
+
+        var presentationTime: TimeInterval?
+        scheduleManager.queue.sync {
+            presentationTime = self.scheduleManager.inappsByPresentationTime.keys.first
+        }
+        if let presentationTime {
+            scheduleManager.showEligibleInapp(presentationTime)
+        }
+        await awaitSchedule()
+    }
+
+    @Test("A scheduled in-app past the session limit is not presented", .tags(.inAppSchedule))
+    func showEligibleInapp_pastSessionLimit_isNotPresented() async {
+        SessionTemporaryStorage.shared.inAppSettings = Settings.InAppSettings(maxInappsPerSession: 1, maxInappsPerDay: nil, minIntervalBetweenShows: nil)
+        SessionTemporaryStorage.shared.sessionShownInApps = ["already-shown"]
+
+        await showScheduled(createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02"))
+
+        #expect(presentationManagerMock.presentCallsCount == 0)
+        #expect(SessionTemporaryStorage.shared.showBudget.reservations.isEmpty)
+    }
+
+    @Test("A presented in-app holds its slot until the window reports itself", .tags(.inAppSchedule))
+    func showEligibleInapp_holdsTheSlotUntilPresented() async {
+        await showScheduled(createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02"))
+
+        #expect(presentationManagerMock.presentCallsCount == 1)
+        #expect(SessionTemporaryStorage.shared.showBudget.reservations[.overlay("1")]?.inAppId == "1")
+
+        presentationManagerMock.receivedOnPresent?()
+
+        #expect(SessionTemporaryStorage.shared.showBudget.reservations.isEmpty)
+        #expect(SessionTemporaryStorage.shared.sessionShownInApps == ["1"])
+    }
+
+    @Test("A presentation error gives the slot back", .tags(.inAppSchedule))
+    func showEligibleInapp_errorGivesTheSlotBack() async {
+        await showScheduled(createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02"))
+
+        presentationManagerMock.receivedOnError?(.failed("no window"))
+
+        #expect(SessionTemporaryStorage.shared.showBudget.reservations.isEmpty)
+        #expect(SessionTemporaryStorage.shared.sessionShownInApps.isEmpty)
+    }
+
+    @Test("A show closed before it is on screen gives the slot back and spends nothing", .tags(.inAppSchedule))
+    func showEligibleInapp_closedBeforePresented_givesTheSlotBack() async {
+        await showScheduled(createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02"))
+
+        presentationManagerMock.receivedOnPresentationCompleted?()
+
+        #expect(SessionTemporaryStorage.shared.showBudget.reservations.isEmpty)
+        #expect(SessionTemporaryStorage.shared.sessionShownInApps.isEmpty)
+        #expect(trackingServiceMock.saveInappStateChangeCallCount == 0)
+        #expect(!SessionTemporaryStorage.shared.isPresentingInAppMessage)
+    }
+
+    @Test("A show on request that closes a loading show gives that show's slot back", .tags(.inAppSchedule))
+    func showInAppNow_closingALoadingShow_givesItsSlotBack() async {
+        await showScheduled(createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02"))
+        #expect(SessionTemporaryStorage.shared.showBudget.reservations[.overlay("1")] != nil)
+
+        await showNowAndAwaitMainQueue(scheduleManager, createInAppFormData(id: "2", isPriority: false, delayTime: nil))
+        presentationManagerMock.receivedOnPresent?()
+
+        #expect(SessionTemporaryStorage.shared.showBudget.reservations.isEmpty)
+        #expect(SessionTemporaryStorage.shared.sessionShownInApps == ["2"])
+    }
+
+    @Test("Another in-app on screen blocks the show without taking a slot", .tags(.inAppSchedule))
+    func showEligibleInapp_whileAnotherIsOnScreen_isNotPresented() async {
+        SessionTemporaryStorage.shared.isPresentingInAppMessage = true
+
+        await showScheduled(createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02"))
+
+        #expect(presentationManagerMock.presentCallsCount == 0)
+        #expect(SessionTemporaryStorage.shared.showBudget.reservations.isEmpty)
+    }
+
+    @Test("A scheduled show is decided and presented on the main queue", .tags(.inAppSchedule))
+    func showEligibleInapp_presentsOnTheMainQueue() async {
+        await showScheduled(createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02"))
+
+        #expect(presentationManagerMock.presentedOnMainThread == true)
+    }
+
+    // MARK: - A slot taken in the background
+
+    private var reservations: [InappShowBudgetOwner: InappShowReservation] {
+        SessionTemporaryStorage.shared.showBudget.reservations
+    }
+
+    private var scheduledCount: Int {
+        var count = 0
+        scheduleManager.queue.sync { count = self.scheduleManager.inappsByPresentationTime.count }
+        return count
+    }
+
+    /// The moment came while the app was away: the timer's background branch, driven by hand.
+    private func holdScheduled(_ inapp: InAppFormData) {
+        scheduleManager.scheduleInApp(inapp, processingDuration: 0)
+
+        var presentationTime: TimeInterval?
+        scheduleManager.queue.sync {
+            presentationTime = self.scheduleManager.inappsByPresentationTime.keys.max()
+        }
+        if let presentationTime {
+            scheduleManager.holdEligibleInapp(presentationTime)
+        }
+        scheduleManager.queue.sync {}
+    }
+
+    private func comeToForeground(after seconds: TimeInterval = 5) async {
+        SessionTemporaryStorage.shared.isInitializationCalled = true
+        host.clockOffset += seconds
+        scheduleManager.checkExpiredInapps()
+        await awaitSchedule()
+    }
+
+    private func awaitHold(of inAppId: String) async {
+        for _ in 0..<40 where reservations[.overlay(inAppId)] == nil {
+            try? await Task.sleep(nanoseconds: 50_000_000)
+        }
+        scheduleManager.queue.sync {}
+    }
+
+    @Test("A timer firing in the background holds the in-app instead of presenting it", .tags(.inAppSchedule))
+    func timer_inBackground_holdsInsteadOfPresenting() async {
+        host.isInBackground = true
+
+        scheduleManager.scheduleInApp(createInAppFormData(id: "1", isPriority: false, delayTime: nil), processingDuration: 0)
+        await awaitHold(of: "1")
+
+        #expect(presentationManagerMock.presentCallsCount == 0)
+        #expect(reservations[.overlay("1")]?.inAppId == "1")
+        #expect(scheduledCount == 1)
+    }
+
+    @Test("An in-app whose moment comes in the background takes its slot and waits", .tags(.inAppSchedule))
+    func hold_takesTheSlotAndWaits() {
+        holdScheduled(createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02"))
+
+        #expect(presentationManagerMock.presentCallsCount == 0)
+        #expect(reservations[.overlay("1")]?.inAppId == "1")
+        #expect(scheduledCount == 1)
+    }
+
+    @Test("A held in-app is presented at the foreground and spends its slot once on screen", .tags(.inAppSchedule))
+    func hold_isPresentedAtTheForeground() async {
+        holdScheduled(createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02"))
+
+        await comeToForeground()
+
+        #expect(presentationManagerMock.presentCallsCount == 1)
+        #expect(presentationManagerMock.receivedInAppUIModel?.inAppId == "1")
+        #expect(reservations[.overlay("1")] != nil)
+        #expect(scheduledCount == 0)
+
+        presentationManagerMock.receivedOnPresent?()
+
+        #expect(reservations.isEmpty)
+        #expect(SessionTemporaryStorage.shared.sessionShownInApps == ["1"])
+    }
+
+    @Test("A block resolving while a held in-app waits finds the slot taken", .tags(.inAppSchedule))
+    func hold_keepsTheSlotFromABlock() {
+        SessionTemporaryStorage.shared.inAppSettings = Settings.InAppSettings(maxInappsPerSession: 1, maxInappsPerDay: nil, minIntervalBetweenShows: nil)
+
+        holdScheduled(createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02"))
+
+        let block = budget.reserve(.place("stories"), inAppId: "2", isPriority: false, frequency: .once(OnceFrequency(kind: .session)))
+        #expect(block == .refused)
+    }
+
+    @Test("An in-app refused its slot in the background is dropped, not retried at the foreground", .tags(.inAppSchedule))
+    func hold_refused_isDropped() async {
+        SessionTemporaryStorage.shared.inAppSettings = Settings.InAppSettings(maxInappsPerSession: 1, maxInappsPerDay: nil, minIntervalBetweenShows: nil)
+        SessionTemporaryStorage.shared.sessionShownInApps = ["already-shown"]
+
+        holdScheduled(createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02"))
+        #expect(reservations.isEmpty)
+        #expect(scheduledCount == 0)
+
+        SessionTemporaryStorage.shared.sessionShownInApps = []
+        await comeToForeground()
+
+        #expect(presentationManagerMock.presentCallsCount == 0)
+    }
+
+    @Test("A held in-app finding another on screen at the foreground gives its slot back", .tags(.inAppSchedule))
+    func hold_blockedAtTheForeground_givesTheSlotBack() async {
+        holdScheduled(createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02"))
+        SessionTemporaryStorage.shared.isPresentingInAppMessage = true
+
+        await comeToForeground()
+
+        #expect(presentationManagerMock.presentCallsCount == 0)
+        #expect(reservations.isEmpty)
+        #expect(scheduledCount == 0)
+    }
+
+    @Test("Of several held in-apps the earliest is presented and the others give their slots back", .tags(.inAppSchedule))
+    func hold_several_onlyTheEarliestIsPresented() async {
+        holdScheduled(createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02"))
+        holdScheduled(createInAppFormData(id: "2", isPriority: false, delayTime: "00:00:03"))
+        #expect(reservations.count == 2)
+
+        await comeToForeground()
+
+        #expect(presentationManagerMock.presentCallsCount == 1)
+        #expect(presentationManagerMock.receivedInAppUIModel?.inAppId == "1")
+        #expect(Array(reservations.keys) == [.overlay("1")])
+        #expect(scheduledCount == 0)
+    }
+
+    @Test("A held in-app closed before it is on screen gives the slot back", .tags(.inAppSchedule))
+    func hold_closedBeforePresented_givesTheSlotBack() async {
+        holdScheduled(createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02"))
+        await comeToForeground()
+
+        presentationManagerMock.receivedOnPresentationCompleted?()
+
+        #expect(reservations.isEmpty)
+        #expect(SessionTemporaryStorage.shared.sessionShownInApps.isEmpty)
+    }
+
+    @Test("A session expired while in-apps were held gives every slot back", .tags(.inAppSchedule))
+    func hold_sessionExpired_givesEverySlotBack() async {
+        holdScheduled(createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02"))
+        holdScheduled(createInAppFormData(id: "2", isPriority: false, delayTime: "00:00:03"))
+        SessionTemporaryStorage.shared.configSessionExpirationTime = host.now
+
+        await comeToForeground()
+
+        #expect(presentationManagerMock.presentCallsCount == 0)
+        #expect(reservations.isEmpty)
+        #expect(scheduledCount == 0)
+    }
+
+    @Test("A show on request closed before it is on screen leaves a held slot of the same in-app alone", .tags(.inAppSchedule))
+    func showInAppNow_closedBeforePresented_leavesAHeldSlotAlone() async {
+        holdScheduled(createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02"))
+
+        await showNowAndAwaitMainQueue(scheduleManager, createInAppFormData(id: "1", isPriority: false, delayTime: nil))
+        presentationManagerMock.receivedOnPresentationCompleted?()
+
+        #expect(reservations[.overlay("1")]?.inAppId == "1")
     }
 
     // MARK: - Helpers

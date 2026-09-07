@@ -16,6 +16,7 @@ class InAppPresentationManagerMock: InAppPresentationManagerProtocol {
     var receivedOnPresent: (() -> Void)?
     var receivedOnPresentationCompleted: (() -> Void)?
     var receivedOnError: ((InAppPresentationError) -> Void)?
+    private(set) var presentedOnMainThread: Bool?
 
     /// Like the real manager, `dismissActiveInApp` routes an outside dismissal through the show's own completion.
     var hasActivePresentation = false
@@ -26,6 +27,7 @@ class InAppPresentationManagerMock: InAppPresentationManagerProtocol {
                  onPresentationCompleted: @escaping () -> Void,
                  onError: @escaping (InAppPresentationError) -> Void) {
         presentCallsCount += 1
+        presentedOnMainThread = Thread.isMainThread
         receivedInAppUIModel = inAppFormData
         receivedOnPresent = onPresented
         receivedOnPresentationCompleted = onPresentationCompleted

@@ -257,9 +257,9 @@ final class DIMainModuleRegistrationTests: XCTestCase {
         XCTAssertNotNil(manager)
     }
     
-    func testInappPresentationValidatorIsRegistered() {
-        let manager: InAppPresentationValidatorProtocol? = DI.inject(InAppPresentationValidatorProtocol.self)
-        XCTAssertNotNil(manager)
+    func testInappShowBudgetIsRegistered() {
+        let budget: InappShowBudgeting? = DI.inject(InappShowBudgeting.self)
+        XCTAssertNotNil(budget)
     }
     
     func testInappTrackingServiceIsRegistered() {
