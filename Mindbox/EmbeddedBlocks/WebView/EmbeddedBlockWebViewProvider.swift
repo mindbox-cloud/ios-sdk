@@ -121,35 +121,32 @@ final class EmbeddedBlockWebViewProvider {
         isPaused = false
         page?.isUserPresent = true
 
-        let pending = pendingResolution
-        pendingResolution = nil
-
         flushPendingFailureReport()
 
-        if page != nil, outcome != .failed {
+        // The parked answer goes first, as on Android: a page it replaces or drops is not resumed.
+        let generation = loadGeneration
+        let parked = pendingResolution
+        pendingResolution = nil
+        if let parked {
+            apply(parked.resolution, processingDuration: parked.processingDuration)
+        }
+
+        guard parked != nil || (page != nil && outcome != .failed) else {
+            beginAttempt()
+            return
+        }
+
+        if loadGeneration == generation, page != nil, outcome != .failed {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': back on screen, resuming its attempt at \(outcome)",
                           category: .embeddedBlocks)
             onStateChange?(outcome)
             if outcome == .ready {
                 accountForShow()
             }
-
-            if let pending = pending {
-                apply(pending.resolution, processingDuration: pending.processingDuration)
-            }
-
             rearmDataPushAckIfAwaited()
-            askThePlaceAgain()
-            return
         }
 
-        if let pending = pending {
-            apply(pending.resolution, processingDuration: pending.processingDuration)
-            askThePlaceAgain()
-            return
-        }
-
-        beginAttempt()
+        askThePlaceAgain()
     }
 
     private func askThePlaceAgain() {
@@ -386,7 +383,7 @@ final class EmbeddedBlockWebViewProvider {
     }
 
     private func rearmDataPushAckIfAwaited() {
-        guard isAwaitingDataPushAck else { return }
+        guard isAwaitingDataPushAck, dataPushAck == nil else { return }
 
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': back on screen with a data push still unconfirmed — waiting out the remaining \(ackBudget.remaining)s",
                       category: .embeddedBlocks)
