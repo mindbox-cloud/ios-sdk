@@ -301,6 +301,25 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.accounting.shows.count == 1)
     }
 
+    @Test("A page that drew off screen is not accounted when another in-app waits for the block's return")
+    func offScreenRenderReplacedBeforeTheReturnIsNotAccounted() {
+        let bed = EmbeddedBlockTestBed(resolution: .content(.counted()))
+        bed.provider.start()
+        bed.provider.stop()
+        bed.page?.reportRendered(3)
+        bed.resolver.resolution = .content(.other)
+        bed.provider.apply(.content(.other), processingDuration: 0)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.start()
+
+        #expect(bed.accounting.shows.isEmpty)
+        #expect(states == [.loading])
+        #expect(bed.pageFactory.contents.last == .other)
+        #expect(bed.pageFactory.pages.count == 2)
+    }
+
     @Test("A page rebuilt for another in-app hands its show to the accounting again")
     func pageForAnotherInappIsHandedToAccountingAgain() {
         let bed = EmbeddedBlockTestBed()
@@ -1179,7 +1198,8 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.onStateChange = { states.append($0) }
         bed.provider.start()
 
-        #expect(states.first == .ready)
+        #expect(states == [.loading])
+        #expect(bed.accounting.shows.count == 1)
         #expect(bed.pageFactory.pages.count == 2)
         #expect(bed.pageFactory.contents.last == .other)
     }
@@ -1210,6 +1230,25 @@ struct EmbeddedBlockWebViewProviderTests {
 
         bed.provider.start()
 
+        #expect(bed.resolver.resolveCount == 2)
+    }
+
+    @Test("An empty answer parked for the return collapses the block without accounting the page that drew off screen")
+    func parkedEmptyAnswerCollapsesWithoutAShow() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.provider.stop()
+        bed.page?.reportRendered(1)
+        bed.resolver.resolution = .empty
+        bed.provider.apply(.empty, processingDuration: 0)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.start()
+
+        #expect(bed.accounting.shows.isEmpty)
+        #expect(states == [.empty])
+        #expect(bed.pageFactory.page?.isClosed == true)
         #expect(bed.resolver.resolveCount == 2)
     }
 
@@ -1275,6 +1314,28 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.ackScheduler.fire()
 
         #expect(bed.pageFactory.pages.count == 2)
+    }
+
+    @Test("A data push parked for the return is waited on once")
+    func parkedDataPushIsWaitedOnOnce() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.provider.stop()
+        let fresh = EmbeddedBlockWebContent(inAppId: EmbeddedBlockWebContent.stub.inAppId,
+                                            baseUrl: EmbeddedBlockWebContent.stub.baseUrl,
+                                            contentUrl: EmbeddedBlockWebContent.stub.contentUrl,
+                                            frequency: EmbeddedBlockWebContent.stub.frequency,
+                                            tags: EmbeddedBlockWebContent.stub.tags,
+                                            params: ["stories": .array([.string("one")])])
+        bed.resolver.resolution = .content(fresh)
+        bed.provider.apply(.content(fresh), processingDuration: 0)
+
+        bed.provider.start()
+
+        #expect(bed.page?.initDataPushes == [fresh.params])
+        #expect(bed.ackScheduler.scheduled.count == 1)
+        #expect(bed.accounting.shows.count == 1)
     }
 
     @Test("The confirmation wait resumes on its remainder, not on a full interval")
