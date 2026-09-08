@@ -291,7 +291,6 @@ internal extension InappScheduleManager {
                     tags: inapp.tags
                 )
                 self.failureManager.sendFailures()
-                // Answered when it appeared; a later failure is reported, not answered again.
                 guard !didPresent else { return }
                 onFailed(error)
             }

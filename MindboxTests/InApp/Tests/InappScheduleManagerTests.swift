@@ -22,8 +22,6 @@ struct InappScheduleManagerTests {
     private var budget: InappShowBudget
     private let host: HostApp
 
-    /// The host app as the manager sees it: whether it is in the background, and a clock that can be
-    /// moved forward without waiting.
     private final class HostApp {
         var isInBackground = false
         var clockOffset: TimeInterval = 0
@@ -482,7 +480,6 @@ struct InappScheduleManagerTests {
         }
     }
 
-    /// A session reset is not a user's close: Android suppresses both the cooldown and the host callback for it.
     @Test("A show discarded by a session reset moves no cooldown and tells the delegate nothing", .tags(.inAppSchedule))
     func discardedShow_movesNoCooldownAndIsNotReportedDismissed() {
         let spy = DelegateSpy()
@@ -735,7 +732,6 @@ struct InappScheduleManagerTests {
         #expect(SessionTemporaryStorage.shared.sessionShownInApps == ["direct-twice"])
     }
 
-    /// In sync with Android: one terminal answer per request.
     @Test("A show on request closed before it is on screen answers its request with an error", .tags(.inAppSchedule))
     func showInAppNow_closedBeforePresented_answersWithAnError() async {
         let manager = makeSpiedManager(tracker: InAppMessagesTrackerSpyMock())

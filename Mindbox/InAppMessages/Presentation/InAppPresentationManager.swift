@@ -23,9 +23,8 @@ protocol InAppPresentationManagerProtocol: AnyObject {
     /// user's close would. Main thread only.
     func dismissActiveInApp()
 
-    /// Closes the overlay because the session it belonged to is over. The show's completion still runs, so a
-    /// request waiting behind it is answered, but this is not the user's close: no cooldown is written and the
-    /// host is not told the in-app was dismissed, in sync with Android. Main thread only.
+    /// The session is over: closes the overlay through the show's completion, so a waiting request is answered,
+    /// but not as the user's close: no cooldown, no dismissed callback to the host, in sync with Android. Main thread only.
     func discardActiveInApp()
 }
 

@@ -23,19 +23,14 @@ protocol EmbeddedBlockPlaceHandling: AnyObject {
     var holdsAnAttempt: Bool { get }
 }
 
-/// The registry's state is confined to the main thread, and it puts every entry point there itself: two of
-/// them are driven by object lifetime — a block's `init` and the container's `deinit` — which UIKit does not
-/// promise to run on the main thread.
-///
-/// There is no `unregister`: blocks are held weakly and drop out on their own.
+/// Main-thread confined, and every entry point hops there itself: a block's `init` and the container's
+/// `deinit` are not promised the main thread by UIKit.
 protocol EmbeddedBlockPlaceRegistering: AnyObject {
 
     func register(_ block: EmbeddedBlockPlaceHandling, place: String)
 
     func blockAppeared(_ place: String)
 
-    /// A block's attempt ended without a show; once no block of the place holds one, the place's slot
-    /// in the show budget is given back.
     func blockAttemptEnded(_ place: String)
 }
 

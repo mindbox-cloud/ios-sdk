@@ -21,14 +21,7 @@ protocol InappShowFailureManagerProtocol {
     /// it names the place instead. Sent at once, past the buffer, like the other block failures.
     func sendWaitBudgetExceeded(place: String, waited: TimeInterval, phase: EmbeddedBlockShowFailure.Phase)
 
-    /// Sends a block's failure at once, without joining the buffer the selection pass fills, and once
-    /// per in-app and reason per session: a block that fails the same way on every return to the
-    /// screen reports it a single time. The overlay's failures go through the buffer.
-    ///
-    /// The buffer keeps a single failure per in-app id and only lets the three targeting reasons
-    /// replace each other, so a failure that does not belong to a selection pass would be dropped
-    /// whenever that id already has one buffered. In sync with Android, whose block failures also
-    /// bypass their collected list.
+    /// Past the buffer, once per in-app and reason per session; the overlay's failures go through the buffer.
     func sendBlockFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?)
 }
 
@@ -127,9 +120,8 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
         }
     }
 
-    /// Must be called on `queue`. Records the failures not yet reported this session and enqueues them as one
-    /// event, the check and the record under one lock hold; a failed enqueue un-records them, so the retry is
-    /// not suppressed as a duplicate. Nil when the enqueue failed.
+    /// On `queue`. The check and the record share one ledger lock; a failed enqueue un-records, so the retry
+    /// is not taken for a duplicate. Nil when the enqueue failed.
     private func enqueueOncePerSession(_ candidates: [InAppShowFailure],
                                        where isReportedOnce: (InAppShowFailureReason) -> Bool) -> [InAppShowFailure]? {
         let toSend = SessionTemporaryStorage.shared.$ledger.mutate { ledger in
@@ -183,7 +175,6 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
         queue.async { [self] in
             guard !failures.isEmpty else { return }
 
-            // A network outage is one report per session, in sync with Android.
             guard let sent = enqueueOncePerSession(failures, where: isNetworkOutage) else { return }
 
             if sent.count < failures.count {

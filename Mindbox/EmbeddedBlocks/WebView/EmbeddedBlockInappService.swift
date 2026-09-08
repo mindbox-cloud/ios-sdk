@@ -20,9 +20,7 @@ protocol EmbeddedBlockInappServing: AnyObject {
     /// Answers on the main thread.
     func showableInappIds(among ids: [String], askedBy blockInappId: String, completion: @escaping ([String]) -> Void)
 
-    /// Deliberately unchecked: whether to offer the in-app was decided when the page drew it. Answers once,
-    /// on the main thread, when the window is on screen or the show has failed; `unknown_inapp` when the
-    /// selection has nothing to show for the id.
+    /// Deliberately unchecked: the page decided when it drew the in-app. Answers once, on the main thread.
     func showInapp(id: String, params: [String: JSONValue], completion: @escaping (Result<Void, ShowInAppRefusal>) -> Void)
 }
 

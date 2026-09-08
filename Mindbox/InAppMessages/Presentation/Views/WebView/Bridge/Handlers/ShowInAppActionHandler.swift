@@ -9,8 +9,7 @@
 import Foundation
 import MindboxLogger
 
-/// One terminal answer, by the outcome: success once the window is on screen, otherwise an error
-/// naming why — in sync with Android and the bridge contract.
+/// One terminal answer by outcome, in sync with Android and the bridge contract.
 final class ShowInAppActionHandler: WebBridgeActionHandler {
 
     let actions: Set<BridgeMessage.Action> = [.showInApp]

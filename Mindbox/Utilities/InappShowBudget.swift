@@ -9,9 +9,8 @@
 import Foundation
 import MindboxLogger
 
-/// Who holds a slot. An overlay is keyed by its own in-app: a show on request commits without a
-/// reservation and must not touch the slot a scheduled overlay still holds. A place holds one slot
-/// for whatever it is about to show.
+/// An overlay is keyed by its own in-app, so a show on request cannot touch a scheduled overlay's slot;
+/// a place holds one slot for whatever it shows next.
 enum InappShowBudgetOwner: Hashable {
     case overlay(String)
     case place(String)
@@ -22,15 +21,12 @@ struct InappShowReservation: Equatable {
     let reservedAt: Date
 }
 
-/// What a reservation came to. Only a `granted` slot is the caller's to give back.
 enum InappShowReservationOutcome: Equatable {
     case granted
     case notNeeded
     case refused
 }
 
-/// The session's show budget as one value: what was shown and what is spoken for but not yet on
-/// screen. Reset as one with the session.
 struct InappShowBudgetState: Equatable {
     var shownInSession: [String] = []
     var reservations: [InappShowBudgetOwner: InappShowReservation] = [:]
@@ -38,14 +34,8 @@ struct InappShowBudgetState: Equatable {
 
 protocol InappShowBudgeting: AnyObject {
 
-    /// Checks the show budgets and takes a slot in them in one step, so nobody passes on the same count.
-    /// Priority and `unlimited` in-apps pass without a slot. An owner reserving the same in-app again
-    /// keeps its slot; another in-app replaces it, and a refused replacement leaves the owner with none.
     func reserve(_ owner: InappShowBudgetOwner, inAppId: String, isPriority: Bool, frequency: InappFrequency?) -> InappShowReservationOutcome
 
-    /// The slot became a show: it leaves the reservations and, when the frequency counts shows, enters
-    /// the session count, the history and the cooldown. Without a slot the show is still recorded, and a
-    /// slot the owner has meanwhile taken for another in-app stays with it.
     func commit(_ owner: InappShowBudgetOwner, inAppId: String, frequency: InappFrequency?)
 
     func release(_ owner: InappShowBudgetOwner)

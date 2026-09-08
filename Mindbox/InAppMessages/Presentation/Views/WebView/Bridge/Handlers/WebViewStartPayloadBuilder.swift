@@ -130,7 +130,6 @@ private extension WebViewStartPayloadBuilder {
             PayloadKey.Insets.right: insets.right
         ]
 
-        // Always present, in sync with Android: a page reads one shape whether or not anything is granted.
         params[PayloadKey.permissions] = permissions.mapValues { $0.toDictionary() }
     }
 

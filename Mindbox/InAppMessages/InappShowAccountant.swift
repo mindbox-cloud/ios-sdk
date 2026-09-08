@@ -19,15 +19,10 @@ struct InappShow {
 
 protocol InappShowAccounting: AnyObject {
 
-    /// `Inapp.Show` to the backend, then the overlay's slot in the show budget becomes the recorded show.
     func recordShow(_ show: InappShow)
 
-    /// The moment `minIntervalBetweenShows` counts from — written when the frequency counts shows.
     func recordCooldown(frequency: InappFrequency?)
 
-    /// A block's show counts when its place shows a different in-app than it showed last: 1 → 2 → 1 in
-    /// one session is three shows, the same in-app again — a rebuilt page, a rotation — is none, and
-    /// gives the place's slot back.
     func recordBlockShow(_ show: InappShow, at place: String)
 }
 

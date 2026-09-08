@@ -22,8 +22,7 @@ struct ServedPlaceDelay: Hashable {
     let inappId: String
 }
 
-/// One `Inapp.ShowFailure` per in-app and reason per session: every network outage, and every failure a block
-/// sends past the buffer. The key is shared with Android.
+/// The once-per-session key of `Inapp.ShowFailure`, shared with Android.
 struct ReportedFailure: Hashable {
     let inappId: String
     let reason: String

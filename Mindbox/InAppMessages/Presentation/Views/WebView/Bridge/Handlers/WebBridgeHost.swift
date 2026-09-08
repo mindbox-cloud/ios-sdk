@@ -42,13 +42,7 @@ protocol WebBridgeHost: AnyObject {
     /// Native → JS. The only way out of a handler.
     func send(_ message: BridgeMessage)
 
-    /// The parameters this page needs to configure itself.
-    ///
-    /// Built by the host rather than by the handler: what goes in depends on what the page is —
-    /// an in-app knows its operation, a block knows its configuration entry — while answering
-    /// `ready` with it is the same everywhere. Snapshot at the moment of asking, so a page that
-    /// asks again is told what is true now. Part of it is asked of the system, so the answer
-    /// arrives through the completion, on the main queue.
+    /// A snapshot at the moment of asking; part of it comes from the system, so it answers on the main queue.
     func makeStartPayload(_ completion: @escaping (JSONValue) -> Void)
 }
 
@@ -138,8 +132,7 @@ protocol WebBridgeContentHosting: AnyObject {
     func bridgeDidReportUnreadableContent()
 }
 
-/// Why a `showInApp` request ended without a show. The raw values are the bridge contract's, shared
-/// with Android; a page treats any reason it does not know as "not shown".
+/// Raw values are the bridge contract's, shared with Android; a page treats an unknown reason as "not shown".
 enum ShowInAppRefusal: String, Error {
     /// Not in the config, or cut by the filters before it could be shown.
     case unknownInapp = "unknown_inapp"
@@ -155,9 +148,7 @@ protocol WebBridgeInappRequestHosting: AnyObject {
     /// stopped listening drops the question, and what a missing answer means is the page's call.
     func bridgeDidAskShowableInapps(_ ids: [String], completion: @escaping ([String]) -> Void)
 
-    /// `params` travel into the shown in-app's start payload untouched: for the SDK they are an
-    /// opaque dictionary. Answered once the outcome is known — the window is on screen, or why it
-    /// is not — and possibly never, like the question above.
+    /// `params` travel into the start payload untouched. Answered once the outcome is known, possibly never.
     func bridgeDidRequestShowInApp(id: String,
                                    params: [String: JSONValue],
                                    completion: @escaping (Result<Void, ShowInAppRefusal>) -> Void)
