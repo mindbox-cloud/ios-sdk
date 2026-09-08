@@ -96,6 +96,19 @@ struct EmbeddedBlockShimmerViewTests {
         #expect(shimmer.gradientLayer.endPoint == CGPoint(x: 1, y: 0.5))
     }
 
+    @Test("A resize snaps the gradient to the new bounds without an implicit animation")
+    func resizeDoesNotAnimateTheGradientFrame() {
+        let shimmer = makeShimmer()
+        host.addSubview(shimmer)
+        shimmer.layoutIfNeeded()
+
+        shimmer.frame = CGRect(x: 0, y: 0, width: 200, height: 80)
+        shimmer.layoutIfNeeded()
+
+        #expect(shimmer.gradientLayer.frame == shimmer.bounds)
+        #expect(shimmer.gradientLayer.animationKeys() == [EmbeddedBlockShimmerView.animationKey])
+    }
+
     // MARK: - Geometry
 
     @Test("Stops follow the gradient layer: moving it shifts every stop by the same fraction")

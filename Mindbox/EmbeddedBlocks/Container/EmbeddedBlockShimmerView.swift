@@ -10,7 +10,7 @@ import UIKit
 
 final class EmbeddedBlockShimmerView: UIView {
 
-    /// Figma: Mobile Launchpad → «Шиммер вью для встроенных блоков». Positions are fractions of the block's width.
+    /// Positions are fractions of the block's width.
     enum Design {
 
         static let lightTint = UIColor(red: 0x28 / 255.0, green: 0x2A / 255.0, blue: 0x2F / 255.0, alpha: 1.0)
@@ -80,11 +80,7 @@ final class EmbeddedBlockShimmerView: UIView {
 
     override func layoutSubviews() {
         super.layoutSubviews()
-        // Without this a resize animates the layer's frame over 0.25 s.
-        CATransaction.begin()
-        CATransaction.setDisableActions(true)
         gradientLayer.frame = bounds
-        CATransaction.commit()
     }
 
     override func didMoveToWindow() {
@@ -106,6 +102,7 @@ final class EmbeddedBlockShimmerView: UIView {
         isUserInteractionEnabled = false
         backgroundColor = .clear
 
+        gradientLayer.actions = ["bounds": NSNull(), "position": NSNull()]
         gradientLayer.startPoint = CGPoint(x: 0.0, y: 0.5)
         gradientLayer.endPoint = CGPoint(x: 1.0, y: 0.5)
         gradientLayer.locations = Design.startLocations.map { NSNumber(value: Double($0)) }
