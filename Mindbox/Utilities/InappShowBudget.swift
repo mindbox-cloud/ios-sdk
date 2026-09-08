@@ -44,7 +44,8 @@ protocol InappShowBudgeting: AnyObject {
     func reserve(_ owner: InappShowBudgetOwner, inAppId: String, isPriority: Bool, frequency: InappFrequency?) -> InappShowReservationOutcome
 
     /// The slot became a show: it leaves the reservations and, when the frequency counts shows, enters
-    /// the session count, the history and the cooldown. Without a slot the show is still recorded.
+    /// the session count, the history and the cooldown. Without a slot the show is still recorded, and a
+    /// slot the owner has meanwhile taken for another in-app stays with it.
     func commit(_ owner: InappShowBudgetOwner, inAppId: String, frequency: InappFrequency?)
 
     func release(_ owner: InappShowBudgetOwner)
@@ -98,7 +99,12 @@ final class InappShowBudget: InappShowBudgeting {
 
     func commit(_ owner: InappShowBudgetOwner, inAppId: String, frequency: InappFrequency?) {
         SessionTemporaryStorage.shared.$showBudget.mutate { state in
-            state.reservations.removeValue(forKey: owner)
+            if let held = state.reservations[owner], held.inAppId != inAppId {
+                Logger.common(message: "[ShowBudget] \(owner) now holds a slot for in-app \(held.inAppId), the show of \(inAppId) leaves it in place",
+                              level: .debug, category: .inAppMessages)
+            } else {
+                state.reservations.removeValue(forKey: owner)
+            }
 
             guard InappFrequency.countsShows(frequency) else { return }
 
