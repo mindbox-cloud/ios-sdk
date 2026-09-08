@@ -21,8 +21,11 @@ protocol InappShowFailureManagerProtocol {
     /// it names the place instead. Sent at once, past the buffer, like the other block failures.
     func sendWaitBudgetExceeded(place: String, waited: TimeInterval, phase: EmbeddedBlockShowFailure.Phase)
 
-    /// Past the buffer, once per in-app and reason per session; the overlay's failures go through the buffer.
+    /// Past the buffer, once per in-app and reason per session.
     func sendBlockFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?)
+
+    /// Past the buffer, every time: the overlay's own failure to show, in sync with Android.
+    func sendFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?)
 }
 
 final class InappShowFailureManager: InappShowFailureManagerProtocol {
@@ -82,15 +85,7 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
     }
     
     func sendBlockFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?) {
-        guard featureToggleManager.isFeatureEnabled(.shouldSendInAppShowError) else {
-            Logger.common(message: "[InappShowFailureManager] sendBlockFailure ignored, feature is disabled", category: .inAppMessages)
-            return
-        }
-
-        let failure = makeFailure(inappId: inappId,
-                                  reason: reason,
-                                  details: truncatedDetails(details, inappId: inappId),
-                                  tags: featureToggleManager.gatedTags(tags))
+        guard let failure = gatedFailure(inappId: inappId, reason: reason, details: details, tags: tags) else { return }
 
         queue.async { [self] in
             guard let sent = enqueueOncePerSession([failure], where: { _ in true }) else { return }
@@ -104,6 +99,33 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
             Logger.common(message: "[InappShowFailureManager] Inapp.ShowFailure event sent at once. inappId=\(inappId), reason=\(reason.rawValue)",
                           category: .inAppMessages)
         }
+    }
+
+    func sendFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?) {
+        guard let failure = gatedFailure(inappId: inappId, reason: reason, details: details, tags: tags) else { return }
+
+        queue.async { [self] in
+            guard enqueue([.inapp(failure)]) else { return }
+
+            Logger.common(message: "[InappShowFailureManager] Inapp.ShowFailure event sent at once. inappId=\(inappId), reason=\(reason.rawValue)",
+                          category: .inAppMessages)
+        }
+    }
+
+    private func gatedFailure(inappId: String,
+                              reason: InAppShowFailureReason,
+                              details: String?,
+                              tags: [String: String]?,
+                              caller: String = #function) -> InAppShowFailure? {
+        guard featureToggleManager.isFeatureEnabled(.shouldSendInAppShowError) else {
+            Logger.common(message: "[InappShowFailureManager] \(caller) ignored, feature is disabled", category: .inAppMessages)
+            return nil
+        }
+
+        return makeFailure(inappId: inappId,
+                           reason: reason,
+                           details: truncatedDetails(details, inappId: inappId),
+                           tags: featureToggleManager.gatedTags(tags))
     }
 
     private func truncatedDetails(_ details: String?, inappId: String) -> String? {

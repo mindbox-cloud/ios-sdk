@@ -284,13 +284,10 @@ internal extension InappScheduleManager {
                 if holdsSlot {
                     self.budget.release(.overlay(inapp.inAppId))
                 }
-                self.failureManager.addFailure(
-                    inappId: inapp.inAppId,
-                    reason: error.failureReason,
-                    details: error.failureDetails,
-                    tags: inapp.tags
-                )
-                self.failureManager.sendFailures()
+                self.failureManager.sendFailure(inappId: inapp.inAppId,
+                                                reason: error.failureReason,
+                                                details: error.failureDetails,
+                                                tags: inapp.tags)
                 guard !didPresent else { return }
                 onFailed(error)
             }
