@@ -226,6 +226,7 @@ final class EmbeddedBlockWebViewProvider {
 
         switch resolution {
         case .empty:
+            dropPage()
             guard outcome != .empty else { return }
 
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': nothing at this place — collapsing",
