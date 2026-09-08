@@ -240,7 +240,7 @@ final class EmbeddedBlockWebViewProvider {
     }
 
     func contentIsDelayed() {
-        guard isStarted else { return }
+        guard isStarted, page == nil else { return }
 
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': content is coming after its delay — waiting",
                       category: .embeddedBlocks)
