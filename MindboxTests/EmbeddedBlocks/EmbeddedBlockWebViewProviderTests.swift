@@ -412,6 +412,19 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(!bed.provider.isAwaitingDelayedContent)
     }
 
+    @Test("A delay announced while the page is loading leaves the page its own budget")
+    func delayAnnouncedWhileThePageLoadsIsIgnored() {
+        let bed = EmbeddedBlockTestBed()
+        var delayedCalls = 0
+        bed.provider.onContentDelayed = { delayedCalls += 1 }
+        bed.provider.start()
+
+        bed.provider.contentIsDelayed()
+
+        #expect(!bed.provider.isAwaitingDelayedContent)
+        #expect(delayedCalls == 0)
+    }
+
     @Test("A block the SDK never answered reports one failure without an in-app")
     func unansweredBlockReportsOneUnattributedFailure() {
         let bed = EmbeddedBlockTestBed()
