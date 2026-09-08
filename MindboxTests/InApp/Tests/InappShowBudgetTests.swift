@@ -207,6 +207,23 @@ struct InappShowBudgetTests {
         #expect(trackingService.saveInappStateChangeCallCount == 1)
     }
 
+    @Test("A late show of the replaced candidate leaves the newer slot of its place in place")
+    func lateCommitOfTheReplacedCandidateKeepsTheNewerSlot() {
+        setLimits(session: 5)
+        #expect(reserve(.place("stories"), "old"))
+        #expect(reserve(.place("stories"), "new"))
+
+        budget.commit(.place("stories"), inAppId: "old", frequency: restricted)
+
+        #expect(reservations[.place("stories")]?.inAppId == "new")
+        #expect(shownInSession == ["old"])
+
+        budget.commit(.place("stories"), inAppId: "new", frequency: restricted)
+
+        #expect(reservations.isEmpty)
+        #expect(shownInSession == ["old", "new"])
+    }
+
     @Test("A committed unlimited show records nothing")
     func unlimitedCommitRecordsNothing() {
         budget.commit(.overlay("a"), inAppId: "a", frequency: .unlimited)
