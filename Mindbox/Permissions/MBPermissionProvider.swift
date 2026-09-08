@@ -27,17 +27,10 @@ private enum DetailsKey {
 /// iOS implementation of PermissionProvider
 final class MBPermissionProvider: PermissionProvider {
 
-    private let persistenceStorage: PersistenceStorage
+    private let notificationStatus: UNAuthorizationStatusProviding
 
-    init(persistenceStorage: PersistenceStorage) {
-        self.persistenceStorage = persistenceStorage
-    }
-
-    func getNotificationPermissionStatus() -> PermissionStatus {
-        guard let isEnabled = persistenceStorage.isNotificationsEnabled else {
-            return PermissionStatus(status: .notDetermined)
-        }
-        return PermissionStatus(status: isEnabled ? .granted : .denied)
+    init(notificationStatus: UNAuthorizationStatusProviding) {
+        self.notificationStatus = notificationStatus
     }
 
     func getCameraPermissionStatus() -> PermissionStatus {
@@ -70,11 +63,10 @@ final class MBPermissionProvider: PermissionProvider {
         return mapCLAuthorizationStatus(status)
     }
 
-    func getGrantedPermissions() -> [String: PermissionStatus] {
+    func getGrantedPermissions(_ completion: @escaping ([String: PermissionStatus]) -> Void) {
         var granted: [String: PermissionStatus] = [:]
 
         let permissions: [(String, PermissionStatus)] = [
-            (PermissionKey.notifications, getNotificationPermissionStatus()),
             (PermissionKey.camera, getCameraPermissionStatus()),
             (PermissionKey.microphone, getMicrophonePermissionStatus()),
             (PermissionKey.photoLibrary, getPhotoLibraryPermissionStatus()),
@@ -85,7 +77,12 @@ final class MBPermissionProvider: PermissionProvider {
             granted[key] = permission
         }
 
-        return granted
+        notificationStatus.getStatus { isGranted in
+            if isGranted {
+                granted[PermissionKey.notifications] = PermissionStatus(status: .granted)
+            }
+            DispatchQueue.main.async { completion(granted) }
+        }
     }
 
     // MARK: - Mapping helpers

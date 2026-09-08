@@ -45,7 +45,9 @@ struct InAppCoreManagerTests {
         weak var delegate: InAppMessagesDelegate?
 
         func scheduleInApp(_ inAppFormData: InAppFormData, processingDuration: TimeInterval) {}
-        func showInAppNow(_ inAppFormData: InAppFormData, processingDuration: TimeInterval) {}
+        func showInAppNow(_ inAppFormData: InAppFormData,
+                          processingDuration: TimeInterval,
+                          completion: @escaping (Result<Void, InAppPresentationError>) -> Void) {}
     }
 
     private let queue = DispatchQueue(label: "test.core-manager.events")

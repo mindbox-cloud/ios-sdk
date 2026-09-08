@@ -226,15 +226,6 @@ struct EmbeddedBlockResolveTests {
         #expect(dataFacade.discardCollectedFailuresCalls == 0)
     }
 
-    @Test("A place resolve whose winner the show limits hold back drops the pass's buffered failures too")
-    func placeResolveWithWinnerHeldByBudgetsDropsBufferedFailures() async {
-        spendEveryShowBudget()
-
-        #expect(await resolvePlace(Constants.cappedPlace) == nil)
-        #expect(dataFacade.discardCollectedFailuresCalls == 1)
-        #expect(dataFacade.sendCollectedFailuresCalls == 0)
-    }
-
     @Test("A place resolve hands the in-apps its targeting cut to the failure collection")
     func placeResolveCollectsFailuresForTheCut() async {
         _ = await resolvePlace(Constants.place)
@@ -255,25 +246,18 @@ struct EmbeddedBlockResolveTests {
         #expect(resolved.inAppId == Constants.blockId)
     }
 
-    @Test("Spent show limits leave a non-unlimited block's place empty")
-    func showLimitsStopANonUnlimitedBlock() async {
+    @Test("Spent show limits do not hold a non-unlimited block back at the resolve — the place registry does")
+    func showLimitsAreNotAppliedAtTheResolve() async throws {
         spendEveryShowBudget()
 
-        #expect(await resolvePlace(Constants.cappedPlace) == nil)
+        let resolved = try #require(await resolvePlace(Constants.cappedPlace))
+        #expect(resolved.inAppId == Constants.cappedBlockId)
     }
 
     @Test("Without spent budgets the same block is drawn")
     func nonUnlimitedBlockIsDrawnWithBudgetsLeft() async throws {
         let resolved = try #require(await resolvePlace(Constants.cappedPlace))
         #expect(resolved.inAppId == Constants.cappedBlockId)
-    }
-
-    @Test("A block stopped by the show limits is still vouched for")
-    func blockedByBudgetsIsStillVouchedFor() async {
-        spendEveryShowBudget()
-
-        #expect(await resolvePlace(Constants.cappedPlace) == nil)
-        #expect(dataFacade.trackTargetingCalls.contains { $0.id == Constants.cappedBlockId })
     }
 
     @Test("Resolving a place vouches for every targeted in-app set up for it, not only the winner")

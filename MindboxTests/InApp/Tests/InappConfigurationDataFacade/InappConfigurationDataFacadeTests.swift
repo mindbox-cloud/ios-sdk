@@ -49,6 +49,8 @@ final class MockInappShowFailureManager: InappShowFailureManagerProtocol {
         failures.append((inappId: inappId, reason: reason, details: details, tags: tags))
     }
 
+    func sendBlockFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?) {}
+
     func sendFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?) {}
 
     func sendFailures() {}

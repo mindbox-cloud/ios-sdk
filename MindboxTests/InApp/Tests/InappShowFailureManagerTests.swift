@@ -8,8 +8,138 @@
 
 import XCTest
 import UIKit
+import Testing
 @testable import Mindbox
 @testable import MindboxLogger
+
+// Shares SessionTemporaryStorage with the whole serial test target; erased in init.
+@Suite("Inapp show failure session dedup", .tags(.inappSelection))
+struct InappShowFailureSessionDedupTests {
+
+    private let repository = InappShowFailureDatabaseRepositoryMock()
+    private let manager: InappShowFailureManager
+
+    init() {
+        SessionTemporaryStorage.shared.erase()
+        manager = InappShowFailureManager(databaseRepository: repository,
+                                          featureToggleManager: FeatureToggleManager())
+    }
+
+    private func settledEventsCount(reaching expected: Int) async throws -> Int {
+        for _ in 0..<100 where repository.createdEvents.count < expected {
+            try await Task.sleep(nanoseconds: 20_000_000)
+        }
+        try await Task.sleep(nanoseconds: 100_000_000)
+        return repository.createdEvents.count
+    }
+
+    @Test("The same network failure is reported once per session, later passes stay silent")
+    func sameNetworkFailureIsReportedOnce() async throws {
+        manager.addFailure(inappId: "inapp-1", reason: .customerSegmentRequestFailed, details: nil, tags: nil)
+        manager.sendFailures()
+        manager.addFailure(inappId: "inapp-1", reason: .customerSegmentRequestFailed, details: nil, tags: nil)
+        manager.sendFailures()
+
+        #expect(try await settledEventsCount(reaching: 1) == 1)
+    }
+
+    @Test("A different reason for the same in-app is its own report")
+    func differentReasonIsItsOwnReport() async throws {
+        manager.addFailure(inappId: "inapp-1", reason: .customerSegmentRequestFailed, details: nil, tags: nil)
+        manager.sendFailures()
+        manager.addFailure(inappId: "inapp-1", reason: .geoRequestFailed, details: nil, tags: nil)
+        manager.sendFailures()
+
+        #expect(try await settledEventsCount(reaching: 2) == 2)
+    }
+
+    @Test("An outage already reported this session does not shadow a fresh failure of the same in-app")
+    func reportedOutageDoesNotShadowAFreshFailure() async throws {
+        manager.addFailure(inappId: "inapp-1", reason: .customerSegmentRequestFailed, details: nil, tags: nil)
+        manager.sendFailures()
+        manager.addFailure(inappId: "inapp-1", reason: .customerSegmentRequestFailed, details: nil, tags: nil)
+        manager.addFailure(inappId: "inapp-1", reason: .geoRequestFailed, details: nil, tags: nil)
+        manager.sendFailures()
+
+        #expect(try await settledEventsCount(reaching: 2) == 2)
+        #expect(repository.createdEvents.last?.body.contains(InAppShowFailureReason.geoRequestFailed.rawValue) == true)
+    }
+
+    @Test("An image download failure is reported once per session")
+    func imageDownloadFailureIsReportedOnce() async throws {
+        manager.addFailure(inappId: "inapp-1", reason: .imageDownloadFailed, details: nil, tags: nil)
+        manager.sendFailures()
+        manager.addFailure(inappId: "inapp-1", reason: .imageDownloadFailed, details: nil, tags: nil)
+        manager.sendFailures()
+
+        #expect(try await settledEventsCount(reaching: 1) == 1)
+    }
+
+    @Test("A buffered presentation failure, the overlay's path, repeats freely")
+    func bufferedPresentationFailureRepeats() async throws {
+        manager.addFailure(inappId: "inapp-1", reason: .presentationFailed, details: nil, tags: nil)
+        manager.sendFailures()
+        manager.addFailure(inappId: "inapp-1", reason: .presentationFailed, details: nil, tags: nil)
+        manager.sendFailures()
+
+        #expect(try await settledEventsCount(reaching: 2) == 2)
+    }
+
+    @Test("A failure sent past the buffer, the block's path, is reported once per session whatever the reason",
+          arguments: [InAppShowFailureReason.presentationFailed, .webviewLoadFailed, .webviewPresentationFailed])
+    func failureSentPastTheBufferIsReportedOnce(reason: InAppShowFailureReason) async throws {
+        manager.sendBlockFailure(inappId: "inapp-1", reason: reason, details: nil, tags: nil)
+        manager.sendBlockFailure(inappId: "inapp-1", reason: reason, details: nil, tags: nil)
+
+        #expect(try await settledEventsCount(reaching: 1) == 1)
+    }
+
+    @Test("A different reason sent past the buffer for the same in-app is its own report")
+    func differentReasonPastTheBufferIsItsOwnReport() async throws {
+        manager.sendBlockFailure(inappId: "inapp-1", reason: .presentationFailed, details: nil, tags: nil)
+        manager.sendBlockFailure(inappId: "inapp-1", reason: .webviewLoadFailed, details: nil, tags: nil)
+
+        #expect(try await settledEventsCount(reaching: 2) == 2)
+    }
+
+    @Test("A failure sent past the buffer whose enqueue failed is not suppressed as a duplicate later")
+    func failedDirectEnqueueDoesNotBurnTheDedupSlot() async throws {
+        repository.createError = InappShowFailureRepositoryError.createFailed
+        manager.sendBlockFailure(inappId: "inapp-1", reason: .presentationFailed, details: nil, tags: nil)
+        #expect(try await settledEventsCount(reaching: 0) == 0)
+
+        repository.createError = nil
+        manager.sendBlockFailure(inappId: "inapp-1", reason: .presentationFailed, details: nil, tags: nil)
+
+        #expect(try await settledEventsCount(reaching: 1) == 1)
+    }
+
+    @Test("A network failure whose enqueue failed retries later instead of being suppressed as a duplicate")
+    func failedEnqueueDoesNotBurnTheDedupSlot() async throws {
+        repository.createError = InappShowFailureRepositoryError.createFailed
+        manager.addFailure(inappId: "inapp-1", reason: .customerSegmentRequestFailed, details: nil, tags: nil)
+        manager.sendFailures()
+        #expect(try await settledEventsCount(reaching: 0) == 0)
+
+        repository.createError = nil
+        manager.sendFailures()
+
+        #expect(try await settledEventsCount(reaching: 1) == 1)
+    }
+
+    @Test("A new session reports the same outage again")
+    func newSessionReportsAgain() async throws {
+        manager.addFailure(inappId: "inapp-1", reason: .customerSegmentRequestFailed, details: nil, tags: nil)
+        manager.sendFailures()
+        #expect(try await settledEventsCount(reaching: 1) == 1)
+
+        SessionTemporaryStorage.shared.erase()
+
+        manager.addFailure(inappId: "inapp-1", reason: .customerSegmentRequestFailed, details: nil, tags: nil)
+        manager.sendFailures()
+        #expect(try await settledEventsCount(reaching: 2) == 2)
+    }
+}
 
 final class InappShowFailureManagerTests: XCTestCase {
     private var databaseRepository: InappShowFailureDatabaseRepositoryMock!
@@ -18,6 +148,7 @@ final class InappShowFailureManagerTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
+        SessionTemporaryStorage.shared.erase()
         databaseRepository = InappShowFailureDatabaseRepositoryMock()
         featureToggleManager = FeatureToggleManager()
         manager = InappShowFailureManager(
@@ -213,12 +344,12 @@ final class InappShowFailureManagerTests: XCTestCase {
         XCTAssertEqual(failures[0].errorDetails, "segment")
     }
 
-    // MARK: - sendFailure: past the buffer
+    // MARK: - sendBlockFailure: past the buffer
 
-    func testSendFailure_isNotSwallowedByABufferedTargetingFailure() throws {
+    func testSendBlockFailure_isNotSwallowedByABufferedTargetingFailure() throws {
         manager.addFailure(inappId: "inapp-1", reason: .geoRequestFailed, details: "geo down", tags: nil)
 
-        manager.sendFailure(inappId: "inapp-1", reason: .presentationFailed, details: "page said nothing", tags: nil)
+        manager.sendBlockFailure(inappId: "inapp-1", reason: .presentationFailed, details: "page said nothing", tags: nil)
 
         assertCreatedEventsCountEventually(1)
         let event = try XCTUnwrap(databaseRepository.createdEvents.first)
@@ -228,9 +359,9 @@ final class InappShowFailureManagerTests: XCTestCase {
         XCTAssertEqual(failures[0].errorDetails, "page said nothing")
     }
 
-    func testSendFailure_leavesTheBufferIntact() throws {
+    func testSendBlockFailure_leavesTheBufferIntact() throws {
         manager.addFailure(inappId: "inapp-1", reason: .geoRequestFailed, details: "geo down", tags: nil)
-        manager.sendFailure(inappId: "inapp-1", reason: .webviewLoadFailed, details: "markup", tags: nil)
+        manager.sendBlockFailure(inappId: "inapp-1", reason: .webviewLoadFailed, details: "markup", tags: nil)
         assertCreatedEventsCountEventually(1)
 
         manager.sendFailures()
@@ -239,6 +370,39 @@ final class InappShowFailureManagerTests: XCTestCase {
         let second = try XCTUnwrap(databaseRepository.createdEvents.last)
         let failures = try XCTUnwrap(decodeFailures(from: second))
         XCTAssertEqual(failures.map(\.failureReason), [.geoRequestFailed])
+    }
+
+    func testSendBlockFailure_whenFeatureDisabled_sendsNothing() {
+        applyFeatureToggle(shouldSendInAppShowError: false)
+
+        manager.sendBlockFailure(inappId: "inapp-1", reason: .presentationFailed, details: nil, tags: nil)
+
+        assertCreatedEventsCountEventually(0)
+    }
+
+    // MARK: - sendFailure: past the buffer, every time
+
+    func testSendFailure_leavesTheBufferIntact() throws {
+        manager.addFailure(inappId: "inapp-1", reason: .geoRequestFailed, details: "geo down", tags: nil)
+
+        manager.sendFailure(inappId: "inapp-2", reason: .presentationFailed, details: "no window", tags: nil)
+
+        assertCreatedEventsCountEventually(1)
+        let first = try XCTUnwrap(databaseRepository.createdEvents.first)
+        XCTAssertEqual(try XCTUnwrap(decodeFailures(from: first)).map(\.inappId), ["inapp-2"])
+
+        manager.sendFailures()
+
+        assertCreatedEventsCountEventually(2)
+        let second = try XCTUnwrap(databaseRepository.createdEvents.last)
+        XCTAssertEqual(try XCTUnwrap(decodeFailures(from: second)).map(\.failureReason), [.geoRequestFailed])
+    }
+
+    func testSendFailure_isSentEveryTime() {
+        manager.sendFailure(inappId: "inapp-1", reason: .presentationFailed, details: nil, tags: nil)
+        manager.sendFailure(inappId: "inapp-1", reason: .presentationFailed, details: nil, tags: nil)
+
+        assertCreatedEventsCountEventually(2)
     }
 
     func testSendFailure_whenFeatureDisabled_sendsNothing() {
@@ -253,10 +417,10 @@ final class InappShowFailureManagerTests: XCTestCase {
         XCTAssertEqual(InappShowFailureManager.errorDetailsLimit, 1000)
     }
 
-    func testSendFailure_truncatesErrorDetailsToLimit() throws {
+    func testSendBlockFailure_truncatesErrorDetailsToLimit() throws {
         let long = String(repeating: "a", count: InappShowFailureManager.errorDetailsLimit + 100)
 
-        manager.sendFailure(inappId: "inapp-1", reason: .presentationFailed, details: long, tags: nil)
+        manager.sendBlockFailure(inappId: "inapp-1", reason: .presentationFailed, details: long, tags: nil)
 
         assertCreatedEventsCountEventually(1)
         let event = try XCTUnwrap(databaseRepository.createdEvents.first)

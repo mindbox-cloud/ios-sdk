@@ -16,7 +16,8 @@ extension MBContainer {
         }
 
         register(EmbeddedBlockPlaceRegistering.self) {
-            EmbeddedBlockPlaceRegistry(resolver: DI.injectOrFail(EmbeddedBlockResolving.self))
+            EmbeddedBlockPlaceRegistry(resolver: DI.injectOrFail(EmbeddedBlockResolving.self),
+                                       budget: DI.injectOrFail(InappShowBudgeting.self))
         }
 
         register(EmbeddedBlockInappServing.self) {

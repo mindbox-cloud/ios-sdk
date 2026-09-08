@@ -72,6 +72,50 @@ final class InappShowAccountingMock: InappShowAccounting {
     }
 }
 
+final class InappShowBudgetMock: InappShowBudgeting {
+
+    struct Reservation: Equatable {
+        let owner: InappShowBudgetOwner
+        let inAppId: String
+        let isPriority: Bool
+        let frequency: InappFrequency?
+    }
+
+    struct Commit: Equatable {
+        let owner: InappShowBudgetOwner
+        let inAppId: String
+        let frequency: InappFrequency?
+    }
+
+    var refusedInAppIds: Set<String> = []
+
+    private(set) var reservations: [Reservation] = []
+    private(set) var commits: [Commit] = []
+    private(set) var releases: [InappShowBudgetOwner] = []
+    private(set) var releasedOnMainThread: [Bool] = []
+    private(set) var cooldowns: [InappFrequency?] = []
+
+    var reservedOwners: [InappShowBudgetOwner] { reservations.map(\.owner) }
+
+    func reserve(_ owner: InappShowBudgetOwner, inAppId: String, isPriority: Bool, frequency: InappFrequency?) -> InappShowReservationOutcome {
+        reservations.append(Reservation(owner: owner, inAppId: inAppId, isPriority: isPriority, frequency: frequency))
+        return refusedInAppIds.contains(inAppId) ? .refused : .granted
+    }
+
+    func commit(_ owner: InappShowBudgetOwner, inAppId: String, frequency: InappFrequency?) {
+        commits.append(Commit(owner: owner, inAppId: inAppId, frequency: frequency))
+    }
+
+    func release(_ owner: InappShowBudgetOwner) {
+        releases.append(owner)
+        releasedOnMainThread.append(Thread.isMainThread)
+    }
+
+    func recordCooldown(frequency: InappFrequency?) {
+        cooldowns.append(frequency)
+    }
+}
+
 final class EmbeddedBlockFailureReporterMock {
 
     private(set) var reported: [(inAppId: String, reason: InAppShowFailureReason, details: String, tags: [String: String]?)] = []
@@ -111,7 +155,7 @@ final class EmbeddedBlockPageMock: EmbeddedBlockPageHosting {
 
     var onShowableQuestion: (([String], @escaping ([String]) -> Void) -> Void)?
 
-    var onShowInAppRequest: ((String, [String: JSONValue]) -> Void)?
+    var onShowInAppRequest: ((String, [String: JSONValue], @escaping (Result<Void, ShowInAppRefusal>) -> Void) -> Void)?
 
     var onDataPushConfirmed: (() -> Void)?
 
@@ -127,6 +171,9 @@ final class EmbeddedBlockPageMock: EmbeddedBlockPageHosting {
 
     fileprivate(set) var responses: [(action: String, payload: JSONValue)] = []
     fileprivate(set) var refusals: [(action: String, error: String)] = []
+
+    var showInAppResponses: [JSONValue] { responses.filter { $0.action == "showInApp" }.map(\.payload) }
+    var showInAppRefusals: [String] { refusals.filter { $0.action == "showInApp" }.map(\.error) }
     private(set) var initDataPushes: [[String: JSONValue]] = []
 
     private lazy var host = EmbeddedBlockPageMockHost(page: self)
@@ -208,8 +255,8 @@ private final class EmbeddedBlockPageMockHost: WebBridgeHost, WebBridgeContentHo
         }
     }
 
-    func makeStartPayload() -> JSONValue {
-        .string("{}")
+    func makeStartPayload(_ completion: @escaping (JSONValue) -> Void) {
+        completion(.string("{}"))
     }
 
     func bridgeDidRenderContent(count: Int) {
@@ -224,8 +271,10 @@ private final class EmbeddedBlockPageMockHost: WebBridgeHost, WebBridgeContentHo
         page.onShowableQuestion?(ids, completion)
     }
 
-    func bridgeDidRequestShowInApp(id: String, params: [String: JSONValue]) {
-        page.onShowInAppRequest?(id, params)
+    func bridgeDidRequestShowInApp(id: String,
+                                   params: [String: JSONValue],
+                                   completion: @escaping (Result<Void, ShowInAppRefusal>) -> Void) {
+        page.onShowInAppRequest?(id, params, completion)
     }
 }
 
@@ -264,9 +313,9 @@ final class SharedWebLayerMock: InappWebViewFacadeProtocol {
 
     private(set) var startPayloadRequests = 0
 
-    func makeStartPayload() -> JSONValue {
+    func makeStartPayload(_ completion: @escaping (JSONValue) -> Void) {
         startPayloadRequests += 1
-        return .string("{}")
+        completion(.string("{}"))
     }
 
     func sendInitDataUpdated(params: [String: JSONValue]) {
@@ -370,9 +419,17 @@ final class EmbeddedBlockInappServiceMock: EmbeddedBlockInappServing {
     private(set) var shown: [(id: String, params: [String: JSONValue])] = []
 
     private var pending: [([String]) -> Void] = []
+    private var showCompletions: [(Result<Void, ShowInAppRefusal>) -> Void] = []
 
-    func showInapp(id: String, params: [String: JSONValue]) {
+    func showInapp(id: String, params: [String: JSONValue], completion: @escaping (Result<Void, ShowInAppRefusal>) -> Void) {
         shown.append((id, params))
+        showCompletions.append(completion)
+    }
+
+    func finishShow(_ outcome: Result<Void, ShowInAppRefusal>) {
+        let completions = showCompletions
+        showCompletions = []
+        completions.forEach { $0(outcome) }
     }
 
     func showableInappIds(among ids: [String], askedBy blockInappId: String, completion: @escaping ([String]) -> Void) {
@@ -537,6 +594,7 @@ final class EmbeddedBlockTestBed {
     let pageFactory: EmbeddedBlockPageFactoryMock
     let provider: EmbeddedBlockWebViewProvider
     let accounting: InappShowAccountingMock
+    let budget = InappShowBudgetMock()
     let failureReporter: EmbeddedBlockFailureReporterMock
     let ackScheduler: EmbeddedBlockAckSchedulerMock
 
@@ -563,6 +621,7 @@ final class EmbeddedBlockTestBed {
         let failureReporter = EmbeddedBlockFailureReporterMock()
         let ackScheduler = EmbeddedBlockAckSchedulerMock()
         let registry = EmbeddedBlockPlaceRegistry(resolver: resolver,
+                                                  budget: budget,
                                                   notificationCenter: center,
                                                   fetchEmbeddedPlaces: { embeddedPlaces.fetch($0) })
 

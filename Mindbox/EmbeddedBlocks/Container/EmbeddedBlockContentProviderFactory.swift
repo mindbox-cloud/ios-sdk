@@ -58,7 +58,7 @@ final class EmbeddedBlockContentProviderFactory: EmbeddedBlockContentProviderMak
                        details: String,
                        for content: EmbeddedBlockWebContent,
                        to manager: InappShowFailureManagerProtocol) {
-        manager.sendFailure(inappId: content.inAppId,
+        manager.sendBlockFailure(inappId: content.inAppId,
                             reason: reason,
                             details: details,
                             tags: content.tags)

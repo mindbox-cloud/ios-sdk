@@ -67,10 +67,10 @@ struct EmbeddedBlockInappServiceTests {
                 fetched.append((id, params))
                 completion(Self.formData(id: id))
             },
-            showNow: { formData, _ in shown.append(formData.inAppId) }
+            showNow: { formData, _, _ in shown.append(formData.inAppId) }
         )
 
-        service.showInapp(id: "story-1", params: ["formId": .string("160477")])
+        service.showInapp(id: "story-1", params: ["formId": .string("160477")]) { _ in }
 
         #expect(fetched.map(\.id) == ["story-1"])
         #expect(fetched.map(\.params) == [["formId": .string("160477")]])
@@ -83,26 +83,55 @@ struct EmbeddedBlockInappServiceTests {
         var durations: [TimeInterval] = []
         let service = EmbeddedBlockInappService(
             fetchInappToShow: { id, _, completion in completion(Self.formData(id: id)) },
-            showNow: { _, processingDuration in durations.append(processingDuration) },
+            showNow: { _, processingDuration, _ in durations.append(processingDuration) },
             now: { ticks.removeFirst() }
         )
 
-        service.showInapp(id: "story-1", params: [:])
+        service.showInapp(id: "story-1", params: [:]) { _ in }
 
         #expect(durations == [0.25])
     }
 
-    @Test("A tap that resolves to nothing schedules nothing")
-    func tapResolvingToNothingSchedulesNothing() {
+    @Test("A tap that resolves to nothing schedules nothing and answers unknown_inapp")
+    func tapResolvingToNothingAnswersUnknownInapp() {
         var shownCount = 0
+        var outcomes: [Result<Void, ShowInAppRefusal>] = []
         let service = EmbeddedBlockInappService(
             fetchInappToShow: { _, _, completion in completion(nil) },
-            showNow: { _, _ in shownCount += 1 }
+            showNow: { _, _, _ in shownCount += 1 }
         )
 
-        service.showInapp(id: "story-1", params: [:])
+        service.showInapp(id: "story-1", params: [:]) { outcomes.append($0) }
 
         #expect(shownCount == 0)
+        #expect(outcomes.map(\.isSuccess) == [false])
+        #expect(outcomes.first?.refusal == .unknownInapp)
+    }
+
+    @Test("A show that opened answers success")
+    func openedShowAnswersSuccess() {
+        var outcomes: [Result<Void, ShowInAppRefusal>] = []
+        let service = EmbeddedBlockInappService(
+            fetchInappToShow: { id, _, completion in completion(Self.formData(id: id)) },
+            showNow: { _, _, completion in completion(.success(())) }
+        )
+
+        service.showInapp(id: "story-1", params: [:]) { outcomes.append($0) }
+
+        #expect(outcomes.map(\.isSuccess) == [true])
+    }
+
+    @Test("A show that failed on the way to the screen answers show_failed")
+    func failedShowAnswersShowFailed() {
+        var outcomes: [Result<Void, ShowInAppRefusal>] = []
+        let service = EmbeddedBlockInappService(
+            fetchInappToShow: { id, _, completion in completion(Self.formData(id: id)) },
+            showNow: { _, _, completion in completion(.failure(.failedToLoadWindow)) }
+        )
+
+        service.showInapp(id: "story-1", params: [:]) { outcomes.append($0) }
+
+        #expect(outcomes.first?.refusal == .showFailed)
     }
 
     private static func formData(id: String) -> InAppFormData {
@@ -124,6 +153,21 @@ struct EmbeddedBlockInappServiceTests {
 
         let deliveredOnMainThread: Bool = await withCheckedContinuation { continuation in
             service.showableInappIds(among: ["story-1"], askedBy: "block") { _ in
+                continuation.resume(returning: Thread.isMainThread)
+            }
+        }
+
+        #expect(deliveredOnMainThread)
+    }
+
+    @Test("A tap answered from a background thread reaches the page on the main thread")
+    func backgroundTapAnswerIsDeliveredOnTheMainThread() async {
+        let service = EmbeddedBlockInappService(fetchInappToShow: { _, _, completion in
+            DispatchQueue.global().async { completion(nil) }
+        })
+
+        let deliveredOnMainThread: Bool = await withCheckedContinuation { continuation in
+            service.showInapp(id: "story-1", params: [:]) { _ in
                 continuation.resume(returning: Thread.isMainThread)
             }
         }
@@ -193,5 +237,18 @@ private final class ServiceBed {
         let completions = pending
         pending = []
         completions.forEach { $0(allowed) }
+    }
+}
+
+private extension Result where Success == Void, Failure == ShowInAppRefusal {
+
+    var isSuccess: Bool {
+        if case .success = self { return true }
+        return false
+    }
+
+    var refusal: ShowInAppRefusal? {
+        if case .failure(let refusal) = self { return refusal }
+        return nil
     }
 }

@@ -33,8 +33,22 @@ class HostSpy: WebBridgeHost {
         sent.append(message)
     }
 
-    func makeStartPayload() -> JSONValue {
-        startPayload
+    /// When set, `makeStartPayload` parks the request; `deliverStartPayload()` answers the parked ones.
+    var holdsStartPayload = false
+    private var parkedPayloadRequests: [(JSONValue) -> Void] = []
+
+    func makeStartPayload(_ completion: @escaping (JSONValue) -> Void) {
+        guard holdsStartPayload else {
+            completion(startPayload)
+            return
+        }
+        parkedPayloadRequests.append(completion)
+    }
+
+    func deliverStartPayload() {
+        let parked = parkedPayloadRequests
+        parkedPayloadRequests = []
+        parked.forEach { $0(startPayload) }
     }
 }
 

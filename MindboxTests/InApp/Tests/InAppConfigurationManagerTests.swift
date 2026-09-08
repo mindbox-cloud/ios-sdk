@@ -283,6 +283,23 @@ struct InAppConfigurationManagerTests {
         #expect((answers.first ?? nil)?.inAppId == "11111111-1111-1111-1111-111111111111")
     }
 
+    @Test("A place outlives the wait budget: only the download's conclusion answers it")
+    func placeIsNotAnsweredByTheWaitBudget() async throws {
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+
+        let answers = Answers<InAppTransitionData?>()
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { inapp, _ in answers.append(inapp) }
+
+        try await Task.sleep(nanoseconds: 600_000_000)
+        #expect(answers.isEmpty, "the config wait budget must not answer a place — the block owns the give-up")
+
+        api.deliver(.data(try fixtureData()))
+
+        try await waitUntil(!answers.isEmpty)
+        #expect((answers.first ?? nil)?.inAppId == "11111111-1111-1111-1111-111111111111")
+    }
+
     @Test("The place's processing time runs from the block's request, the wait for the config included")
     func placeProcessingTimeIncludesTheWaitForTheConfig() async throws {
         let clock = TestClock()

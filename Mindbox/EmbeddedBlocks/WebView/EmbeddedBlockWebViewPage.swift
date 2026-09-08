@@ -22,7 +22,7 @@ final class EmbeddedBlockWebViewPage: NSObject, EmbeddedBlockPageHosting {
 
     var onShowableQuestion: (([String], @escaping ([String]) -> Void) -> Void)?
 
-    var onShowInAppRequest: ((String, [String: JSONValue]) -> Void)?
+    var onShowInAppRequest: ((String, [String: JSONValue], @escaping (Result<Void, ShowInAppRefusal>) -> Void) -> Void)?
 
     var onDataPushConfirmed: (() -> Void)?
 
@@ -139,8 +139,8 @@ extension EmbeddedBlockWebViewPage: WebBridgeHost {
         facade.sendToJS(message)
     }
 
-    func makeStartPayload() -> JSONValue {
-        facade.makeStartPayload()
+    func makeStartPayload(_ completion: @escaping (JSONValue) -> Void) {
+        facade.makeStartPayload(completion)
     }
 }
 
@@ -165,8 +165,10 @@ extension EmbeddedBlockWebViewPage: WebBridgeInappRequestHosting {
         onShowableQuestion?(ids, completion)
     }
 
-    func bridgeDidRequestShowInApp(id: String, params: [String: JSONValue]) {
-        onShowInAppRequest?(id, params)
+    func bridgeDidRequestShowInApp(id: String,
+                                   params: [String: JSONValue],
+                                   completion: @escaping (Result<Void, ShowInAppRefusal>) -> Void) {
+        onShowInAppRequest?(id, params, completion)
     }
 }
 
@@ -193,9 +195,7 @@ extension EmbeddedBlockWebViewPage: WebBridgeMessageDelegate {
             registerForBroadcasts()
         }
 
-        // An action nobody owns is not an error: the web vocabulary is allowed to be newer than
-        // the SDK. Messages that are not requests are the registry's to swallow — both hosts hand
-        // it everything the dispatcher matched.
+        // Journaling only: the dispatcher already refused an unknown action to the page.
         guard actionRegistry.handle(message, host: self) else {
             Logger.common(message: "[EmbeddedBlock] Unknown bridge action '\(message.action)'",
                           category: .embeddedBlocks)

@@ -114,6 +114,73 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.provider.contentView == nil)
     }
 
+    // MARK: - The place's slot
+
+    @Test("A block that started took the place's slot and keeps it while loading")
+    func loadingBlockKeepsTheSlot() {
+        let bed = EmbeddedBlockTestBed(placeSystemName: "promo")
+
+        bed.provider.start()
+
+        #expect(bed.budget.reservedOwners == [.place("promo")])
+        #expect(bed.budget.releases.isEmpty)
+    }
+
+    @Test("A paused block with content parked for its return still holds its attempt")
+    func pausedBlockWithParkedContentHoldsItsAttempt() {
+        let bed = EmbeddedBlockTestBed(resolution: .empty)
+        bed.provider.start()
+        bed.provider.stop()
+
+        bed.provider.apply(.content(.stub), processingDuration: 0)
+
+        #expect(bed.provider.holdsAnAttempt)
+    }
+
+    @Test("A page that failed to load gives the place's slot back")
+    func failedPageGivesTheSlotBack() {
+        let bed = EmbeddedBlockTestBed(placeSystemName: "promo")
+
+        bed.provider.start()
+        bed.page?.failLoad()
+
+        #expect(bed.budget.releases == [.place("promo")])
+    }
+
+    @Test("A page that drew nothing gives the place's slot back")
+    func emptyPageGivesTheSlotBack() {
+        let bed = EmbeddedBlockTestBed(placeSystemName: "promo")
+
+        bed.provider.start()
+        bed.page?.reportRendered(0)
+
+        #expect(bed.budget.releases == [.place("promo")])
+    }
+
+    @Test("A block leaving the screen keeps the place's slot")
+    func stoppedBlockKeepsTheSlot() {
+        let bed = EmbeddedBlockTestBed(placeSystemName: "promo")
+
+        bed.provider.start()
+        bed.provider.stop()
+
+        #expect(bed.budget.releases.isEmpty)
+    }
+
+    @Test("A torn-down or abandoned block gives the place's slot back", arguments: [true, false])
+    func goneBlockGivesTheSlotBack(isTornDown: Bool) {
+        let bed = EmbeddedBlockTestBed(placeSystemName: "promo")
+
+        bed.provider.start()
+        if isTornDown {
+            bed.provider.teardown()
+        } else {
+            bed.provider.abandonAttempt()
+        }
+
+        #expect(bed.budget.releases == [.place("promo")])
+    }
+
     // MARK: - Accounting for the show
 
     @Test("A block that drew its page hands the show to the accounting")
@@ -234,6 +301,25 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.accounting.shows.count == 1)
     }
 
+    @Test("A page that drew off screen is not accounted when another in-app waits for the block's return")
+    func offScreenRenderReplacedBeforeTheReturnIsNotAccounted() {
+        let bed = EmbeddedBlockTestBed(resolution: .content(.counted()))
+        bed.provider.start()
+        bed.provider.stop()
+        bed.page?.reportRendered(3)
+        bed.resolver.resolution = .content(.other)
+        bed.provider.apply(.content(.other), processingDuration: 0)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.start()
+
+        #expect(bed.accounting.shows.isEmpty)
+        #expect(states == [.loading])
+        #expect(bed.pageFactory.contents.last == .other)
+        #expect(bed.pageFactory.pages.count == 2)
+    }
+
     @Test("A page rebuilt for another in-app hands its show to the accounting again")
     func pageForAnotherInappIsHandedToAccountingAgain() {
         let bed = EmbeddedBlockTestBed()
@@ -345,6 +431,19 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(!bed.provider.isAwaitingDelayedContent)
     }
 
+    @Test("A delay announced while the page is loading leaves the page its own budget")
+    func delayAnnouncedWhileThePageLoadsIsIgnored() {
+        let bed = EmbeddedBlockTestBed()
+        var delayedCalls = 0
+        bed.provider.onContentDelayed = { delayedCalls += 1 }
+        bed.provider.start()
+
+        bed.provider.contentIsDelayed()
+
+        #expect(!bed.provider.isAwaitingDelayedContent)
+        #expect(delayedCalls == 0)
+    }
+
     @Test("A block the SDK never answered reports one failure without an in-app")
     func unansweredBlockReportsOneUnattributedFailure() {
         let bed = EmbeddedBlockTestBed()
@@ -451,6 +550,40 @@ struct EmbeddedBlockWebViewProviderTests {
         let show = try #require(bed.accounting.shows.first)
         #expect(show.frequency == EmbeddedBlockWebContent.counted().frequency)
         #expect(bed.page?.initDataPushes.isEmpty == true)
+    }
+
+    @Test("A config that empties the place drops the page still loading: its late report shows nothing")
+    func emptyAnswerWhileLoadingDropsThePage() {
+        let bed = EmbeddedBlockTestBed()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+        bed.provider.start()
+        let page = bed.page
+
+        bed.resolver.resolution = .empty
+        bed.announceNewConfig()
+        page?.reportRendered(1)
+
+        #expect(page?.isClosed == true)
+        #expect(states == [.loading, .empty])
+        #expect(bed.accounting.shows.isEmpty)
+        #expect(bed.provider.contentView == nil)
+    }
+
+    @Test("An empty answer after the page drew nothing drops that page too")
+    func emptyAnswerAfterAnEmptyPageDropsIt() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(0)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.apply(.empty, processingDuration: 0)
+        bed.page?.reportRendered(1)
+
+        #expect(bed.page?.isClosed == true)
+        #expect(states.isEmpty)
+        #expect(bed.accounting.shows.isEmpty)
     }
 
     // MARK: - The data push's confirmation
@@ -831,6 +964,33 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(states.isEmpty)
     }
 
+    @Test("The page hears the show's outcome once it is known, not on handover")
+    func pageHearsTheShowOutcome() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+
+        bed.page?.send(.showInApp, ["inappId": .string("story-id")])
+        #expect(bed.page?.showInAppResponses.isEmpty == true)
+        #expect(bed.page?.showInAppRefusals.isEmpty == true)
+
+        bed.inappService.finishShow(.success(()))
+
+        #expect(bed.page?.showInAppResponses == [.object(["success": .bool(true)])])
+    }
+
+    @Test("A show that failed reaches the page as its reason")
+    func failedShowReachesThePageAsItsReason() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+
+        bed.page?.send(.showInApp, ["inappId": .string("story-id")])
+        bed.inappService.finishShow(.failure(.showFailed))
+
+        #expect(bed.page?.showInAppRefusals == ["show_failed"])
+    }
+
     @Test("The params the page sent are passed on as they are")
     func paramsArePassedOnUntouched() {
         let bed = EmbeddedBlockTestBed()
@@ -843,8 +1003,8 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.inappService.shown.first?.params == params)
     }
 
-    @Test("A stopped block does not answer at all")
-    func stoppedBlockDoesNotAnswer() {
+    @Test("A stopped block's request is refused at the presence gate, before the block hears it")
+    func stoppedBlockIsRefusedAtThePresenceGate() {
         let bed = EmbeddedBlockTestBed()
 
         bed.provider.start()
@@ -852,10 +1012,11 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.page?.send(.showInApp, ["inappId": .string("story-id")])
 
         #expect(bed.inappService.shown.isEmpty)
+        #expect(bed.page?.showInAppRefusals == ["Nobody is looking at this page"])
     }
 
-    @Test("A block collapsed as empty does not act on a show request")
-    func emptyBlockDoesNotActOnShowInApp() {
+    @Test("A block collapsed as empty refuses a show request as source_dismissed")
+    func emptyBlockRefusesShowInApp() {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
 
@@ -863,10 +1024,11 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.page?.send(.showInApp, ["inappId": .string("story-id")])
 
         #expect(bed.inappService.shown.isEmpty)
+        #expect(bed.page?.showInAppRefusals == ["source_dismissed"])
     }
 
-    @Test("A failed block does not act on a show request")
-    func failedBlockDoesNotActOnShowInApp() {
+    @Test("A failed block refuses a show request as source_dismissed")
+    func failedBlockRefusesShowInApp() {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
 
@@ -874,10 +1036,11 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.page?.send(.showInApp, ["inappId": .string("story-id")])
 
         #expect(bed.inappService.shown.isEmpty)
+        #expect(bed.page?.showInAppRefusals == ["source_dismissed"])
     }
 
-    @Test("A block broken by an unreadable report does not act on a show request")
-    func brokenBlockDoesNotActOnShowInApp() {
+    @Test("A block broken by an unreadable report refuses a show request as source_dismissed")
+    func brokenBlockRefusesShowInApp() {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
 
@@ -885,6 +1048,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.page?.send(.showInApp, ["inappId": .string("story-id")])
 
         #expect(bed.inappService.shown.isEmpty)
+        #expect(bed.page?.showInAppRefusals == ["source_dismissed"])
     }
 
     @Test("A new attempt after a failure acts again")
@@ -1034,7 +1198,8 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.onStateChange = { states.append($0) }
         bed.provider.start()
 
-        #expect(states.first == .ready)
+        #expect(states == [.loading])
+        #expect(bed.accounting.shows.count == 1)
         #expect(bed.pageFactory.pages.count == 2)
         #expect(bed.pageFactory.contents.last == .other)
     }
@@ -1065,6 +1230,25 @@ struct EmbeddedBlockWebViewProviderTests {
 
         bed.provider.start()
 
+        #expect(bed.resolver.resolveCount == 2)
+    }
+
+    @Test("An empty answer parked for the return collapses the block without accounting the page that drew off screen")
+    func parkedEmptyAnswerCollapsesWithoutAShow() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.provider.stop()
+        bed.page?.reportRendered(1)
+        bed.resolver.resolution = .empty
+        bed.provider.apply(.empty, processingDuration: 0)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.start()
+
+        #expect(bed.accounting.shows.isEmpty)
+        #expect(states == [.empty])
+        #expect(bed.pageFactory.page?.isClosed == true)
         #expect(bed.resolver.resolveCount == 2)
     }
 
@@ -1130,6 +1314,28 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.ackScheduler.fire()
 
         #expect(bed.pageFactory.pages.count == 2)
+    }
+
+    @Test("A data push parked for the return is waited on once")
+    func parkedDataPushIsWaitedOnOnce() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.provider.stop()
+        let fresh = EmbeddedBlockWebContent(inAppId: EmbeddedBlockWebContent.stub.inAppId,
+                                            baseUrl: EmbeddedBlockWebContent.stub.baseUrl,
+                                            contentUrl: EmbeddedBlockWebContent.stub.contentUrl,
+                                            frequency: EmbeddedBlockWebContent.stub.frequency,
+                                            tags: EmbeddedBlockWebContent.stub.tags,
+                                            params: ["stories": .array([.string("one")])])
+        bed.resolver.resolution = .content(fresh)
+        bed.provider.apply(.content(fresh), processingDuration: 0)
+
+        bed.provider.start()
+
+        #expect(bed.page?.initDataPushes == [fresh.params])
+        #expect(bed.ackScheduler.scheduled.count == 1)
+        #expect(bed.accounting.shows.count == 1)
     }
 
     @Test("The confirmation wait resumes on its remainder, not on a full interval")

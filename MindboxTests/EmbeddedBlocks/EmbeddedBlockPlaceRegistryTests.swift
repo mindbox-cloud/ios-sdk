@@ -17,6 +17,7 @@ struct EmbeddedBlockPlaceRegistryTests {
 
     private final class BlockFake: EmbeddedBlockPlaceHandling {
         var isActive = true
+        var holdsAnAttempt = true
         private(set) var applied: [EmbeddedBlockResolution] = []
         private(set) var processingDurations: [TimeInterval] = []
         private(set) var delayedCount = 0
@@ -36,12 +37,16 @@ struct EmbeddedBlockPlaceRegistryTests {
         let center: NotificationCenter
         let embeddedPlaces: EmbeddedPlacesStub
         let delayScheduler: TestScheduler
+        let budget = InappShowBudgetMock()
         let registry: EmbeddedBlockPlaceRegistry
         var isInBackground = false
 
         init() {
-            // Served delays live on the shared session singleton — reset, or rigs would see each other's.
-            SessionTemporaryStorage.shared.$ledger.mutate { $0.servedPlaceDelays = [] }
+            // Served delays and shown slots live on the shared session singleton — reset, or rigs would see each other's.
+            SessionTemporaryStorage.shared.$ledger.mutate {
+                $0.servedPlaceDelays = []
+                $0.placeShownInappId = [:]
+            }
 
             let resolver = EmbeddedBlockResolverMock()
             let center = NotificationCenter()
@@ -53,6 +58,7 @@ struct EmbeddedBlockPlaceRegistryTests {
             self.delayScheduler = delayScheduler
             var background = { false }
             registry = EmbeddedBlockPlaceRegistry(resolver: resolver,
+                                                  budget: budget,
                                                   notificationCenter: center,
                                                   fetchEmbeddedPlaces: { embeddedPlaces.fetch($0) },
                                                   delayedDelivery: EmbeddedBlockDelayedDelivery(isInBackground: { background() },
@@ -499,6 +505,150 @@ struct EmbeddedBlockPlaceRegistryTests {
 
         #expect(block.applied.count == 2)
         #expect(block.delayedCount == 1)
+    }
+
+    // MARK: - The show budget
+
+    @Test("A winner takes the place's slot before it is delivered")
+    func winnerTakesThePlaceSlot() {
+        let rig = Rig()
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+
+        rig.registry.blockAppeared("stories")
+
+        #expect(rig.budget.reservations == [.init(owner: .place("stories"),
+                                                  inAppId: EmbeddedBlockWebContent.stub.inAppId,
+                                                  isPriority: false,
+                                                  frequency: .unlimited)])
+        #expect(block.applied == [.content(.stub)])
+    }
+
+    @Test("A winner the budget refuses is delivered as empty")
+    func refusedWinnerIsDeliveredAsEmpty() {
+        let rig = Rig()
+        rig.budget.refusedInAppIds = [EmbeddedBlockWebContent.stub.inAppId]
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+
+        rig.registry.blockAppeared("stories")
+
+        #expect(block.applied == [.empty])
+    }
+
+    @Test("An in-app the place already shows needs no new slot")
+    func shownInappNeedsNoSlot() {
+        let rig = Rig()
+        SessionTemporaryStorage.shared.$ledger.mutate { $0.placeShownInappId["stories"] = EmbeddedBlockWebContent.stub.inAppId }
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+
+        rig.registry.blockAppeared("stories")
+
+        #expect(rig.budget.reservations.isEmpty)
+        #expect(block.applied == [.content(.stub)])
+    }
+
+    @Test("A delayed winner takes its slot when the delay runs out, not before")
+    func delayedWinnerTakesItsSlotAfterTheDelay() {
+        let rig = Rig()
+        rig.resolver.resolution = .content(.delayed("00:00:05"))
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+
+        rig.registry.blockAppeared("stories")
+        #expect(rig.budget.reservations.isEmpty)
+
+        rig.delayScheduler.fireAll()
+
+        #expect(rig.budget.reservations.map(\.inAppId) == [EmbeddedBlockWebContent.delayed().inAppId])
+        #expect(block.applied == [.content(.delayed("00:00:05"))])
+    }
+
+    @Test("An empty answer gives the place's slot back")
+    func emptyAnswerGivesTheSlotBack() {
+        let rig = Rig()
+        rig.resolver.resolution = .empty
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+
+        rig.registry.blockAppeared("stories")
+
+        #expect(rig.budget.releases == [.place("stories")])
+    }
+
+    @Test("The slot is given back when the last attempt at the place has ended")
+    func slotIsGivenBackAfterTheLastAttempt() {
+        let rig = Rig()
+        let first = BlockFake()
+        let second = BlockFake()
+        rig.registry.register(first, place: "stories")
+        rig.registry.register(second, place: "stories")
+        rig.registry.blockAppeared("stories")
+
+        first.holdsAnAttempt = false
+        rig.registry.blockAttemptEnded("stories")
+        #expect(rig.budget.releases.isEmpty)
+
+        second.holdsAnAttempt = false
+        rig.registry.blockAttemptEnded("stories")
+
+        #expect(rig.budget.releases == [.place("stories")])
+    }
+
+    @Test("Content for a place whose blocks have given up gives the slot straight back")
+    func contentForAnAbandonedPlaceGivesTheSlotBack() {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+
+        block.isActive = false
+        block.holdsAnAttempt = false
+        rig.resolver.flush()
+
+        #expect(rig.budget.reservedOwners == [.place("stories")])
+        #expect(rig.budget.releases == [.place("stories")])
+    }
+
+    @Test("Content for a place whose blocks are gone gives the slot straight back")
+    func contentForAPlaceWithNoBlocksGivesTheSlotBack() {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        var block: BlockFake? = BlockFake()
+        if let block {
+            rig.registry.register(block, place: "stories")
+        }
+        rig.registry.blockAppeared("stories")
+
+        block = nil
+        rig.resolver.flush()
+
+        #expect(rig.budget.releases == [.place("stories")])
+    }
+
+    @Test("A block whose attempt ended off the main queue releases the place's slot on it")
+    func attemptEndedOffTheMainQueueReleasesOnIt() async {
+        let rig = Rig()
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+        block.holdsAnAttempt = false
+
+        nonisolated(unsafe) let registry = rig.registry
+        await withCheckedContinuation { continuation in
+            DispatchQueue.global().async {
+                registry.blockAttemptEnded("stories")
+                continuation.resume()
+            }
+        }
+        await withCheckedContinuation { continuation in
+            DispatchQueue.main.async { continuation.resume() }
+        }
+
+        #expect(rig.budget.releases == [.place("stories")])
+        #expect(rig.budget.releasedOnMainThread == [true])
     }
 
     // MARK: - Lifetime
