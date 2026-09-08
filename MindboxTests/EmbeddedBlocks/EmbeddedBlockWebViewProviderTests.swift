@@ -520,6 +520,40 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.page?.initDataPushes.isEmpty == true)
     }
 
+    @Test("A config that empties the place drops the page still loading: its late report shows nothing")
+    func emptyAnswerWhileLoadingDropsThePage() {
+        let bed = EmbeddedBlockTestBed()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+        bed.provider.start()
+        let page = bed.page
+
+        bed.resolver.resolution = .empty
+        bed.announceNewConfig()
+        page?.reportRendered(1)
+
+        #expect(page?.isClosed == true)
+        #expect(states == [.loading, .empty])
+        #expect(bed.accounting.shows.isEmpty)
+        #expect(bed.provider.contentView == nil)
+    }
+
+    @Test("An empty answer after the page drew nothing drops that page too")
+    func emptyAnswerAfterAnEmptyPageDropsIt() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(0)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.apply(.empty, processingDuration: 0)
+        bed.page?.reportRendered(1)
+
+        #expect(bed.page?.isClosed == true)
+        #expect(states.isEmpty)
+        #expect(bed.accounting.shows.isEmpty)
+    }
+
     // MARK: - The data push's confirmation
 
     @Test("A page that never confirms the data push is rebuilt")
