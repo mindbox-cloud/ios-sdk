@@ -395,16 +395,17 @@ struct InappScheduleManagerTests {
         #expect(failureManagerMock.addFailureCallCount == 0)
     }
     
-    @Test("In-app error callback sends buffered failures", .tags(.inAppSchedule))
-    func presentInapp_onError_sendsFailures() {
+    @Test("In-app error callback sends its own failure and leaves the buffer of other passes alone", .tags(.inAppSchedule))
+    func presentInapp_onError_sendsItsFailurePastTheBuffer() {
         let inapp = createInAppFormData(id: "error-id", isPriority: false, delayTime: nil)
 
         scheduleManager.presentInapp(inapp, stopwatch: ForegroundStopwatch())
         #expect(presentationManagerMock.presentCallsCount == 1)
-        #expect(failureManagerMock.sendFailuresCallCount == 0)
 
         presentationManagerMock.receivedOnError?(.failedToLoadWindow)
-        #expect(failureManagerMock.sendFailuresCallCount == 1)
+        #expect(failureManagerMock.sentFailures.map(\.inappId) == ["error-id"])
+        #expect(failureManagerMock.sendFailuresCallCount == 0)
+        #expect(failureManagerMock.addFailureCallCount == 0)
     }
 
     @Test("In-app error callback propagates the in-app tags into the show failure", .tags(.inAppSchedule, .inAppTags))
@@ -415,7 +416,7 @@ struct InappScheduleManagerTests {
         scheduleManager.presentInapp(inapp, stopwatch: ForegroundStopwatch())
         presentationManagerMock.receivedOnError?(.failedToLoadWindow)
 
-        #expect(failureManagerMock.addFailureCalls.first?.tags == tags)
+        #expect(failureManagerMock.sentFailures.first?.tags == tags)
     }
 
     @Test("In-app error callback maps error to show failure payload", .tags(.inAppSchedule))
@@ -435,10 +436,9 @@ struct InappScheduleManagerTests {
             scheduleManager.presentInapp(inapp, stopwatch: ForegroundStopwatch())
             presentationManagerMock.receivedOnError?(error)
 
-            #expect(failureManagerMock.addFailureCallCount == index + 1)
-            #expect(failureManagerMock.sendFailuresCallCount == index + 1)
+            #expect(failureManagerMock.sentFailures.count == index + 1)
 
-            let call = failureManagerMock.addFailureCalls[index]
+            let call = failureManagerMock.sentFailures[index]
             #expect(call.inappId == inapp.inAppId)
             #expect(call.reason == expectedReason)
             #expect(call.details == expectedDetails)
@@ -465,9 +465,8 @@ struct InappScheduleManagerTests {
         presentationManagerMock.receivedOnError?(.failed("first-error"))
         presentationManagerMock.receivedOnError?(.failed("second-error"))
 
-        #expect(failureManagerMock.addFailureCallCount == 1)
-        #expect(failureManagerMock.sendFailuresCallCount == 1)
-        #expect(failureManagerMock.addFailureCalls.first?.details == "first-error")
+        #expect(failureManagerMock.sentFailures.count == 1)
+        #expect(failureManagerMock.sentFailures.first?.details == "first-error")
     }
 
     private final class DelegateSpy: InAppMessagesDelegate {
@@ -711,7 +710,7 @@ struct InappScheduleManagerTests {
         presentationManagerMock.receivedOnError?(.webviewPresentationFailed("bridge gone"))
 
         #expect(outcomes.count == 1)
-        #expect(failureManagerMock.addFailureCallCount == 1)
+        #expect(failureManagerMock.sentFailures.count == 1)
     }
 
     @Test("A window reporting itself on screen twice is one show and one answer", .tags(.inAppSchedule))
@@ -782,8 +781,8 @@ struct InappScheduleManagerTests {
         await showNowAndAwaitMainQueue(manager, inapp)
         presentationManagerMock.receivedOnError?(.failed("no window"))
 
-        #expect(failureManagerMock.addFailureCallCount == 1)
-        #expect(failureManagerMock.sendFailuresCallCount == 1)
+        #expect(failureManagerMock.sentFailures.count == 1)
+        #expect(failureManagerMock.sendFailuresCallCount == 0)
         #expect(!SessionTemporaryStorage.shared.isPresentingInAppMessage)
     }
 
@@ -1099,6 +1098,7 @@ final class InappShowFailureManagerMock: InappShowFailureManagerProtocol {
     @Locked private(set) var waitBudgetExceeded: [(place: String, waited: TimeInterval, phase: EmbeddedBlockShowFailure.Phase)] = []
     @Locked private(set) var addFailureCalls: [AddFailureCall] = []
     @Locked private(set) var sentAtOnce: [AddFailureCall] = []
+    @Locked private(set) var sentFailures: [AddFailureCall] = []
 
     func addFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?) {
         addFailureCallCount += 1
@@ -1107,6 +1107,10 @@ final class InappShowFailureManagerMock: InappShowFailureManagerProtocol {
 
     func sendBlockFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?) {
         sentAtOnce.append(AddFailureCall(inappId: inappId, reason: reason, details: details, tags: tags))
+    }
+
+    func sendFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?) {
+        sentFailures.append(AddFailureCall(inappId: inappId, reason: reason, details: details, tags: tags))
     }
 
     func sendFailures() {

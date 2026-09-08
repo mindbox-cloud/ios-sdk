@@ -380,6 +380,39 @@ final class InappShowFailureManagerTests: XCTestCase {
         assertCreatedEventsCountEventually(0)
     }
 
+    // MARK: - sendFailure: past the buffer, every time
+
+    func testSendFailure_leavesTheBufferIntact() throws {
+        manager.addFailure(inappId: "inapp-1", reason: .geoRequestFailed, details: "geo down", tags: nil)
+
+        manager.sendFailure(inappId: "inapp-2", reason: .presentationFailed, details: "no window", tags: nil)
+
+        assertCreatedEventsCountEventually(1)
+        let first = try XCTUnwrap(databaseRepository.createdEvents.first)
+        XCTAssertEqual(try XCTUnwrap(decodeFailures(from: first)).map(\.inappId), ["inapp-2"])
+
+        manager.sendFailures()
+
+        assertCreatedEventsCountEventually(2)
+        let second = try XCTUnwrap(databaseRepository.createdEvents.last)
+        XCTAssertEqual(try XCTUnwrap(decodeFailures(from: second)).map(\.failureReason), [.geoRequestFailed])
+    }
+
+    func testSendFailure_isSentEveryTime() {
+        manager.sendFailure(inappId: "inapp-1", reason: .presentationFailed, details: nil, tags: nil)
+        manager.sendFailure(inappId: "inapp-1", reason: .presentationFailed, details: nil, tags: nil)
+
+        assertCreatedEventsCountEventually(2)
+    }
+
+    func testSendFailure_whenFeatureDisabled_sendsNothing() {
+        applyFeatureToggle(shouldSendInAppShowError: false)
+
+        manager.sendFailure(inappId: "inapp-1", reason: .presentationFailed, details: nil, tags: nil)
+
+        assertCreatedEventsCountEventually(0)
+    }
+
     func testErrorDetailsLimit_matchesTheLimitTheBackendAccepts() {
         XCTAssertEqual(InappShowFailureManager.errorDetailsLimit, 1000)
     }

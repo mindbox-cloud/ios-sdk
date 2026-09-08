@@ -51,6 +51,8 @@ final class MockInappShowFailureManager: InappShowFailureManagerProtocol {
 
     func sendBlockFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?) {}
 
+    func sendFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?) {}
+
     func sendFailures() {}
 
     private(set) var clearFailuresCallCount = 0
