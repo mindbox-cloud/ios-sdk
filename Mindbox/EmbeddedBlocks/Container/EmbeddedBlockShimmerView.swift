@@ -8,48 +8,74 @@
 
 import UIKit
 
-/// The default embedded block placeholder — a neutral tile with a sweeping highlight.
-///
-/// Fills the container entirely: the SDK knows nothing about the layout of the content to come, so
-/// the placeholder does not depict it and simply marks the reserved spot as "loading". A host that
-/// needs a skeleton of its own layout sets the container's `placeholderView`.
 final class EmbeddedBlockShimmerView: UIView {
 
-    private enum Shimmer {
-        static let animationKey = "embeddedBlockShimmer"
-        static let animationDuration: CFTimeInterval = 1.4
+    /// Positions are fractions of the block's width.
+    enum Design {
 
-        /// Outside 0…1 on purpose: fully off the leading edge at rest, off the trailing one once swept.
-        static let restingLocations: [NSNumber] = [-1.0, -0.5, 0.0]
-        static let sweptLocations: [NSNumber] = [1.0, 1.5, 2.0]
-    }
+        static let lightTint = UIColor(red: 0x28 / 255.0, green: 0x2A / 255.0, blue: 0x2F / 255.0, alpha: 1.0)
+        static let darkTint = UIColor.white
 
-    private let gradientLayer = CAGradientLayer()
+        static let restingAlpha: CGFloat = 0.08
+        static let lightHighlightAlpha: CGFloat = 0.04
+        static let darkHighlightAlpha: CGFloat = 0.16
 
-    private var baseColor: UIColor {
-        if #available(iOS 13.0, *) {
-            return .systemGray5
+        static let stops: [CGFloat] = [0.0, 0.4, 0.5, 0.6, 1.0]
+        static let layerWidth: CGFloat = 2.96
+        static let startX: CGFloat = -1.88
+        static let endX: CGFloat = -0.083
+
+        static let pauseAtStart: CFTimeInterval = 0.6
+        static let sweepDuration: CFTimeInterval = 1.0
+        static let pauseAtEnd: CFTimeInterval = 0.6
+
+        static var cycleDuration: CFTimeInterval { pauseAtStart + sweepDuration + pauseAtEnd }
+
+        static func locations(forLayerAt x: CGFloat) -> [CGFloat] {
+            stops.map { x + layerWidth * $0 }
         }
-        return UIColor(white: 0.90, alpha: 1.0)
-    }
 
-    /// Lighter than the base in both appearances, which the system grays do not give for free: their
-    /// order flips in the dark, where `systemGray6` is the closest one to black.
-    private var highlightColor: UIColor {
-        if #available(iOS 13.0, *) {
-            return UIColor { $0.userInterfaceStyle == .dark ? .systemGray4 : .systemGray6 }
+        static var startLocations: [CGFloat] { locations(forLayerAt: startX) }
+
+        static var endLocations: [CGFloat] { locations(forLayerAt: endX) }
+
+        static func alphas(isDark: Bool) -> [CGFloat] {
+            let highlight = isDark ? darkHighlightAlpha : lightHighlightAlpha
+            return [restingAlpha, restingAlpha, highlight, restingAlpha, restingAlpha]
         }
-        return UIColor(white: 0.96, alpha: 1.0)
+
+        static func colors(isDark: Bool) -> [CGColor] {
+            let tint = isDark ? darkTint : lightTint
+            return alphas(isDark: isDark).map { tint.withAlphaComponent($0).cgColor }
+        }
     }
 
-    override init(frame: CGRect) {
+    /// One per process so every shimmer on screen sweeps in the same phase.
+    static let beatEpoch: CFTimeInterval = CACurrentMediaTime()
+
+    static let animationKey = "embeddedBlockShimmer"
+
+    let gradientLayer = CAGradientLayer()
+
+    private let notificationCenter: NotificationCenter
+
+    private var isDarkAppearance: Bool {
+        traitCollection.userInterfaceStyle == .dark
+    }
+
+    init(frame: CGRect = .zero, notificationCenter: NotificationCenter = .default) {
+        self.notificationCenter = notificationCenter
         super.init(frame: frame)
         setUp()
     }
 
+    @available(*, unavailable, message: "The shimmer is not created from storyboards")
     required init?(coder: NSCoder) {
-        super.init(coder: coder)
-        setUp()
+        return nil
+    }
+
+    deinit {
+        notificationCenter.removeObserver(self)
     }
 
     override func layoutSubviews() {
@@ -74,48 +100,61 @@ final class EmbeddedBlockShimmerView: UIView {
 
     private func setUp() {
         isUserInteractionEnabled = false
+        backgroundColor = .clear
 
+        gradientLayer.actions = ["bounds": NSNull(), "position": NSNull()]
         gradientLayer.startPoint = CGPoint(x: 0.0, y: 0.5)
         gradientLayer.endPoint = CGPoint(x: 1.0, y: 0.5)
-        gradientLayer.locations = Shimmer.restingLocations
+        gradientLayer.locations = Design.startLocations.map { NSNumber(value: Double($0)) }
         applyColors()
         layer.addSublayer(gradientLayer)
 
-        NotificationCenter.default.addObserver(self,
-                                               selector: #selector(applicationWillEnterForeground),
-                                               name: UIApplication.willEnterForegroundNotification,
-                                               object: nil)
-    }
-
-    deinit {
-        NotificationCenter.default.removeObserver(self)
+        notificationCenter.addObserver(self,
+                                       selector: #selector(applicationWillEnterForeground),
+                                       name: UIApplication.willEnterForegroundNotification,
+                                       object: nil)
     }
 
     private func applyColors() {
-        gradientLayer.colors = [
-            baseColor.cgColor,
-            highlightColor.cgColor,
-            baseColor.cgColor
-        ]
+        gradientLayer.colors = Design.colors(isDark: isDarkAppearance)
     }
 
     private func startShimmering() {
-        guard gradientLayer.animation(forKey: Shimmer.animationKey) == nil else { return }
+        guard gradientLayer.animation(forKey: Self.animationKey) == nil else { return }
 
-        let animation = CABasicAnimation(keyPath: "locations")
-        animation.fromValue = Shimmer.restingLocations
-        animation.toValue = Shimmer.sweptLocations
-        animation.duration = Shimmer.animationDuration
-        animation.repeatCount = .infinity
-        gradientLayer.add(animation, forKey: Shimmer.animationKey)
+        gradientLayer.add(Self.makeSweep(beginningAt: gradientLayer.convertTime(Self.beatEpoch, from: nil)),
+                          forKey: Self.animationKey)
     }
 
     private func stopShimmering() {
-        gradientLayer.removeAnimation(forKey: Shimmer.animationKey)
+        gradientLayer.removeAnimation(forKey: Self.animationKey)
     }
 
-    /// The system removes infinite CA animations when the app goes to the background — after
-    /// coming back the highlight has to be started again.
+    static func makeSweep(beginningAt beginTime: CFTimeInterval) -> CAKeyframeAnimation {
+        let start = Design.startLocations.map { NSNumber(value: Double($0)) }
+        let end = Design.endLocations.map { NSNumber(value: Double($0)) }
+        let cycle = Design.cycleDuration
+
+        let animation = CAKeyframeAnimation(keyPath: "locations")
+        animation.values = [start, start, end, end]
+        animation.keyTimes = [
+            0.0,
+            NSNumber(value: Design.pauseAtStart / cycle),
+            NSNumber(value: (Design.pauseAtStart + Design.sweepDuration) / cycle),
+            1.0
+        ]
+        animation.timingFunctions = [
+            CAMediaTimingFunction(name: .linear),
+            CAMediaTimingFunction(name: .easeIn),
+            CAMediaTimingFunction(name: .linear)
+        ]
+        animation.duration = cycle
+        animation.repeatCount = .infinity
+        animation.beginTime = beginTime
+        return animation
+    }
+
+    // The system drops infinite animations while the app is in the background.
     @objc
     private func applicationWillEnterForeground() {
         guard window != nil else { return }
