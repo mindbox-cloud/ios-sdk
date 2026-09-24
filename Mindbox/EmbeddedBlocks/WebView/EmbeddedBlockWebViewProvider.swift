@@ -81,10 +81,7 @@ final class EmbeddedBlockWebViewProvider {
 
     private var ackBudget: EmbeddedBlockAckBudget
 
-    private var pendingFailureReport: (inAppId: String,
-                                       tags: [String: String]?,
-                                       reason: InAppShowFailureReason,
-                                       details: String)?
+    private var pendingFailureReport: EmbeddedBlockResolutionFailure?
 
     private var pendingResolution: (resolution: EmbeddedBlockResolution, processingDuration: TimeInterval)?
 
@@ -479,7 +476,7 @@ final class EmbeddedBlockWebViewProvider {
         guard isStarted else {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': \(reason.rawValue) for in-app \(inAppId) happened off screen — held until the block is looked at",
                           category: .embeddedBlocks)
-            pendingFailureReport = (inAppId, tags, reason, details)
+            pendingFailureReport = EmbeddedBlockResolutionFailure(inAppId: inAppId, tags: tags, reason: reason, details: details)
             return
         }
 
