@@ -97,7 +97,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.start()
         bed.page?.reportRenderedWithoutCount()
 
-        #expect(states.last == .failed)
+        #expect(states.last == .failed(.internalError))
         #expect(bed.provider.contentView == nil)
     }
 
@@ -230,7 +230,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.start()
         bed.page?.reportRendered(-1)
 
-        #expect(states.last == .failed)
+        #expect(states.last == .failed(.internalError))
         #expect(bed.accounting.shows.isEmpty)
         #expect(bed.failureReporter.reasons == [.presentationFailed])
     }
@@ -359,7 +359,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.start()
         bed.page?.failLoad()
 
-        #expect(states == [.loading, .failed])
+        #expect(states == [.loading, .failed(.networkError)])
         #expect(bed.provider.contentView == nil)
     }
 
@@ -405,7 +405,7 @@ struct EmbeddedBlockWebViewProviderTests {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
 
-        bed.provider.reportPageTimedOut()
+        bed.provider.failSilentPage()
 
         #expect(bed.failureReporter.reasons == [.presentationFailed])
     }
@@ -450,7 +450,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.resolver.isDeferred = true
         bed.provider.start()
 
-        bed.provider.reportAnswerTimedOut(waited: 30)
+        bed.provider.failUnanswered(waited: 30)
 
         #expect(bed.failureReporter.unansweredWaits == [30])
         #expect(bed.failureReporter.reported.isEmpty)
@@ -462,8 +462,8 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.resolver.isDeferred = true
         bed.provider.start()
 
-        bed.provider.reportAnswerTimedOut(waited: 30)
-        bed.provider.reportAnswerTimedOut(waited: 30)
+        bed.provider.failUnanswered(waited: 30)
+        bed.provider.failUnanswered(waited: 30)
 
         #expect(bed.failureReporter.unansweredWaits.count == 1)
     }
@@ -473,8 +473,8 @@ struct EmbeddedBlockWebViewProviderTests {
         let first = EmbeddedBlockTestBed(placeSystemName: "first-place")
         let second = EmbeddedBlockTestBed(placeSystemName: "second-place")
 
-        first.provider.reportAnswerTimedOut(waited: 30)
-        second.provider.reportAnswerTimedOut(waited: 30)
+        first.provider.failUnanswered(waited: 30)
+        second.provider.failUnanswered(waited: 30)
 
         #expect(first.failureReporter.unansweredWaits.count == 1)
         #expect(second.failureReporter.unansweredWaits.count == 1)
@@ -485,9 +485,151 @@ struct EmbeddedBlockWebViewProviderTests {
         let bed = EmbeddedBlockTestBed(resolution: .empty)
         bed.provider.start()
 
-        bed.provider.reportPageTimedOut()
+        bed.provider.failSilentPage()
 
         #expect(bed.failureReporter.reported.isEmpty)
+    }
+
+    @Test("A silent page fails the block as internalError")
+    func silentPageFailsAsContentFailed() {
+        let bed = EmbeddedBlockTestBed()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+        bed.provider.start()
+
+        bed.provider.failSilentPage()
+
+        #expect(states == [.loading, .failed(.internalError)])
+        #expect(bed.provider.contentView == nil)
+        #expect(bed.page?.cancelCount == 1)
+    }
+
+    @Test("An unanswered block fails as networkError every time, whatever the analytics already heard")
+    func unansweredBlockFailsAsNoResponseEveryTime() {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.isDeferred = true
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.start()
+        bed.provider.failUnanswered(waited: 30)
+        bed.provider.start()
+        bed.provider.failUnanswered(waited: 30)
+
+        #expect(states == [.loading, .failed(.networkError), .loading, .failed(.networkError)])
+        #expect(bed.failureReporter.unansweredWaits == [30])
+    }
+
+    @Test("A broken winner fails the block as internalError and reports unknown_error")
+    func brokenWinnerFailsAsInternalError() {
+        let bed = EmbeddedBlockTestBed(resolution: .failure(.broken))
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.start()
+
+        #expect(states == [.loading, .failed(.internalError)])
+        #expect(bed.pageFactory.pages.isEmpty)
+        #expect(bed.provider.contentView == nil)
+        #expect(bed.failureReporter.reasons == [.unknownError])
+        #expect(bed.failureReporter.reported.first?.inAppId == "broken-inapp-id")
+        #expect(bed.failureReporter.reported.first?.tags == ["templateType": "Broken"])
+        #expect(bed.failureReporter.reported.first?.details == EmbeddedBlockResolutionFailure.broken.details)
+    }
+
+    @Test("The same broken winner asked again is neither re-reported nor re-announced")
+    func sameBrokenWinnerAskedAgainIsSilent() {
+        let bed = EmbeddedBlockTestBed(resolution: .failure(.broken))
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+        bed.provider.start()
+
+        bed.announceNewConfig()
+
+        #expect(states == [.loading, .failed(.internalError)])
+        #expect(bed.failureReporter.reasons == [.unknownError])
+    }
+
+    @Test("A broken winner arriving while the block is paused is applied on return")
+    func brokenWinnerWhilePausedIsAppliedOnReturn() {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.isDeferred = true
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+        bed.provider.start()
+        bed.provider.stop()
+
+        bed.resolver.resolution = .failure(.broken)
+        bed.resolver.flush()
+
+        #expect(states == [.loading])
+        #expect(bed.failureReporter.reported.isEmpty)
+
+        bed.provider.start()
+
+        #expect(states == [.loading, .failed(.internalError)])
+        #expect(bed.failureReporter.reasons == [.unknownError])
+    }
+
+    @Test("A broken winner replacing shown content drops the page")
+    func brokenWinnerDropsTheShownPage() {
+        let bed = EmbeddedBlockTestBed()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+
+        bed.resolver.resolution = .failure(.broken)
+        bed.announceNewConfig()
+
+        #expect(states == [.loading, .ready, .failed(.internalError)])
+        #expect(bed.provider.contentView == nil)
+        #expect(bed.pageFactory.pages.first?.cancelCount == 1)
+    }
+
+    @Test("An unavailable config fails the block as networkError and reports the unanswered wait")
+    func unavailableConfigFailsAsNetworkError() {
+        let bed = EmbeddedBlockTestBed(resolution: .configUnavailable)
+        bed.resolver.processingDuration = 1.5
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.start()
+
+        #expect(states == [.loading, .failed(.networkError)])
+        #expect(bed.pageFactory.pages.isEmpty)
+        #expect(bed.provider.contentView == nil)
+        #expect(bed.failureReporter.unansweredWaits == [1.5])
+        #expect(bed.failureReporter.reported.isEmpty)
+    }
+
+    @Test("An unavailable config asked again in the session fails again but reports once")
+    func unavailableConfigAskedAgainReportsOnce() {
+        let bed = EmbeddedBlockTestBed(resolution: .configUnavailable)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+        bed.provider.start()
+
+        bed.provider.stop()
+        bed.provider.start()
+
+        #expect(states == [.loading, .failed(.networkError), .loading, .failed(.networkError)])
+        #expect(bed.failureReporter.unansweredWaits.count == 1)
+    }
+
+    @Test("A config arriving after an unavailable one revives the block")
+    func configArrivingAfterUnavailableRevivesTheBlock() {
+        let bed = EmbeddedBlockTestBed(resolution: .configUnavailable)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+        bed.provider.start()
+
+        bed.resolver.resolution = .content(.stub)
+        bed.announceNewConfig()
+        bed.page?.reportRendered(1)
+
+        #expect(states == [.loading, .failed(.networkError), .loading, .ready])
+        #expect(bed.provider.contentView != nil)
     }
 
     @Test("A page that drew nothing reports nothing")

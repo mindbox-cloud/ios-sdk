@@ -20,13 +20,19 @@ import SwiftUI
 /// A different `placeSystemName` is a different block, built from scratch in place of the old one.
 /// A different `height` resizes the block where it stands — the same content, no reload.
 ///
-/// Both outcomes can be customized the same way as in UIKit, through modifiers on the block
+/// Both looks can be customized the same way as in UIKit, through modifiers on the block
 /// itself: `placeholder` replaces the stock loading shimmer, and `errorView` opts into showing a
 /// failure instead of collapsing. Both stay ordinary SwiftUI views drawn in place, so they see the
 /// environment of the tree they were written in — objects, fonts, locale, color scheme.
 ///
+/// The outcome arrives through three closures: `onLoad` when the content is shown, `onEmpty` when
+/// there is nothing to show at the place, and `onFail` with a reason when the block could not be
+/// shown.
+///
 /// ```swift
-/// MindboxEmbeddedBlock(placeSystemName: "stories", height: 104, onFail: hideSection)
+/// MindboxEmbeddedBlock(placeSystemName: "stories", height: 104,
+///                      onEmpty: hideSection,
+///                      onFail: { reason in log("stories failed: \(reason)") })
 ///     .placeholder { StoriesSkeleton() }
 ///     .errorView { StoriesUnavailable() }
 /// ```
@@ -35,8 +41,8 @@ import SwiftUI
 /// `.frame(…)` or `.padding(…)` the value is no longer a `MindboxEmbeddedBlock`.
 ///
 /// A collapsed block is zero points tall, but a stack still pays its spacing around it. To hand the
-/// space back completely, drop the whole section from the layout in `onFail` — as in the example
-/// above.
+/// space back completely, drop the whole section from the layout in `onEmpty` — as in the example
+/// above — and in `onFail` when no `errorView` is set.
 @available(iOS 13.0, *)
 public struct MindboxEmbeddedBlock: View {
 
@@ -44,7 +50,8 @@ public struct MindboxEmbeddedBlock: View {
     private let height: CGFloat
     private let timeout: TimeInterval?
     private let onLoad: (() -> Void)?
-    private let onFail: (() -> Void)?
+    private let onEmpty: (() -> Void)?
+    private let onFail: ((MindboxEmbeddedBlockFailReason) -> Void)?
 
     private(set) var placeholderBuilder: (() -> AnyView)?
     private(set) var errorBuilder: (() -> AnyView)?
@@ -54,23 +61,29 @@ public struct MindboxEmbeddedBlock: View {
     ///     it is ignored; the name itself is matched as it is, case included.
     ///   - height: The height the block occupies while loading and shown. A new value resizes the
     ///     block in place, without reloading its content.
-    ///   - timeout: How long the block waits to learn what it shows before collapsing as
-    ///     empty, in seconds. `nil` means the SDK default of 30. An answer that arrives after that
-    ///     no longer expands the block; the next attempt starts when the block enters the window
-    ///     again.
+    ///   - timeout: How long the block waits to learn what it shows before failing as
+    ///     `networkError`, in seconds. `nil` means the SDK default of 30. An answer that arrives after
+    ///     that no longer expands the block; the next attempt starts when the block enters the
+    ///     window again.
     ///   - onLoad: The block content is shown and the container is visible.
-    ///   - onFail: The block cannot be shown — a failure or an empty block.
+    ///   - onEmpty: There is nothing to show at the place — no campaign, targeting or A/B group not
+    ///     matched, show budget spent, or the page rendered nothing. The block collapses; `errorView`
+    ///     does not apply.
+    ///   - onFail: The block could not be shown. The block collapses or shows `errorView`. The
+    ///     reason is for logs and analytics — match it with a `default`, a later SDK may add reasons.
     public init(placeSystemName: String,
                 height: CGFloat,
                 timeout: TimeInterval? = nil,
                 onLoad: (() -> Void)? = nil,
-                onFail: (() -> Void)? = nil) {
+                onEmpty: (() -> Void)? = nil,
+                onFail: ((MindboxEmbeddedBlockFailReason) -> Void)? = nil) {
         // Normalized here too, so `.id(placeSystemName)` keeps one SwiftUI identity per place
         // however the name was padded.
         self.placeSystemName = MindboxEmbeddedBlockView.normalizedPlaceSystemName(placeSystemName)
         self.height = height
         self.timeout = timeout
         self.onLoad = onLoad
+        self.onEmpty = onEmpty
         self.onFail = onFail
     }
 
@@ -98,6 +111,7 @@ public struct MindboxEmbeddedBlock: View {
                           height: height,
                           timeout: timeout,
                           onLoad: onLoad,
+                          onEmpty: onEmpty,
                           onFail: onFail,
                           placeholder: placeholderBuilder,
                           errorContent: errorBuilder)
@@ -112,7 +126,8 @@ private struct EmbeddedBlockBody: View {
     let height: CGFloat
     let timeout: TimeInterval?
     let onLoad: (() -> Void)?
-    let onFail: (() -> Void)?
+    let onEmpty: (() -> Void)?
+    let onFail: ((MindboxEmbeddedBlockFailReason) -> Void)?
     let placeholder: (() -> AnyView)?
     let errorContent: (() -> AnyView)?
 
@@ -122,13 +137,15 @@ private struct EmbeddedBlockBody: View {
          height: CGFloat,
          timeout: TimeInterval?,
          onLoad: (() -> Void)?,
-         onFail: (() -> Void)?,
+         onEmpty: (() -> Void)?,
+         onFail: ((MindboxEmbeddedBlockFailReason) -> Void)?,
          placeholder: (() -> AnyView)?,
          errorContent: (() -> AnyView)?) {
         self.placeSystemName = placeSystemName
         self.height = height
         self.timeout = timeout
         self.onLoad = onLoad
+        self.onEmpty = onEmpty
         self.onFail = onFail
         self.placeholder = placeholder
         self.errorContent = errorContent
@@ -142,6 +159,7 @@ private struct EmbeddedBlockBody: View {
                                        timeout: timeout,
                                        appearance: $appearance,
                                        onLoad: onLoad,
+                                       onEmpty: onEmpty,
                                        onFail: onFail,
                                        hasPlaceholder: placeholder != nil,
                                        hasErrorView: errorContent != nil)
@@ -176,7 +194,8 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
     @Binding var appearance: MindboxEmbeddedBlockAppearance
 
     let onLoad: (() -> Void)?
-    let onFail: (() -> Void)?
+    let onEmpty: (() -> Void)?
+    let onFail: ((MindboxEmbeddedBlockFailReason) -> Void)?
 
     let hasPlaceholder: Bool
     let hasErrorView: Bool
@@ -184,6 +203,7 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
     func makeCoordinator() -> Coordinator {
         Coordinator(appearance: $appearance,
                     onLoad: onLoad,
+                    onEmpty: onEmpty,
                     onFail: onFail)
     }
 
@@ -202,6 +222,7 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
         let coordinator = context.coordinator
         coordinator.appearance = $appearance
         coordinator.onLoad = onLoad
+        coordinator.onEmpty = onEmpty
         coordinator.onFail = onFail
         uiView.preferredHeight = height
         syncStandIns(in: uiView)
@@ -242,7 +263,8 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
 
         var appearance: Binding<MindboxEmbeddedBlockAppearance>
         var onLoad: (() -> Void)?
-        var onFail: (() -> Void)?
+        var onEmpty: (() -> Void)?
+        var onFail: ((MindboxEmbeddedBlockFailReason) -> Void)?
 
         private var isDetached = false
 
@@ -251,10 +273,12 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
 
         init(appearance: Binding<MindboxEmbeddedBlockAppearance>,
              onLoad: (() -> Void)?,
-             onFail: (() -> Void)?,
+             onEmpty: (() -> Void)?,
+             onFail: ((MindboxEmbeddedBlockFailReason) -> Void)?,
              schedule: @escaping (@escaping () -> Void) -> Void = { work in DispatchQueue.main.async { work() } }) {
             self.appearance = appearance
             self.onLoad = onLoad
+            self.onEmpty = onEmpty
             self.onFail = onFail
             self.schedule = schedule
         }
@@ -277,8 +301,13 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
             onLoad?()
         }
 
-        func mindboxEmbeddedBlockViewDidFail(_ blockView: MindboxEmbeddedBlockView) {
-            onFail?()
+        func mindboxEmbeddedBlockViewDidBecomeEmpty(_ blockView: MindboxEmbeddedBlockView) {
+            onEmpty?()
+        }
+
+        func mindboxEmbeddedBlockViewDidFail(_ blockView: MindboxEmbeddedBlockView,
+                                             reason: MindboxEmbeddedBlockFailReason) {
+            onFail?(reason)
         }
     }
 }

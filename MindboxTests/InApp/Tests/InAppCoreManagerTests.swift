@@ -23,8 +23,8 @@ struct InAppCoreManagerTests {
         }
         func selectInappForPlace(_ place: String,
                                  trigger: ApplicationEvent?,
-                                 _ completion: @escaping (InAppTransitionData?, TimeInterval) -> Void) {
-            completion(nil, 0)
+                                 _ completion: @escaping (EmbeddedPlaceSelection, TimeInterval) -> Void) {
+            completion(.decided(nil), 0)
         }
         func getInAppById(_ id: String, _ completion: @escaping (InAppTransitionData?) -> Void) {
             completion(nil)
