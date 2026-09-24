@@ -105,4 +105,103 @@ struct EmbeddedBlockLayerHostTests {
         #expect(layer.superview === container)
         #expect(container.constraints.count == 4)
     }
+
+    // MARK: - The fade
+
+    @Test("An animated show fades the new view in over the previous one, which leaves when the fade ends")
+    func animatedShowFadesInAndDropsThePreviousWhenTheFadeEnds() {
+        let container = UIView()
+        let spy = EmbeddedBlockRevealAnimationSpy()
+        spy.isDeferred = true
+        let host = EmbeddedBlockLayerHost(container: container, animation: spy.animation)
+        let first = UIView()
+        let second = UIView()
+
+        host.show(first)
+        host.show(second, animated: true)
+
+        // Both are on screen while the fade runs, the new one on top; its model alpha is already 1.
+        #expect(container.subviews == [first, second])
+        #expect(second.alpha == 1)
+        #expect(spy.runs == [Constants.EmbeddedBlock.revealAnimationDuration])
+
+        spy.finish()
+
+        #expect(first.superview == nil)
+        #expect(container.subviews == [second])
+        #expect(container.constraints.count == 4)
+    }
+
+    @Test("An animated show with nothing to replace fades the view in alone")
+    func animatedShowWithoutAPreviousViewFadesInAlone() {
+        let container = UIView()
+        let spy = EmbeddedBlockRevealAnimationSpy()
+        let host = EmbeddedBlockLayerHost(container: container, animation: spy.animation)
+        let layer = UIView()
+
+        host.show(layer, animated: true)
+
+        #expect(container.subviews == [layer])
+        #expect(spy.runs.count == 1)
+        #expect(container.constraints.count == 4)
+    }
+
+    @Test("A show interrupting a fade removes the fading view at once")
+    func showInterruptingAFadeRemovesTheFadingViewAtOnce() {
+        let container = UIView()
+        let spy = EmbeddedBlockRevealAnimationSpy()
+        spy.isDeferred = true
+        let host = EmbeddedBlockLayerHost(container: container, animation: spy.animation)
+        let first = UIView()
+        let second = UIView()
+        let third = UIView()
+
+        host.show(first)
+        host.show(second, animated: true)
+        host.show(third)
+        spy.finish()
+
+        #expect(first.superview == nil)
+        #expect(second.superview == nil)
+        #expect(container.subviews == [third])
+        #expect(container.constraints.count == 4)
+    }
+
+    @Test("Showing nothing during a fade removes both views")
+    func showingNothingDuringAFadeRemovesBothViews() {
+        let container = UIView()
+        let spy = EmbeddedBlockRevealAnimationSpy()
+        spy.isDeferred = true
+        let host = EmbeddedBlockLayerHost(container: container, animation: spy.animation)
+        let first = UIView()
+        let second = UIView()
+
+        host.show(first)
+        host.show(second, animated: true)
+        host.show(nil)
+        spy.finish()
+
+        #expect(container.subviews.isEmpty)
+        #expect(container.constraints.isEmpty)
+    }
+
+    /// A late completion of a fade that was already cut short must not remove the view that replaced it.
+    @Test("A fade cut short by another fade does not remove the newer view when it ends")
+    func cutShortFadeDoesNotRemoveTheNewerView() {
+        let container = UIView()
+        let spy = EmbeddedBlockRevealAnimationSpy()
+        spy.isDeferred = true
+        let host = EmbeddedBlockLayerHost(container: container, animation: spy.animation)
+        let first = UIView()
+        let second = UIView()
+        let third = UIView()
+
+        host.show(first)
+        host.show(second, animated: true)
+        host.show(third, animated: true)
+        spy.finish()
+
+        #expect(container.subviews == [third])
+        #expect(container.constraints.count == 4)
+    }
 }

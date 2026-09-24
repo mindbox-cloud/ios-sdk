@@ -209,7 +209,9 @@ struct MindboxEmbeddedBlockTests {
     private func makeBlockView() -> MindboxEmbeddedBlockView {
         MindboxEmbeddedBlockView(placeSystemName: "stories",
                                  height: 104,
-                                 contentProvider: EmbeddedBlockTestBed().provider)
+                                 contentProvider: EmbeddedBlockTestBed().provider,
+                                 placeMemory: EmbeddedBlockPlaceMemoryMock(),
+                                 loadingStrategy: .placeholder)
     }
 
     @available(iOS 13.0, *)
@@ -218,6 +220,8 @@ struct MindboxEmbeddedBlockTests {
         return EmbeddedBlockRepresentable(placeSystemName: "stories",
                                           height: 104,
                                           timeout: nil,
+                                          loadingStrategy: .placeholder,
+                                          animatesReveal: true,
                                           appearance: .constant(.placeholder),
                                           onLoad: nil,
                                           onEmpty: nil,

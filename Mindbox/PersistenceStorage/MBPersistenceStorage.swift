@@ -269,6 +269,9 @@ class MBPersistenceStorage: PersistenceStorage {
     @UserDefaultsWrapper(key: .webViewLearnedHosts, defaultValue: nil)
     var webViewLearnedHosts: [String: [String]]?
 
+    @UserDefaultsWrapper(key: .embeddedBlockPlaceRecords, defaultValue: nil)
+    var embeddedBlockPlaceRecords: [String: Data]?
+
     @UserDefaultsWrapper(key: .operationsDomainFromConfig, defaultValue: nil)
     var operationsDomainFromConfig: String? {
         didSet {
@@ -315,6 +318,7 @@ extension MBPersistenceStorage {
             case applicationInstanceId = "MBPersistenceStorage-applicationInstanceId"
             case webViewLocalStateVersion = "MBPersistenceStorage-webViewLocalStateVersion"
             case webViewLearnedHosts = "MBPersistenceStorage-webViewLearnedHosts"
+            case embeddedBlockPlaceRecords = "MBPersistenceStorage-embeddedBlockPlaceRecords"
             case operationsDomainFromConfig = "MBPersistenceStorage-operationsDomainFromConfig"
 
             // MARK: - Deprecated Keys

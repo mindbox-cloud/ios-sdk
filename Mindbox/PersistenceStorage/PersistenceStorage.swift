@@ -79,6 +79,12 @@ protocol PersistenceStorage: AnyObject {
     /// launch's preconnect. See `InAppWebViewLearnedHostsStore`.
     var webViewLearnedHosts: [String: [String]]? { get set }
 
+    /// Embedded block places that showed content on this device, keyed by place system name; each
+    /// value is an encoded `EmbeddedBlockPlaceRecord`. Decides whether an `automatic` block starts
+    /// hidden or with a placeholder. Left alone by `softReset()`: a stale record costs one placeholder
+    /// that collapses, a dropped one costs a layout jump. See `EmbeddedBlockPlaceMemory`.
+    var embeddedBlockPlaceRecords: [String: Data]? { get set }
+
     // Reset functions
 
     func softReset()
@@ -135,5 +141,6 @@ extension PersistenceStorage {
         applicationInstanceId = nil
         applicationInfoUpdateVersion = nil
         webViewLearnedHosts = nil
+        embeddedBlockPlaceRecords = nil
     }
 }

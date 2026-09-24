@@ -24,6 +24,11 @@ extension MBContainer {
             EmbeddedBlockInappService()
         }
 
+        // One memory per container: blocks of one place read and write the same record.
+        register(EmbeddedBlockPlaceRemembering.self) {
+            EmbeddedBlockPlaceMemory(persistenceStorage: DI.injectOrFail(PersistenceStorage.self))
+        }
+
         register(EmbeddedBlockContentProviderMaking.self) {
             EmbeddedBlockContentProviderFactory(registry: DI.injectOrFail(EmbeddedBlockPlaceRegistering.self),
                                                 inappService: DI.injectOrFail(EmbeddedBlockInappServing.self),

@@ -131,6 +131,12 @@ class MockPersistenceStorage: PersistenceStorage {
         didSet { webViewLearnedHostsWriteCount += 1 }
     }
 
+    // Same idea: the place memory promises to write a place once, and only the count can tell.
+    @Locked var embeddedBlockPlaceRecordsWriteCount = 0
+    @Locked var embeddedBlockPlaceRecords: [String: Data]? {
+        didSet { embeddedBlockPlaceRecordsWriteCount += 1 }
+    }
+
     @Locked var operationsDomainFromConfig: String? {
         didSet {
             onDidChange?()

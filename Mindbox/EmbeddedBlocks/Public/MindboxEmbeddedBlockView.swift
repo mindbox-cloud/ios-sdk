@@ -16,9 +16,16 @@ import MindboxLogger
 /// Put it anywhere in the app and constrain its position and width only — the height is applied
 /// by the container itself through `intrinsicContentSize`: the one given at creation while the
 /// content is loading and shown, and 0 when there is nothing to show (a failure or an empty
-/// block), so the block takes no space and is invisible in the host layout. Both looks can be
-/// customized: `placeholderView` replaces the stock loading shimmer, and `errorView` opts into
-/// showing a failure instead of collapsing.
+/// block), so the block takes no space and is invisible in the host layout. What the block shows
+/// before the SDK answers is decided by `loadingStrategy`: a placeholder, nothing, or — by default —
+/// nothing until the place has shown content once on this device and a placeholder from then on.
+/// Both looks can be customized: `placeholderView` replaces the stock loading shimmer, and
+/// `errorView` opts into showing a failure instead of collapsing.
+///
+/// The content is revealed with the SDK's own animation — it fades in, and a block that started
+/// hidden grows to its height — unless `animatesReveal` is off. A host that wants an animation of its
+/// own turns that off, puts the block in a container of its own and animates the container in
+/// `mindboxEmbeddedBlockViewDidLoad`.
 ///
 /// What exactly lives inside is decided by the SDK from the `placeSystemName`, not by the host. The
 /// block flow belongs to the SDK too: the container starts its content when it enters a window
@@ -31,6 +38,14 @@ public final class MindboxEmbeddedBlockView: UIView {
     /// The system name of the place from the admin panel, given at creation and stripped of the
     /// whitespace around it. Decides what content the SDK puts inside.
     public let placeSystemName: String
+
+    /// What the block shows until the SDK answers, given at creation.
+    /// See `MindboxEmbeddedBlockLoadingStrategy`.
+    public let loadingStrategy: MindboxEmbeddedBlockLoadingStrategy
+
+    /// Whether the SDK animates the reveal of the content, given at creation. `false` swaps the layers
+    /// and applies the height at once — for a host that animates the block's container itself.
+    public let animatesReveal: Bool
 
     /// Receives the block events. Assigning a delegate after the content already resolved still
     /// delivers that outcome, so subscribing late cannot lose it.
@@ -48,7 +63,7 @@ public final class MindboxEmbeddedBlockView: UIView {
     /// The view shown in place of the content while it is loading. `nil` — the default — means
     /// the SDK's own shimmer. The placeholder fills the whole container, so it is laid out to the
     /// container's width and the height given at creation. Can be swapped at any moment, including
-    /// mid-loading.
+    /// mid-loading. A block that waits hidden — see `loadingStrategy` — shows no placeholder at all.
     public var placeholderView: UIView? {
         didSet {
             guard placeholderView !== oldValue else { return }
@@ -66,7 +81,8 @@ public final class MindboxEmbeddedBlockView: UIView {
     /// while one is shown takes the failure back down to a collapse — the space returns to the host
     /// layout. What neither does is expand a block that has already collapsed: reopening space the
     /// host layout has reclaimed would make the layout jump, so such a view is remembered for a load
-    /// that starts the cycle anew, never for the silent retry a return to the screen brings.
+    /// that starts the cycle anew, never for the silent retry a return to the screen brings. For the
+    /// same reason a block that waits hidden shows no error screen: it never took the space.
     public var errorView: UIView? {
         didSet {
             guard errorView !== oldValue else { return }
@@ -80,7 +96,8 @@ public final class MindboxEmbeddedBlockView: UIView {
     /// relying on `intrinsicContentSize` — see `MindboxEmbeddedBlockAppearance`.
     ///
     /// The current value arrives right away on subscribing: a wrapper that comes after the outcome
-    /// cannot miss what the block already decided.
+    /// cannot miss what the block already decided. A wrapper that lays the block out also animates
+    /// its height itself: the container animates only the content's fade for it.
     @_spi(Internal)
     public func setAppearanceObserver(_ observer: ((MindboxEmbeddedBlockAppearance) -> Void)?) {
         appearanceObserver = observer
@@ -129,9 +146,23 @@ public final class MindboxEmbeddedBlockView: UIView {
         contentProvider.teardown()
     }
 
+    /// The look a block of this place starts with, for wrappers that size the block before the
+    /// container exists: a hidden start must not be preceded by a frame of reserved space.
+    @_spi(Internal)
+    public static func initialAppearance(placeSystemName: String,
+                                         loadingStrategy: MindboxEmbeddedBlockLoadingStrategy) -> MindboxEmbeddedBlockAppearance {
+        let place = normalizedPlaceSystemName(placeSystemName)
+        let memory = DI.injectOrFail(EmbeddedBlockPlaceRemembering.self)
+        return initialAppearance(for: loadingStrategy, hasShownContentBefore: memory.hasShownContent(at: place))
+    }
+
     // MARK: - State
 
     private let contentProvider: EmbeddedBlockWebViewProvider
+
+    private let placeMemory: EmbeddedBlockPlaceRemembering
+
+    private let revealAnimation: EmbeddedBlockRevealAnimation
 
     var preferredHeight: CGFloat {
         didSet {
@@ -143,7 +174,7 @@ public final class MindboxEmbeddedBlockView: UIView {
 
     private let waitBudget: EmbeddedBlockWaitBudget
 
-    private lazy var layers = EmbeddedBlockLayerHost(container: self)
+    private lazy var layers = EmbeddedBlockLayerHost(container: self, animation: revealAnimation)
 
     private lazy var defaultPlaceholder = EmbeddedBlockShimmerView()
 
@@ -155,10 +186,11 @@ public final class MindboxEmbeddedBlockView: UIView {
     }
 
     /// Space once ceded to the host is not taken back: a retry does not reopen the container for
-    /// its placeholder — only shown content expands it back, or an explicit reload.
-    private var hasSettled = false
+    /// its placeholder — only shown content expands it back, or an explicit reload. A block that
+    /// starts hidden has ceded its space from birth.
+    private var hasSettled: Bool
 
-    private var shownAppearance: MindboxEmbeddedBlockAppearance = .placeholder
+    private var shownAppearance: MindboxEmbeddedBlockAppearance
 
     private var appearanceObserver: ((MindboxEmbeddedBlockAppearance) -> Void)?
 
@@ -193,12 +225,23 @@ public final class MindboxEmbeddedBlockView: UIView {
     ///     `errorView` applies. `nil` means the SDK default of 30. An answer that arrives after
     ///     that no longer expands the block; the next attempt starts when the block enters the
     ///     window again. The separate budget a loaded page gets to render itself is not affected.
-    public convenience init(placeSystemName: String, height: CGFloat, timeout: TimeInterval? = nil) {
+    ///   - loadingStrategy: What the block shows until the SDK answers. `automatic` — the default —
+    ///     keeps the block hidden until the place has shown content once on this device and puts a
+    ///     placeholder there from then on.
+    ///   - animatesReveal: Whether the SDK animates the reveal of the content. `true` by default.
+    public convenience init(placeSystemName: String,
+                            height: CGFloat,
+                            timeout: TimeInterval? = nil,
+                            loadingStrategy: MindboxEmbeddedBlockLoadingStrategy = .automatic,
+                            animatesReveal: Bool = true) {
         let place = Self.normalizedPlaceSystemName(placeSystemName)
         self.init(placeSystemName: place,
                   height: height,
                   contentProvider: DI.injectOrFail(EmbeddedBlockContentProviderMaking.self).makeProvider(placeSystemName: place),
-                  timeout: timeout)
+                  placeMemory: DI.injectOrFail(EmbeddedBlockPlaceRemembering.self),
+                  loadingStrategy: loadingStrategy,
+                  timeout: timeout,
+                  animatesReveal: animatesReveal)
     }
 
     /// Padding is not part of a name: a name pasted from the admin panel with a stray space still
@@ -217,11 +260,19 @@ public final class MindboxEmbeddedBlockView: UIView {
     init(placeSystemName: String,
          height: CGFloat,
          contentProvider: EmbeddedBlockWebViewProvider,
+         placeMemory: EmbeddedBlockPlaceRemembering,
+         loadingStrategy: MindboxEmbeddedBlockLoadingStrategy,
          timeout: TimeInterval? = nil,
+         animatesReveal: Bool = true,
+         revealAnimation: EmbeddedBlockRevealAnimation = EmbeddedBlockRevealAnimation(),
          makeWaitBudget: ((_ placeSystemName: String, _ duration: @escaping () -> TimeInterval) -> EmbeddedBlockWaitBudget)? = nil) {
         self.placeSystemName = placeSystemName
         self.preferredHeight = height
         self.contentProvider = contentProvider
+        self.placeMemory = placeMemory
+        self.loadingStrategy = loadingStrategy
+        self.animatesReveal = animatesReveal
+        self.revealAnimation = revealAnimation
         let answerTimeout = Self.sanitizedTimeout(timeout, placeSystemName: placeSystemName)
         let duration: () -> TimeInterval = { [weak contentProvider] in
             contentProvider?.isAwaitingAnswer == false
@@ -230,9 +281,17 @@ public final class MindboxEmbeddedBlockView: UIView {
         }
         self.waitBudget = makeWaitBudget?(placeSystemName, duration)
             ?? EmbeddedBlockWaitBudget(placeSystemName: placeSystemName, duration: duration)
+
+        // Decided synchronously, before the first layout pass: a wrapper reads the same answer
+        // through `initialAppearance(placeSystemName:loadingStrategy:)`.
+        let initial = Self.initialAppearance(for: loadingStrategy,
+                                             hasShownContentBefore: placeMemory.hasShownContent(at: placeSystemName))
+        self.shownAppearance = initial
+        self.hasSettled = initial == .collapsed
         super.init(frame: .zero)
         warnIfPlaceIsMissing()
         warnIfHeightReservesNothing()
+        logInitialLook()
         setUpContainer()
     }
 
@@ -252,6 +311,20 @@ public final class MindboxEmbeddedBlockView: UIView {
         return timeout
     }
 
+    /// The strategy plus the place's memory, and nothing else: `placeholder` and `hidden` do not
+    /// look at the memory, `automatic` is decided by it.
+    static func initialAppearance(for strategy: MindboxEmbeddedBlockLoadingStrategy,
+                                  hasShownContentBefore: Bool) -> MindboxEmbeddedBlockAppearance {
+        switch strategy {
+        case .placeholder:
+            return .placeholder
+        case .hidden:
+            return .collapsed
+        case .automatic:
+            return hasShownContentBefore ? .placeholder : .collapsed
+        }
+    }
+
     /// An empty name addresses no place, and the name is never normalized: whatever the host
     /// passed is what the config is asked for.
     private func warnIfPlaceIsMissing() {
@@ -268,6 +341,12 @@ public final class MindboxEmbeddedBlockView: UIView {
 
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' was created with height \(preferredHeight): it reserves no space and stays invisible whatever loads. Pass the height it should occupy.",
                       level: .error,
+                      category: .embeddedBlocks)
+    }
+
+    private func logInitialLook() {
+        let look = shownAppearance == .collapsed ? "hidden, taking no space" : "a placeholder"
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' starts with \(look) (strategy \(loadingStrategy))",
                       category: .embeddedBlocks)
     }
 
@@ -370,10 +449,18 @@ public final class MindboxEmbeddedBlockView: UIView {
         waitBudget.reset()
         // A new attempt means a new outcome: the host must hear it even if it matches the previous one.
         deliveredEvent = nil
-        // A reload is the host's explicit consent to the full cycle with the placeholder.
-        hasSettled = false
+        // A reload starts the cycle over from the block's first look: the strategy decides again —
+        // the place's memory as it is now included — whether the block waits in a placeholder or hidden.
+        resetToInitialLook()
         contentProvider.reload()
         waitBudget.armIfNeeded()
+    }
+
+    private func resetToInitialLook() {
+        let initial = Self.initialAppearance(for: loadingStrategy,
+                                             hasShownContentBefore: placeMemory.hasShownContent(at: placeSystemName))
+        shownAppearance = initial
+        hasSettled = initial == .collapsed
     }
 
     /// Both a page that was built and stayed silent and a block the SDK never answered fail — with
@@ -399,7 +486,9 @@ public final class MindboxEmbeddedBlockView: UIView {
     }
 
     private func apply(_ state: EmbeddedBlockState) {
+        let previous = shownAppearance
         shownAppearance = appearance(for: state)
+        updatePlaceMemory(for: state)
 
         switch shownAppearance {
         case .collapsed, .error: hasSettled = true
@@ -407,26 +496,69 @@ public final class MindboxEmbeddedBlockView: UIView {
         case .placeholder: break
         }
 
-        layers.show(view(for: shownAppearance))
+        // Only the arrival of content is a reveal: content shown again on a return, or an error
+        // screen swapped in place, changes nothing worth animating.
+        let reveals = shownAppearance == .content && previous != .content
+        let animated = reveals && shouldAnimateReveal
+
+        layers.show(view(for: shownAppearance), animated: animated)
 
         invalidateIntrinsicContentSize()
+        // The height is animated by whoever owns it: the container through its intrinsic size, a
+        // wrapper laying the block out itself through its own frame.
+        if animated, previous == .collapsed, appearanceObserver == nil {
+            animateGrowth()
+        }
+
         appearanceObserver?(shownAppearance)
         scheduleDelivery()
     }
 
+    private var shouldAnimateReveal: Bool {
+        animatesReveal && window != nil && !revealAnimation.isReduceMotionEnabled()
+    }
+
+    /// The new intrinsic size is already pending; laying it out inside the animation makes the host
+    /// layout — Auto Layout, a stack view — grow to it instead of jumping. A list host remeasures
+    /// its row on its own terms, in `mindboxEmbeddedBlockViewDidLoad`.
+    private func animateGrowth() {
+        revealAnimation.run(revealAnimation.duration, { [weak self] in
+            self?.superview?.layoutIfNeeded()
+        }, {})
+    }
+
+    /// Shown content is worth a placeholder on the next launch; a place with nothing to show is not.
+    /// A failure says nothing about the place and leaves the memory as it is.
+    private func updatePlaceMemory(for state: EmbeddedBlockState) {
+        switch state {
+        case .ready:
+            placeMemory.rememberShownContent(at: placeSystemName)
+        case .empty:
+            placeMemory.forgetPlace(placeSystemName)
+        case .loading, .failed:
+            break
+        }
+    }
+
     private func appearance(for state: EmbeddedBlockState) -> MindboxEmbeddedBlockAppearance {
         switch state {
+        case .ready:
+            return .content
+        case .empty:
+            return .collapsed
         case .loading:
-            guard hasSettled else { return .placeholder }
-
-            return shownAppearance == .error && errorView == nil ? .collapsed : shownAppearance
-        case .ready: return .content
+            return hasSettled ? settledAppearance : .placeholder
         case .failed:
             guard hasSettled else { return errorView == nil ? .collapsed : .error }
 
-            return shownAppearance == .error && errorView == nil ? .collapsed : shownAppearance
-        case .empty: return .collapsed
+            return settledAppearance
         }
+    }
+
+    /// What a block that has ceded its space keeps showing while it waits or fails again: the error
+    /// screen it already shows, or nothing. Never a placeholder — that would take the space back.
+    private var settledAppearance: MindboxEmbeddedBlockAppearance {
+        shownAppearance == .error && errorView != nil ? .error : .collapsed
     }
 
     private func view(for appearance: MindboxEmbeddedBlockAppearance) -> UIView? {
