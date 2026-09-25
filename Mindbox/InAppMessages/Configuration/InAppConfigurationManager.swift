@@ -14,6 +14,18 @@ protocol InAppConfigurationDelegate: AnyObject {
     func didPreparedConfiguration()
 }
 
+enum EmbeddedPlaceSelection: Equatable {
+
+    case decided(InAppTransitionData?)
+
+    case configUnavailable
+
+    var inapp: InAppTransitionData? {
+        if case .decided(let inapp) = self { return inapp }
+        return nil
+    }
+}
+
 protocol InAppConfigurationManagerProtocol: AnyObject {
     var delegate: InAppConfigurationDelegate? { get set }
 
@@ -26,7 +38,7 @@ protocol InAppConfigurationManagerProtocol: AnyObject {
     /// counts from the moment it asked for content (in sync with Android).
     func selectInappForPlace(_ place: String,
                              trigger: ApplicationEvent?,
-                             _ completion: @escaping (InAppTransitionData?, _ processingDuration: TimeInterval) -> Void)
+                             _ completion: @escaping (EmbeddedPlaceSelection, _ processingDuration: TimeInterval) -> Void)
     func getShowableInappIds(_ ids: [String], askedBy blockInappId: String, _ completion: @escaping ([String]) -> Void)
     func getInAppToShowById(_ id: String, params: [String: JSONValue], _ completion: @escaping (InAppFormData?) -> Void)
     func getEmbeddedPlaces(_ completion: @escaping ([String: Set<String>]?) -> Void)
@@ -116,18 +128,26 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     }
     
     /// No cap of its own: the block owns the give-up, and a second timer here raced it.
+    ///
+    /// A download that concluded with nothing — failed, and nothing cached — is not "nothing to
+    /// show": the place gets `configUnavailable` instead of an empty pass, in sync with Android.
     func selectInappForPlace(_ place: String,
                              trigger: ApplicationEvent?,
-                             _ completion: @escaping (InAppTransitionData?, _ processingDuration: TimeInterval) -> Void) {
+                             _ completion: @escaping (EmbeddedPlaceSelection, _ processingDuration: TimeInterval) -> Void) {
         let requestedAt = now()
         awaitConfig("place '\(place)'", givingUpAfter: nil) { [weak self] candidates in
-            guard let self = self, let inappMapper = self.inappMapper, let candidates = candidates else {
-                completion(nil, 0)
+            guard let self = self, let inappMapper = self.inappMapper else {
+                completion(.decided(nil), 0)
+                return
+            }
+
+            guard let candidates = candidates else {
+                completion(.configUnavailable, self.now() - requestedAt)
                 return
             }
 
             inappMapper.selectInappForPlace(place, trigger: trigger, candidates) { [now] inapp in
-                completion(inapp, now() - requestedAt)
+                completion(.decided(inapp), now() - requestedAt)
             }
         }
     }

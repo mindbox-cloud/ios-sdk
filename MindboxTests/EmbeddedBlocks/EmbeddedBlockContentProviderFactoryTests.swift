@@ -56,7 +56,8 @@ struct EmbeddedBlockContentProviderFactoryTests {
 
         EmbeddedBlockContentProviderFactory.report(failure: .webviewLoadFailed,
                                                    details: "the page did not load",
-                                                   for: content,
+                                                   inAppId: content.inAppId,
+                                                   tags: content.tags,
                                                    to: manager)
 
         #expect(manager.addFailureCallCount == 0)
@@ -86,7 +87,7 @@ struct EmbeddedBlockContentProviderFactoryTests {
         let place = "factory-silent-place"
         let provider = factory.makeProvider(placeSystemName: place)
         withExtendedLifetime(provider) {
-            provider.reportAnswerTimedOut(waited: 30)
+            provider.failUnanswered(waited: 30)
         }
 
         #expect(manager.waitBudgetExceeded.count == 1)

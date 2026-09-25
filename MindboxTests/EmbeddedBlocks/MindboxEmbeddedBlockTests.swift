@@ -220,6 +220,7 @@ struct MindboxEmbeddedBlockTests {
                                           timeout: nil,
                                           appearance: .constant(.placeholder),
                                           onLoad: nil,
+                                          onEmpty: nil,
                                           onFail: nil,
                                           hasPlaceholder: hasPlaceholder,
                                           hasErrorView: hasErrorView)

@@ -138,6 +138,68 @@ struct EmbeddedBlockResolverTests {
         }
         #expect(content.isPriority)
     }
+
+    @Test("No winner is an empty place")
+    func noWinnerIsEmpty() {
+        #expect(EmbeddedBlockResolver.resolution(from: nil, place: "stories-list-container") == .empty)
+    }
+
+    @Test("A winner that is not an embedded block is a failure with unknown_error, not an empty place")
+    func nonEmbeddedWinnerIsAFailure() throws {
+        let layer = WebviewContentBackgroundLayer(baseUrl: "https://inapp.local/stories",
+                                                  contentUrl: "https://mindbox.ru/block.html",
+                                                  params: [:])
+        let content = InappFormVariantContent(background: ContentBackground(layers: [.webview(layer)]),
+                                              elements: nil)
+        let inapp = InAppTransitionData(inAppId: "modal-inapp-id",
+                                        isPriority: false,
+                                        delayTime: nil,
+                                        content: .modal(ModalFormVariant(content: content)),
+                                        frequency: nil,
+                                        tags: ["templateType": "Modal"])
+
+        let resolution = EmbeddedBlockResolver.resolution(from: inapp, place: "stories-list-container")
+
+        guard case .failure(let failure) = resolution else {
+            Issue.record("Expected a failure, got \(resolution)")
+            return
+        }
+        #expect(failure.inAppId == "modal-inapp-id")
+        #expect(failure.tags == ["templateType": "Modal"])
+        #expect(failure.reason == .unknownError)
+    }
+
+    @Test("An embedded winner without a webview layer is a failure with unknown_error")
+    func embeddedWinnerWithoutWebviewLayerIsAFailure() throws {
+        let content = InappFormVariantContent(background: ContentBackground(layers: []), elements: nil)
+        let variant = MindboxFormVariant.embedded(EmbeddedFormVariant(content: content,
+                                                                      placeSystemName: "stories-list-container"))
+        let inapp = InAppTransitionData(inAppId: "layerless-inapp-id",
+                                        isPriority: false,
+                                        delayTime: nil,
+                                        content: variant,
+                                        frequency: nil,
+                                        tags: nil)
+
+        let resolution = EmbeddedBlockResolver.resolution(from: inapp, place: "stories-list-container")
+
+        guard case .failure(let failure) = resolution else {
+            Issue.record("Expected a failure, got \(resolution)")
+            return
+        }
+        #expect(failure.inAppId == "layerless-inapp-id")
+        #expect(failure.reason == .unknownError)
+    }
+
+    @Test("A config the SDK could not get is not an empty place")
+    func unavailableConfigIsNotEmpty() {
+        #expect(EmbeddedBlockResolver.resolution(from: .configUnavailable, place: "stories-list-container") == .configUnavailable)
+    }
+
+    @Test("A decided pass with no winner is an empty place")
+    func decidedPassWithoutWinnerIsEmpty() {
+        #expect(EmbeddedBlockResolver.resolution(from: .decided(nil), place: "stories-list-container") == .empty)
+    }
 }
 
 /// A loader that answers only when asked to: this is how the resolver's behaviour while a load is

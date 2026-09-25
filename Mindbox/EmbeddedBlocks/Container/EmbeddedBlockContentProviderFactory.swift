@@ -40,10 +40,10 @@ final class EmbeddedBlockContentProviderFactory: EmbeddedBlockContentProviderMak
                                      inappService: inappService,
                                      makePage: { EmbeddedBlockWebViewPage(content: $0) },
                                      accounting: accounting,
-                                     reportFailure: { [failureManager] content, reason, details in
+                                     reportFailure: { [failureManager] inAppId, tags, reason, details in
                                          // Captured, not read through the factory: a provider outliving it
                                          // would otherwise drop the failure it is reporting.
-                                         Self.report(failure: reason, details: details, for: content, to: failureManager)
+                                         Self.report(failure: reason, details: details, inAppId: inAppId, tags: tags, to: failureManager)
                                      },
                                      reportUnansweredWait: { [failureManager, inappService] waited in
                                          failureManager.sendWaitBudgetExceeded(place: placeSystemName,
@@ -56,11 +56,12 @@ final class EmbeddedBlockContentProviderFactory: EmbeddedBlockContentProviderMak
     /// selection pass had already buffered another.
     static func report(failure reason: InAppShowFailureReason,
                        details: String,
-                       for content: EmbeddedBlockWebContent,
+                       inAppId: String,
+                       tags: [String: String]?,
                        to manager: InappShowFailureManagerProtocol) {
-        manager.sendBlockFailure(inappId: content.inAppId,
-                            reason: reason,
-                            details: details,
-                            tags: content.tags)
+        manager.sendBlockFailure(inappId: inAppId,
+                                 reason: reason,
+                                 details: details,
+                                 tags: tags)
     }
 }
