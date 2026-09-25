@@ -443,6 +443,11 @@ final class EmbeddedBlockWebViewProvider {
     /// the analytics must agree it was a failure, not an empty place — while the analytics hear about
     /// it once per place per session, with no in-app to pin it on. Any answer, "nothing" included,
     /// would have disarmed the budget instead.
+    ///
+    /// Unlike `configUnavailable` — an instant answer that leaves the block started, so the next
+    /// config revives it at once — a timeout abandons the attempt: a late answer is dropped and the
+    /// block asks afresh on its next appearance. In sync with Android, where `onConfigTimeout` gives
+    /// up and `onConfigUnavailable` does not.
     func failUnanswered(waited: TimeInterval) {
         failures.reportUnansweredWaitOnce(waited)
         settle(.failed(MindboxEmbeddedBlockFailReason(.waitBudgetExceeded)))

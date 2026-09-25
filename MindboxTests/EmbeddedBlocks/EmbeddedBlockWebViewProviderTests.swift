@@ -520,6 +520,31 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.failureReporter.unansweredWaits == [30])
     }
 
+    @Test("A config arriving after an unanswered wait does not revive the block until it is back on screen")
+    func configAfterUnansweredWaitWaitsForTheNextAppearance() {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.isDeferred = true
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+        bed.provider.start()
+        bed.provider.failUnanswered(waited: 30)
+
+        // The SDK answers late, then a config lands: neither reaches a block that gave up.
+        bed.resolver.flush()
+        bed.announceNewConfig()
+
+        #expect(states == [.loading, .failed(.networkError)])
+        #expect(bed.pageFactory.pages.isEmpty)
+        #expect(bed.resolver.resolveCount == 1)
+
+        bed.provider.start()
+        bed.resolver.flush()
+        bed.page?.reportRendered(1)
+
+        #expect(states == [.loading, .failed(.networkError), .loading, .ready])
+        #expect(bed.provider.contentView != nil)
+    }
+
     @Test("A broken winner fails the block as internalError and reports unknown_error")
     func brokenWinnerFailsAsInternalError() {
         let bed = EmbeddedBlockTestBed(resolution: .failure(.broken))
