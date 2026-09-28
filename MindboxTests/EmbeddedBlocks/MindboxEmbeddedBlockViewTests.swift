@@ -760,7 +760,7 @@ struct MindboxEmbeddedBlockViewTests {
         }
         MBInject.mode = .test
 
-        let view = MindboxEmbeddedBlockView(placeSystemName: "  stories \n", height: 120)
+        let view = MindboxEmbeddedBlockView(placeSystemName: "  stories \n", height: 120, loadingStrategy: .placeholder)
 
         #expect(view.placeSystemName == "stories")
         #expect(factory.requestedPlaces == ["stories"])

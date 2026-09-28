@@ -31,7 +31,7 @@ struct MindboxEmbeddedBlockTests {
     func bareBlockHasNoCustomViews() {
         guard #available(iOS 13.0, *) else { return }
 
-        let block = MindboxEmbeddedBlock(placeSystemName: "stories", height: 104)
+        let block = MindboxEmbeddedBlock(placeSystemName: "stories", height: 104, loadingStrategy: .placeholder)
 
         #expect(block.placeholderBuilder == nil)
         #expect(block.errorBuilder == nil)
@@ -41,7 +41,7 @@ struct MindboxEmbeddedBlockTests {
     func placeholderModifierSetsOnlyThePlaceholder() {
         guard #available(iOS 13.0, *) else { return }
 
-        let block = MindboxEmbeddedBlock(placeSystemName: "stories", height: 104)
+        let block = MindboxEmbeddedBlock(placeSystemName: "stories", height: 104, loadingStrategy: .placeholder)
             .placeholder { Color.gray }
 
         #expect(block.placeholderBuilder != nil)
@@ -52,7 +52,7 @@ struct MindboxEmbeddedBlockTests {
     func errorViewModifierSetsOnlyTheErrorView() {
         guard #available(iOS 13.0, *) else { return }
 
-        let block = MindboxEmbeddedBlock(placeSystemName: "stories", height: 104)
+        let block = MindboxEmbeddedBlock(placeSystemName: "stories", height: 104, loadingStrategy: .placeholder)
             .errorView { Text("no stories") }
 
         #expect(block.errorBuilder != nil)
@@ -63,11 +63,11 @@ struct MindboxEmbeddedBlockTests {
     func bothModifiersCompose() {
         guard #available(iOS 13.0, *) else { return }
 
-        let placeholderFirst = MindboxEmbeddedBlock(placeSystemName: "stories", height: 104)
+        let placeholderFirst = MindboxEmbeddedBlock(placeSystemName: "stories", height: 104, loadingStrategy: .placeholder)
             .placeholder { Color.gray }
             .errorView { Text("no stories") }
 
-        let errorFirst = MindboxEmbeddedBlock(placeSystemName: "stories", height: 104)
+        let errorFirst = MindboxEmbeddedBlock(placeSystemName: "stories", height: 104, loadingStrategy: .placeholder)
             .errorView { Text("no stories") }
             .placeholder { Color.gray }
 
@@ -81,7 +81,7 @@ struct MindboxEmbeddedBlockTests {
     func modifierDoesNotMutateTheOriginal() {
         guard #available(iOS 13.0, *) else { return }
 
-        let bare = MindboxEmbeddedBlock(placeSystemName: "stories", height: 104)
+        let bare = MindboxEmbeddedBlock(placeSystemName: "stories", height: 104, loadingStrategy: .placeholder)
 
         let decorated = bare
             .placeholder { Color.gray }
@@ -99,7 +99,7 @@ struct MindboxEmbeddedBlockTests {
 
         let log = BuildLog()
 
-        let block = MindboxEmbeddedBlock(placeSystemName: "stories", height: 104)
+        let block = MindboxEmbeddedBlock(placeSystemName: "stories", height: 104, loadingStrategy: .placeholder)
             .placeholder { ProbeView("first", log: log) }
             .placeholder { ProbeView("second", log: log) }
 
