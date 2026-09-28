@@ -536,6 +536,35 @@ struct EmbeddedBlockPlaceRegistryTests {
         #expect(block.applied == [.empty])
     }
 
+    @Test("A broken winner gives the slot back and is delivered as the failure it is")
+    func brokenWinnerIsDeliveredAsFailure() {
+        let rig = Rig()
+        rig.resolver.resolution = .failure(.broken)
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+
+        rig.registry.blockAppeared("stories")
+
+        #expect(block.applied == [.failure(.broken)])
+        #expect(rig.budget.reservations.isEmpty)
+        #expect(rig.budget.releases == [.place("stories")])
+        #expect(block.delayedCount == 0)
+    }
+
+    @Test("An unavailable config is delivered untouched and takes no slot")
+    func unavailableConfigIsDeliveredUntouched() {
+        let rig = Rig()
+        rig.resolver.resolution = .configUnavailable
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+
+        rig.registry.blockAppeared("stories")
+
+        #expect(block.applied == [.configUnavailable])
+        #expect(rig.budget.reservations.isEmpty)
+        #expect(block.delayedCount == 0)
+    }
+
     @Test("An in-app the place already shows needs no new slot")
     func shownInappNeedsNoSlot() {
         let rig = Rig()

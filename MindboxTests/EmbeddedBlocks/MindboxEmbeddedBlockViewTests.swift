@@ -307,11 +307,11 @@ struct MindboxEmbeddedBlockViewTests {
         block.page?.failLoad()
         await mainQueueTurn()
 
-        #expect(delegate.events == [.failed])
+        #expect(delegate.events == [.failed(.networkError)])
     }
 
-    @Test("Empty block reports didFail")
-    func emptyBlockReportsDidFail() async {
+    @Test("Empty block reports didBecomeEmpty, not didFail")
+    func emptyBlockReportsDidBecomeEmpty() async {
         let block = BlockFixture(resolution: .empty)
         let delegate = EmbeddedBlockViewDelegateMock()
         block.view.delegate = delegate
@@ -319,7 +319,88 @@ struct MindboxEmbeddedBlockViewTests {
         block.attachToWindow()
         await mainQueueTurn()
 
-        #expect(delegate.events == [.failed])
+        #expect(delegate.events == [.empty])
+    }
+
+    @Test("A page that rendered nothing reports didBecomeEmpty")
+    func pageThatRenderedNothingReportsDidBecomeEmpty() async {
+        let block = BlockFixture()
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.attachToWindow()
+        await mainQueueTurn()
+
+        block.page?.reportRendered(0)
+        await mainQueueTurn()
+
+        #expect(delegate.events == [.empty])
+        #expect(block.bed.failureReporter.reported.isEmpty)
+    }
+
+    @Test("Delegate assigned after an empty outcome still hears didBecomeEmpty")
+    func lateDelegateHearsEmpty() async {
+        let block = BlockFixture(resolution: .empty)
+        block.attachToWindow()
+        await mainQueueTurn()
+
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        await mainQueueTurn()
+
+        #expect(delegate.events == [.empty])
+    }
+
+    @Test("Empty after a failure is a new outcome and is delivered")
+    func emptyAfterFailureIsDelivered() async {
+        let block = BlockFixture()
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.attachToWindow()
+        await mainQueueTurn()
+
+        block.page?.failLoad()
+        await mainQueueTurn()
+        block.bed.resolver.resolution = .empty
+        block.bed.announceNewConfig()
+        await mainQueueTurn()
+
+        #expect(delegate.events == [.failed(.networkError), .empty])
+    }
+
+    @Test("A broken winner reports didFail(internalError) and honours the error view")
+    func brokenWinnerFailsAsInternalError() async {
+        let block = BlockFixture(resolution: .failure(.broken))
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        let errorView = UIView()
+        block.view.errorView = errorView
+
+        block.attachToWindow()
+        await mainQueueTurn()
+
+        #expect(delegate.events == [.failed(.internalError)])
+        #expect(block.view.intrinsicContentSize.height == 120)
+        #expect(block.view.subviews.contains(errorView))
+        #expect(block.bed.failureReporter.reasons == [.unknownError])
+        #expect(block.bed.pageFactory.pages.isEmpty)
+    }
+
+    @Test("A block the SDK has no config for fails as networkError at once and shows the error view")
+    func unavailableConfigFailsAsNetworkError() async {
+        let block = BlockFixture(resolution: .configUnavailable)
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        let errorView = UIView()
+        block.view.errorView = errorView
+
+        block.attachToWindow()
+        await mainQueueTurn()
+
+        #expect(delegate.events == [.failed(.networkError)])
+        #expect(block.view.intrinsicContentSize.height == 120)
+        #expect(block.view.subviews.contains(errorView))
+        #expect(block.bed.failureReporter.unansweredWaits.count == 1)
+        #expect(block.bed.failureReporter.reported.isEmpty)
     }
 
     @Test("Delegate assigned after the outcome still receives it")
@@ -333,7 +414,7 @@ struct MindboxEmbeddedBlockViewTests {
         block.view.delegate = delegate
         await mainQueueTurn()
 
-        #expect(delegate.events == [.failed])
+        #expect(delegate.events == [.failed(.networkError)])
     }
 
     @Test("Reassigning the same delegate does not repeat the outcome")
@@ -351,7 +432,7 @@ struct MindboxEmbeddedBlockViewTests {
         block.view.delegate = delegate
         await mainQueueTurn()
 
-        #expect(delegate.events == [.failed])
+        #expect(delegate.events == [.failed(.networkError)])
     }
 
     @Test("A delegate replacing another one still receives the outcome")
@@ -368,8 +449,8 @@ struct MindboxEmbeddedBlockViewTests {
         block.view.delegate = second
         await mainQueueTurn()
 
-        #expect(first.events == [.failed])
-        #expect(second.events == [.failed])
+        #expect(first.events == [.failed(.networkError)])
+        #expect(second.events == [.failed(.networkError)])
     }
 
     @Test("Repeated failure is reported once")
@@ -385,7 +466,7 @@ struct MindboxEmbeddedBlockViewTests {
         block.page?.failLoad()
         await mainQueueTurn()
 
-        #expect(delegate.events == [.failed])
+        #expect(delegate.events == [.failed(.networkError)])
     }
 
     @Test("Block that fails after being shown reports both outcomes in order")
@@ -401,7 +482,7 @@ struct MindboxEmbeddedBlockViewTests {
         block.page?.failLoad()
         await mainQueueTurn()
 
-        #expect(delegate.events == [.loaded, .failed])
+        #expect(delegate.events == [.loaded, .failed(.networkError)])
     }
 
     // MARK: - Presentation for the SwiftUI wrapper
@@ -597,7 +678,7 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.page?.loadCount == 1)
         #expect(block.view.intrinsicContentSize.height == 0)
         #expect(block.view.subviews.isEmpty)
-        #expect(delegate.events == [.failed])
+        #expect(delegate.events == [.failed(.networkError)])
     }
 
     @Test("Retry that succeeds gives the block its height back")
@@ -616,7 +697,7 @@ struct MindboxEmbeddedBlockViewTests {
         await mainQueueTurn()
 
         #expect(block.view.intrinsicContentSize.height == 120)
-        #expect(delegate.events == [.failed, .loaded])
+        #expect(delegate.events == [.failed(.networkError), .loaded])
     }
 
     @Test("Reload after a collapse shows the placeholder again")
@@ -705,7 +786,7 @@ struct MindboxEmbeddedBlockViewTests {
         await mainQueueTurn()
 
         #expect(block.view.intrinsicContentSize.height == 0)
-        #expect(delegate.events == [.failed])
+        #expect(delegate.events == [.failed(.internalError)])
         // Content is stopped, so it can no longer revive the expired block.
         #expect(block.page?.cancelCount == 1)
     }
@@ -761,15 +842,35 @@ struct MindboxEmbeddedBlockViewTests {
         await mainQueueTurn()
 
         #expect(block.view.intrinsicContentSize.height == 0)
-        #expect(delegate.events == [.failed])
+        #expect(delegate.events == [.failed(.internalError)])
     }
 
-    @Test("A block that never learned what to show collapses as empty")
-    func neverAnsweredBlockCollapsesAsEmpty() async {
+    @Test("A block the SDK never answered fails as networkError and shows the error view")
+    func neverAnsweredBlockFailsAsNoResponse() async {
         let block = BlockFixture()
         let delegate = EmbeddedBlockViewDelegateMock()
         block.view.delegate = delegate
-        block.view.errorView = UIView()
+        let errorView = UIView()
+        block.view.errorView = errorView
+        block.bed.resolver.isDeferred = true
+        block.attachToWindow()
+        await mainQueueTurn()
+
+        block.expireTimeout()
+        await mainQueueTurn()
+
+        #expect(block.view.intrinsicContentSize.height == 120)
+        #expect(block.view.subviews.contains(errorView))
+        #expect(delegate.events == [.failed(.networkError)])
+        #expect(block.bed.failureReporter.unansweredWaits == [block.waitBudgetBed.duration])
+        #expect(block.bed.failureReporter.reported.isEmpty)
+    }
+
+    @Test("A block the SDK never answered collapses without an error view")
+    func neverAnsweredBlockCollapsesWithoutErrorView() async {
+        let block = BlockFixture()
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
         block.bed.resolver.isDeferred = true
         block.attachToWindow()
         await mainQueueTurn()
@@ -779,9 +880,25 @@ struct MindboxEmbeddedBlockViewTests {
 
         #expect(block.view.intrinsicContentSize.height == 0)
         #expect(block.view.subviews.isEmpty)
-        #expect(delegate.events == [.failed])
-        #expect(block.bed.failureReporter.unansweredWaits == [block.waitBudgetBed.duration])
-        #expect(block.bed.failureReporter.reported.isEmpty)
+        #expect(delegate.events == [.failed(.networkError)])
+    }
+
+    @Test("A different failure reason on a silent retry is not re-delivered")
+    func differentReasonOnSilentRetryIsNotRedelivered() async {
+        let block = BlockFixture()
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.attachToWindow()
+        await mainQueueTurn()
+        block.page?.failLoad()
+        await mainQueueTurn()
+
+        block.removeFromWindow()
+        block.attachToWindow()
+        block.expireTimeout()
+        await mainQueueTurn()
+
+        #expect(delegate.events == [.failed(.networkError)])
     }
 
     @Test("A page that was built and stayed silent fails")
@@ -798,7 +915,7 @@ struct MindboxEmbeddedBlockViewTests {
         await mainQueueTurn()
 
         #expect(block.view.subviews.contains(errorView))
-        #expect(delegate.events == [.failed])
+        #expect(delegate.events == [.failed(.internalError)])
         #expect(block.bed.failureReporter.reasons == [.presentationFailed])
         #expect(block.bed.failureReporter.unansweredWaits.isEmpty)
     }
@@ -913,7 +1030,7 @@ struct MindboxEmbeddedBlockViewTests {
         await mainQueueTurn()
 
         #expect(block.view.intrinsicContentSize.height == 0)
-        #expect(delegate.events.last == .failed)
+        #expect(delegate.events.last == .failed(.internalError))
     }
 
     // MARK: - Appearance observer
@@ -1072,7 +1189,7 @@ struct MindboxEmbeddedBlockViewTests {
         block.expireTimeout()
         await mainQueueTurn()
 
-        #expect(delegate.events == [.failed])
+        #expect(delegate.events == [.failed(.internalError)])
         #expect(block.view.intrinsicContentSize.height == 0)
     }
 

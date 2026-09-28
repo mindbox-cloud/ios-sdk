@@ -33,6 +33,7 @@ struct EmbeddedBlockCoordinatorTests {
         let coordinator = EmbeddedBlockRepresentable.Coordinator(
             appearance: Binding(get: { .placeholder }, set: { written.append($0) }),
             onLoad: nil,
+            onEmpty: nil,
             onFail: nil,
             schedule: { scheduled.append($0) }
         )
@@ -58,6 +59,7 @@ struct EmbeddedBlockCoordinatorTests {
         let coordinator = EmbeddedBlockRepresentable.Coordinator(
             appearance: Binding(get: { .placeholder }, set: { written.append($0) }),
             onLoad: nil,
+            onEmpty: nil,
             onFail: nil,
             schedule: { scheduled.append($0) }
         )
@@ -68,5 +70,29 @@ struct EmbeddedBlockCoordinatorTests {
         scheduled.forEach { $0() }
 
         #expect(written.isEmpty)
+    }
+
+    @Test("onLoad, onEmpty and onFail(reason) are forwarded as they arrive")
+    @MainActor
+    func outcomeClosuresAreForwarded() {
+        guard #available(iOS 13.0, *) else { return }
+
+        var heard: [String] = []
+        let coordinator = EmbeddedBlockRepresentable.Coordinator(
+            appearance: .constant(.placeholder),
+            onLoad: { heard.append("load") },
+            onEmpty: { heard.append("empty") },
+            onFail: { heard.append("fail:\($0.rawValue)") },
+            schedule: { _ in }
+        )
+        let view = MindboxEmbeddedBlockView(placeSystemName: "stories",
+                                            height: 104,
+                                            contentProvider: EmbeddedBlockTestBed().provider)
+
+        coordinator.mindboxEmbeddedBlockViewDidLoad(view)
+        coordinator.mindboxEmbeddedBlockViewDidBecomeEmpty(view)
+        coordinator.mindboxEmbeddedBlockViewDidFail(view, reason: .networkError)
+
+        #expect(heard == ["load", "empty", "fail:networkError"])
     }
 }

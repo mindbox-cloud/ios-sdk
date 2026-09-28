@@ -16,14 +16,14 @@ import MindboxLogger
 /// Put it anywhere in the app and constrain its position and width only — the height is applied
 /// by the container itself through `intrinsicContentSize`: the one given at creation while the
 /// content is loading and shown, and 0 when there is nothing to show (a failure or an empty
-/// block), so the block takes no space and is invisible in the host layout. Both outcomes can be
+/// block), so the block takes no space and is invisible in the host layout. Both looks can be
 /// customized: `placeholderView` replaces the stock loading shimmer, and `errorView` opts into
 /// showing a failure instead of collapsing.
 ///
 /// What exactly lives inside is decided by the SDK from the `placeSystemName`, not by the host. The
 /// block flow belongs to the SDK too: the container starts its content when it enters a window
 /// and stops it when it leaves. The host app observes the outcome through `delegate` and nothing
-/// else.
+/// else: the block is shown, the place is empty, or the block failed with a reason.
 public final class MindboxEmbeddedBlockView: UIView {
 
     // MARK: - Host API
@@ -168,8 +168,11 @@ public final class MindboxEmbeddedBlockView: UIView {
 
     private var isContentRunning = false
 
+    /// The kind of outcome the host has heard — the deduplication key. Deliberately without the
+    /// failure reason: a silent retry that fails differently is still the same outcome.
     private enum BlockEvent {
         case loaded
+        case empty
         case failed
     }
 
@@ -186,10 +189,10 @@ public final class MindboxEmbeddedBlockView: UIView {
     ///     host's job and there is no default: a height of 0 or less leaves the block invisible
     ///     whatever its content turns out to be, so the SDK reports it as an integration error.
     ///   - timeout: How long the block waits to learn what it shows — the config has to
-    ///     arrive and the selection has to run — before collapsing as empty, in seconds. `nil`
-    ///     means the SDK default of 30. An answer that arrives after that no longer expands the
-    ///     block; the next attempt starts when the block enters the window again. The separate
-    ///     budget a loaded page gets to render itself is not affected.
+    ///     arrive and the selection has to run — before failing as `networkError`, in seconds;
+    ///     `errorView` applies. `nil` means the SDK default of 30. An answer that arrives after
+    ///     that no longer expands the block; the next attempt starts when the block enters the
+    ///     window again. The separate budget a loaded page gets to render itself is not affected.
     public convenience init(placeSystemName: String, height: CGFloat, timeout: TimeInterval? = nil) {
         let place = Self.normalizedPlaceSystemName(placeSystemName)
         self.init(placeSystemName: place,
@@ -373,19 +376,16 @@ public final class MindboxEmbeddedBlockView: UIView {
         waitBudget.armIfNeeded()
     }
 
-    /// A page that was built and stayed silent fails. A block the SDK never answered has nothing to
-    /// show and collapses as empty — but the silence itself is still reported.
+    /// Both a page that was built and stayed silent and a block the SDK never answered fail — with
+    /// different reasons, decided by the provider next to the failure report. The state arrives
+    /// through `onStateChange`, reason attached; the provider also abandons the attempt so it cannot
+    /// resurrect content the container has given up on.
     private func handleTimeout() {
-        let hadContentToLoad = !contentProvider.isAwaitingAnswer
-
-        if hadContentToLoad {
-            contentProvider.reportPageTimedOut()
+        if contentProvider.isAwaitingAnswer {
+            contentProvider.failUnanswered(waited: waitBudget.consumed)
         } else {
-            contentProvider.reportAnswerTimedOut(waited: waitBudget.consumed)
+            contentProvider.failSilentPage()
         }
-        // The provider must not resurrect content the container has already given up on.
-        contentProvider.abandonAttempt()
-        state = hadContentToLoad ? .failed : .empty
     }
 
     // MARK: - Layers
@@ -473,9 +473,12 @@ public final class MindboxEmbeddedBlockView: UIView {
 
         deliveredEvent = event
 
-        switch event {
-            case .loaded: delegate.mindboxEmbeddedBlockViewDidLoad(self)
-            case .failed: delegate.mindboxEmbeddedBlockViewDidFail(self)
+        // The reason is read off the state the provider settled, never recomputed here.
+        switch state {
+            case .loading: break
+            case .ready: delegate.mindboxEmbeddedBlockViewDidLoad(self)
+            case .empty: delegate.mindboxEmbeddedBlockViewDidBecomeEmpty(self)
+            case .failed(let reason): delegate.mindboxEmbeddedBlockViewDidFail(self, reason: reason)
         }
     }
 
@@ -483,7 +486,8 @@ public final class MindboxEmbeddedBlockView: UIView {
         switch state {
             case .loading: return nil
             case .ready: return .loaded
-            case .failed, .empty: return .failed
+            case .empty: return .empty
+            case .failed: return .failed
         }
     }
 }

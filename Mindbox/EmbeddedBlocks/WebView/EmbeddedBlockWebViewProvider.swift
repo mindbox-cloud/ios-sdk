@@ -38,9 +38,7 @@ final class EmbeddedBlockWebViewProvider {
 
     private let accounting: InappShowAccounting
 
-    private let reportFailure: (EmbeddedBlockWebContent, InAppShowFailureReason, String) -> Void
-
-    private let reportUnansweredWait: (_ waited: TimeInterval) -> Void
+    private let failures: EmbeddedBlockFailureReporter
 
     private var page: EmbeddedBlockPageHosting?
 
@@ -81,10 +79,6 @@ final class EmbeddedBlockWebViewProvider {
 
     private var ackBudget: EmbeddedBlockAckBudget
 
-    private var pendingFailureReport: (content: EmbeddedBlockWebContent,
-                                       reason: InAppShowFailureReason,
-                                       details: String)?
-
     private var pendingResolution: (resolution: EmbeddedBlockResolution, processingDuration: TimeInterval)?
 
     init(placeSystemName: String,
@@ -92,7 +86,7 @@ final class EmbeddedBlockWebViewProvider {
          inappService: EmbeddedBlockInappServing,
          makePage: @escaping (EmbeddedBlockWebContent) -> EmbeddedBlockPageHosting,
          accounting: InappShowAccounting,
-         reportFailure: @escaping (EmbeddedBlockWebContent, InAppShowFailureReason, String) -> Void,
+         reportFailure: @escaping EmbeddedBlockFailureReporter.Report,
          reportUnansweredWait: @escaping (_ waited: TimeInterval) -> Void,
          scheduleAckTimeout: @escaping EmbeddedBlockWaitScheduling = { delay, work in
              DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
@@ -104,8 +98,9 @@ final class EmbeddedBlockWebViewProvider {
         self.inappService = inappService
         self.makePage = makePage
         self.accounting = accounting
-        self.reportFailure = reportFailure
-        self.reportUnansweredWait = reportUnansweredWait
+        self.failures = EmbeddedBlockFailureReporter(placeSystemName: placeSystemName,
+                                                     report: reportFailure,
+                                                     reportUnansweredWait: reportUnansweredWait)
         self.scheduleAckTimeout = scheduleAckTimeout
         self.makeStopwatch = makeStopwatch
         self.presentationStopwatch = makeStopwatch()
@@ -121,7 +116,7 @@ final class EmbeddedBlockWebViewProvider {
         isPaused = false
         page?.isUserPresent = true
 
-        flushPendingFailureReport()
+        failures.flushHeld()
 
         // The parked answer goes first, as on Android: a page it replaces or drops is not resumed.
         let generation = loadGeneration
@@ -131,12 +126,12 @@ final class EmbeddedBlockWebViewProvider {
             apply(parked.resolution, processingDuration: parked.processingDuration)
         }
 
-        guard parked != nil || (page != nil && outcome != .failed) else {
+        guard parked != nil || (page != nil && !outcome.isFailed) else {
             beginAttempt()
             return
         }
 
-        if loadGeneration == generation, page != nil, outcome != .failed {
+        if loadGeneration == generation, page != nil, !outcome.isFailed {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': back on screen, resuming its attempt at \(outcome)",
                           category: .embeddedBlocks)
             onStateChange?(outcome)
@@ -168,7 +163,6 @@ final class EmbeddedBlockWebViewProvider {
     func abandonAttempt() {
         isStarted = false
         isPaused = false
-        outcome = .failed
         pendingResolution = nil
         dropPage()
         registry.blockAttemptEnded(placeSystemName)
@@ -178,7 +172,7 @@ final class EmbeddedBlockWebViewProvider {
         isStarted = false
         isPaused = false
         pendingResolution = nil
-        pendingFailureReport = nil
+        failures.discardHeld()
         dropPage()
         registry.blockAttemptEnded(placeSystemName)
     }
@@ -230,6 +224,26 @@ final class EmbeddedBlockWebViewProvider {
                           category: .embeddedBlocks)
             outcome = .empty
             onStateChange?(.empty)
+
+        case .failure(let failure):
+            dropPage()
+            let failed = EmbeddedBlockState.failed(MindboxEmbeddedBlockFailReason(failure.reason))
+            guard outcome != failed else { return }
+
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': \(failure.details) — failing",
+                          level: .error, category: .embeddedBlocks)
+            settle(failed)
+            failures.report(failure, isBlockOnScreen: isStarted)
+
+        case .configUnavailable:
+            dropPage()
+            let failed = EmbeddedBlockState.failed(MindboxEmbeddedBlockFailReason(.waitBudgetExceeded))
+            guard outcome != failed else { return }
+
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the SDK has no config to answer with — failing",
+                          level: .error, category: .embeddedBlocks)
+            failures.reportUnansweredWaitOnce(processingDuration)
+            settle(failed)
 
         case .content(let fresh):
             applyContent(fresh, processingDuration: processingDuration)
@@ -417,51 +431,36 @@ final class EmbeddedBlockWebViewProvider {
     }
 
     func handleLoadFailure() {
-        settle(.failed)
-        report(.webviewLoadFailed, "The block's page failed to load")
+        fail(.webviewLoadFailed, "The block's page failed to load")
     }
 
-    func reportPageTimedOut() {
-        report(.presentationFailed, "The block's page did not report itself in time")
+    func failSilentPage() {
+        fail(.presentationFailed, "The block's page did not report itself in time")
+        abandonAttempt()
     }
 
-    /// The SDK never answered within the block's budget — a failure with no in-app to pin it on, once
-    /// per place per session. Any answer, "nothing" included, would have disarmed the budget instead.
-    func reportAnswerTimedOut(waited: TimeInterval) {
-        guard SessionTemporaryStorage.shared.$ledger.mutate({ $0.recordUnanswered(placeSystemName) }) else {
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the SDK stayed silent again this session — already reported",
-                          category: .embeddedBlocks)
-            return
-        }
-
-        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the SDK never answered within \(waited.toTimeSpan()) — reporting a failure without an in-app",
-                      level: .error, category: .embeddedBlocks)
-        reportUnansweredWait(waited)
+    /// The SDK never answered within the block's budget. The block fails every time — the host and
+    /// the analytics must agree it was a failure, not an empty place — while the analytics hear about
+    /// it once per place per session, with no in-app to pin it on. Any answer, "nothing" included,
+    /// would have disarmed the budget instead.
+    ///
+    /// Unlike `configUnavailable` — an instant answer that leaves the block started, so the next
+    /// config revives it at once — a timeout abandons the attempt: a late answer is dropped and the
+    /// block asks afresh on its next appearance. In sync with Android, where `onConfigTimeout` gives
+    /// up and `onConfigUnavailable` does not.
+    func failUnanswered(waited: TimeInterval) {
+        failures.reportUnansweredWaitOnce(waited)
+        settle(.failed(MindboxEmbeddedBlockFailReason(.waitBudgetExceeded)))
+        abandonAttempt()
     }
 
-    private func report(_ reason: InAppShowFailureReason, _ details: String) {
+    private func fail(_ reason: InAppShowFailureReason, _ details: String) {
+        settle(.failed(MindboxEmbeddedBlockFailReason(reason)))
+
         guard let content = content else { return }
 
-        guard isStarted else {
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': \(reason.rawValue) for in-app \(content.inAppId) happened off screen — held until the block is looked at",
-                          category: .embeddedBlocks)
-            pendingFailureReport = (content, reason, details)
-            return
-        }
-
-        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': reporting \(reason.rawValue) for in-app \(content.inAppId)",
-                      level: .error, category: .embeddedBlocks)
-        reportFailure(content, reason, details)
-    }
-
-    private func flushPendingFailureReport() {
-        guard let held = pendingFailureReport else { return }
-
-        pendingFailureReport = nil
-
-        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': reporting the held \(held.reason.rawValue) for in-app \(held.content.inAppId)",
-                      level: .error, category: .embeddedBlocks)
-        reportFailure(held.content, held.reason, held.details)
+        failures.report(EmbeddedBlockResolutionFailure(inAppId: content.inAppId, tags: content.tags, reason: reason, details: details),
+                        isBlockOnScreen: isStarted)
     }
 
     private var isAttemptAlive: Bool {
@@ -529,8 +528,7 @@ final class EmbeddedBlockWebViewProvider {
 
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': contentRendered without a readable count, treating as broken",
                       level: .error, category: .embeddedBlocks)
-        settle(.failed)
-        report(.presentationFailed, "The block's page reported contentRendered without a readable count")
+        fail(.presentationFailed, "The block's page reported contentRendered without a readable count")
     }
 
     private func accountForShow() {

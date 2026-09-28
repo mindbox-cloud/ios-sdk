@@ -48,6 +48,14 @@ extension EmbeddedBlockWebContent {
     }
 }
 
+extension EmbeddedBlockResolutionFailure {
+
+    static let broken = EmbeddedBlockResolutionFailure(inAppId: "broken-inapp-id",
+                                                       tags: ["templateType": "Broken"],
+                                                       reason: .unknownError,
+                                                       details: "In-app broken-inapp-id won place 'block-id' but is not an embedded block")
+}
+
 final class InappShowAccountingMock: InappShowAccounting {
 
     private(set) var shows: [InappShow] = []
@@ -125,8 +133,8 @@ final class EmbeddedBlockFailureReporterMock {
     /// Failures with no in-app behind them — the SDK never answered the block — by how long it waited.
     private(set) var unansweredWaits: [TimeInterval] = []
 
-    func report(_ content: EmbeddedBlockWebContent, _ reason: InAppShowFailureReason, _ details: String) {
-        reported.append((content.inAppId, reason, details, content.tags))
+    func report(_ inAppId: String, _ tags: [String: String]?, _ reason: InAppShowFailureReason, _ details: String) {
+        reported.append((inAppId, reason, details, tags))
     }
 
     func reportUnansweredWait(_ waited: TimeInterval) {
@@ -638,7 +646,7 @@ final class EmbeddedBlockTestBed {
                                                      inappService: inappService,
                                                      makePage: { pageFactory.make($0) },
                                                      accounting: accounting,
-                                                     reportFailure: { failureReporter.report($0, $1, $2) },
+                                                     reportFailure: { failureReporter.report($0, $1, $2, $3) },
                                                      reportUnansweredWait: { failureReporter.reportUnansweredWait($0) },
                                                      scheduleAckTimeout: { ackScheduler.schedule($0, $1) },
                                                      makeStopwatch: { ForegroundStopwatch(notificationCenter: center, now: { clock.now }) },
@@ -684,7 +692,8 @@ final class EmbeddedBlockViewDelegateMock: MindboxEmbeddedBlockViewDelegate {
 
     enum Event: Equatable {
         case loaded
-        case failed
+        case empty
+        case failed(MindboxEmbeddedBlockFailReason)
     }
 
     private(set) var events: [Event] = []
@@ -693,8 +702,13 @@ final class EmbeddedBlockViewDelegateMock: MindboxEmbeddedBlockViewDelegate {
         events.append(.loaded)
     }
 
-    func mindboxEmbeddedBlockViewDidFail(_ blockView: MindboxEmbeddedBlockView) {
-        events.append(.failed)
+    func mindboxEmbeddedBlockViewDidBecomeEmpty(_ blockView: MindboxEmbeddedBlockView) {
+        events.append(.empty)
+    }
+
+    func mindboxEmbeddedBlockViewDidFail(_ blockView: MindboxEmbeddedBlockView,
+                                         reason: MindboxEmbeddedBlockFailReason) {
+        events.append(.failed(reason))
     }
 }
 

@@ -8,8 +8,8 @@
 
 /// The container's own view of the block content.
 ///
-/// Deliberately internal: the host app only learns whether the block ended up shown or not,
-/// never the intermediate progress, so the SDK stays free to change the flow later.
+/// Deliberately internal: the host app hears only the outcomes — shown, empty or failed with a
+/// reason — never the intermediate progress, so the SDK stays free to change the flow later.
 enum EmbeddedBlockState: Equatable {
 
     /// The content has not resolved yet.
@@ -18,7 +18,12 @@ enum EmbeddedBlockState: Equatable {
     /// The content is renderable.
     case ready
 
-    case failed
+    case failed(MindboxEmbeddedBlockFailReason)
 
     case empty
+
+    var isFailed: Bool {
+        if case .failed = self { return true }
+        return false
+    }
 }
