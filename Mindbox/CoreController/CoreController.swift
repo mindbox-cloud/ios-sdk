@@ -33,6 +33,7 @@ final class CoreController {
             SessionTemporaryStorage.shared.isInstalledFromPersistenceStorageBeforeInitSDK = self.persistenceStorage.isInstalled
 
             self.configValidation.compare(configuration, self.persistenceStorage.configuration)
+            self.forgetEmbeddedBlockPlacesIfEndpointChanged(to: configuration)
             self.persistenceStorage.configuration = configuration
             if !self.persistenceStorage.isInstalled {
                 self.primaryInitialization(with: configuration)
@@ -139,6 +140,17 @@ final class CoreController {
             deviceUUID: deviceUUID,
             configuration: configuration
         )
+    }
+
+    /// The memory of embedded block places belongs to the endpoint whose config named the places:
+    /// another endpoint has other places, and a record left over would reserve space for nothing.
+    /// The domain alone does not scope the places, so a change of domain keeps the memory.
+    private func forgetEmbeddedBlockPlacesIfEndpointChanged(to configuration: MBConfiguration) {
+        guard let previous = persistenceStorage.configuration, previous.endpoint != configuration.endpoint else { return }
+
+        Logger.common(message: "[Core] Endpoint changed from '\(previous.endpoint)' to '\(configuration.endpoint)': forgetting embedded block places",
+                      level: .info, category: .general)
+        DI.injectOrFail(EmbeddedBlockPlaceRemembering.self).forgetAllPlaces()
     }
 
     private func repeatInitialization(with configuration: MBConfiguration) {

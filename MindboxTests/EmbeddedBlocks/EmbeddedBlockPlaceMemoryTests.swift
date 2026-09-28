@@ -71,6 +71,29 @@ struct EmbeddedBlockPlaceMemoryTests {
         #expect(storage.embeddedBlockPlaceRecordsWriteCount == writes)
     }
 
+    @Test("Forgetting all places drops every record at once")
+    func forgettingAllPlacesDropsEveryRecord() {
+        let memory = makeMemory()
+        memory.rememberShownContent(at: "stories")
+        memory.rememberShownContent(at: "banner")
+
+        memory.forgetAllPlaces()
+
+        #expect(memory.hasShownContent(at: "stories") == false)
+        #expect(memory.hasShownContent(at: "banner") == false)
+        #expect(storage.embeddedBlockPlaceRecords == nil)
+    }
+
+    @Test("Forgetting all places with nothing remembered does not touch the storage")
+    func forgettingAllPlacesWithNothingRememberedWritesNothing() {
+        let memory = makeMemory()
+        let writes = storage.embeddedBlockPlaceRecordsWriteCount
+
+        memory.forgetAllPlaces()
+
+        #expect(storage.embeddedBlockPlaceRecordsWriteCount == writes)
+    }
+
     @Test("A place remembered again after being forgotten is written anew")
     func placeRememberedAgainIsWrittenAnew() {
         let memory = makeMemory()

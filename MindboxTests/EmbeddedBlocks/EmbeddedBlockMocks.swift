@@ -706,6 +706,13 @@ final class EmbeddedBlockPlaceMemoryMock: EmbeddedBlockPlaceRemembering {
         shownPlaces.remove(place)
         forgotten.append(place)
     }
+
+    private(set) var forgotAllCount = 0
+
+    func forgetAllPlaces() {
+        shownPlaces.removeAll()
+        forgotAllCount += 1
+    }
 }
 
 /// The SDK's reveal animation run on the spot: the animations apply at once, the way UIKit sets the

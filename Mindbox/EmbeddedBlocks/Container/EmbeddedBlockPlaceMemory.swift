@@ -29,6 +29,9 @@ protocol EmbeddedBlockPlaceRemembering: AnyObject {
 
     /// The place answered with nothing to show: the next block there starts as if it were new.
     func forgetPlace(_ place: String)
+
+    /// Every place starts as new: the records described another endpoint's places.
+    func forgetAllPlaces()
 }
 
 final class EmbeddedBlockPlaceMemory: EmbeddedBlockPlaceRemembering {
@@ -85,6 +88,17 @@ final class EmbeddedBlockPlaceMemory: EmbeddedBlockPlaceRemembering {
         persistenceStorage.embeddedBlockPlaceRecords = records
 
         Logger.common(message: "[EmbeddedBlock] Place '\(place)' has nothing to show — forgotten, the next launch starts it hidden",
+                      category: .embeddedBlocks)
+    }
+
+    /// Place names are scoped by the endpoint: the same name on another endpoint is another place, so a
+    /// change of endpoint drops every record rather than let a stale one reserve space.
+    func forgetAllPlaces() {
+        guard let records = persistenceStorage.embeddedBlockPlaceRecords, !records.isEmpty else { return }
+
+        persistenceStorage.embeddedBlockPlaceRecords = nil
+
+        Logger.common(message: "[EmbeddedBlock] Forgot \(records.count) place(s) — the next launch starts every place hidden",
                       category: .embeddedBlocks)
     }
 
