@@ -36,15 +36,14 @@ import UIKit
 ///
 /// ```swift
 /// MindboxEmbeddedBlock(placeSystemName: "stories", height: 104,
-///                      loadingStrategy: .hidden,
+///                      loadingStrategy: .automatic,
 ///                      onEmpty: hideSection,
 ///                      onFail: { reason in log("stories failed: \(reason)") })
-///     .placeholder { StoriesSkeleton() }
-///     .errorView { StoriesUnavailable() }
 /// ```
 ///
 /// Both modifiers return the block itself, so they come before any SwiftUI modifier: after
-/// `.frame(…)` or `.padding(…)` the value is no longer a `MindboxEmbeddedBlock`.
+/// `.frame(…)` or `.padding(…)` the value is no longer a `MindboxEmbeddedBlock`. Neither shows on a
+/// block that waits hidden — `hidden`, or `automatic` at a place with no record yet.
 ///
 /// A collapsed block is zero points tall, but a stack still pays its spacing around it. To hand the
 /// space back completely, drop the whole section from the layout in `onEmpty` — as in the example
