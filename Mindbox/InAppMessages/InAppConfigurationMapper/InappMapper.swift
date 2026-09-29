@@ -77,10 +77,7 @@ class InappMapper: InappMapperProtocol {
                              _ candidates: ConfigCandidates,
                              _ completion: @escaping (EmbeddedPlaceSelection) -> Void) {
         runPass("place '\(place)'", event: trigger) { finish in
-            self.evaluate(self.placeQuery(place, candidates), event: trigger) { verdict in
-                // Read before the targeting query: that one collects nothing and would not reset the mark.
-                let cutByFetchFailure = self.dataFacade.didCutCandidatesForFetchFailure
-
+            self.evaluate(self.placeQuery(place, candidates), event: trigger) { verdict, cutByFetchFailure in
                 self.evaluate(self.placeTargetingQuery(place, candidates), event: trigger) { targeted in
                     let winner = verdict.first
                     self.vouch(targeted, winner: winner, at: place)
@@ -244,6 +241,14 @@ class InappMapper: InappMapperProtocol {
     private func evaluate(_ query: TargetingQuery,
                           event: ApplicationEvent?,
                           completion: @escaping ([InAppTransitionData]) -> Void) {
+        evaluate(query, event: event) { suitable, _ in completion(suitable) }
+    }
+
+    /// The second answer says whether a cut candidate could not be checked at all — its segmentation
+    /// or geo failed to fetch. Only a query that collects failures can say so; the rest answer `false`.
+    private func evaluate(_ query: TargetingQuery,
+                          event: ApplicationEvent?,
+                          completion: @escaping ([InAppTransitionData], _ cutByFetchFailure: Bool) -> Void) {
         let prepared = query.prepares()
         prepared.forEach { targetingChecker.prepare(id: $0.id, targeting: $0.targeting) }
 
@@ -255,9 +260,9 @@ class InappMapper: InappMapperProtocol {
             let suitable = self.inappFilterService.filterInappsByTargeting(inapps: candidates,
                                                                            targetingChecker: self.targetingChecker,
                                                                            pickVariant: query.pickVariant)
-            if query.collectsFailures {
-                self.collectTargetingFailures(among: candidates, suitable: suitable)
-            }
+            let cutByFetchFailure = query.collectsFailures
+                ? self.collectTargetingFailures(among: candidates, suitable: suitable)
+                : false
 
             let ms = Int(Date().timeIntervalSince(startedAt) * 1000)
             Logger.common(message: """
@@ -265,7 +270,7 @@ class InappMapper: InappMapperProtocol {
             answered in \(ms) ms.
             """, level: .debug, category: .inAppMessages)
 
-            completion(suitable)
+            completion(suitable, cutByFetchFailure)
         }
 
         if query.fetchesDependencies {
@@ -275,14 +280,14 @@ class InappMapper: InappMapperProtocol {
         }
     }
 
-    private func collectTargetingFailures(among candidates: [InApp], suitable: [InAppTransitionData]) {
+    private func collectTargetingFailures(among candidates: [InApp], suitable: [InAppTransitionData]) -> Bool {
         let suitableIds = Set(suitable.map(\.inAppId))
         let failedIds = Set(candidates.map(\.id)).subtracting(suitableIds)
         let tagsByInappId: [String: [String: String]] = candidates.reduce(into: [:]) { result, inapp in
             guard failedIds.contains(inapp.id), let tags = inapp.tags else { return }
             result[inapp.id] = tags
         }
-        dataFacade.collectTargetingFailures(forFailedTargetingInappIds: failedIds, tagsByInappId: tagsByInappId)
+        return dataFacade.collectTargetingFailures(forFailedTargetingInappIds: failedIds, tagsByInappId: tagsByInappId)
     }
 
     // MARK: - Queries

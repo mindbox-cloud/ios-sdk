@@ -16,11 +16,11 @@ protocol InAppConfigurationDataFacadeProtocol {
         shouldCollectFailures: Bool,
         _ completion: @escaping () -> Void
     )
-    func collectTargetingFailures(forFailedTargetingInappIds failedTargetingInappIds: Set<String>, tagsByInappId: [String: [String: String]])
-
-    /// Whether the last `collectTargetingFailures` found a candidate cut because the data its targeting
-    /// needs could not be fetched. Such a pass could not check the place — it did not find it empty.
-    var didCutCandidatesForFetchFailure: Bool { get }
+    /// Buffers an `Inapp.ShowFailure` for every cut candidate whose fetch failed on the server side.
+    /// Returns whether any cut candidate could not be checked at all — its segmentation or geo failed
+    /// to fetch for whatever reason, offline included. Such a pass did not find the place empty.
+    @discardableResult
+    func collectTargetingFailures(forFailedTargetingInappIds failedTargetingInappIds: Set<String>, tagsByInappId: [String: [String: String]]) -> Bool
 
     func downloadImage(withUrl url: String, inappId: String, tags: [String: String]?, completion: @escaping (Result<UIImage, MindboxError>) -> Void)
     func trackTargeting(id: String?, tags: [String: String]?)
@@ -47,9 +47,13 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
     let tracker: InappTargetingTrackProtocol
     let failureManager: InappShowFailureManagerProtocol
 
-    private var pendingTargetingFailureDetails: [InAppShowFailureReason: String] = [:]
+    /// What the analytics hear: only a server-side failure is reported, per candidate it cut.
+    /// Written from the fetch callbacks — segmentation answers on the main thread, geo on a URLSession
+    /// thread — and read on the pass's queue, hence the lock; the same for the set below.
+    @Locked private var pendingTargetingFailureDetails: [InAppShowFailureReason: String] = [:]
 
-    private(set) var didCutCandidatesForFetchFailure = false
+    /// What the place hears: any fetch that failed left its candidates unchecked, offline included.
+    @Locked private var uncheckableReasons: Set<InAppShowFailureReason> = []
 
     init(segmentationService: SegmentationServiceProtocol,
          targetingChecker: InAppTargetingCheckerProtocol,
@@ -70,7 +74,8 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
         shouldCollectFailures: Bool,
         _ completion: @escaping () -> Void
     ) {
-        pendingTargetingFailureDetails.removeAll()
+        pendingTargetingFailureDetails = [:]
+        uncheckableReasons = []
         fetchSegmentationIfNeeded(shouldCollectFailures: shouldCollectFailures)
         fetchGeoIfNeeded(shouldCollectFailures: shouldCollectFailures)
         fetchProductSegmentationIfNeeded(
@@ -83,25 +88,22 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
         }
     }
 
-    func collectTargetingFailures(forFailedTargetingInappIds failedTargetingInappIds: Set<String>, tagsByInappId: [String: [String: String]]) {
-        defer {
-            pendingTargetingFailureDetails.removeAll()
-        }
-
-        didCutCandidatesForFetchFailure = false
+    @discardableResult
+    func collectTargetingFailures(forFailedTargetingInappIds failedTargetingInappIds: Set<String>, tagsByInappId: [String: [String: String]]) -> Bool {
+        let reported = $pendingTargetingFailureDetails.exchange([:])
+        let uncheckable = $uncheckableReasons.exchange([])
 
         guard !failedTargetingInappIds.isEmpty else {
-            return
+            return false
         }
 
-        pendingTargetingFailureDetails.forEach { reason, details in
-            let inappIds = inappIds(for: reason)
-            let cut = failedTargetingInappIds.intersection(inappIds)
-            didCutCandidatesForFetchFailure = didCutCandidatesForFetchFailure || !cut.isEmpty
-            cut.forEach {
+        reported.forEach { reason, details in
+            failedTargetingInappIds.intersection(inappIds(for: reason)).forEach {
                 failureManager.addFailure(inappId: $0, reason: reason, details: details, tags: tagsByInappId[$0])
             }
         }
+
+        return uncheckable.contains { !failedTargetingInappIds.isDisjoint(with: inappIds(for: $0)) }
     }
 
     func downloadImage(withUrl url: String, inappId: String, tags: [String: String]?, completion: @escaping (Result<UIImage, MindboxError>) -> Void) {
@@ -229,11 +231,16 @@ extension InAppConfigurationDataFacade {
         guard shouldCollectFailures else {
             return
         }
+
+        // Whatever failed, the candidates that need this data were not checked.
+        $uncheckableReasons.mutate { $0.insert(reason) }
+
+        // Only the server's own failure is worth a report; offline and the like are not its doing.
         guard case .serverError = error else {
             return
         }
 
-        pendingTargetingFailureDetails[reason] = error.failureReason
+        $pendingTargetingFailureDetails.mutate { $0[reason] = error.failureReason }
     }
 
     private func inappIds(for reason: InAppShowFailureReason) -> Set<String> {

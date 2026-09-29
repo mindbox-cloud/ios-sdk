@@ -623,6 +623,61 @@
       "tags": {
         "templateType": "Embedded"
       }
+    },
+    {
+      "id": "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
+      "isPriority": false,
+      "delayTime": null,
+      "sdkVersion": {
+        "min": 13,
+        "max": null
+      },
+      "frequency": {
+        "$type": "unlimited"
+      },
+      "validityPeriod": {
+        "dateTimeUtc": "2020-01-01T00:00:00.000000Z",
+        "$type": "dateTime"
+      },
+      "displayConditions": null,
+      "targeting": {
+        "nodes": [
+          {
+            "kind": "positive",
+            "segmentationInternalId": "42",
+            "segmentationExternalId": "feed-segmentation",
+            "segmentExternalId": "feed-segment",
+            "$type": "segment"
+          }
+        ],
+        "$type": "and"
+      },
+      "form": {
+        "variants": [
+          {
+            "$type": "embedded",
+            "placeSystemName": "segment-block-place",
+            "content": {
+              "background": {
+                "layers": [
+                  {
+                    "$type": "webview",
+                    "baseUrl": "https://inapp.local/stories",
+                    "contentUrl": "https://mobile-static-staging.mindbox.ru/inapps/webview/content/stories.html",
+                    "params": {
+                      "stories": []
+                    }
+                  }
+                ]
+              },
+              "elements": null
+            }
+          }
+        ]
+      },
+      "tags": {
+        "templateType": "Embedded"
+      }
     }
   ],
   "abtests": [
