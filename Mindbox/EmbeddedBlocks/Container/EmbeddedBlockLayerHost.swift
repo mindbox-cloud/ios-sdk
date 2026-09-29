@@ -27,12 +27,16 @@ final class EmbeddedBlockLayerHost {
         self.animation = animation
     }
 
-    /// Shows the view in place of the one attached now. `nil` — show nothing. `animated` fades the view
-    /// in over the previous one, which leaves when the fade ends.
+    /// Shows the view in place of the one attached now. `nil` — show nothing. `animated` cross-fades:
+    /// the view fades in while the previous one fades out under it, and leaves when the fade ends.
+    /// The page is transparent, so a previous layer left opaque would show through its empty parts
+    /// for the whole fade and then vanish in one frame.
     func show(_ view: UIView?, animated: Bool = false) {
         // A fade still running is over: what it was replacing goes now.
-        fadingOutView?.removeFromSuperview()
-        fadingOutView = nil
+        if let fadingOutView {
+            drop(fadingOutView)
+            self.fadingOutView = nil
+        }
 
         guard let view else {
             attachedView?.removeFromSuperview()
@@ -54,12 +58,22 @@ final class EmbeddedBlockLayerHost {
 
         fadingOutView = previous
         view.alpha = 0
-        animation.run(animation.duration, { view.alpha = 1 }, { [weak self] in
+        animation.run(animation.duration, {
+            view.alpha = 1
+            previous?.alpha = 0
+        }, { [weak self] in
             guard let self, self.fadingOutView === previous else { return }
 
             self.fadingOutView = nil
-            previous?.removeFromSuperview()
+            previous.map(self.drop)
         })
+    }
+
+    /// The faded-out layer is shown again on the next load — the shimmer is one instance for the
+    /// block's whole life — so it leaves with its alpha back at 1.
+    private func drop(_ view: UIView) {
+        view.removeFromSuperview()
+        view.alpha = 1
     }
 
     private func attach(_ view: UIView) {

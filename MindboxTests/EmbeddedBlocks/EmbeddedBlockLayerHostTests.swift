@@ -120,14 +120,19 @@ struct EmbeddedBlockLayerHostTests {
         host.show(first)
         host.show(second, animated: true)
 
-        // Both are on screen while the fade runs, the new one on top; its model alpha is already 1.
+        // Both are on screen while the fade runs, the new one on top. The spy applies the animations
+        // at once, the way UIKit sets the model values: the new one is at 1, the previous one at 0 —
+        // a cross-fade, not a fade over an opaque layer.
         #expect(container.subviews == [first, second])
         #expect(second.alpha == 1)
+        #expect(first.alpha == 0)
         #expect(spy.runs == [Constants.EmbeddedBlock.revealAnimationDuration])
 
         spy.finish()
 
         #expect(first.superview == nil)
+        // Ready to be shown again on the next load.
+        #expect(first.alpha == 1)
         #expect(container.subviews == [second])
         #expect(container.constraints.count == 4)
     }
@@ -162,6 +167,8 @@ struct EmbeddedBlockLayerHostTests {
         spy.finish()
 
         #expect(first.superview == nil)
+        // Dropped mid-fade, yet ready to be shown again on the next load.
+        #expect(first.alpha == 1)
         #expect(second.superview == nil)
         #expect(container.subviews == [third])
         #expect(container.constraints.count == 4)
