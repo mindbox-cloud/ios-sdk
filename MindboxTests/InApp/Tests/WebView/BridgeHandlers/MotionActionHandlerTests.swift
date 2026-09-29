@@ -65,18 +65,40 @@ struct MotionActionHandlerTests {
 
         let response = try #require(host.sent.first)
         #expect(response.type == .error)
-        #expect(response.payload == .object(["error": .string("No sensors available for requested gestures: flip")]))
+        #expect(response.payload == .object(["error": .string("gestures_unavailable")]))
     }
 
-    @Test("Unknown gesture names are dropped, and asking only for those is refused")
-    func unknownGesturesAreRefused() throws {
+    @Test("Unknown gesture names are dropped, and asking only for those is refused as an unsupported value",
+          arguments: [["somersault"], ["wave"], [" "]])
+    func unknownGesturesAreRefused(gestures: [String]) throws {
         let (handler, service, host) = makeSUT()
 
-        handler.handle(startRequest(["somersault"]), host: host)
+        handler.handle(startRequest(gestures), host: host)
 
         #expect(service.started == nil)
-        #expect(host.sent.first?.payload
-                == .object(["error": .string("No valid gestures provided. Available: shake, flip")]))
+        #expect(host.sent.first?.payload == .object(["error": .string("unsupported_value")]))
+    }
+
+    @Test("A gesture list that is empty or holds anything but non-empty names is refused as an invalid payload",
+          arguments: [#"[]"#, #"[""]"#, #"[1]"#, #"[1,"wave"]"#, #"["wave",1]"#])
+    func unreadableGestureListIsRefused(gestures: String) throws {
+        let (handler, service, host) = makeSUT()
+
+        handler.handle(.request(.motionStart, payload: .string(#"{"gestures":\#(gestures)}"#)), host: host)
+
+        #expect(service.started == nil)
+        #expect(host.sent.first?.payload == .object(["error": .string("invalid_payload")]))
+    }
+
+    @Test("A known gesture next to an element that is not a name still starts")
+    func knownGestureNextToUnreadableElementStarts() throws {
+        let (handler, service, host) = makeSUT(started: [.flip])
+
+        handler.handle(.request(.motionStart, payload: .object(["gestures": .array([.string("flip"), .int(1)])])),
+                       host: host)
+
+        #expect(service.started == [.flip])
+        #expect(host.sent.first?.type == .response)
     }
 
     @Test("A payload without gestures is refused")
@@ -86,19 +108,17 @@ struct MotionActionHandlerTests {
         handler.handle(.request(.motionStart, payload: .object([:])), host: host)
 
         #expect(service.started == nil)
-        #expect(host.sent.first?.payload == .object(["error": .string("Invalid payload: 'gestures' must be an array")]))
+        #expect(host.sent.first?.payload == .object(["error": .string("invalid_payload")]))
     }
 
-    /// The first guard has its own wording, because there is a difference worth telling the page:
-    /// nothing arrived at all, as against something arrived in the wrong shape.
-    @Test("A request with no payload at all is refused before the shape is looked at")
+    @Test("A request with no payload at all is refused as an invalid payload")
     func missingPayloadIsRefused() throws {
         let (handler, service, host) = makeSUT()
 
         handler.handle(.request(.motionStart), host: host)
 
         #expect(service.started == nil)
-        #expect(host.sent.first?.payload == .object(["error": .string("Invalid payload: missing 'gestures' array")]))
+        #expect(host.sent.first?.payload == .object(["error": .string("invalid_payload")]))
     }
 
     @Test("A payload that is not an object is refused the same way")
@@ -108,7 +128,7 @@ struct MotionActionHandlerTests {
         handler.handle(.request(.motionStart, payload: .array([.string("shake")])), host: host)
 
         #expect(service.started == nil)
-        #expect(host.sent.first?.payload == .object(["error": .string("Invalid payload: missing 'gestures' array")]))
+        #expect(host.sent.first?.payload == .object(["error": .string("invalid_payload")]))
     }
 
     @Test("A gestures field that is not an array is refused")
@@ -117,7 +137,7 @@ struct MotionActionHandlerTests {
 
         handler.handle(.request(.motionStart, payload: .object(["gestures": .string("shake")])), host: host)
 
-        #expect(host.sent.first?.payload == .object(["error": .string("Invalid payload: 'gestures' must be an array")]))
+        #expect(host.sent.first?.payload == .object(["error": .string("invalid_payload")]))
     }
 
     // MARK: - Stopping

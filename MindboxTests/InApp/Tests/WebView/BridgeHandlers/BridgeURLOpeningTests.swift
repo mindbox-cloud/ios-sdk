@@ -38,7 +38,7 @@ struct BridgeURLOpeningTests {
         #expect(response.action == message.action)
     }
 
-    @Test("A refused open is answered as an error naming the URL")
+    @Test("A refused open is answered as open_failed")
     func failureIsAnswered() async throws {
         let opener = URLOpenerSpy()
         opener.result = false
@@ -50,7 +50,7 @@ struct BridgeURLOpeningTests {
 
         let response = try #require(host.sent.first)
         #expect(response.type == .error)
-        #expect(response.payload == .object(["error": .string("Failed to open URL: 'myapp://product/1'")]))
+        #expect(response.payload == .object(["error": .string("open_failed")]))
         #expect(response.id == message.id)
     }
 

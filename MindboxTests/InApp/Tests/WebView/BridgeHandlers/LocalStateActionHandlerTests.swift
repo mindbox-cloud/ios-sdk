@@ -88,7 +88,7 @@ struct LocalStateActionHandlerTests {
 
         let response = try #require(host.sent.first)
         #expect(response.type == .error)
-        #expect(response.payload == .object(["error": .string("Invalid payload")]))
+        #expect(response.payload == .object(["error": .string("invalid_payload")]))
     }
 
     // MARK: - set
@@ -137,7 +137,7 @@ struct LocalStateActionHandlerTests {
         #expect(storage.written == nil)
         let response = try #require(host.sent.first)
         #expect(response.type == .error)
-        #expect(response.payload == .object(["error": .string("Invalid payload: missing 'data' object")]))
+        #expect(response.payload == .object(["error": .string("invalid_payload")]))
     }
 
     // MARK: - broadcast
@@ -210,7 +210,7 @@ struct LocalStateActionHandlerTests {
 
         let response = try #require(host.sent.first)
         #expect(response.type == .error)
-        #expect(response.payload == .object(["error": .string("Version must be a positive integer, got 0")]))
+        #expect(response.payload == .object(["error": .string("invalid_payload")]))
     }
 
     @Test("An init without a version is refused")
@@ -221,7 +221,7 @@ struct LocalStateActionHandlerTests {
 
         let response = try #require(host.sent.first)
         #expect(response.type == .error)
-        #expect(response.payload == .object(["error": .string("Invalid payload: missing 'version' or 'data'")]))
+        #expect(response.payload == .object(["error": .string("invalid_payload")]))
     }
 
     // MARK: - Envelope

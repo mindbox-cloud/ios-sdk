@@ -87,7 +87,7 @@ struct FilterShowableInappsActionHandlerTests {
         #expect(host.askedIds.isEmpty)
         let response = try #require(host.sent.first)
         #expect(response.type == .error)
-        #expect(response.payload == .object(["error": .string("Invalid payload: missing 'inappIds' array")]))
+        #expect(response.payload == .object(["error": .string("invalid_payload")]))
     }
 
     @Test("A payload sent as a JSON string is understood too")
@@ -112,7 +112,7 @@ struct FilterShowableInappsActionHandlerTests {
 
         let response = try #require(host.sent.first)
         #expect(response.type == .error)
-        #expect(response.payload == .object(["error": .string("filterShowableInapps is not served on this surface")]))
+        #expect(response.payload == .object(["error": .string("not_served")]))
     }
 }
 
@@ -160,9 +160,12 @@ struct ShowInAppActionHandlerTests {
         #expect(shown.params.isEmpty)
     }
 
-    @Test("A show that did not happen is refused with the contract's reason",
-          arguments: [ShowInAppRefusal.unknownInapp, .sourceDismissed, .showFailed])
-    func refusedShowCarriesTheReason(refusal: ShowInAppRefusal) throws {
+    @Test("A show that did not happen is refused with the contract's code", arguments: [
+        (BridgeErrorCode.unknownInapp, "unknown_inapp"),
+        (BridgeErrorCode.notVisible, "not_visible"),
+        (BridgeErrorCode.showFailed, "show_failed")
+    ])
+    func refusedShowCarriesTheCode(refusal: BridgeErrorCode, code: String) throws {
         let host = InappRequestHostSpy()
         let message = BridgeMessage.request(.showInApp, payload: .object(["inappId": .string("some-id")]))
 
@@ -172,7 +175,7 @@ struct ShowInAppActionHandlerTests {
         let response = try #require(host.sent.first)
         #expect(response.type == .error)
         #expect(response.id == message.id)
-        #expect(response.payload == .object(["error": .string(refusal.rawValue)]))
+        #expect(response.payload == .object(["error": .string(code)]))
     }
 
     @Test("A request without an id is refused", arguments: [
@@ -188,7 +191,7 @@ struct ShowInAppActionHandlerTests {
         #expect(host.shown.isEmpty)
         let response = try #require(host.sent.first)
         #expect(response.type == .error)
-        #expect(response.payload == .object(["error": .string("Invalid payload: missing or empty 'inappId'")]))
+        #expect(response.payload == .object(["error": .string("invalid_payload")]))
     }
 
     @Test("A host without an in-app service refuses the request instead of keeping silent")
@@ -200,7 +203,7 @@ struct ShowInAppActionHandlerTests {
 
         let response = try #require(host.sent.first)
         #expect(response.type == .error)
-        #expect(response.payload == .object(["error": .string("showInApp is not served on this surface")]))
+        #expect(response.payload == .object(["error": .string("not_served")]))
     }
 }
 
@@ -214,7 +217,7 @@ private final class InappRequestHostSpy: HostSpy, WebBridgeInappRequestHosting {
     private(set) var shown: [(id: String, params: [String: JSONValue])] = []
 
     private var pending: [([String]) -> Void] = []
-    private var showCompletions: [(Result<Void, ShowInAppRefusal>) -> Void] = []
+    private var showCompletions: [(Result<Void, BridgeErrorCode>) -> Void] = []
 
     func bridgeDidAskShowableInapps(_ ids: [String], completion: @escaping ([String]) -> Void) {
         askedIds.append(ids)
@@ -228,12 +231,12 @@ private final class InappRequestHostSpy: HostSpy, WebBridgeInappRequestHosting {
 
     func bridgeDidRequestShowInApp(id: String,
                                    params: [String: JSONValue],
-                                   completion: @escaping (Result<Void, ShowInAppRefusal>) -> Void) {
+                                   completion: @escaping (Result<Void, BridgeErrorCode>) -> Void) {
         shown.append((id, params))
         showCompletions.append(completion)
     }
 
-    func finishShow(_ outcome: Result<Void, ShowInAppRefusal>) {
+    func finishShow(_ outcome: Result<Void, BridgeErrorCode>) {
         let completions = showCompletions
         showCompletions = []
         completions.forEach { $0(outcome) }

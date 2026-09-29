@@ -338,7 +338,7 @@ struct MindboxWebBridgeBlanketAnswerTests {
         #expect(envelope["action"] as? String == "totally.new")
         #expect(envelope["id"] as? String == request.id.uuidString.lowercased())
         let payload = try #require(payloadObject(of: envelope))
-        #expect(payload["error"] as? String == "unknown action 'totally.new'")
+        #expect(payload["error"] as? String == "unknown_action")
     }
 
     @Test("A known non-deferred request keeps its blanket success")

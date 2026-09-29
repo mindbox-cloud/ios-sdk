@@ -100,7 +100,7 @@ struct OpenLinkActionHandlerTests {
 
         let response = try #require(host.sent.first)
         #expect(response.type == .error)
-        #expect(response.payload == .object(["error": .string("Failed to open URL: 'myapp://nope'")]))
+        #expect(response.payload == .object(["error": .string("open_failed")]))
     }
 
     // MARK: - Refusals
@@ -117,7 +117,7 @@ struct OpenLinkActionHandlerTests {
         #expect(opener.opened.isEmpty)
         let response = try #require(host.sent.first)
         #expect(response.type == .error)
-        #expect(response.payload == .object(["error": .string("Invalid payload: missing or empty 'url' field")]))
+        #expect(response.payload == .object(["error": .string("invalid_payload")]))
     }
 
     @Test("An empty url is refused")
@@ -142,11 +142,9 @@ struct OpenLinkActionHandlerTests {
 
         #expect(opener.opened.isEmpty)
         let response = try #require(host.sent.first)
-        #expect(response.payload == .object(["error": .string("Invalid payload: missing or empty 'url' field")]))
+        #expect(response.payload == .object(["error": .string("invalid_payload")]))
     }
 
-    /// A string can be non-empty and still not be an address. It is refused by name rather than
-    /// handed to the system, which would answer a flat `false` and say nothing about why.
     @Test("A url that cannot be parsed is refused without reaching the system",
           arguments: ["http://exa mple.com", "ht tp://example.com"])
     func unparseableURLIsRefused(urlString: String) throws {
@@ -160,7 +158,7 @@ struct OpenLinkActionHandlerTests {
         #expect(opener.opened.isEmpty)
         let response = try #require(host.sent.first)
         #expect(response.type == .error)
-        #expect(response.payload == .object(["error": .string("Invalid URL: '\(urlString)' could not be parsed")]))
+        #expect(response.payload == .object(["error": .string("invalid_url")]))
     }
 
     /// A bare address parses, but with no scheme it is nothing Safari could show — only the system
@@ -194,7 +192,7 @@ struct OpenLinkActionHandlerTests {
 
         let response = try #require(host.sent.first)
         #expect(response.type == .error)
-        #expect(response.payload == .object(["error": .string("Failed to open URL: no presenting view controller")]))
+        #expect(response.payload == .object(["error": .string("open_failed")]))
         #expect(host.sent.count == 1, "the universal-link attempt and the fallback answer once between them")
     }
 

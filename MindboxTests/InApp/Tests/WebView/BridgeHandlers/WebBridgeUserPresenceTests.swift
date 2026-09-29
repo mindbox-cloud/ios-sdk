@@ -104,6 +104,7 @@ struct WebBridgeUserPresenceTests {
         #expect(response.type == .error)
         #expect(response.id == message.id)
         #expect(response.action == BridgeMessage.Action.openLink.rawValue)
+        #expect(response.payload == .object(["error": .string("not_visible")]))
     }
 
     /// The action is owned — it was refused, not unrecognised. Reporting it as unhandled would
@@ -206,7 +207,7 @@ struct WebBridgeUserPresenceDuringRequestTests {
 
         let response = try #require(host.sent.first)
         #expect(response.type == .error)
-        #expect(response.payload == .object(["error": .string("Nobody is looking at this page")]))
+        #expect(response.payload == .object(["error": .string("not_visible")]))
         #expect(host.sent.count == 1)
     }
 
@@ -225,7 +226,7 @@ struct WebBridgeUserPresenceDuringRequestTests {
         #expect(opener.opened.isEmpty)
         let response = try #require(host.sent.first)
         #expect(response.type == .error)
-        #expect(response.payload == .object(["error": .string("Nobody is looking at this page")]))
+        #expect(response.payload == .object(["error": .string("not_visible")]))
     }
 
     /// The same turn on the route every other scheme takes, and the one `settings.open` shares.
@@ -242,7 +243,7 @@ struct WebBridgeUserPresenceDuringRequestTests {
         #expect(opener.opened.isEmpty)
         let response = try #require(host.sent.first)
         #expect(response.type == .error)
-        #expect(response.payload == .object(["error": .string("Nobody is looking at this page")]))
+        #expect(response.payload == .object(["error": .string("not_visible")]))
     }
 
     /// The whole point of asking again is that the answer may have changed. A page still on screen

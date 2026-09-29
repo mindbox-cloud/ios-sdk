@@ -79,6 +79,7 @@ struct OperationActionHandlerTests {
 
         let response = try #require(sut.host.sent.first)
         #expect(response.type == .error)
+        #expect(response.payload == .object(["error": .string("operation_failed")]))
         #expect(sut.host.sent.count == 1, "a failed queue is answered once, not confirmed as well")
     }
 
@@ -222,6 +223,7 @@ struct OperationActionHandlerTests {
 
         let response = try #require(sut.host.sent.first)
         #expect(response.type == .error)
+        #expect(response.payload == .object(["error": .string("invalid_payload")]))
         #expect(sut.database.created.isEmpty)
         #expect(sut.events.sentRaw.isEmpty)
         #expect(sut.core.sendEventCalled.isEmpty)

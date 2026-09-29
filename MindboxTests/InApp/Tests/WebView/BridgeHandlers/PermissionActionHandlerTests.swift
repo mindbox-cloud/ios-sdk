@@ -69,7 +69,7 @@ struct PermissionActionHandlerTests {
 
         let response = try #require(host.sent.first)
         #expect(response.type == .error)
-        #expect(response.payload == .object(["error": .string("Something went wrong")]))
+        #expect(response.payload == .object(["error": .string("permission_failed")]))
     }
 
     // MARK: - Refusals
@@ -81,17 +81,17 @@ struct PermissionActionHandlerTests {
         handler.handle(.request(.permissionRequest, payload: .object([:])), host: host)
 
         #expect(permission.requestCount == 0)
-        #expect(host.sent.first?.payload == .object(["error": .string("Invalid payload: missing or empty 'type' field")]))
+        #expect(host.sent.first?.payload == .object(["error": .string("invalid_payload")]))
     }
 
-    @Test("A permission the SDK does not know is refused by name")
-    func unknownTypeIsRefused() throws {
+    @Test("A permission the SDK does not know is refused as an unsupported value", arguments: ["camera", " "])
+    func unknownTypeIsRefused(type: String) throws {
         let (handler, permission, host) = makeSUT()
 
-        handler.handle(.request(.permissionRequest, payload: .object(["type": .string("camera")])), host: host)
+        handler.handle(.request(.permissionRequest, payload: .object(["type": .string(type)])), host: host)
 
         #expect(permission.requestCount == 0)
-        #expect(host.sent.first?.payload == .object(["error": .string("Unknown permission type: 'camera'")]))
+        #expect(host.sent.first?.payload == .object(["error": .string("unsupported_value")]))
     }
 
     @Test("A known permission with no handler registered is refused")
@@ -100,8 +100,7 @@ struct PermissionActionHandlerTests {
 
         handler.handle(pushRequest(), host: host)
 
-        #expect(host.sent.first?.payload
-                == .object(["error": .string("No handler registered for permission type: 'pushNotifications'")]))
+        #expect(host.sent.first?.payload == .object(["error": .string("internal_error")]))
     }
 
     /// Asking without the usage description in place would kill the host app rather than
@@ -113,8 +112,7 @@ struct PermissionActionHandlerTests {
         handler.handle(pushRequest(), host: host)
 
         #expect(permission.requestCount == 0)
-        #expect(host.sent.first?.payload
-                == .object(["error": .string("Missing Info.plist key: NSUserTrackingUsageDescription")]))
+        #expect(host.sent.first?.payload == .object(["error": .string("permission_failed")]))
     }
 
     @Test("A required key that is present lets the request through")
