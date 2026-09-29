@@ -24,6 +24,9 @@ final class CoreController {
     var controllerQueue: DispatchQueue
 
     func initialization(configuration: MBConfiguration) {
+        // Before the queue hop, on the caller's thread: a block created right after this call returns
+        // must already see the reset, or its first look would come from another endpoint's places.
+        forgetEmbeddedBlockPlacesIfEndpointChanged(to: configuration)
 
         controllerQueue.async {
             SessionTemporaryStorage.shared.isInitializationCalled = true
@@ -33,7 +36,6 @@ final class CoreController {
             SessionTemporaryStorage.shared.isInstalledFromPersistenceStorageBeforeInitSDK = self.persistenceStorage.isInstalled
 
             self.configValidation.compare(configuration, self.persistenceStorage.configuration)
-            self.forgetEmbeddedBlockPlacesIfEndpointChanged(to: configuration)
             self.persistenceStorage.configuration = configuration
             if !self.persistenceStorage.isInstalled {
                 self.primaryInitialization(with: configuration)
@@ -145,6 +147,10 @@ final class CoreController {
     /// The memory of embedded block places belongs to the endpoint whose config named the places:
     /// another endpoint has other places, and a record left over would reserve space for nothing.
     /// The domain alone does not scope the places, so a change of domain keeps the memory.
+    ///
+    /// Blocks already on screen keep the old config until a restart, and on their next return to the
+    /// screen they write their places down again — a reset in a running process is undone by them.
+    /// Switching the endpoint mid-process is a rare enough case (an environment switch) to leave that.
     private func forgetEmbeddedBlockPlacesIfEndpointChanged(to configuration: MBConfiguration) {
         guard let previous = persistenceStorage.configuration, previous.endpoint != configuration.endpoint else { return }
 

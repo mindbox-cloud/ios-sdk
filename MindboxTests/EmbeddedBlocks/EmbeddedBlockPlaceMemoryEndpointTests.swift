@@ -42,6 +42,20 @@ struct EmbeddedBlockPlaceMemoryEndpointTests {
         cleanup()
     }
 
+    @Test("The reset is visible as soon as initialization returns, before the controller queue runs")
+    func resetIsVisibleBeforeInitializationFinishes() async throws {
+        try await initialize(endpoint: "shop-app", domain: "api.mindbox.ru")
+        rememberPlaces()
+
+        // A block created right after this line reads the memory on the main thread: it must not see
+        // the old endpoint's places.
+        coreController.initialization(configuration: try MBConfiguration(endpoint: "shop-app-staging", domain: "api.mindbox.ru"))
+        #expect(storage.embeddedBlockPlaceRecords == nil)
+
+        await waitForInitializationFinished()
+        cleanup()
+    }
+
     @Test("The same endpoint on another domain keeps the remembered places")
     func domainChangeKeepsPlaces() async throws {
         try await initialize(endpoint: "shop-app", domain: "api.mindbox.ru")

@@ -122,6 +122,21 @@ struct EmbeddedBlockPlaceMemoryTests {
         #expect(memory.record(at: "stories") == nil)
     }
 
+    @Test("Concurrent remembers and forgets from other threads lose no record")
+    func concurrentAccessLosesNoRecord() {
+        let memory = makeMemory()
+        let places = (0..<64).map { "place-\($0)" }
+
+        // Each remember is a read-modify-write of the whole dictionary; without the lock they overwrite each other.
+        DispatchQueue.concurrentPerform(iterations: places.count) { index in
+            memory.rememberShownContent(at: places[index])
+            _ = memory.hasShownContent(at: places[index])
+        }
+
+        #expect(places.allSatisfy { memory.hasShownContent(at: $0) })
+        #expect(storage.embeddedBlockPlaceRecords?.count == places.count)
+    }
+
     @Test("The record is JSON with an ISO 8601 date, so a later field can join it")
     func recordIsStoredAsJSON() throws {
         makeMemory(now: Date(timeIntervalSince1970: 0)).rememberShownContent(at: "stories")
