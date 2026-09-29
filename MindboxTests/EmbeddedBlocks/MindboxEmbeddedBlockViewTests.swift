@@ -1625,13 +1625,20 @@ struct MindboxEmbeddedBlockViewTests {
     @Test("A hidden block grows to its height with animation when its content arrives")
     func hiddenBlockGrowsWithAnimation() {
         let block = BlockFixture(loadingStrategy: .hidden)
-        block.attachToWindow()
+        let host = LayoutRecordingHost()
+        host.isInsideAnimation = { [reveal = block.reveal] in reveal.isApplyingAnimations }
+        block.attachToHost(host)
+        host.layouts.removeAll()
+        // Something of the host's own is pending: it must not ride along with the growth.
+        host.setNeedsLayout()
 
         block.page?.reportRendered(1)
 
         // The fade of the content and the growth of the height.
         #expect(block.reveal.runs.count == 2)
-        #expect(block.view.intrinsicContentSize.height == 120)
+        // The host's pending layout settles outside the animation first; the growth is laid out inside it.
+        #expect(host.layouts == ["outside", "inside"])
+        #expect(block.view.frame.height == 120)
     }
 
     @Test("A wrapper that lays the block out gets the fade only: the height is its own to animate")
@@ -1707,6 +1714,19 @@ struct MindboxEmbeddedBlockViewTests {
     }
 }
 
+/// A host that writes down every layout pass and whether it ran inside the reveal animation.
+private final class LayoutRecordingHost: UIView {
+
+    var isInsideAnimation: () -> Bool = { false }
+
+    var layouts: [String] = []
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        layouts.append(isInsideAnimation() ? "inside" : "outside")
+    }
+}
+
 /// A block with every dependency substituted and a live window: the window must outlive the test,
 /// otherwise the view would fly out of the window mid-check and the content would stop on its own.
 @MainActor
@@ -1756,6 +1776,21 @@ private final class BlockFixture {
 
     func attachToWindow() {
         window.addSubview(view)
+    }
+
+    /// The block inside a host view laid out by constraints, the way an app puts it in a stack or a
+    /// cell: the host's layout is what the growth animation drives.
+    func attachToHost(_ host: UIView) {
+        host.frame = window.bounds
+        window.addSubview(host)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        host.addSubview(view)
+        NSLayoutConstraint.activate([
+            view.topAnchor.constraint(equalTo: host.topAnchor),
+            view.leadingAnchor.constraint(equalTo: host.leadingAnchor),
+            view.trailingAnchor.constraint(equalTo: host.trailingAnchor)
+        ])
+        host.layoutIfNeeded()
     }
 
     func removeFromWindow() {

@@ -727,6 +727,9 @@ final class EmbeddedBlockRevealAnimationSpy {
     /// `true` — the completion waits for `finish()`, as it waits for the end of a real animation.
     var isDeferred = false
 
+    /// `true` while the animations block runs: what happens then is what UIKit would animate.
+    private(set) var isApplyingAnimations = false
+
     private var pendingCompletions: [() -> Void] = []
 
     var animation: EmbeddedBlockRevealAnimation {
@@ -734,7 +737,9 @@ final class EmbeddedBlockRevealAnimationSpy {
             guard let self else { return }
 
             self.runs.append(duration)
+            self.isApplyingAnimations = true
             animations()
+            self.isApplyingAnimations = false
             if self.isDeferred {
                 self.pendingCompletions.append(completion)
             } else {

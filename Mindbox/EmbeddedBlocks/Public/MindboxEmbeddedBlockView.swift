@@ -509,11 +509,16 @@ public final class MindboxEmbeddedBlockView: UIView {
 
         layers.show(view(for: shownAppearance), animated: animated)
 
-        invalidateIntrinsicContentSize()
         // The height is animated by whoever owns it: the container through its intrinsic size, a
         // wrapper laying the block out itself through its own frame.
         if animated, previous == .collapsed, appearanceObserver == nil {
+            // Whatever the host had pending in this subtree settles first, outside the animation:
+            // only the growth of the block is animated.
+            superview?.layoutIfNeeded()
+            invalidateIntrinsicContentSize()
             animateGrowth()
+        } else {
+            invalidateIntrinsicContentSize()
         }
 
         appearanceObserver?(shownAppearance)
