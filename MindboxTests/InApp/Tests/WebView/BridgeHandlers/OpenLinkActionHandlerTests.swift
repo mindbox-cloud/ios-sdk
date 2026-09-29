@@ -53,6 +53,22 @@ struct OpenLinkActionHandlerTests {
         #expect(opener.opened.first?.universalLinksOnly == false)
     }
 
+    @Test("Whitespace around the url is dropped before it is opened",
+          arguments: [(" https://example.com", "https://example.com"),
+                      ("myapp://product/1 ", "myapp://product/1"),
+                      ("\n\t tel:+123456789 \n", "tel:+123456789")])
+    func surroundingWhitespaceIsDropped(requested: String, expected: String) async {
+        let opener = URLOpenerSpy()
+        let host = HostSpy()
+
+        let handler = OpenLinkActionHandler(urlOpener: opener)
+
+        handler.handle(.request(.openLink, payload: .object(["url": .string(requested)])), host: host)
+        await drainMainQueue(until: { !opener.opened.isEmpty })
+
+        #expect(opener.opened.map(\.url.absoluteString) == [expected])
+    }
+
     // MARK: - Outcomes
 
     @Test("An opened universal link is reported as a success")
@@ -113,6 +129,20 @@ struct OpenLinkActionHandlerTests {
         handler.handle(.request(.openLink, payload: .object(["url": .string("")])), host: host)
 
         #expect(host.sent.first?.type == .error)
+    }
+
+    @Test("A url of only whitespace is refused like an empty one", arguments: [" ", "\n\t "])
+    func whitespaceOnlyURLIsRefused(urlString: String) throws {
+        let opener = URLOpenerSpy()
+        let host = HostSpy()
+
+        let handler = OpenLinkActionHandler(urlOpener: opener)
+
+        handler.handle(.request(.openLink, payload: .object(["url": .string(urlString)])), host: host)
+
+        #expect(opener.opened.isEmpty)
+        let response = try #require(host.sent.first)
+        #expect(response.payload == .object(["error": .string("Invalid payload: missing or empty 'url' field")]))
     }
 
     /// A string can be non-empty and still not be an address. It is refused by name rather than
