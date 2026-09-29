@@ -1588,13 +1588,18 @@ struct MindboxEmbeddedBlockViewTests {
     }
 
     @Test("A failure leaves the memory as it is", arguments: [true, false])
-    func failureLeavesTheMemoryAlone(hasShownBefore: Bool) {
+    func failureLeavesTheMemoryAlone(hasShownBefore: Bool) async {
         let memory = EmbeddedBlockPlaceMemoryMock(shownPlaces: hasShownBefore ? ["block-id"] : [])
         let block = BlockFixture(memory: memory)
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
         block.attachToWindow()
 
         block.page?.failLoad()
+        await mainQueueTurn()
 
+        // It was a failure the host heard about, not an outcome that went unnoticed.
+        #expect(delegate.events == [.failed(.networkError)])
         #expect(memory.hasShownContent(at: "block-id") == hasShownBefore)
         #expect(memory.forgotten.isEmpty)
         #expect(memory.remembered.isEmpty)
@@ -1620,14 +1625,18 @@ struct MindboxEmbeddedBlockViewTests {
     }
 
     @Test("A block the SDK never answered leaves the memory as it is")
-    func neverAnsweredBlockLeavesTheMemoryAlone() {
+    func neverAnsweredBlockLeavesTheMemoryAlone() async {
         let memory = EmbeddedBlockPlaceMemoryMock(shownPlaces: ["block-id"])
         let block = BlockFixture(memory: memory)
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
         block.bed.resolver.isDeferred = true
         block.attachToWindow()
 
         block.expireTimeout()
+        await mainQueueTurn()
 
+        #expect(delegate.events == [.failed(.networkError)])
         #expect(memory.shownPlaces == ["block-id"])
         #expect(memory.forgotten.isEmpty)
     }
