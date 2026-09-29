@@ -563,7 +563,14 @@ public final class MindboxEmbeddedBlockView: UIView {
         case .empty:
             return .collapsed
         case .loading:
-            return hasSettled ? settledAppearance : .placeholder
+            // A block that ceded its space keeps what it shows. One that holds its space waits the way
+            // it first waited: a hidden block whose page is being replaced hides again, not a shimmer.
+            guard hasSettled else {
+                return Self.initialAppearance(for: loadingStrategy,
+                                              hasShownContentBefore: placeMemory.hasShownContent(at: placeSystemName))
+            }
+
+            return settledAppearance
         case .failed:
             guard hasSettled else { return errorView == nil ? .collapsed : .error }
 
