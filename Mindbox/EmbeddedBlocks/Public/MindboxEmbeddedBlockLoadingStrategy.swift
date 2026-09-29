@@ -15,7 +15,7 @@ import Foundation
 /// takes its space before the answer, and the SDK remembers per place whether content was ever shown
 /// there, so the layout does not jump where content is expected and does not flash where it is not.
 ///
-/// The same three values exist on every platform; `automatic` is the default everywhere.
+/// `automatic` is the default.
 public enum MindboxEmbeddedBlockLoadingStrategy: Sendable {
 
     /// Hidden until the place has shown content once on this device; a placeholder from then on.
