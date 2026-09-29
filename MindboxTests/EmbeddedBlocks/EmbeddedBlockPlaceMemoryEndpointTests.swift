@@ -13,7 +13,7 @@ import Testing
 
 /// The memory of places belongs to the endpoint whose config named them: a new endpoint starts
 /// every place hidden, a new domain on the same endpoint keeps what was remembered.
-@Suite(.serialized)
+@Suite("Embedded block place memory across endpoints", .tags(.embeddedBlocks), .serialized)
 @MainActor
 struct EmbeddedBlockPlaceMemoryEndpointTests {
 
