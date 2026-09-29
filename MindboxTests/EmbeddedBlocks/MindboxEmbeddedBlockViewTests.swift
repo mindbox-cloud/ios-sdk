@@ -1474,8 +1474,8 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.view.intrinsicContentSize.height == 120)
     }
 
-    @Test("A hidden block whose page is replaced by a new config waits hidden again, not in a placeholder")
-    func hiddenBlockWaitsHiddenWhileItsPageIsReplaced() {
+    @Test("A hidden block that shows content keeps its space in a placeholder while its page is replaced")
+    func hiddenBlockKeepsItsSpaceWhileItsPageIsReplaced() {
         let block = BlockFixture(loadingStrategy: .hidden)
         block.attachToWindow()
         block.page?.reportRendered(1)
@@ -1485,12 +1485,28 @@ struct MindboxEmbeddedBlockViewTests {
         block.bed.resolver.resolution = .content(.other)
         block.bed.announceNewConfig()
 
-        #expect(block.view.intrinsicContentSize.height == 0)
-        #expect(block.view.subviews.contains { $0 is EmbeddedBlockShimmerView } == false)
+        #expect(block.view.intrinsicContentSize.height == 120)
+        #expect(block.view.subviews.contains { $0 is EmbeddedBlockShimmerView })
 
         block.page?.reportRendered(1)
 
         #expect(block.view.intrinsicContentSize.height == 120)
+        #expect(block.view.subviews.contains { $0 is EmbeddedBlockShimmerView } == false)
+    }
+
+    @Test("A hidden block that failed after showing content waits hidden again, not in a placeholder")
+    func hiddenBlockThatCededItsSpaceWaitsHiddenAgain() {
+        let block = BlockFixture(loadingStrategy: .hidden)
+        block.attachToWindow()
+        block.page?.reportRendered(1)
+        block.page?.failLoad()
+        #expect(block.view.intrinsicContentSize.height == 0)
+
+        block.bed.resolver.resolution = .content(.other)
+        block.bed.announceNewConfig()
+
+        #expect(block.view.intrinsicContentSize.height == 0)
+        #expect(block.view.subviews.contains { $0 is EmbeddedBlockShimmerView } == false)
     }
 
     @Test("Reload of an automatic block shows the placeholder once the place is remembered")

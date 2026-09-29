@@ -122,7 +122,9 @@ public struct MindboxEmbeddedBlock: View {
 
     /// Shows this view instead of the SDK shimmer while the block is loading.
     ///
-    /// Called again, it replaces the previous placeholder. A block that waits hidden shows neither.
+    /// Called again, it replaces the previous placeholder. A block that waits hidden shows neither
+    /// until it has shown content; from then on it keeps its space in the placeholder while its
+    /// page is replaced.
     public func placeholder<Content: View>(@ViewBuilder _ build: @escaping () -> Content) -> Self {
         var block = self
         block.placeholderBuilder = { AnyView(build()) }

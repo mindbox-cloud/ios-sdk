@@ -69,7 +69,9 @@ public final class MindboxEmbeddedBlockView: UIView {
     /// The view shown in place of the content while it is loading. `nil` — the default — means
     /// the SDK's own shimmer. The placeholder fills the whole container, so it is laid out to the
     /// container's width and the height given at creation. Can be swapped at any moment, including
-    /// mid-loading. A block that waits hidden — see `loadingStrategy` — shows no placeholder at all.
+    /// mid-loading. A block that waits hidden — see `loadingStrategy` — shows no placeholder until
+    /// it has shown content: from then on it keeps its space in the placeholder while its page is
+    /// replaced.
     public var placeholderView: UIView? {
         didSet {
             guard placeholderView !== oldValue else { return }
@@ -563,14 +565,16 @@ public final class MindboxEmbeddedBlockView: UIView {
         case .empty:
             return .collapsed
         case .loading:
-            // A block that ceded its space keeps what it shows. One that holds its space waits the way
-            // it first waited: a hidden block whose page is being replaced hides again, not a shimmer.
-            guard hasSettled else {
-                return Self.initialAppearance(for: loadingStrategy,
-                                              hasShownContentBefore: placeMemory.hasShownContent(at: placeSystemName))
-            }
+            // A block that ceded its space keeps what it shows. One that shows content keeps its
+            // space in a placeholder while its page is replaced — whatever the strategy, shrinking
+            // to nothing and growing back would be a jump for no reason. The first wait is the
+            // strategy's call.
+            guard !hasSettled else { return settledAppearance }
 
-            return settledAppearance
+            if shownAppearance == .content { return .placeholder }
+
+            return Self.initialAppearance(for: loadingStrategy,
+                                          hasShownContentBefore: placeMemory.hasShownContent(at: placeSystemName))
         case .failed:
             guard hasSettled else { return errorView == nil ? .collapsed : .error }
 

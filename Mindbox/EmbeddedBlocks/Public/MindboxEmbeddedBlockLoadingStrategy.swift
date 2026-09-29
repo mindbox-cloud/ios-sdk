@@ -29,8 +29,9 @@ public enum MindboxEmbeddedBlockLoadingStrategy: Sendable {
     /// Always a placeholder until the answer: the SDK shimmer or the host's `placeholderView`.
     case placeholder
 
-    /// Always hidden until the content is shown: zero height, no placeholder, and no `errorView` on a
+    /// Hidden until the content is shown once: zero height, no placeholder, and no `errorView` on a
     /// failure — a block that never took its space does not take it for an error screen either.
-    /// The outcome still arrives through `onFail`.
+    /// The outcome still arrives through `onFail`. A block that shows content keeps its space in
+    /// a placeholder while its page is replaced; only the next creation starts hidden again.
     case hidden
 }
