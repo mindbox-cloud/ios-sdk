@@ -54,8 +54,13 @@ public struct MindboxEmbeddedBlock: View {
     private let placeSystemName: String
     private let height: CGFloat
     private let timeout: TimeInterval?
-    private let loadingStrategy: MindboxEmbeddedBlockLoadingStrategy
-    private let animatesReveal: Bool
+
+    /// What the block shows until the SDK answers, given at creation. See `MindboxEmbeddedBlockLoadingStrategy`.
+    public let loadingStrategy: MindboxEmbeddedBlockLoadingStrategy
+
+    /// Whether the SDK animates the reveal of the content, given at creation.
+    public let animatesReveal: Bool
+
     private let onLoad: (() -> Void)?
     private let onEmpty: (() -> Void)?
     private let onFail: ((MindboxEmbeddedBlockFailReason) -> Void)?
