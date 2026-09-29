@@ -14,15 +14,15 @@ final class ShowInAppActionHandler: WebBridgeActionHandler {
     let actions: Set<BridgeMessage.Action> = [.showInApp]
 
     func handle(_ message: BridgeMessage, host: WebBridgeHost) {
+        guard let inappHost = host as? WebBridgeInappRequestHosting else {
+            host.respondError(.notServed, detail: "no in-app service on this surface", to: message)
+            return
+        }
+
         guard let payload = message.payloadObject,
               case .string(let inAppId)? = payload["inappId"],
               !inAppId.isEmpty else {
             host.respondError(.invalidPayload, detail: "missing or empty 'inappId'", to: message)
-            return
-        }
-
-        guard let inappHost = host as? WebBridgeInappRequestHosting else {
-            host.respondError(.notServed, detail: "no in-app service on this surface", to: message)
             return
         }
 

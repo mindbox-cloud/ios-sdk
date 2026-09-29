@@ -16,6 +16,11 @@ final class FilterShowableInappsActionHandler: WebBridgeActionHandler {
     let actions: Set<BridgeMessage.Action> = [.filterShowableInapps]
 
     func handle(_ message: BridgeMessage, host: WebBridgeHost) {
+        guard let inappHost = host as? WebBridgeInappRequestHosting else {
+            host.respondError(.notServed, detail: "no in-app service on this surface", to: message)
+            return
+        }
+
         guard case .array(let requested)? = message.payloadObject?["inappIds"] else {
             host.respondError(.invalidPayload, detail: "missing 'inappIds' array", to: message)
             return
@@ -30,11 +35,6 @@ final class FilterShowableInappsActionHandler: WebBridgeActionHandler {
             Logger.common(message: "[WebView] filterShowableInapps: \(requested.count - ids.count) of \(requested.count) asked ids are not strings, skipping them",
                           level: .error,
                           category: host.logCategory)
-        }
-
-        guard let inappHost = host as? WebBridgeInappRequestHosting else {
-            host.respondError(.notServed, detail: "no in-app service on this surface", to: message)
-            return
         }
 
         inappHost.bridgeDidAskShowableInapps(ids) { [weak host] allowed in

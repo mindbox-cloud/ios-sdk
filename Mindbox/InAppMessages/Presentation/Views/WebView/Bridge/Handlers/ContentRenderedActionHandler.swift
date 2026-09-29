@@ -19,6 +19,13 @@ final class ContentRenderedActionHandler: WebBridgeActionHandler {
     let actions: Set<BridgeMessage.Action> = [.contentRendered]
 
     func handle(_ message: BridgeMessage, host: WebBridgeHost) {
+        guard let content = host as? WebBridgeContentHosting else {
+            Logger.common(message: "[WebView] Bridge: contentRendered from '\(host.contentId)' has nobody listening here, ignoring",
+                          category: host.logCategory)
+            host.respondSuccess(to: message)
+            return
+        }
+
         let renderedCount: Int
 
         switch Self.count(in: message) {
@@ -29,22 +36,15 @@ final class ContentRenderedActionHandler: WebBridgeActionHandler {
             // behalf: `0.4` would collapse it as empty, `0.6` would show it. Named instead, so
             // the bug is found where it is rather than lived with as a block that sometimes
             // disappears.
-            refuse("'count' must be a whole number, got \(count)", message: message, host: host)
+            refuse("'count' must be a whole number, got \(count)", message: message, host: host, content: content)
             return
         case .absent:
-            refuse("missing or non-numeric 'count'", message: message, host: host)
+            refuse("missing or non-numeric 'count'", message: message, host: host, content: content)
             return
         }
 
         guard renderedCount >= 0 else {
-            refuse("'count' must not be negative, got \(renderedCount)", message: message, host: host)
-            return
-        }
-
-        guard let content = host as? WebBridgeContentHosting else {
-            Logger.common(message: "[WebView] Bridge: contentRendered(\(renderedCount)) from '\(host.contentId)' has nobody listening here, ignoring",
-                          category: host.logCategory)
-            host.respondSuccess(to: message)
+            refuse("'count' must not be negative, got \(renderedCount)", message: message, host: host, content: content)
             return
         }
 
@@ -52,9 +52,9 @@ final class ContentRenderedActionHandler: WebBridgeActionHandler {
         host.respondSuccess(to: message)
     }
 
-    private func refuse(_ detail: String, message: BridgeMessage, host: WebBridgeHost) {
+    private func refuse(_ detail: String, message: BridgeMessage, host: WebBridgeHost, content: WebBridgeContentHosting) {
         host.respondError(.invalidPayload, detail: detail, to: message)
-        (host as? WebBridgeContentHosting)?.bridgeDidReportUnreadableContent()
+        content.bridgeDidReportUnreadableContent()
     }
 
     /// What the payload's `count` turned out to be.
