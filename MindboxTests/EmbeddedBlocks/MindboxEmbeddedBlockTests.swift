@@ -202,6 +202,16 @@ struct MindboxEmbeddedBlockTests {
         #expect(blockView.errorView === errorView)
     }
 
+    @Test("A block created without a strategy is automatic, in SwiftUI and in UIKit alike")
+    func defaultStrategyIsAutomatic() {
+        guard #available(iOS 13.0, *) else { return }
+
+        withTestContainer(memory: EmbeddedBlockPlaceMemoryMock()) {
+            #expect(MindboxEmbeddedBlock(placeSystemName: "stories", height: 104).loadingStrategy == .automatic)
+            #expect(MindboxEmbeddedBlockView(placeSystemName: "stories", height: 104).loadingStrategy == .automatic)
+        }
+    }
+
     @Test("The coordinator is made with the block's animatesReveal, not the default",
           arguments: [true, false])
     func coordinatorGetsTheBlocksAnimatesReveal(animatesReveal: Bool) {

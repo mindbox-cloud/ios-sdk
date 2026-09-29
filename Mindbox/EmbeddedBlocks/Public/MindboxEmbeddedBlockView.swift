@@ -17,9 +17,9 @@ import MindboxLogger
 /// by the container itself through `intrinsicContentSize`: the one given at creation while the
 /// content is loading and shown, and 0 when there is nothing to show (a failure or an empty
 /// block), so the block takes no space and is invisible in the host layout. What the block shows
-/// before the SDK answers is decided by `loadingStrategy`, named by the host at creation: a
-/// placeholder, nothing, or nothing until the place has shown content once on this device and a
-/// placeholder from then on.
+/// before the SDK answers is decided by `loadingStrategy`, given at creation: a placeholder, nothing,
+/// or — by default — nothing until the place has shown content once on this device and a placeholder
+/// from then on.
 /// Both looks can be customized: `placeholderView` replaces the stock loading shimmer, and
 /// `errorView` opts into showing a failure instead of collapsing.
 ///
@@ -232,8 +232,8 @@ public final class MindboxEmbeddedBlockView: UIView {
     ///     host's job and there is no default: a height of 0 or less leaves the block invisible
     ///     whatever its content turns out to be, so the SDK reports it as an integration error.
     ///   - loadingStrategy: What the block shows until the SDK answers: a placeholder, nothing, or
-    ///     `automatic` — hidden until the place has shown content once on this device and a
-    ///     placeholder from then on. No default: the host decides for every block.
+    ///     `automatic` — the default — hidden until the place has shown content once on this device
+    ///     and a placeholder from then on.
     ///   - timeout: How long the block waits to learn what it shows — the config has to
     ///     arrive and the selection has to run — before failing as `networkError`, in seconds;
     ///     `errorView` applies. `nil` means the SDK default of 30. An answer that arrives after
@@ -242,7 +242,7 @@ public final class MindboxEmbeddedBlockView: UIView {
     ///   - animatesReveal: Whether the SDK animates the reveal of the content. `true` by default.
     public convenience init(placeSystemName: String,
                             height: CGFloat,
-                            loadingStrategy: MindboxEmbeddedBlockLoadingStrategy,
+                            loadingStrategy: MindboxEmbeddedBlockLoadingStrategy = .automatic,
                             timeout: TimeInterval? = nil,
                             animatesReveal: Bool = true) {
         let place = Self.normalizedPlaceSystemName(placeSystemName)
@@ -263,7 +263,7 @@ public final class MindboxEmbeddedBlockView: UIView {
 
     /// Blocks are not created from storyboards: the place system name and the height are required
     /// and have no sensible defaults.
-    @available(*, unavailable, message: "Use init(placeSystemName:height:loadingStrategy:) instead")
+    @available(*, unavailable, message: "Use init(placeSystemName:height:) instead")
     public required init?(coder: NSCoder) {
         return nil
     }

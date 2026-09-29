@@ -17,7 +17,7 @@ import UIKit
 /// Place it anywhere in a layout — the caller decides only the position and the width. The block
 /// keeps the given height while its content is loading and shown; a block with nothing to show
 /// collapses to zero height. What the block shows before the SDK answers is decided by
-/// `loadingStrategy`, named at creation: a placeholder, nothing, or nothing until the place has shown
+/// `loadingStrategy`: a placeholder, nothing, or — by default — nothing until the place has shown
 /// content once on this device and a placeholder from then on. The first look is known before the
 /// first frame, so a block that waits hidden never flashes reserved space.
 ///
@@ -78,9 +78,8 @@ public struct MindboxEmbeddedBlock: View {
     ///   - height: The height the block occupies while loading and shown. A new value resizes the
     ///     block in place, without reloading its content.
     ///   - loadingStrategy: What the block shows until the SDK answers: a placeholder, nothing, or
-    ///     `automatic` — hidden until the place has shown content once on this device and a
-    ///     placeholder from then on. No default: the host decides for every block. Read once, when
-    ///     the block is created.
+    ///     `automatic` — the default — hidden until the place has shown content once on this device
+    ///     and a placeholder from then on. Read once, when the block is created.
     ///   - timeout: How long the block waits to learn what it shows before failing as
     ///     `networkError`, in seconds. `nil` means the SDK default of 30. An answer that arrives after
     ///     that no longer expands the block; the next attempt starts when the block enters the
@@ -99,7 +98,7 @@ public struct MindboxEmbeddedBlock: View {
     ///     reason is for logs and analytics — match it with a `default`, a later SDK may add reasons.
     public init(placeSystemName: String,
                 height: CGFloat,
-                loadingStrategy: MindboxEmbeddedBlockLoadingStrategy,
+                loadingStrategy: MindboxEmbeddedBlockLoadingStrategy = .automatic,
                 timeout: TimeInterval? = nil,
                 animatesReveal: Bool = true,
                 onLoad: (() -> Void)? = nil,
