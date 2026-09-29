@@ -1676,6 +1676,29 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.view.frame.height == 120)
     }
 
+    @Test("The growth is laid out from the window: a stack view above the block's superview grows inside the animation")
+    func growthLaysOutTheWholeWindow() {
+        let block = BlockFixture(loadingStrategy: .hidden)
+        let stack = LayoutRecordingStack()
+        stack.isInsideAnimation = { [reveal = block.reveal] in reveal.isApplyingAnimations }
+        let header = UILabel()
+        header.text = "Header"
+        let footer = UILabel()
+        footer.text = "Footer"
+        // Header, the block in a wrapper of its own, footer: the wrapper is the block's superview, the
+        // stack is above it and has to grow for the footer to move down.
+        let wrapper = UIView()
+        block.attachToStack(stack, arranging: [header, wrapper, footer], blockInside: wrapper)
+        stack.layouts.removeAll()
+
+        block.page?.reportRendered(1)
+
+        #expect(block.reveal.runs.count == 2)
+        #expect(stack.layouts.contains("inside"))
+        #expect(wrapper.frame.height == 120)
+        #expect(footer.frame.minY == header.frame.maxY + 120)
+    }
+
     @Test("A wrapper that lays the block out gets the fade only: the height is its own to animate")
     func wrapperLaidOutBlockGetsTheFadeOnly() {
         let block = BlockFixture(loadingStrategy: .hidden)
@@ -1762,6 +1785,18 @@ private final class LayoutRecordingHost: UIView {
     }
 }
 
+private final class LayoutRecordingStack: UIStackView {
+
+    var isInsideAnimation: () -> Bool = { false }
+
+    var layouts: [String] = []
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        layouts.append(isInsideAnimation() ? "inside" : "outside")
+    }
+}
+
 /// A block with every dependency substituted and a live window: the window must outlive the test,
 /// otherwise the view would fly out of the window mid-check and the content would stop on its own.
 @MainActor
@@ -1826,6 +1861,24 @@ private final class BlockFixture {
             view.trailingAnchor.constraint(equalTo: host.trailingAnchor)
         ])
         host.layoutIfNeeded()
+    }
+
+    /// The block in a vertical stack, inside a wrapper of its own: the stack is an ancestor above
+    /// the block's superview, the way a section of an app screen holds a block among other views.
+    func attachToStack(_ stack: UIStackView, arranging views: [UIView], blockInside wrapper: UIView) {
+        stack.axis = .vertical
+        stack.frame = window.bounds
+        window.addSubview(stack)
+        views.forEach(stack.addArrangedSubview)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        wrapper.addSubview(view)
+        NSLayoutConstraint.activate([
+            view.topAnchor.constraint(equalTo: wrapper.topAnchor),
+            view.leadingAnchor.constraint(equalTo: wrapper.leadingAnchor),
+            view.trailingAnchor.constraint(equalTo: wrapper.trailingAnchor),
+            view.bottomAnchor.constraint(equalTo: wrapper.bottomAnchor)
+        ])
+        stack.layoutIfNeeded()
     }
 
     func removeFromWindow() {

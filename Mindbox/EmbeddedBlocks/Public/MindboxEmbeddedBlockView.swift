@@ -519,9 +519,9 @@ public final class MindboxEmbeddedBlockView: UIView {
         // The height is animated by whoever owns it: the container through its intrinsic size, a
         // wrapper laying the block out itself through its own frame.
         if animated, previous == .collapsed, appearanceObserver == nil {
-            // Whatever the host had pending in this subtree settles first, outside the animation:
-            // only the growth of the block is animated.
-            superview?.layoutIfNeeded()
+            // Whatever the host had pending settles first, outside the animation: only the growth
+            // of the block is animated.
+            window?.layoutIfNeeded()
             invalidateIntrinsicContentSize()
             animateGrowth()
         } else {
@@ -537,11 +537,13 @@ public final class MindboxEmbeddedBlockView: UIView {
     }
 
     /// The new intrinsic size is already pending; laying it out inside the animation makes the host
-    /// layout — Auto Layout, a stack view — grow to it instead of jumping. A list host remeasures
-    /// its row on its own terms, in `mindboxEmbeddedBlockViewDidLoad`.
+    /// layout — Auto Layout, a stack view — grow to it instead of jumping. From the window, not the
+    /// superview: the growth moves everything below the block, and a superview laid out on its own
+    /// leaves its ancestors to jump after the animation. A list host remeasures its row on its own
+    /// terms, in `mindboxEmbeddedBlockViewDidLoad`.
     private func animateGrowth() {
         revealAnimation.run(revealAnimation.duration, { [weak self] in
-            self?.superview?.layoutIfNeeded()
+            self?.window?.layoutIfNeeded()
         }, {})
     }
 
