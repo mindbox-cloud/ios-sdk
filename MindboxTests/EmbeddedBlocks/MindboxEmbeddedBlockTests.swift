@@ -222,6 +222,27 @@ struct MindboxEmbeddedBlockTests {
         #expect(coordinator.animatesReveal == animatesReveal)
     }
 
+    /// What the value was given has to reach the container SwiftUI builds — through the body, the
+    /// representable and `makeUIView` — not stop at the coordinator.
+    @Test("The container SwiftUI builds is made with the block's strategy and animatesReveal")
+    func containerGetsTheBlocksStrategyAndAnimatesReveal() throws {
+        guard #available(iOS 13.0, *) else { return }
+
+        try withTestContainer(memory: EmbeddedBlockPlaceMemoryMock()) {
+            let block = MindboxEmbeddedBlock(placeSystemName: "stories", height: 104,
+                                             loadingStrategy: .hidden, animatesReveal: false)
+            let hosting = UIHostingController(rootView: block)
+            let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 320, height: 600))
+            window.rootViewController = hosting
+            window.isHidden = false
+            hosting.view.layoutIfNeeded()
+
+            let container = try #require(findBlockView(in: hosting.view))
+            #expect(container.loadingStrategy == .hidden)
+            #expect(container.animatesReveal == false)
+        }
+    }
+
     // MARK: - First look
 
     /// The first look a wrapper reads before the container exists: the strategy plus the place's
@@ -292,7 +313,7 @@ struct MindboxEmbeddedBlockTests {
 
     /// The wrapper reaches the memory and the content provider through DI. The container is
     /// process-global and the mode swap rebuilds it: both are restored after the body.
-    private func withTestContainer(memory: EmbeddedBlockPlaceMemoryMock, _ body: () -> Void) {
+    private func withTestContainer(memory: EmbeddedBlockPlaceMemoryMock, _ body: () throws -> Void) rethrows {
         let factory = EmbeddedBlockContentProviderFactoryMock(provider: EmbeddedBlockTestBed().provider)
         let savedBuilder = MBInject.buildTestContainer
         let savedMode = MBInject.mode
@@ -308,7 +329,16 @@ struct MindboxEmbeddedBlockTests {
         }
         MBInject.mode = .test
 
-        body()
+        try body()
+    }
+
+    private func findBlockView(in view: UIView) -> MindboxEmbeddedBlockView? {
+        if let blockView = view as? MindboxEmbeddedBlockView { return blockView }
+
+        for subview in view.subviews {
+            if let found = findBlockView(in: subview) { return found }
+        }
+        return nil
     }
 
     /// A container with substituted dependencies: the wrapper loads nothing itself, its job is to
