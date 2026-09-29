@@ -14,10 +14,13 @@ protocol InappMapperProtocol {
     func handleInapps(_ event: ApplicationEvent?,
                       _ candidates: ConfigCandidates,
                       _ completion: @escaping (InAppFormData?) -> Void)
+    /// Answers `decided` with the winner or with nothing, or `targetingUnavailable` when there is no
+    /// winner because a candidate could not be checked — the data its targeting needs failed to fetch.
+    /// Never `configUnavailable`: the config is in hand here.
     func selectInappForPlace(_ place: String,
                              trigger: ApplicationEvent?,
                              _ candidates: ConfigCandidates,
-                             _ completion: @escaping (InAppTransitionData?) -> Void)
+                             _ completion: @escaping (EmbeddedPlaceSelection) -> Void)
     func getInAppById(_ id: String,
                       _ candidates: ConfigCandidates,
                       _ completion: @escaping (InAppTransitionData?) -> Void)
@@ -72,21 +75,27 @@ class InappMapper: InappMapperProtocol {
     func selectInappForPlace(_ place: String,
                              trigger: ApplicationEvent?,
                              _ candidates: ConfigCandidates,
-                             _ completion: @escaping (InAppTransitionData?) -> Void) {
+                             _ completion: @escaping (EmbeddedPlaceSelection) -> Void) {
         runPass("place '\(place)'", event: trigger) { finish in
             self.evaluate(self.placeQuery(place, candidates), event: trigger) { verdict in
+                // Read before the targeting query: that one collects nothing and would not reset the mark.
+                let cutByFetchFailure = self.dataFacade.didCutCandidatesForFetchFailure
+
                 self.evaluate(self.placeTargetingQuery(place, candidates), event: trigger) { targeted in
                     let winner = verdict.first
                     self.vouch(targeted, winner: winner, at: place)
 
                     guard let winner else {
                         finish(false)
-                        completion(nil)
+                        // A candidate cut because its segmentation or geo could not be fetched is not
+                        // "nothing here": the place stays undecided, and the block fails rather than
+                        // forgets a place that showed content before.
+                        completion(cutByFetchFailure ? .targetingUnavailable : .decided(nil))
                         return
                     }
 
                     finish(true)
-                    completion(winner)
+                    completion(.decided(winner))
                 }
             }
         }

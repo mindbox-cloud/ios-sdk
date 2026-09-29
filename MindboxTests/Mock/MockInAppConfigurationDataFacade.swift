@@ -31,6 +31,7 @@ class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
     @Locked public var fetchDependenciesCalls = 0
     @Locked public var sendCollectedFailuresCalls = 0
     @Locked public var discardCollectedFailuresCalls = 0
+    @Locked public var didCutCandidatesForFetchFailure = false
 
     init(segmentationService: SegmentationServiceProtocol,
          targetingChecker: InAppTargetingCheckerProtocol,

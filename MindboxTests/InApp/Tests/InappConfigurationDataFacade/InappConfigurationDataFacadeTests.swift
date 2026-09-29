@@ -270,6 +270,57 @@ final class InAppConfigurationDataFacadeTests: XCTestCase {
         XCTAssertTrue(mockFailureManager.failures.allSatisfy { $0.reason == .customerSegmentRequestFailed })
     }
 
+    func test_marksCut_whenSegmentationFailedAndACandidateDependsOnIt() {
+        dataFacade.targetingChecker.context.segmentInapps = ["inapp-segment"]
+        dataFacade.targetingChecker.context.segments = ["segment-id"]
+        mockSegmentation.stubError = .serverError(.init(status: .internalServerError, errorMessage: "Internal Server error", httpStatusCode: 500))
+        let expectation = expectation(description: "fetch dependencies")
+
+        dataFacade.fetchDependencies(model: nil) {
+            expectation.fulfill()
+        }
+
+        waitForExpectations(timeout: 1)
+        dataFacade.collectTargetingFailures(forFailedTargetingInappIds: ["inapp-segment", "inapp-other"], tagsByInappId: [:])
+
+        XCTAssertTrue(dataFacade.didCutCandidatesForFetchFailure)
+    }
+
+    func test_doesNotMarkCut_whenNoFailedCandidateDependsOnTheFailedFetch() {
+        dataFacade.targetingChecker.context.segmentInapps = ["inapp-segment"]
+        dataFacade.targetingChecker.context.segments = ["segment-id"]
+        mockSegmentation.stubError = .serverError(.init(status: .internalServerError, errorMessage: "Internal Server error", httpStatusCode: 500))
+        let expectation = expectation(description: "fetch dependencies")
+
+        dataFacade.fetchDependencies(model: nil) {
+            expectation.fulfill()
+        }
+
+        waitForExpectations(timeout: 1)
+        dataFacade.collectTargetingFailures(forFailedTargetingInappIds: ["inapp-other"], tagsByInappId: [:])
+
+        XCTAssertFalse(dataFacade.didCutCandidatesForFetchFailure)
+    }
+
+    func test_clearsCutMark_onTheNextCollectWithoutAFailedFetch() {
+        dataFacade.targetingChecker.context.segmentInapps = ["inapp-segment"]
+        dataFacade.targetingChecker.context.segments = ["segment-id"]
+        mockSegmentation.stubError = .serverError(.init(status: .internalServerError, errorMessage: "Internal Server error", httpStatusCode: 500))
+        let failing = expectation(description: "failing fetch")
+        dataFacade.fetchDependencies(model: nil) { failing.fulfill() }
+        waitForExpectations(timeout: 1)
+        dataFacade.collectTargetingFailures(forFailedTargetingInappIds: ["inapp-segment"], tagsByInappId: [:])
+        XCTAssertTrue(dataFacade.didCutCandidatesForFetchFailure)
+
+        mockSegmentation.stubError = nil
+        let succeeding = expectation(description: "succeeding fetch")
+        dataFacade.fetchDependencies(model: nil) { succeeding.fulfill() }
+        waitForExpectations(timeout: 1)
+        dataFacade.collectTargetingFailures(forFailedTargetingInappIds: ["inapp-segment"], tagsByInappId: [:])
+
+        XCTAssertFalse(dataFacade.didCutCandidatesForFetchFailure)
+    }
+
     func test_addFailure_whenSegmentationRequestFailedBefore_returnsCachedFailureOnNextFetch() {
         SessionTemporaryStorage.shared.segmentationRequestResult = nil
         let targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)

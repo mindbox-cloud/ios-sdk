@@ -30,6 +30,10 @@ enum EmbeddedBlockResolution: Equatable {
 
     case configUnavailable
 
+    /// No winner because a candidate could not be checked — its segmentation or geo failed to fetch.
+    /// The pass has already reported that per candidate; the block only fails as `networkError`.
+    case targetingUnavailable
+
     var content: EmbeddedBlockWebContent? {
         if case .content(let content) = self { return content }
         return nil
@@ -103,6 +107,10 @@ final class EmbeddedBlockResolver: EmbeddedBlockResolving {
             return resolution(from: inapp, place: place)
         case .configUnavailable:
             return .configUnavailable
+        case .targetingUnavailable:
+            Logger.common(message: "[EmbeddedBlock] Place '\(place)' could not be checked: its targeting data failed to fetch — failing the block",
+                          level: .error, category: .embeddedBlocks)
+            return .targetingUnavailable
         }
     }
 

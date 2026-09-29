@@ -65,6 +65,12 @@ struct EmbeddedBlockResolveTests {
     private func resolvePlace(_ place: String,
                               trigger: ApplicationEvent? = nil,
                               candidates: ConfigCandidates? = nil) async -> InAppTransitionData? {
+        await selectPlace(place, trigger: trigger, candidates: candidates).inapp
+    }
+
+    private func selectPlace(_ place: String,
+                             trigger: ApplicationEvent? = nil,
+                             candidates: ConfigCandidates? = nil) async -> EmbeddedPlaceSelection {
         await withCheckedContinuation { continuation in
             mapper.selectInappForPlace(place, trigger: trigger, candidates ?? self.candidates) { continuation.resume(returning: $0) }
         }
@@ -286,6 +292,27 @@ struct EmbeddedBlockResolveTests {
 
         #expect(await resolvePlace(Constants.abPlace, candidates: config.candidates) == nil)
         #expect(dataFacade.trackTargetingCalls.contains { $0.id == Constants.abBlockId })
+    }
+
+    @Test("A place with no winner is undecided when a fetch failure cut a candidate")
+    func placeCutByFetchFailureIsNotEmpty() async {
+        let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+        persistenceStorage.deviceUUID = Constants.deviceCuttingAbBlock
+        dataFacade.didCutCandidatesForFetchFailure = true
+
+        #expect(await selectPlace(Constants.abPlace, candidates: config.candidates) == .targetingUnavailable)
+        // Not a selection: what the pass buffered goes out as failures, as for an empty place.
+        #expect(dataFacade.sendCollectedFailuresCalls == 1)
+    }
+
+    @Test("A winner is a winner even when a fetch failure cut someone else")
+    func winnerBeatsAFetchFailureElsewhere() async throws {
+        let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+        persistenceStorage.deviceUUID = Constants.deviceKeepingAbBlock
+        dataFacade.didCutCandidatesForFetchFailure = true
+
+        let selection = await selectPlace(Constants.abPlace, candidates: config.candidates)
+        #expect(selection.inapp?.inAppId == Constants.abBlockId)
     }
 
     @Test("In the A/B branch that keeps it, the in-app wins its place")

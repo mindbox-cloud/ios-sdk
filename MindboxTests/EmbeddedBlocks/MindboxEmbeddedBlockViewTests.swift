@@ -1557,6 +1557,25 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(memory.remembered.isEmpty)
     }
 
+    @Test("A place the pass could not check fails the automatic block and keeps its record")
+    func uncheckedPlaceKeepsTheMemoryAndFails() async {
+        let memory = EmbeddedBlockPlaceMemoryMock(shownPlaces: ["block-id"])
+        let block = BlockFixture(resolution: .targetingUnavailable, loadingStrategy: .automatic, memory: memory)
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        let errorView = UIView()
+        block.view.errorView = errorView
+
+        block.attachToWindow()
+        await mainQueueTurn()
+
+        #expect(delegate.events == [.failed(.networkError)])
+        #expect(memory.hasShownContent(at: "block-id"))
+        #expect(memory.forgotten.isEmpty)
+        // The record gave the block a placeholder, so the failure keeps the height for the error view.
+        #expect(block.view.subviews.contains(errorView))
+    }
+
     @Test("A block the SDK never answered leaves the memory as it is")
     func neverAnsweredBlockLeavesTheMemoryAlone() {
         let memory = EmbeddedBlockPlaceMemoryMock(shownPlaces: ["block-id"])

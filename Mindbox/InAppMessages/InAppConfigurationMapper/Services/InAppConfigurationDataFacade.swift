@@ -17,6 +17,11 @@ protocol InAppConfigurationDataFacadeProtocol {
         _ completion: @escaping () -> Void
     )
     func collectTargetingFailures(forFailedTargetingInappIds failedTargetingInappIds: Set<String>, tagsByInappId: [String: [String: String]])
+
+    /// Whether the last `collectTargetingFailures` found a candidate cut because the data its targeting
+    /// needs could not be fetched. Such a pass could not check the place — it did not find it empty.
+    var didCutCandidatesForFetchFailure: Bool { get }
+
     func downloadImage(withUrl url: String, inappId: String, tags: [String: String]?, completion: @escaping (Result<UIImage, MindboxError>) -> Void)
     func trackTargeting(id: String?, tags: [String: String]?)
 
@@ -43,6 +48,8 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
     let failureManager: InappShowFailureManagerProtocol
 
     private var pendingTargetingFailureDetails: [InAppShowFailureReason: String] = [:]
+
+    private(set) var didCutCandidatesForFetchFailure = false
 
     init(segmentationService: SegmentationServiceProtocol,
          targetingChecker: InAppTargetingCheckerProtocol,
@@ -81,13 +88,17 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
             pendingTargetingFailureDetails.removeAll()
         }
 
+        didCutCandidatesForFetchFailure = false
+
         guard !failedTargetingInappIds.isEmpty else {
             return
         }
 
         pendingTargetingFailureDetails.forEach { reason, details in
             let inappIds = inappIds(for: reason)
-            failedTargetingInappIds.intersection(inappIds).forEach {
+            let cut = failedTargetingInappIds.intersection(inappIds)
+            didCutCandidatesForFetchFailure = didCutCandidatesForFetchFailure || !cut.isEmpty
+            cut.forEach {
                 failureManager.addFailure(inappId: $0, reason: reason, details: details, tags: tagsByInappId[$0])
             }
         }
