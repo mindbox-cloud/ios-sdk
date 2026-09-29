@@ -25,7 +25,7 @@ import Foundation
 /// Deliberately not part of the public API: available only through `@_spi(Internal) import Mindbox`.
 /// The host observes outcomes through `MindboxEmbeddedBlockViewDelegate` and nothing else.
 @_spi(Internal)
-public enum MindboxEmbeddedBlockAppearance {
+public enum MindboxEmbeddedBlockAppearance: Sendable {
 
     /// The content is loading. A wrapper with a placeholder of its own draws it; without one the
     /// container's shimmer is already on screen.
