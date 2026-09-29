@@ -29,11 +29,13 @@ struct OperationActionHandlerTests {
     private func makeSUT(
         database: DatabaseRepositoryStub = DatabaseRepositoryStub(),
         events: SyncOperationRepositoryStub = SyncOperationRepositoryStub()
-    ) -> (handler: OperationActionHandler, database: DatabaseRepositoryStub, events: SyncOperationRepositoryStub, host: HostSpy) {
+    ) -> (handler: OperationActionHandler, database: DatabaseRepositoryStub, events: SyncOperationRepositoryStub, core: InAppCoreManagerMock, host: HostSpy) {
+        let core = InAppCoreManagerMock()
         let handler = OperationActionHandler(featureToggleManager: FeatureToggleManager(),
                                             databaseRepository: database,
-                                            eventRepository: events)
-        return (handler, database, events, HostSpy())
+                                            eventRepository: events,
+                                            inAppEventSender: InappMessageEventSender(inAppMessagesManager: core))
+        return (handler, database, events, core, HostSpy())
     }
 
     private func request(_ action: BridgeMessage.Action,
@@ -169,6 +171,47 @@ struct OperationActionHandlerTests {
         #expect(page == nil)
     }
 
+    // MARK: - In-apps
+
+    @Test("A queued operation reaches in-apps under its name and body, as one from the app does")
+    func asyncOperationReachesInApps() throws {
+        let sut = makeSUT()
+        let body: JSONValue = .object(["viewProductCategory": .object(["productCategory": .object(["ids": .object(["website": .string("cat-1")])])])])
+
+        sut.handler.handle(request(.asyncOperation, operation: "Test.Async", body: body), host: sut.host)
+
+        #expect(sut.core.sendEventCalled.count == 1)
+        let event = try #require(sut.core.sendEventCalled.first?.applicationEvent)
+        #expect(event.name == "test.async")
+        #expect(event.model == InappOperationJSONModel(viewProductCategory: .init(productCategory: .init(ids: ["website": "cat-1"]))))
+    }
+
+    @Test("An operation reaches in-apps even when the queue refuses it, as one from the app does")
+    func refusedQueueStillReachesInApps() throws {
+        let database = DatabaseRepositoryStub()
+        database.createError = DatabaseRepositoryStub.StubError.full
+        let sut = makeSUT(database: database)
+
+        sut.handler.handle(request(.asyncOperation), host: sut.host)
+
+        #expect(sut.core.sendEventCalled.count == 1)
+        #expect(try #require(sut.host.sent.first).type == .error)
+    }
+
+    @Test("A sync operation reaches in-apps with its body when it is sent, without waiting for the backend")
+    func syncOperationReachesInAppsBeforeTheAnswer() throws {
+        let sut = makeSUT()
+        let body: JSONValue = .object(["viewProduct": .object(["product": .object(["ids": .object(["website": .string("sku-1")])])])])
+
+        sut.handler.handle(request(.syncOperation, operation: "Test.Sync", body: body), host: sut.host)
+
+        #expect(sut.events.pending != nil, "the backend has not answered yet")
+        #expect(sut.core.sendEventCalled.count == 1)
+        let event = try #require(sut.core.sendEventCalled.first?.applicationEvent)
+        #expect(event.name == "test.sync")
+        #expect(event.model == InappOperationJSONModel(viewProduct: .init(product: .init(ids: ["website": "sku-1"]))))
+    }
+
     // MARK: - Refusals
 
     @Test("A request without a payload is refused", arguments: [BridgeMessage.Action.asyncOperation, .syncOperation])
@@ -181,6 +224,7 @@ struct OperationActionHandlerTests {
         #expect(response.type == .error)
         #expect(sut.database.created.isEmpty)
         #expect(sut.events.sentRaw.isEmpty)
+        #expect(sut.core.sendEventCalled.isEmpty)
     }
 
     @Test("A payload that is not an object at all is refused")
