@@ -329,8 +329,11 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
         /// `DispatchQueue.main` outside tests.
         private let schedule: (@escaping () -> Void) -> Void
 
-        /// `withAnimation` outside tests — unless the user asked the system to reduce motion.
-        private let animateReveal: (@escaping () -> Void) -> Void
+        /// The accessibility setting outside tests: with it on, the content lands at once.
+        private let isReduceMotionEnabled: () -> Bool
+
+        /// `withAnimation` with the SDK's reveal outside tests.
+        private let animate: (@escaping () -> Void) -> Void
 
         init(appearance: Binding<MindboxEmbeddedBlockAppearance>,
              onLoad: (() -> Void)?,
@@ -338,12 +341,8 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
              onFail: ((MindboxEmbeddedBlockFailReason) -> Void)?,
              animatesReveal: Bool = true,
              schedule: @escaping (@escaping () -> Void) -> Void = { work in DispatchQueue.main.async { work() } },
-             animateReveal: @escaping (@escaping () -> Void) -> Void = { changes in
-                 guard !UIAccessibility.isReduceMotionEnabled else {
-                     changes()
-                     return
-                 }
-
+             isReduceMotionEnabled: @escaping () -> Bool = { UIAccessibility.isReduceMotionEnabled },
+             animate: @escaping (@escaping () -> Void) -> Void = { changes in
                  withAnimation(.easeInOut(duration: Constants.EmbeddedBlock.revealAnimationDuration)) { changes() }
              }) {
             self.appearance = appearance
@@ -352,7 +351,8 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
             self.onFail = onFail
             self.animatesReveal = animatesReveal
             self.schedule = schedule
-            self.animateReveal = animateReveal
+            self.isReduceMotionEnabled = isReduceMotionEnabled
+            self.animate = animate
         }
 
         func update(_ newAppearance: MindboxEmbeddedBlockAppearance) {
@@ -362,9 +362,10 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
 
                 let write = { self.appearance.wrappedValue = newAppearance }
 
-                // Only the arrival of content is a reveal; a collapse or an error screen lands at once.
-                if newAppearance == .content, self.animatesReveal {
-                    self.animateReveal(write)
+                // Only the arrival of content is a reveal; a collapse or an error screen lands at once,
+                // and so does the content for a user who asked the system to reduce motion.
+                if newAppearance == .content, self.animatesReveal, !self.isReduceMotionEnabled() {
+                    self.animate(write)
                 } else {
                     write()
                 }

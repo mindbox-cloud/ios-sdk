@@ -202,6 +202,16 @@ struct MindboxEmbeddedBlockTests {
         #expect(blockView.errorView === errorView)
     }
 
+    @Test("The coordinator is made with the block's animatesReveal, not the default",
+          arguments: [true, false])
+    func coordinatorGetsTheBlocksAnimatesReveal(animatesReveal: Bool) {
+        guard #available(iOS 13.0, *) else { return }
+
+        let coordinator = makeRepresentable(animatesReveal: animatesReveal).makeCoordinator()
+
+        #expect(coordinator.animatesReveal == animatesReveal)
+    }
+
     // MARK: - First look
 
     /// The first look a wrapper reads before the container exists: the strategy plus the place's
@@ -285,12 +295,13 @@ struct MindboxEmbeddedBlockTests {
 
     @available(iOS 13.0, *)
     private func makeRepresentable(hasPlaceholder: Bool = false,
-                                   hasErrorView: Bool = false) -> EmbeddedBlockRepresentable {
+                                   hasErrorView: Bool = false,
+                                   animatesReveal: Bool = true) -> EmbeddedBlockRepresentable {
         return EmbeddedBlockRepresentable(placeSystemName: "stories",
                                           height: 104,
                                           timeout: nil,
                                           loadingStrategy: .placeholder,
-                                          animatesReveal: true,
+                                          animatesReveal: animatesReveal,
                                           appearance: .constant(.placeholder),
                                           onLoad: nil,
                                           onEmpty: nil,

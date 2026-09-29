@@ -114,7 +114,7 @@ struct EmbeddedBlockCoordinatorTests {
             onFail: nil,
             animatesReveal: true,
             schedule: { scheduled.append($0) },
-            animateReveal: { changes in
+            animate: { changes in
                 animatedWrites += 1
                 changes()
             }
@@ -125,6 +125,34 @@ struct EmbeddedBlockCoordinatorTests {
 
         #expect(written == [.content])
         #expect(animatedWrites == 1)
+    }
+
+    @Test("With Reduce Motion on the content lands at once")
+    func contentLandsAtOnceUnderReduceMotion() {
+        guard #available(iOS 13.0, *) else { return }
+
+        var written = [MindboxEmbeddedBlockAppearance]()
+        var scheduled = [() -> Void]()
+        var animatedWrites = 0
+        let coordinator = EmbeddedBlockRepresentable.Coordinator(
+            appearance: Binding(get: { .collapsed }, set: { written.append($0) }),
+            onLoad: nil,
+            onEmpty: nil,
+            onFail: nil,
+            animatesReveal: true,
+            schedule: { scheduled.append($0) },
+            isReduceMotionEnabled: { true },
+            animate: { changes in
+                animatedWrites += 1
+                changes()
+            }
+        )
+
+        coordinator.update(.content)
+        scheduled.forEach { $0() }
+
+        #expect(written == [.content])
+        #expect(animatedWrites == 0)
     }
 
     @Test("A collapse and an error screen land at once", arguments: [MindboxEmbeddedBlockAppearance.collapsed, .error])
@@ -141,7 +169,7 @@ struct EmbeddedBlockCoordinatorTests {
             onFail: nil,
             animatesReveal: true,
             schedule: { scheduled.append($0) },
-            animateReveal: { changes in
+            animate: { changes in
                 animatedWrites += 1
                 changes()
             }
@@ -168,7 +196,7 @@ struct EmbeddedBlockCoordinatorTests {
             onFail: nil,
             animatesReveal: false,
             schedule: { scheduled.append($0) },
-            animateReveal: { changes in
+            animate: { changes in
                 animatedWrites += 1
                 changes()
             }
