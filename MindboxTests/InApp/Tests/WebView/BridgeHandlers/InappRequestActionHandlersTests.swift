@@ -129,8 +129,6 @@ struct ShowInAppActionHandlerTests {
         let host = InappRequestHostSpy()
         let message = BridgeMessage.request(.showInApp, payload: .object([
             "inappId": .string("11111111-1111-1111-1111-111111111111"),
-            "index": .int(0),
-            "sourceInappId": .string("block"),
             "params": .object(["title": .string("Сториз 1")])
         ]))
 
