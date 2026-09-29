@@ -135,8 +135,8 @@ final class TransparentViewJSBridgeTests {
 
         registry.broadcast(.localStateChanged, payload: .object(["version": .int(3)]), excluding: nil)
 
-        #expect(facade.sentMessages.count == 1)
-        let pushed = try #require(facade.sentMessages.first)
+        #expect(facade.sentRequests.count == 1)
+        let pushed = try #require(facade.sentRequests.first)
         #expect(pushed.type == .request)
         #expect(pushed.parsedAction == .localStateChanged)
         #expect(pushed.payload == .object(["version": .int(3)]))
@@ -150,7 +150,7 @@ final class TransparentViewJSBridgeTests {
 
         registry.broadcast(.localStateChanged, payload: .object(["version": .int(3)]), excluding: view)
 
-        #expect(facade.sentMessages.isEmpty)
+        #expect(facade.sentRequests.isEmpty)
     }
 
     @Test("Each broadcast reaches the popup under an id of its own", .tags(.webView))
@@ -162,8 +162,8 @@ final class TransparentViewJSBridgeTests {
         registry.broadcast(.localStateChanged, payload: .object([:]), excluding: nil)
         registry.broadcast(.localStateChanged, payload: .object([:]), excluding: nil)
 
-        #expect(facade.sentMessages.count == 2)
-        #expect(facade.sentMessages[0].id != facade.sentMessages[1].id)
+        #expect(facade.sentRequests.count == 2)
+        #expect(facade.sentRequests[0].id != facade.sentRequests[1].id)
     }
 
     // MARK: - Helpers
@@ -217,6 +217,7 @@ final class TransparentViewJSBridgeTests {
 
 private final class WebViewFacadeSpy: InappWebViewFacadeProtocol {
     private(set) var sentMessages: [BridgeMessage] = []
+    var sentRequests: [BridgeMessage] { sentMessages.filter { $0.type == .request } }
 
     func makeView() -> UIView { UIView() }
     func loadHTML(baseUrl: String, contentUrl: String, onFailure: @escaping () -> Void) {}

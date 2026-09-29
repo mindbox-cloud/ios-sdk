@@ -7,6 +7,7 @@
 //
 
 import Testing
+import UIKit
 import WebKit
 @_spi(Internal) @testable import Mindbox
 
@@ -265,11 +266,127 @@ struct MindboxWebBridgeMessageGateTests {
     }
 }
 
-@Suite("MindboxWebBridge blanket answers", .tags(.webView))
+@Suite("MindboxWebBridge answers", .tags(.webView))
 @MainActor
-struct MindboxWebBridgeBlanketAnswerTests {
+struct MindboxWebBridgeAnswerTests {
 
-    private final class EvaluationSpyWebView: WKWebView {
+    enum Surface: CaseIterable {
+        case overlay
+        case embeddedBlock
+    }
+
+    init() {
+        TestConfiguration.configure()
+    }
+
+    @Test("A request for an action outside the vocabulary is refused with an error envelope, not acknowledged",
+          arguments: Surface.allCases)
+    func unknownActionIsRefused(surface: Surface) throws {
+        let bed = AnswerBed(surface)
+        let request = try #require(BridgeMessage(type: .request, action: "totally.new", payload: "{}"))
+
+        try bed.post(request)
+
+        let envelopes = bed.sentEnvelopes()
+        #expect(envelopes.count == 1)
+        let envelope = try #require(envelopes.last)
+        #expect(envelope["type"] as? String == "error")
+        #expect(envelope["action"] as? String == "totally.new")
+        #expect(envelope["id"] as? String == request.id.uuidString.lowercased())
+        let payload = try #require(bed.payloadObject(of: envelope))
+        #expect(payload["error"] as? String == "unknown_action")
+    }
+
+    @Test("close, init, click, hide and log are answered exactly once with {\"success\":true}",
+          arguments: Surface.allCases, [BridgeMessage.Action.close, .`init`, .click, .hide, .log])
+    func lifecycleAndLogAreAnsweredOnce(surface: Surface, action: BridgeMessage.Action) throws {
+        let bed = AnswerBed(surface, handlers: [LifecycleActionHandler(), LogActionHandler()])
+        let request = BridgeMessage.request(action, payload: .string("{}"))
+
+        try bed.post(request)
+
+        let envelopes = bed.sentEnvelopes()
+        #expect(envelopes.count == 1)
+        let envelope = try #require(envelopes.first)
+        #expect(envelope["type"] as? String == "response")
+        #expect(envelope["action"] as? String == action.rawValue)
+        #expect(envelope["id"] as? String == request.id.uuidString.lowercased())
+        #expect(envelope["payload"] as? String == #"{"success":true}"#)
+    }
+
+    @Test("A request for an action only the SDK sends is refused as not served",
+          arguments: Surface.allCases, ["motion.event", "initDataUpdated", "localState.changed", "navigationIntercepted"])
+    func requestForSDKOnlyActionIsNotServed(surface: Surface, action: String) throws {
+        let bed = AnswerBed(surface)
+        let request = try #require(BridgeMessage(type: .request, action: action, payload: "{}"))
+
+        try bed.post(request)
+
+        let envelopes = bed.sentEnvelopes()
+        #expect(envelopes.count == 1)
+        let envelope = try #require(envelopes.first)
+        #expect(envelope["type"] as? String == "error")
+        #expect(envelope["action"] as? String == action)
+        #expect(envelope["id"] as? String == request.id.uuidString.lowercased())
+        #expect(envelope["payload"] as? String == #"{"error":"not_served"}"#)
+    }
+
+    @Test("The page's answer to a request the SDK sent is not answered back",
+          arguments: Surface.allCases, [BridgeMessage.Action.initDataUpdated, .localStateChanged, .motionEvent, .navigationIntercepted])
+    func answerToSDKRequestIsNotAnswered(surface: Surface, action: BridgeMessage.Action) throws {
+        let bed = AnswerBed(surface)
+        let pushed = BridgeMessage(type: .request, action: action, payload: .object([:]))
+        bed.bridge.send(pushed)
+
+        try bed.post(BridgeMessage(type: .response, action: action, payload: .object(["success": .bool(true)]), id: pushed.id))
+
+        #expect(bed.sentEnvelopes().map { $0["type"] as? String } == ["request"])
+    }
+
+    @Test("The page's answer to initDataUpdated confirms the push")
+    func answerToInitDataUpdatedConfirmsThePush() throws {
+        let bed = AnswerBed(.embeddedBlock)
+        let pushed = BridgeMessage(type: .request, action: .initDataUpdated, payload: .object([:]))
+        bed.bridge.send(pushed)
+
+        try bed.post(BridgeMessage(type: .response,
+                                   action: .initDataUpdated,
+                                   payload: .object(["success": .bool(true)]),
+                                   id: pushed.id))
+
+        #expect(bed.dataPushConfirmations == 1)
+    }
+
+    @Test("A request without a string action gets no answer at all",
+          arguments: Surface.allCases, ["", #""action":5,"#, #""action":null,"#])
+    func requestWithoutStringActionIsNotAnswered(surface: Surface, actionField: String) {
+        let bed = AnswerBed(surface)
+
+        bed.post(rawBody: Self.rawRequest(actionField: actionField))
+
+        #expect(bed.sentScripts().isEmpty)
+    }
+
+    @Test("The same raw request with a string action is answered", arguments: Surface.allCases)
+    func rawRequestWithStringActionIsAnswered(surface: Surface) {
+        let bed = AnswerBed(surface)
+
+        bed.post(rawBody: Self.rawRequest(actionField: #""action":"log","#))
+
+        #expect(bed.sentEnvelopes().count == 1)
+    }
+
+    private static func rawRequest(actionField: String) -> String {
+        let version = Constants.Versions.webBridgeVersion
+        let id = UUID().uuidString.lowercased()
+        return #"{"version":\#(version),"type":"request",\#(actionField)"payload":"{}","id":"\#(id)","timestamp":1}"#
+    }
+}
+
+@MainActor
+private final class AnswerBed {
+
+    final class EvaluationSpyWebView: WKWebView {
         private(set) var scripts: [String] = []
         override func evaluateJavaScript(_ javaScriptString: String, completionHandler: (@MainActor @Sendable (Any?, (any Error)?) -> Void)? = nil) {
             scripts.append(javaScriptString)
@@ -291,26 +408,65 @@ struct MindboxWebBridgeBlanketAnswerTests {
         override var body: Any { fakeBody }
     }
 
+    let bridge: MindboxWebBridge
+    private(set) var dataPushConfirmations = 0
+
     private let webView = EvaluationSpyWebView(frame: .zero, configuration: WKWebViewConfiguration())
     private let navigationFactory = WKWebView(frame: .zero, configuration: WKWebViewConfiguration())
-    private let bridge: MindboxWebBridge
+    private var host: WebBridgeHost?
 
-    init() {
+    init(_ surface: MindboxWebBridgeAnswerTests.Surface,
+         handlers: [WebBridgeActionHandler] = WebBridgeActionHandlerFactory.makeHandlers()) {
         bridge = MindboxWebBridge(webView: webView)
+        let facade = BridgeForwardingFacade(bridge: bridge, webView: webView)
+        let registry = WebBridgeActionRegistry(handlers: handlers)
+
+        switch surface {
+        case .overlay:
+            let view = TransparentView(frame: .zero,
+                                       params: [:],
+                                       userAgent: "",
+                                       operation: nil,
+                                       inAppId: "inapp-1",
+                                       tags: nil,
+                                       actionRegistry: registry)
+            view.facade = facade
+            view.webPageRegistry = MindboxWebPageRegistry()
+            facade.setBridgeMessageDelegate(view)
+            host = view
+        case .embeddedBlock:
+            let page = EmbeddedBlockWebViewPage(content: .stub,
+                                                facade: facade,
+                                                registry: MindboxWebPageRegistry(),
+                                                actionRegistry: registry)
+            page.onDataPushConfirmed = { [weak self] in
+                self?.dataPushConfirmations += 1
+            }
+            host = page
+        }
+
         bridge.expectContentNavigation(nil)
         // swiftlint:disable:next force_unwrapping
         bridge.webView(webView, didCommit: navigationFactory.loadHTMLString("<html></html>", baseURL: nil)!)
     }
 
-    private func post(_ message: BridgeMessage) throws {
+    func post(_ message: BridgeMessage) throws {
         let body = try #require(message.jsonString())
+        post(rawBody: body)
+    }
+
+    func post(rawBody body: String) {
         bridge.userContentController(
             webView.configuration.userContentController,
             didReceive: FakeScriptMessage(name: Constants.WebViewBridgeJS.handlerName, body: body)
         )
     }
 
-    private func sentEnvelopes() -> [[String: Any]] {
+    func sentScripts() -> [String] {
+        webView.scripts
+    }
+
+    func sentEnvelopes() -> [[String: Any]] {
         webView.scripts.compactMap { script in
             guard let start = script.range(of: ".emit("),
                   let end = script.range(of: ");return", options: .backwards),
@@ -321,36 +477,31 @@ struct MindboxWebBridgeBlanketAnswerTests {
         }
     }
 
-    private func payloadObject(of envelope: [String: Any]) -> [String: Any]? {
+    func payloadObject(of envelope: [String: Any]) -> [String: Any]? {
         (envelope["payload"] as? String).flatMap { (try? JSONSerialization.jsonObject(with: Data($0.utf8))) as? [String: Any] }
     }
+}
 
-    @Test("A request for an action outside the vocabulary is refused with an error envelope, not acknowledged")
-    func unknownActionIsRefused() throws {
-        let request = try #require(BridgeMessage(type: .request, action: "totally.new", payload: "{}"))
+private final class BridgeForwardingFacade: InappWebViewFacadeProtocol {
 
-        try post(request)
+    private let bridge: MindboxWebBridge
+    private let webView: WKWebView
 
-        let envelopes = sentEnvelopes()
-        #expect(envelopes.count == 1)
-        let envelope = try #require(envelopes.last)
-        #expect(envelope["type"] as? String == "error")
-        #expect(envelope["action"] as? String == "totally.new")
-        #expect(envelope["id"] as? String == request.id.uuidString.lowercased())
-        let payload = try #require(payloadObject(of: envelope))
-        #expect(payload["error"] as? String == "unknown_action")
+    init(bridge: MindboxWebBridge, webView: WKWebView) {
+        self.bridge = bridge
+        self.webView = webView
     }
 
-    @Test("A known non-deferred request keeps its blanket success")
-    func knownNonDeferredRequestIsAcknowledged() throws {
-        let request = try #require(BridgeMessage(type: .request, action: "log", payload: #"{"message":"hi"}"#))
-
-        try post(request)
-
-        let envelope = try #require(sentEnvelopes().last)
-        #expect(envelope["type"] as? String == "response")
-        #expect(envelope["id"] as? String == request.id.uuidString.lowercased())
-        let payload = try #require(payloadObject(of: envelope))
-        #expect(payload["success"] as? Bool == true)
-    }
+    func makeView() -> UIView { webView }
+    func loadHTML(baseUrl: String, contentUrl: String, onFailure: @escaping () -> Void) {}
+    func applyViewSettings(scrollViewDelegate: UIScrollViewDelegate?) {}
+    func cleanWebView() {}
+    func makeStartPayload(_ completion: @escaping (JSONValue) -> Void) { completion(.string("{}")) }
+    func sendInitDataUpdated(params: [String: JSONValue]) {}
+    func sendToJS(_ message: BridgeMessage) { bridge.send(message) }
+    func evaluateJavaScript(_ script: String, completion: @escaping (Result<Any?, Error>) -> Void) {}
+    func setBridgeMessageDelegate(_ delegate: WebBridgeMessageDelegate?) { bridge.messageDelegate = delegate }
+    func setNavigationDelegate(_ delegate: WebBridgeNavigationDelegate?) { bridge.navigationDelegate = delegate }
+    func retryContentLoadBypassingCache(failedURL: String?, onPurgeOutcome: @escaping (_ didRemoveAnything: Bool) -> Void) {}
+    func releaseRetainedContent() {}
 }

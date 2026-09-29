@@ -12,13 +12,6 @@ import Testing
 @Suite("BridgeMessage settings.open", .tags(.webView))
 struct BridgeMessageOpenSettingsTests {
 
-    // MARK: - deferredActions contract
-
-    @Test("deferredActions contains settingsOpen")
-    func deferredActionsContainsSettingsOpen() {
-        #expect(BridgeMessage.Action.deferredActions.contains(BridgeMessage.Action.settingsOpen))
-    }
-
     // MARK: - Serialization: Native → JS response
 
     @Test("Success response for notifications target encodes payload as JSON string")

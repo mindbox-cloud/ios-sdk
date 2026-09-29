@@ -220,14 +220,17 @@ struct EmbeddedBlockWebViewPageTests {
         #expect(bed.facade.sentMessages.isEmpty)
     }
 
-    @Test("An overlay's lifecycle message is dropped without an extra answer",
+    @Test("An overlay's lifecycle message is answered with exactly one success",
           arguments: [BridgeMessage.Action.close, .`init`, .click, .hide])
-    func overlayLifecycleMessageIsDropped(action: BridgeMessage.Action) {
+    func overlayLifecycleMessageIsAcknowledged(action: BridgeMessage.Action) throws {
         let bed = PageBed()
 
         bed.receive(.pageRequest(action))
 
-        #expect(bed.facade.sentMessages.isEmpty)
+        #expect(bed.facade.sentMessages.count == 1)
+        let answer = try #require(bed.facade.sentMessages.first)
+        #expect(answer.type == .response)
+        #expect(answer.payload == .object(["success": .bool(true)]))
     }
 
     /// The storage is in memory only because the test container does not carry the real one.

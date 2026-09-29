@@ -12,13 +12,6 @@ import Testing
 @Suite("BridgeMessage permission.request", .tags(.webView))
 struct BridgeMessagePermissionTests {
 
-    // MARK: - deferredActions contract
-
-    @Test("deferredActions contains permissionRequest")
-    func deferredActionsContainsPermissionRequest() {
-        #expect(BridgeMessage.Action.deferredActions.contains(BridgeMessage.Action.permissionRequest))
-    }
-
     // MARK: - Serialization: Native → JS response
 
     @Test("Response with granted result encodes payload as JSON string")

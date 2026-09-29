@@ -41,23 +41,33 @@ struct WebBridgeActionRegistryTests {
         #expect(localState.handled.count == 3)
     }
 
-    @Test("Reports an unowned action instead of swallowing it")
-    func reportsUnownedAction() {
+    @Test("A known action nobody owns is refused as not served")
+    func refusesUnownedAction() throws {
         let registry = WebBridgeActionRegistry(handlers: [HandlerSpy(actions: [.log])])
+        let host = HostSpy()
+        let message = BridgeMessage.request(.haptic)
 
-        let didHandle = registry.handle(BridgeMessage.request(.haptic), host: HostSpy())
+        let didHandle = registry.handle(message, host: host)
 
-        #expect(!didHandle)
+        #expect(didHandle)
+        #expect(host.sent.count == 1)
+        let response = try #require(host.sent.first)
+        #expect(response.type == .error)
+        #expect(response.id == message.id)
+        #expect(response.action == message.action)
+        #expect(response.payload == .object(["error": .string("not_served")]))
     }
 
-    @Test("An action outside the known vocabulary is not handled")
+    @Test("An action outside the known vocabulary is not handled and not refused a second time")
     func reportsUnknownAction() {
         let registry = WebBridgeActionRegistry(handlers: [HandlerSpy(actions: [.log])])
+        let host = HostSpy()
         let message = BridgeMessage(type: .request, action: "someFutureAction", payload: nil)
 
-        let didHandle = registry.handle(message, host: HostSpy())
+        let didHandle = registry.handle(message, host: host)
 
         #expect(!didHandle)
+        #expect(host.sent.isEmpty)
     }
 
     @Test("When two handlers claim one action, the first keeps it")
