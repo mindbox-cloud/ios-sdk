@@ -381,6 +381,87 @@ struct MindboxWebBridgeAnswerTests {
         let id = UUID().uuidString.lowercased()
         return #"{"version":\#(version),"type":"request",\#(actionField)"payload":"{}","id":"\#(id)","timestamp":1}"#
     }
+
+    enum AnswerlessRequest: CaseIterable {
+        case haptic
+        case motionStop
+        case motionStart
+        case openLink
+        case notificationSettings
+        case applicationSettings
+        case asyncOperation
+        case contentRendered
+
+        var message: BridgeMessage {
+            switch self {
+            case .haptic:
+                return .request(.haptic, payload: .object(["type": .string("impact")]))
+            case .motionStop:
+                return .request(.motionStop)
+            case .motionStart:
+                return .request(.motionStart, payload: .object(["gestures": .array([.string("flip")])]))
+            case .openLink:
+                return .request(.openLink, payload: .object(["url": .string("mindbox-test://path")]))
+            case .notificationSettings:
+                return .request(.settingsOpen, payload: .object(["target": .string("notifications")]))
+            case .applicationSettings:
+                return .request(.settingsOpen, payload: .object(["target": .string("application")]))
+            case .asyncOperation:
+                return .request(.asyncOperation, payload: .object(["operation": .string("Test.Async"),
+                                                                   "body": .object(["field": .string("value")])]))
+            case .contentRendered:
+                return .request(.contentRendered, payload: .object(["count": .int(3)]))
+            }
+        }
+    }
+
+    @Test("A request whose handler answers without data gets exactly {\"success\":true} on every surface",
+          arguments: Surface.allCases, AnswerlessRequest.allCases)
+    func answerWithoutDataIsExactlySuccess(surface: Surface, request: AnswerlessRequest) async throws {
+        let bed = AnswerBed(surface, handlers: Self.answerlessHandlers())
+        let message = request.message
+
+        try bed.post(message)
+        await drainMainQueue(until: { bed.sentEnvelopes().count > 1 })
+
+        let envelopes = bed.sentEnvelopes()
+        #expect(envelopes.count == 1)
+        let envelope = try #require(envelopes.first)
+        #expect(envelope["type"] as? String == "response")
+        #expect(envelope["id"] as? String == message.id.uuidString.lowercased())
+        #expect(envelope["payload"] as? String == #"{"success":true}"#)
+    }
+
+    @Test("A show the block's service accepted gets exactly {\"success\":true}")
+    func acceptedShowIsExactlySuccess() throws {
+        let bed = AnswerBed(.embeddedBlock, handlers: [ShowInAppActionHandler()])
+        let message = BridgeMessage.request(.showInApp, payload: .object(["inappId": .string("story-1")]))
+
+        try bed.post(message)
+
+        let envelopes = bed.sentEnvelopes()
+        #expect(envelopes.count == 1)
+        let envelope = try #require(envelopes.first)
+        #expect(envelope["type"] as? String == "response")
+        #expect(envelope["id"] as? String == message.id.uuidString.lowercased())
+        #expect(envelope["payload"] as? String == #"{"success":true}"#)
+    }
+
+    private static func answerlessHandlers() -> [WebBridgeActionHandler] {
+        let opener = URLOpenerSpy()
+        opener.result = true
+
+        return [
+            HapticActionHandler(makeService: { HapticServiceSpy() }),
+            MotionActionHandler(makeService: { MotionServiceSpy(result: MotionStartResult(started: [.flip], unavailable: [])) }),
+            OpenLinkActionHandler(urlOpener: opener),
+            SettingsActionHandler(urlOpener: opener, openNotificationSettings: { $0(true) }),
+            OperationActionHandler(featureToggleManager: FeatureToggleManager(),
+                                   databaseRepository: QueueStub(),
+                                   inAppEventSender: InappMessageEventSender(inAppMessagesManager: InAppCoreManagerMock())),
+            ContentRenderedActionHandler()
+        ]
+    }
 }
 
 @MainActor
@@ -442,6 +523,7 @@ private final class AnswerBed {
             page.onDataPushConfirmed = { [weak self] in
                 self?.dataPushConfirmations += 1
             }
+            page.onShowInAppRequest = { _, _, completion in completion(.success(())) }
             host = page
         }
 
@@ -504,4 +586,22 @@ private final class BridgeForwardingFacade: InappWebViewFacadeProtocol {
     func setNavigationDelegate(_ delegate: WebBridgeNavigationDelegate?) { bridge.navigationDelegate = delegate }
     func retryContentLoadBypassingCache(failedURL: String?, onPurgeOutcome: @escaping (_ didRemoveAnything: Bool) -> Void) {}
     func releaseRetainedContent() {}
+}
+
+private final class QueueStub: DatabaseRepositoryProtocol {
+
+    var limit: Int = 0
+    var lifeLimitDate: Date?
+    var deprecatedLimit: Int = 0
+    var onObjectsDidChange: (() -> Void)?
+
+    func create(event: Event) throws {}
+    func readEvent(by transactionId: String) throws -> Event? { nil }
+    func update(event: Event) throws {}
+    func delete(event: Event) throws {}
+    func query(fetchLimit: Int, retryDeadline: TimeInterval) throws -> [Event] { [] }
+    func removeDeprecatedEventsIfNeeded() throws {}
+    func countDeprecatedEvents() throws -> Int { 0 }
+    func erase() throws {}
+    func countEvents() throws -> Int { 0 }
 }
