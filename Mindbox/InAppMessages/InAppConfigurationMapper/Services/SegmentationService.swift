@@ -64,7 +64,9 @@ class SegmentationService: SegmentationServiceProtocol {
                 completion(.success(response.customerSegmentations))
             case .failure(let error):
                 Logger.error(error.asLoggerError())
-                SessionTemporaryStorage.shared.segmentationRequestResult = .failure(error)
+                if error.holdsForSession {
+                    SessionTemporaryStorage.shared.segmentationRequestResult = .failure(error)
+                }
                 completion(.failure(error))
             }
         }

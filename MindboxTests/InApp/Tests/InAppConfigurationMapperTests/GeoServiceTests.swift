@@ -250,6 +250,39 @@ final class GeoServiceTests: XCTestCase {
         XCTAssertEqual(secondProtocolError.httpStatusCode, 500)
     }
 
+    func test_geo_request_whenPreviousRequestWentOffline_asksAgain() throws {
+        let model = InAppGeoResponse(city: 1, region: 2, country: 3)
+        networkFetcher.data = try JSONEncoder().encode(model)
+        networkFetcher.error = .connectionError
+        let expectation = expectation(description: "an offline geo request is asked again")
+        expectation.expectedFulfillmentCount = 2
+        var firstError: MindboxError?
+        var secondResult: InAppGeoResponse?
+
+        sut.geoRequest { result in
+            if case .failure(let error) = result {
+                firstError = error
+            }
+            expectation.fulfill()
+        }
+
+        networkFetcher.error = nil
+        sut.geoRequest { result in
+            if case .success(let response) = result {
+                secondResult = response
+            }
+            expectation.fulfill()
+        }
+
+        waitForExpectations(timeout: 1)
+
+        guard case .connectionError = firstError else {
+            XCTFail("Expected connectionError on first call")
+            return
+        }
+        XCTAssertEqual(secondResult, model)
+    }
+
     func test_geo_request_whenPreviousRequestSucceeded_returnsCachedSuccess() throws {
         let model = InAppGeoResponse(city: 1, region: 2, country: 3)
         networkFetcher.data = try JSONEncoder().encode(model)

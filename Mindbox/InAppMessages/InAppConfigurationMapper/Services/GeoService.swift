@@ -37,7 +37,9 @@ class GeoService: GeoServiceProtocol {
                 self.targetingChecker.geoModels = result
                 completion(.success(result))
             case .failure(let error):
-                SessionTemporaryStorage.shared.geoRequestResult = .failure(error)
+                if error.holdsForSession {
+                    SessionTemporaryStorage.shared.geoRequestResult = .failure(error)
+                }
                 self.targetingChecker.geoModels = nil
                 Logger.error(error.asLoggerError())
                 completion(.failure(error))

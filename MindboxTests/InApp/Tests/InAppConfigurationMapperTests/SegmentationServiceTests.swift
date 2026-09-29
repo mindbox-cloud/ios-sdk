@@ -284,6 +284,56 @@ final class SegmentationServiceTests: XCTestCase {
         XCTAssertEqual(requestCallCount, 1)
     }
 
+    func test_checkSegmentation_whenPreviousRequestWentOffline_asksAgain() {
+        var requestCallCount = 0
+        let expectedModel: [SegmentationCheckResponse.CustomerSegmentation] = [
+            .init(segmentation: .init(ids: .init(externalId: "back")),
+                  segment: .init(ids: .init(externalId: "online")))
+        ]
+        sut.customerSegmentsAPI = CustomerSegmentsAPI { _, completion in
+            requestCallCount += 1
+            completion(.failure(.connectionError))
+        } fetchProductSegments: { _, completion in
+            completion(.success(.init(status: .success, products: nil)))
+        }
+        targetingChecker.context.segments.append("123")
+
+        let expectation = expectation(description: "an offline segmentation request is asked again")
+        expectation.expectedFulfillmentCount = 2
+        var firstError: MindboxError?
+        var secondResult: [SegmentationCheckResponse.CustomerSegmentation]?
+
+        sut.checkSegmentationRequest { result in
+            if case .failure(let error) = result {
+                firstError = error
+            }
+            expectation.fulfill()
+        }
+
+        sut.customerSegmentsAPI = CustomerSegmentsAPI { _, completion in
+            requestCallCount += 1
+            completion(.success(.init(status: .success, customerSegmentations: expectedModel)))
+        } fetchProductSegments: { _, completion in
+            completion(.success(.init(status: .success, products: nil)))
+        }
+
+        sut.checkSegmentationRequest { result in
+            if case .success(let segmentations) = result {
+                secondResult = segmentations
+            }
+            expectation.fulfill()
+        }
+
+        waitForExpectations(timeout: 1)
+
+        guard case .connectionError = firstError else {
+            XCTFail("Expected connectionError on first call")
+            return
+        }
+        XCTAssertEqual(secondResult, expectedModel)
+        XCTAssertEqual(requestCallCount, 2)
+    }
+
     func test_checkProductSegmentation_request_serverError_returnsFailure() {
         sut.customerSegmentsAPI = CustomerSegmentsAPI { _, completion in
             completion(.success(.init(status: .success, customerSegmentations: [])))
