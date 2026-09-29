@@ -202,7 +202,76 @@ struct MindboxEmbeddedBlockTests {
         #expect(blockView.errorView === errorView)
     }
 
+    // MARK: - First look
+
+    /// The first look a wrapper reads before the container exists: the strategy plus the place's
+    /// memory, exactly what the container decides for itself.
+    @Test("The first look follows the strategy and the memory of the place",
+          arguments: [(MindboxEmbeddedBlockLoadingStrategy.automatic, true, MindboxEmbeddedBlockAppearance.placeholder),
+                      (.automatic, false, .collapsed),
+                      (.placeholder, false, .placeholder),
+                      (.hidden, true, .collapsed)])
+    func initialAppearanceFollowsTheStrategyAndTheMemory(strategy: MindboxEmbeddedBlockLoadingStrategy,
+                                                         isRemembered: Bool,
+                                                         expected: MindboxEmbeddedBlockAppearance) {
+        let memory = EmbeddedBlockPlaceMemoryMock(shownPlaces: isRemembered ? ["stories"] : [])
+
+        withTestContainer(memory: memory) {
+            #expect(MindboxEmbeddedBlockView.initialAppearance(placeSystemName: "stories", loadingStrategy: strategy) == expected)
+        }
+    }
+
+    @Test("The first look asks the memory about the normalized place name")
+    func initialAppearanceNormalizesThePlaceName() {
+        let memory = EmbeddedBlockPlaceMemoryMock(shownPlaces: ["stories"])
+
+        withTestContainer(memory: memory) {
+            #expect(MindboxEmbeddedBlockView.initialAppearance(placeSystemName: "  stories \n", loadingStrategy: .automatic) == .placeholder)
+        }
+        // A padded name would never find its record — and the container asks by the same name.
+        #expect(memory.askedPlaces == ["stories"])
+    }
+
+    @Test("The SwiftUI body is laid out from the first look before the container answers",
+          arguments: [(true, CGFloat(104)), (false, CGFloat(0))])
+    func bodyStartsFromTheInitialAppearance(isRemembered: Bool, expectedHeight: CGFloat) {
+        guard #available(iOS 13.0, *) else { return }
+
+        let memory = EmbeddedBlockPlaceMemoryMock(shownPlaces: isRemembered ? ["stories"] : [])
+
+        withTestContainer(memory: memory) {
+            let block = MindboxEmbeddedBlock(placeSystemName: "stories", height: 104, loadingStrategy: .automatic)
+            let hosting = UIHostingController(rootView: block)
+            hosting.view.bounds = CGRect(x: 0, y: 0, width: 320, height: 600)
+            hosting.view.layoutIfNeeded()
+
+            let size = hosting.sizeThatFits(in: CGSize(width: 320, height: CGFloat.greatestFiniteMagnitude))
+            #expect(size.height == expectedHeight)
+        }
+    }
+
     // MARK: - Helpers
+
+    /// The wrapper reaches the memory and the content provider through DI. The container is
+    /// process-global and the mode swap rebuilds it: both are restored after the body.
+    private func withTestContainer(memory: EmbeddedBlockPlaceMemoryMock, _ body: () -> Void) {
+        let factory = EmbeddedBlockContentProviderFactoryMock(provider: EmbeddedBlockTestBed().provider)
+        let savedBuilder = MBInject.buildTestContainer
+        let savedMode = MBInject.mode
+        defer {
+            MBInject.buildTestContainer = savedBuilder
+            MBInject.mode = savedMode
+        }
+        MBInject.buildTestContainer = {
+            let container = MBContainer()
+            container.register(EmbeddedBlockContentProviderMaking.self) { factory }
+            container.register(EmbeddedBlockPlaceRemembering.self) { memory }
+            return container
+        }
+        MBInject.mode = .test
+
+        body()
+    }
 
     /// A container with substituted dependencies: the wrapper loads nothing itself, its job is to
     /// set the container up correctly, so no window or live content is needed here.
