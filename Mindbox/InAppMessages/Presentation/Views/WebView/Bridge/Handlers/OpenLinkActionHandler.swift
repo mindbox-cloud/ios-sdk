@@ -27,7 +27,9 @@ final class OpenLinkActionHandler: WebBridgeActionHandler {
     }
 
     func handle(_ message: BridgeMessage, host: WebBridgeHost) {
-        guard case .string(let urlString)? = message.payloadObject?["url"], !urlString.isEmpty else {
+        guard case .string(let requestedURL)? = message.payloadObject?["url"],
+              case let urlString = requestedURL.trimmingCharacters(in: .whitespacesAndNewlines),
+              !urlString.isEmpty else {
             host.respondError("Invalid payload: missing or empty 'url' field", to: message)
             return
         }
