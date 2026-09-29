@@ -289,6 +289,44 @@ extension TransparentView: WebBridgeNavigationDelegate {
         guard lastReadyCheckedUrl != urlString else { return }
         lastReadyCheckedUrl = urlString
 
+        guard !hasReceivedInit else {
+            startReadyCheck(urlString: urlString)
+            return
+        }
+        pingNativeBridge { [weak self] isReachable in
+            guard let self else { return }
+            if isReachable {
+                self.startReadyCheck(urlString: urlString)
+            } else {
+                self.delegate?.closeBridgeUnavailableWebViewVC(
+                    reason: "[WebView] Native JS bridge unreachable for \(urlString): " +
+                        "window.webkit.messageHandlers.\(Constants.WebViewBridgeJS.handlerName).postMessage threw or is undefined"
+                )
+            }
+        }
+    }
+
+    /// Fail-fast native-bridge probe: does `window.webkit.messageHandlers.SdkBridge` actually
+    /// reach native, as opposed to [WebViewReadyChecker] which only proves the page's own JS
+    /// booted (`window.bridgeMessagesHandlers`). Single-shot and immediate — unlike the
+    /// ready-check's page-boot race, a broken message-handler registration doesn't become
+    /// reachable by waiting. `.failure` (teardown / evaluate error) is inconclusive, not a
+    /// bridge failure, so it's silently dropped rather than reported.
+    private func pingNativeBridge(completion: @escaping (_ isReachable: Bool) -> Void) {
+        guard let facade else { return }
+        facade.evaluateJavaScript(Constants.WebViewBridgeJS.pingScript) { result in
+            switch result {
+            case .success(let value) where (value as? Bool) == true:
+                completion(true)
+            case .success:
+                completion(false)
+            case .failure:
+                return
+            }
+        }
+    }
+
+    private func startReadyCheck(urlString: String) {
         readyChecker?.cancel()
         let checker = WebViewReadyChecker(evaluate: { [weak self] script, completion in
             // Teardown: abandon the poll silently, exactly like cancel().
@@ -320,7 +358,7 @@ extension TransparentView: WebBridgeNavigationDelegate {
             }
         })
     }
-    
+
     func webBridge(_ bridge: MindboxWebBridge, didReceiveHTTPError url: String?) {
         let isRecoverable = InAppWebViewHTTPError.isRecoverable(url: url)
         Logger.common(

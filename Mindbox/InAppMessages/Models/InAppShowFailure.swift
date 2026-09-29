@@ -16,6 +16,7 @@ enum InAppShowFailureReason: String, Codable {
     case presentationFailed = "presentation_failed"
     case webviewLoadFailed = "webview_load_failed"
     case webviewPresentationFailed = "webview_presentation_failed"
+    case webviewBridgeUnavailable = "webview_bridge_unavailable"
     case unknownError = "unknown_error"
 }
 

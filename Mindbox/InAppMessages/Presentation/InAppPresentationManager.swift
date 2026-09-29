@@ -25,6 +25,7 @@ enum InAppPresentationError {
     case failedToLoadWindow
     case webviewLoadFailed(String)
     case webviewPresentationFailed(String)
+    case webviewBridgeUnavailable(String)
     case failed(String)
 }
 
@@ -35,6 +36,8 @@ extension InAppPresentationError {
             return .webviewLoadFailed
         case .webviewPresentationFailed:
             return .webviewPresentationFailed
+        case .webviewBridgeUnavailable:
+            return .webviewBridgeUnavailable
         default:
             return .presentationFailed
         }
@@ -46,7 +49,8 @@ extension InAppPresentationError {
             return "[InAppPresentationError] Failed to load images."
         case .failedToLoadWindow:
             return "[InAppPresentationError] Failed to load window."
-        case .webviewLoadFailed(let details), .webviewPresentationFailed(let details), .failed(let details):
+        case .webviewLoadFailed(let details), .webviewPresentationFailed(let details),
+             .webviewBridgeUnavailable(let details), .failed(let details):
             return details
         }
     }
