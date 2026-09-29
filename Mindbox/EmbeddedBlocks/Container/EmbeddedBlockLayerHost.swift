@@ -19,8 +19,13 @@ final class EmbeddedBlockLayerHost {
     private var attachedView: UIView?
 
     /// The view still on screen under the one fading in over it — until the fade ends, or until the
-    /// next `show` comes first.
-    private var fadingOutView: UIView?
+    /// next `show` comes first — with the alpha it had before the fade, to leave with.
+    private var fadingOut: FadingLayer?
+
+    private struct FadingLayer {
+        let view: UIView
+        let alpha: CGFloat
+    }
 
     init(container: UIView, animation: EmbeddedBlockRevealAnimation = EmbeddedBlockRevealAnimation()) {
         self.container = container
@@ -33,9 +38,9 @@ final class EmbeddedBlockLayerHost {
     /// for the whole fade and then vanish in one frame.
     func show(_ view: UIView?, animated: Bool = false) {
         // A fade still running is over: what it was replacing goes now.
-        if let fadingOutView {
-            drop(fadingOutView)
-            self.fadingOutView = nil
+        if let fadingOut {
+            drop(fadingOut)
+            self.fadingOut = nil
         }
 
         guard let view else {
@@ -56,24 +61,37 @@ final class EmbeddedBlockLayerHost {
             return
         }
 
-        fadingOutView = previous
+        let fading = previous.map { FadingLayer(view: $0, alpha: $0.alpha) }
+        fadingOut = fading
         view.alpha = 0
         animation.run(animation.duration, {
             view.alpha = 1
-            previous?.alpha = 0
+            fading?.view.alpha = 0
         }, { [weak self] in
-            guard let self, self.fadingOutView === previous else { return }
+            // The host may be gone before the fade ends — the block with it — and the layer it was
+            // fading out must still be left as it was found: a host's own placeholder is the host's
+            // to reuse.
+            guard let self else {
+                fading.map(Self.restoreAlpha)
+                return
+            }
 
-            self.fadingOutView = nil
-            previous.map(self.drop)
+            guard self.fadingOut?.view === fading?.view else { return }
+
+            self.fadingOut = nil
+            fading.map(self.drop)
         })
     }
 
     /// The faded-out layer is shown again on the next load — the shimmer is one instance for the
-    /// block's whole life — so it leaves with its alpha back at 1.
-    private func drop(_ view: UIView) {
-        view.removeFromSuperview()
-        view.alpha = 1
+    /// block's whole life, a host's placeholder is the host's — so it leaves with the alpha it came with.
+    private func drop(_ layer: FadingLayer) {
+        layer.view.removeFromSuperview()
+        Self.restoreAlpha(layer)
+    }
+
+    private static func restoreAlpha(_ layer: FadingLayer) {
+        layer.view.alpha = layer.alpha
     }
 
     private func attach(_ view: UIView) {

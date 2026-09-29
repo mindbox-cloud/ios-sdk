@@ -199,6 +199,50 @@ struct EmbeddedBlockLayerHostTests {
         #expect(container.constraints.isEmpty)
     }
 
+    /// A host's own placeholder may be translucent by design: the fade must not hand it back opaque.
+    @Test("The fading view leaves with the alpha it came with", arguments: [true, false])
+    func fadingViewLeavesWithItsOwnAlpha(fadeEnds: Bool) {
+        let container = UIView()
+        let spy = EmbeddedBlockRevealAnimationSpy()
+        spy.isDeferred = true
+        let host = EmbeddedBlockLayerHost(container: container, animation: spy.animation)
+        let first = UIView()
+        first.alpha = 0.5
+        let second = UIView()
+
+        host.show(first)
+        host.show(second, animated: true)
+        if fadeEnds {
+            spy.finish()
+        } else {
+            host.show(UIView())
+        }
+
+        #expect(first.superview == nil)
+        #expect(first.alpha == 0.5)
+    }
+
+    /// The block can be torn down before its fade ends. The view it was fading out belongs to the
+    /// host, who may show it elsewhere: it must not stay transparent.
+    @Test("A host gone mid-fade still gives the fading view its alpha back")
+    func hostGoneMidFadeRestoresTheAlpha() {
+        let container = UIView()
+        let spy = EmbeddedBlockRevealAnimationSpy()
+        spy.isDeferred = true
+        var host: EmbeddedBlockLayerHost? = EmbeddedBlockLayerHost(container: container, animation: spy.animation)
+        let first = UIView()
+        first.alpha = 0.5
+        let second = UIView()
+
+        host?.show(first)
+        host?.show(second, animated: true)
+        #expect(first.alpha == 0)
+        host = nil
+        spy.finish()
+
+        #expect(first.alpha == 0.5)
+    }
+
     /// A late completion of a fade that was already cut short must not remove the view that replaced it.
     @Test("A fade cut short by another fade does not remove the newer view when it ends")
     func cutShortFadeDoesNotRemoveTheNewerView() {
