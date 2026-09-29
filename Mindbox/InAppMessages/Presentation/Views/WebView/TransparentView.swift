@@ -25,9 +25,9 @@ final class TransparentView: UIView {
     private let tags: [String: String]?
     private var lastReadyCheckedUrl: String?
     private var readyChecker: WebViewReadyChecker?
-    /// True when the page finished loading but the JS bridge never appeared within the
-    /// ready-check budget — lets the init timeout report the accurate failure category.
-    private(set) var readyCheckDidGiveUp = false
+    /// Why the ready check gave up (native bridge vs. page handlers), `nil` while it hasn't —
+    /// lets the init timeout report the accurate failure category and say which half is missing.
+    private(set) var readyCheckFailure: String?
     /// True once the page has sent `init`. After that the init timeout is cancelled, so a
     /// later ready-check give-up (a post-load navigation dropped the bridge) has no other
     /// closing authority — it must close the show itself.
@@ -276,7 +276,7 @@ extension TransparentView: WebBridgeNavigationDelegate {
         Logger.common(message: "[WebView] WKNavigationDelegate: start loading URL \(url?.absoluteString ?? "unknown")", category: .webViewInAppMessages)
         // Reset per-navigation checks (e.g. redirects / re-loads).
         lastReadyCheckedUrl = nil
-        readyCheckDidGiveUp = false
+        readyCheckFailure = nil
         readyChecker?.cancel()
         readyChecker = nil
     }
@@ -303,7 +303,7 @@ extension TransparentView: WebBridgeNavigationDelegate {
             )
         }, onGiveUp: { [weak self] lastFailure in
             guard let self else { return }
-            self.readyCheckDidGiveUp = true
+            self.readyCheckFailure = lastFailure
             Logger.common(
                 message: "[WebView] JS ready check gave up for URL \(urlString): \(lastFailure)",
                 category: .webViewInAppMessages

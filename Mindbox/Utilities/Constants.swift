@@ -57,7 +57,17 @@ enum Constants {
             return "(()=>{try{\(bridgeFunction)(\(quoted));return!0}catch(_){return!1}})()"
         }
 
-        static let bridgeFunctionReadyCheck = "(() => typeof window.bridgeMessagesHandlers !== 'undefined' && typeof window.bridgeMessagesHandlers.emit === 'function')()"
+        // Returns a status, not a boolean: the give-up failure carries it into errorDetails, so a
+        // missing native handler is told apart from page JS that never booted.
+        static let bridgeReady = "ok"
+        static let bridgeNoNativeHandler = "no-native-bridge"
+        static let bridgeNoPageHandlers = "no-handlers"
+        static let bridgeFunctionReadyCheck = "(() => {"
+            + "const h = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.\(handlerName);"
+            + "if (!h || typeof h.postMessage !== 'function') return '\(bridgeNoNativeHandler)';"
+            + "if (typeof window.bridgeMessagesHandlers === 'undefined' || typeof window.bridgeMessagesHandlers.emit !== 'function') return '\(bridgeNoPageHandlers)';"
+            + "return '\(bridgeReady)';"
+            + "})()"
     }
 
     enum WebViewHTTPErrorJS {
