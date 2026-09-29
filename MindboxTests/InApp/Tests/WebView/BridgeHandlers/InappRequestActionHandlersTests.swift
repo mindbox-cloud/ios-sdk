@@ -114,6 +114,22 @@ struct FilterShowableInappsActionHandlerTests {
         #expect(response.type == .error)
         #expect(response.payload == .object(["error": .string("not_served")]))
     }
+
+    @Test("A host without an in-app service refuses as not served before reading the payload", arguments: [
+        JSONValue.object([:]),
+        .object(["inappIds": .string("id-1")]),
+        .string("not json")
+    ])
+    func hostWithoutInappServiceRefusesBeforeReadingThePayload(payload: JSONValue) throws {
+        let host = HostSpy()
+
+        FilterShowableInappsActionHandler().handle(.request(.filterShowableInapps, payload: payload), host: host)
+
+        #expect(host.sent.count == 1)
+        let response = try #require(host.sent.first)
+        #expect(response.type == .error)
+        #expect(response.payload == .object(["error": .string("not_served")]))
+    }
 }
 
 @Suite("ShowInAppActionHandler", .tags(.webView))
@@ -201,6 +217,22 @@ struct ShowInAppActionHandlerTests {
         ShowInAppActionHandler().handle(.request(.showInApp, payload: .object(["inappId": .string("some-id")])),
                                         host: host)
 
+        let response = try #require(host.sent.first)
+        #expect(response.type == .error)
+        #expect(response.payload == .object(["error": .string("not_served")]))
+    }
+
+    @Test("A host without an in-app service refuses as not served before reading the payload", arguments: [
+        JSONValue.object([:]),
+        .object(["inappId": .string("")]),
+        .object(["inappId": .int(1)])
+    ])
+    func hostWithoutInappServiceRefusesBeforeReadingThePayload(payload: JSONValue) throws {
+        let host = HostSpy()
+
+        ShowInAppActionHandler().handle(.request(.showInApp, payload: payload), host: host)
+
+        #expect(host.sent.count == 1)
         let response = try #require(host.sent.first)
         #expect(response.type == .error)
         #expect(response.payload == .object(["error": .string("not_served")]))
