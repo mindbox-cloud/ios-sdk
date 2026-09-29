@@ -727,8 +727,14 @@ final class EmbeddedBlockRevealAnimationSpy {
     /// `true` — the completion waits for `finish()`, as it waits for the end of a real animation.
     var isDeferred = false
 
+    /// `true` — the animations block itself waits for `applyAnimations()`: this is how the state
+    /// the animation starts from gets seen, before UIKit would set the model values.
+    var holdsAnimations = false
+
     /// `true` while the animations block runs: what happens then is what UIKit would animate.
     private(set) var isApplyingAnimations = false
+
+    private var pendingAnimations: [() -> Void] = []
 
     private var pendingCompletions: [() -> Void] = []
 
@@ -737,9 +743,11 @@ final class EmbeddedBlockRevealAnimationSpy {
             guard let self else { return }
 
             self.runs.append(duration)
-            self.isApplyingAnimations = true
-            animations()
-            self.isApplyingAnimations = false
+            if self.holdsAnimations {
+                self.pendingAnimations.append(animations)
+            } else {
+                self.apply(animations)
+            }
             if self.isDeferred {
                 self.pendingCompletions.append(completion)
             } else {
@@ -750,10 +758,22 @@ final class EmbeddedBlockRevealAnimationSpy {
         })
     }
 
+    func applyAnimations() {
+        let animations = pendingAnimations
+        pendingAnimations = []
+        animations.forEach(apply)
+    }
+
     func finish() {
         let completions = pendingCompletions
         pendingCompletions = []
         completions.forEach { $0() }
+    }
+
+    private func apply(_ animations: () -> Void) {
+        isApplyingAnimations = true
+        animations()
+        isApplyingAnimations = false
     }
 }
 

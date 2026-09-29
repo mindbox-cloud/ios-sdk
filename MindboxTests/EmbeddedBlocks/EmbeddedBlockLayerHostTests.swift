@@ -112,6 +112,7 @@ struct EmbeddedBlockLayerHostTests {
     func animatedShowFadesInAndDropsThePreviousWhenTheFadeEnds() {
         let container = UIView()
         let spy = EmbeddedBlockRevealAnimationSpy()
+        spy.holdsAnimations = true
         spy.isDeferred = true
         let host = EmbeddedBlockLayerHost(container: container, animation: spy.animation)
         let first = UIView()
@@ -120,13 +121,19 @@ struct EmbeddedBlockLayerHostTests {
         host.show(first)
         host.show(second, animated: true)
 
-        // Both are on screen while the fade runs, the new one on top. The spy applies the animations
-        // at once, the way UIKit sets the model values: the new one is at 1, the previous one at 0 —
-        // a cross-fade, not a fade over an opaque layer.
+        // Both are on screen while the fade runs, the new one on top. Before the animation starts
+        // the new one is invisible and the previous one untouched: the fade begins from here.
         #expect(container.subviews == [first, second])
+        #expect(second.alpha == 0)
+        #expect(first.alpha == 1)
+        #expect(spy.runs == [Constants.EmbeddedBlock.revealAnimationDuration])
+
+        // The animations set the model values the way UIKit does: the new one at 1, the previous one
+        // at 0 — a cross-fade, not a fade over an opaque layer.
+        spy.applyAnimations()
+
         #expect(second.alpha == 1)
         #expect(first.alpha == 0)
-        #expect(spy.runs == [Constants.EmbeddedBlock.revealAnimationDuration])
 
         spy.finish()
 
