@@ -63,7 +63,8 @@ final class EmbeddedBlockPlaceMemory: EmbeddedBlockPlaceRemembering {
         self.now = now
     }
 
-    /// The presence of the record is the fact; what is inside is for the log and for later fields.
+    /// The presence of the record is the fact; what is inside — today only the date it was written —
+    /// is there for the fields that join it later.
     func hasShownContent(at place: String) -> Bool {
         lock.withLock { persistenceStorage.embeddedBlockPlaceRecords?[place] != nil }
     }
