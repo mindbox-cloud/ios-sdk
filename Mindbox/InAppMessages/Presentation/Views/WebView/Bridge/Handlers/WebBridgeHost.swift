@@ -62,15 +62,12 @@ extension WebBridgeHost {
         respond(to: message, payload: .object(["success": .bool(true)]))
     }
 
-    func respondError(_ reason: String, to message: BridgeMessage) {
-        Logger.common(message: "[WebView] Bridge: '\(message.action)' failed for '\(contentId)': \(reason)",
+    func respondError(_ code: BridgeErrorCode, detail: String, to message: BridgeMessage) {
+        Logger.common(message: "[WebView] Bridge: '\(message.action)' \(message.id) refused with \(code.rawValue) for '\(contentId)': \(detail)",
                       level: .error,
                       category: logCategory)
 
-        send(BridgeMessage(type: .error,
-                           action: message.action,
-                           payload: .object(["error": .string(reason)]),
-                           id: message.id))
+        send(.refusal(code, to: message))
     }
 }
 
@@ -92,7 +89,7 @@ extension WebBridgeHost {
     func requireUserPresence(for message: BridgeMessage) -> Bool {
         guard !isUserPresent else { return true }
 
-        respondError("Nobody is looking at this page", to: message)
+        respondError(.notVisible, detail: "nobody is looking at this page", to: message)
         return false
     }
 }
@@ -132,16 +129,6 @@ protocol WebBridgeContentHosting: AnyObject {
     func bridgeDidReportUnreadableContent()
 }
 
-/// Raw values are the bridge contract's, shared with Android; a page treats an unknown reason as "not shown".
-enum ShowInAppRefusal: String, Error {
-    /// Not in the config, or cut by the filters before it could be shown.
-    case unknownInapp = "unknown_inapp"
-    /// The requesting block no longer shows anything; its page is on its way out.
-    case sourceDismissed = "source_dismissed"
-    /// The show started and did not reach the screen.
-    case showFailed = "show_failed"
-}
-
 protocol WebBridgeInappRequestHosting: AnyObject {
 
     /// Which of `ids` are showable. Answered asynchronously and possibly never: a host that
@@ -151,5 +138,5 @@ protocol WebBridgeInappRequestHosting: AnyObject {
     /// `params` travel into the start payload untouched. Answered once the outcome is known, possibly never.
     func bridgeDidRequestShowInApp(id: String,
                                    params: [String: JSONValue],
-                                   completion: @escaping (Result<Void, ShowInAppRefusal>) -> Void)
+                                   completion: @escaping (Result<Void, BridgeErrorCode>) -> Void)
 }

@@ -17,7 +17,7 @@ final class FilterShowableInappsActionHandler: WebBridgeActionHandler {
 
     func handle(_ message: BridgeMessage, host: WebBridgeHost) {
         guard case .array(let requested)? = message.payloadObject?["inappIds"] else {
-            host.respondError("Invalid payload: missing 'inappIds' array", to: message)
+            host.respondError(.invalidPayload, detail: "missing 'inappIds' array", to: message)
             return
         }
 
@@ -33,7 +33,7 @@ final class FilterShowableInappsActionHandler: WebBridgeActionHandler {
         }
 
         guard let inappHost = host as? WebBridgeInappRequestHosting else {
-            host.respondError("filterShowableInapps is not served on this surface", to: message)
+            host.respondError(.notServed, detail: "no in-app service on this surface", to: message)
             return
         }
 

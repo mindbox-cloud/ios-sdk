@@ -72,12 +72,12 @@ private extension MotionActionHandler {
 
     func start(_ message: BridgeMessage, host: WebBridgeHost) {
         guard let payload = message.payloadObject else {
-            host.respondError("Invalid payload: missing 'gestures' array", to: message)
+            host.respondError(.invalidPayload, detail: "missing 'gestures' array", to: message)
             return
         }
 
         guard case .array(let requested) = payload["gestures"] else {
-            host.respondError("Invalid payload: 'gestures' must be an array", to: message)
+            host.respondError(.invalidPayload, detail: "'gestures' must be an array", to: message)
             return
         }
 
@@ -89,17 +89,20 @@ private extension MotionActionHandler {
         }
 
         guard !gestures.isEmpty else {
-            host.respondError("No valid gestures provided. Available: shake, flip", to: message)
+            if Self.areAllNonEmptyStrings(requested) {
+                host.respondError(.unsupportedValue, detail: "no known gesture requested, available: shake, flip", to: message)
+            } else {
+                host.respondError(.invalidPayload, detail: "'gestures' must be a non-empty list of gesture names", to: message)
+            }
             return
         }
 
         let result = service.startMonitoring(gestures: gestures)
 
         guard !result.allUnavailable else {
-            host.respondError(
-                "No sensors available for requested gestures: \(result.unavailable.map(\.rawValue).joined(separator: ", "))",
-                to: message
-            )
+            host.respondError(.gesturesUnavailable,
+                              detail: "no sensors for \(result.unavailable.map(\.rawValue).joined(separator: ", "))",
+                              to: message)
             return
         }
 
@@ -111,6 +114,13 @@ private extension MotionActionHandler {
         }
 
         host.respond(to: message, payload: .object(payloadBack))
+    }
+
+    static func areAllNonEmptyStrings(_ values: [JSONValue]) -> Bool {
+        !values.isEmpty && values.allSatisfy { value in
+            guard case .string(let name) = value else { return false }
+            return !name.isEmpty
+        }
     }
 
     /// Pushed as a request, not a response: nothing asked for this gesture, it just happened.

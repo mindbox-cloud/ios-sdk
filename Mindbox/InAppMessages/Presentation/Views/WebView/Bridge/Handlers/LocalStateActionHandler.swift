@@ -52,7 +52,7 @@ private extension LocalStateActionHandler {
 
     func get(_ message: BridgeMessage, host: WebBridgeHost) {
         guard let payload = message.payloadObject else {
-            host.respondError("Invalid payload", to: message)
+            host.respondError(.invalidPayload, detail: "payload is not a JSON object", to: message)
             return
         }
 
@@ -93,7 +93,7 @@ private extension LocalStateActionHandler {
     func set(_ message: BridgeMessage, host: WebBridgeHost) {
         guard let payload = message.payloadObject,
               case .object(let entries) = payload["data"] else {
-            host.respondError("Invalid payload: missing 'data' object", to: message)
+            host.respondError(.invalidPayload, detail: "missing 'data' object", to: message)
             return
         }
 
@@ -116,14 +116,14 @@ private extension LocalStateActionHandler {
         guard let payload = message.payloadObject,
               case .int(let version) = payload["version"],
               case .object(let entries) = payload["data"] else {
-            host.respondError("Invalid payload: missing 'version' or 'data'", to: message)
+            host.respondError(.invalidPayload, detail: "missing 'version' or 'data'", to: message)
             return
         }
 
         let data = Self.storable(entries)
 
         guard let state = storage.initialize(version: version, data: data) else {
-            host.respondError("Version must be a positive integer, got \(version)", to: message)
+            host.respondError(.invalidPayload, detail: "version must be a positive integer, got \(version)", to: message)
             return
         }
 

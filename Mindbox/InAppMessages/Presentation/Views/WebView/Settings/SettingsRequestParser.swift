@@ -19,11 +19,10 @@ enum SettingsRequestParser {
         static let target = "target"
     }
 
-    static func parse(from message: BridgeMessage) -> SettingsType? {
-        guard case .string(let typeString)? = message.payloadObject?[PayloadKey.target],
-              !typeString.isEmpty else {
+    static func target(from message: BridgeMessage) -> String? {
+        guard case .string(let target)? = message.payloadObject?[PayloadKey.target], !target.isEmpty else {
             return nil
         }
-        return SettingsType(rawValue: typeString)
+        return target
     }
 }

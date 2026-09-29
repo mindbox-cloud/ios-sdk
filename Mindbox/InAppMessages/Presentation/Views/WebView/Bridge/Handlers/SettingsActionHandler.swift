@@ -28,8 +28,13 @@ final class SettingsActionHandler: WebBridgeActionHandler {
     }
 
     func handle(_ message: BridgeMessage, host: WebBridgeHost) {
-        guard let target = SettingsRequestParser.parse(from: message) else {
-            host.respondError("Invalid or unknown settings type", to: message)
+        guard let requested = SettingsRequestParser.target(from: message) else {
+            host.respondError(.invalidPayload, detail: "missing or empty 'target' field", to: message)
+            return
+        }
+
+        guard let target = SettingsType(rawValue: requested) else {
+            host.respondError(.unsupportedValue, detail: "unknown settings target '\(requested)'", to: message)
             return
         }
 
@@ -51,7 +56,7 @@ final class SettingsActionHandler: WebBridgeActionHandler {
             }
         case .application:
             guard let url = URL(string: UIApplication.openSettingsURLString) else {
-                host.respondError("Failed to create application settings URL", to: message)
+                host.respondError(.openFailed, detail: "could not build the application settings URL", to: message)
                 return
             }
 

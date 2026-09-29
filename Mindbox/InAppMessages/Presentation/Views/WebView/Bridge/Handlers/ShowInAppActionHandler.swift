@@ -9,7 +9,6 @@
 import Foundation
 import MindboxLogger
 
-/// One terminal answer by outcome, in sync with Android and the bridge contract.
 final class ShowInAppActionHandler: WebBridgeActionHandler {
 
     let actions: Set<BridgeMessage.Action> = [.showInApp]
@@ -18,12 +17,12 @@ final class ShowInAppActionHandler: WebBridgeActionHandler {
         guard let payload = message.payloadObject,
               case .string(let inAppId)? = payload["inappId"],
               !inAppId.isEmpty else {
-            host.respondError("Invalid payload: missing or empty 'inappId'", to: message)
+            host.respondError(.invalidPayload, detail: "missing or empty 'inappId'", to: message)
             return
         }
 
         guard let inappHost = host as? WebBridgeInappRequestHosting else {
-            host.respondError("showInApp is not served on this surface", to: message)
+            host.respondError(.notServed, detail: "no in-app service on this surface", to: message)
             return
         }
 
@@ -40,8 +39,8 @@ final class ShowInAppActionHandler: WebBridgeActionHandler {
             switch outcome {
             case .success:
                 host?.respondSuccess(to: message)
-            case .failure(let refusal):
-                host?.respondError(refusal.rawValue, to: message)
+            case .failure(let code):
+                host?.respondError(code, detail: "in-app '\(inAppId)' not shown", to: message)
             }
         }
     }

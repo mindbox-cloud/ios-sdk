@@ -21,7 +21,7 @@ protocol EmbeddedBlockInappServing: AnyObject {
     func showableInappIds(among ids: [String], askedBy blockInappId: String, completion: @escaping ([String]) -> Void)
 
     /// Deliberately unchecked: the page decided when it drew the in-app. Answers once, on the main thread.
-    func showInapp(id: String, params: [String: JSONValue], completion: @escaping (Result<Void, ShowInAppRefusal>) -> Void)
+    func showInapp(id: String, params: [String: JSONValue], completion: @escaping (Result<Void, BridgeErrorCode>) -> Void)
 }
 
 final class EmbeddedBlockInappService: EmbeddedBlockInappServing {
@@ -54,7 +54,7 @@ final class EmbeddedBlockInappService: EmbeddedBlockInappServing {
         }
     }
 
-    func showInapp(id: String, params: [String: JSONValue], completion: @escaping (Result<Void, ShowInAppRefusal>) -> Void) {
+    func showInapp(id: String, params: [String: JSONValue], completion: @escaping (Result<Void, BridgeErrorCode>) -> Void) {
         // The tap is the trigger: the fetch and the form build count into timeToDisplay, on the overlay pass's clock.
         let tappedAt = now()
         let answer = Self.onTheMainThread(completion)
