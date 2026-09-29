@@ -79,7 +79,9 @@ public struct MindboxEmbeddedBlock: View {
     ///   - animatesReveal: Whether the SDK animates the reveal of the content — a fade, and the
     ///     growth of a block that waited hidden. `true` by default. Turn it off to animate the
     ///     block's container yourself in `onLoad`. Read once, when the block is created.
-    ///   - onLoad: The block content is shown and the container is visible.
+    ///   - onLoad: The block content is shown and the container is visible. A block that waited
+    ///     hidden grows from 0 to `height` here; a `List` row that holds it changes its height on
+    ///     this call.
     ///   - onEmpty: There is nothing to show at the place — no campaign, targeting or A/B group not
     ///     matched, show budget spent, or the page rendered nothing. The block collapses; `errorView`
     ///     does not apply.

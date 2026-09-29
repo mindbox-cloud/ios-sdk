@@ -28,6 +28,11 @@ import MindboxLogger
 /// own turns that off, puts the block in a container of its own and animates the container in
 /// `mindboxEmbeddedBlockViewDidLoad`.
 ///
+/// A block that waited hidden changes its height on `mindboxEmbeddedBlockViewDidLoad`: from 0 to the
+/// height given at creation. A host that measures the block itself — a table or a collection view
+/// remeasuring its row — does so on that call as well, not only on empty and failure; a row measured
+/// once before the content arrived would stay at zero.
+///
 /// What exactly lives inside is decided by the SDK from the `placeSystemName`, not by the host. The
 /// block flow belongs to the SDK too: the container starts its content when it enters a window
 /// and stops it when it leaves. The host app observes the outcome through `delegate` and nothing

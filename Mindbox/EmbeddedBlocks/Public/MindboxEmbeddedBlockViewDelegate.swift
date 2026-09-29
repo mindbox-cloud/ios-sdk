@@ -19,7 +19,10 @@ import Foundation
 /// its own delegate) to tell them apart.
 public protocol MindboxEmbeddedBlockViewDelegate: AnyObject {
 
-    /// The block content is shown: the container has taken its own height and is visible.
+    /// The block content is shown: the container has taken its own height and is visible. A block
+    /// that waited hidden takes that height here, growing from 0 — a host that measures the block
+    /// itself, a table or a collection view among them, remeasures the row on this call, as it does
+    /// on empty and failure.
     func mindboxEmbeddedBlockViewDidLoad(_ blockView: MindboxEmbeddedBlockView)
 
     /// There is nothing to show at the place: no campaign behind its place system name, the
