@@ -157,6 +157,11 @@ public final class MindboxEmbeddedBlockView: UIView {
     @_spi(Internal)
     public static func initialAppearance(placeSystemName: String,
                                          loadingStrategy: MindboxEmbeddedBlockLoadingStrategy) -> MindboxEmbeddedBlockAppearance {
+        // Only `automatic` asks the memory; the other two are decided by the strategy alone.
+        guard loadingStrategy == .automatic else {
+            return initialAppearance(for: loadingStrategy, hasShownContentBefore: false)
+        }
+
         let place = normalizedPlaceSystemName(placeSystemName)
         let memory = DI.injectOrFail(EmbeddedBlockPlaceRemembering.self)
         return initialAppearance(for: loadingStrategy, hasShownContentBefore: memory.hasShownContent(at: place))

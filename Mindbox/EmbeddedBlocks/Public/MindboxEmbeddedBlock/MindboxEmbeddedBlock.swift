@@ -60,6 +60,10 @@ public struct MindboxEmbeddedBlock: View {
     private let onEmpty: (() -> Void)?
     private let onFail: ((MindboxEmbeddedBlockFailReason) -> Void)?
 
+    /// Decided once, when the block is created: `body` may be evaluated many times, and the state it
+    /// seeds takes only the first value anyway.
+    private let initialAppearance: MindboxEmbeddedBlockAppearance
+
     private(set) var placeholderBuilder: (() -> AnyView)?
     private(set) var errorBuilder: (() -> AnyView)?
 
@@ -106,6 +110,10 @@ public struct MindboxEmbeddedBlock: View {
         self.onLoad = onLoad
         self.onEmpty = onEmpty
         self.onFail = onFail
+        // Before the first frame: the body's state starts from it, so a hidden block is zero points
+        // tall from its very first layout.
+        self.initialAppearance = MindboxEmbeddedBlockView.initialAppearance(placeSystemName: self.placeSystemName,
+                                                                            loadingStrategy: loadingStrategy)
     }
 
     /// Shows this view instead of the SDK shimmer while the block is loading.
@@ -134,10 +142,7 @@ public struct MindboxEmbeddedBlock: View {
                           timeout: timeout,
                           loadingStrategy: loadingStrategy,
                           animatesReveal: animatesReveal,
-                          // Decided here, before the first frame: the body's state starts from it, so a
-                          // hidden block is zero points tall from its very first layout.
-                          initialAppearance: MindboxEmbeddedBlockView.initialAppearance(placeSystemName: placeSystemName,
-                                                                                        loadingStrategy: loadingStrategy),
+                          initialAppearance: initialAppearance,
                           onLoad: onLoad,
                           onEmpty: onEmpty,
                           onFail: onFail,
