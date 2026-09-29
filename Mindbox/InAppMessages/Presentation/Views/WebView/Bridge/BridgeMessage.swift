@@ -638,64 +638,6 @@ public struct BridgeMessage: Codable {
         ///   ```
         case localStateChanged = "localState.changed"
 
-        /// Actions that send their own bridge responses (no auto-response from dispatcher).
-        ///
-        /// The auto-response goes out before the handler runs, so a handler refusing a non-deferred
-        /// action sends a second envelope under the same id; the page takes the later one.
-        var isDeferred: Bool {
-            switch self {
-            // Lifecycle
-            case .ready:
-                return true
-            case .close, .`init`, .click, .hide, .log:
-                return false
-
-            // Answers for itself so a payload without a usable count is refused outright. The
-            // blanket success would otherwise claim the SDK acted on a number it never got.
-            case .contentRendered:
-                return true
-
-            // Both carry an answer the page acts on: one returns the ids that passed, the other
-            // reports whether the show was accepted.
-            case .filterShowableInapps, .showInApp:
-                return true
-
-            // Operations
-            case .asyncOperation, .syncOperation:
-                return true
-
-            // Navigation, Settings & Permissions
-            case .openLink, .settingsOpen, .permissionRequest:
-                return true
-
-            // Local State
-            case .localStateGet, .localStateSet, .localStateInit:
-                return true
-
-            // Haptic
-            case .haptic:
-                return true
-
-            // Motion
-            case .motionStart, .motionStop:
-                return true
-
-            // Native → JS: Motion
-            case .motionEvent:
-                return false
-
-            // Native → JS: Navigation
-            case .navigationIntercepted:
-                return false
-
-            // Native → JS: Embedded pages and storage
-            case .initDataUpdated, .localStateChanged:
-                return false
-            }
-        }
-
-        static let deferredActions: Set<Action> = Set(allCases.filter(\.isDeferred))
-
         /// Actions that act on the user's behalf, and therefore must not run on a page nobody is
         /// looking at.
         ///
@@ -704,10 +646,6 @@ public struct BridgeMessage: Codable {
         /// message, so anything that leaves the app, covers it, or reaches for the device has to be
         /// refused. Enforced by ``WebBridgeActionRegistry`` before dispatch, and again by the
         /// handlers that go on to wait — the page can leave the screen while they do.
-        ///
-        /// Every action listed here is also ``isDeferred``, and has to be: the refusal reaches the
-        /// page as the answer to its request, while a non-deferred action was already answered
-        /// `{success: true}` by the dispatcher before a handler ever saw it.
         var requiresUserPresence: Bool {
             switch self {
             // Leave the app or cover it — a Safari sheet, the settings screen, a permission

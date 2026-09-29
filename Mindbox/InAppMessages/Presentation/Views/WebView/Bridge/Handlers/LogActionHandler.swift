@@ -19,8 +19,7 @@ final class LogActionHandler: WebBridgeActionHandler {
     let actions: Set<BridgeMessage.Action> = [.log]
 
     func handle(_ message: BridgeMessage, host: WebBridgeHost) {
-        // `log` is not deferred: `RequestMessageHandler` has already answered `{success: true}`.
-        // Answering again would arrive against an id JS has closed.
+        host.respondSuccess(to: message)
         Logger.common(message: "[JS] \(message.payloadString)", category: host.logCategory)
     }
 }

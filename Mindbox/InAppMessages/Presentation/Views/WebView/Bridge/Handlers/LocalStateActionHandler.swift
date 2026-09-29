@@ -10,9 +10,6 @@ import Foundation
 import MindboxLogger
 
 /// On-device key-value storage for the page.
-///
-/// All three actions are deferred: each answers with the state it read or wrote, so the
-/// dispatcher's blanket `{success: true}` would say nothing useful.
 final class LocalStateActionHandler: WebBridgeActionHandler {
 
     let actions: Set<BridgeMessage.Action> = [.localStateGet, .localStateSet, .localStateInit]

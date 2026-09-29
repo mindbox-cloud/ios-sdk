@@ -14,15 +14,15 @@ import MindboxLogger
 ///
 /// Registered everywhere, like every other handler. Whether these mean anything depends on who
 /// is hosting the page — a surface that has no window to close simply does not conform, and the
-/// message is journalled and dropped rather than refused. That is what lets a surface pick one
-/// of these up later by adding a conformance and nothing else.
+/// message is acknowledged and journalled rather than refused. That is what lets a surface pick
+/// one of these up later by adding a conformance and nothing else.
 final class LifecycleActionHandler: WebBridgeActionHandler {
 
     let actions: Set<BridgeMessage.Action> = [.close, .`init`, .click, .hide]
 
     func handle(_ message: BridgeMessage, host: WebBridgeHost) {
-        // None of these are deferred: `RequestMessageHandler` has already answered
-        // `{success: true}`, so this handler only acts and never replies.
+        host.respondSuccess(to: message)
+
         guard let lifecycle = host as? WebBridgeLifecycleHosting else {
             Logger.common(message: "[WebView] Bridge: '\(message.action)' from '\(host.contentId)' has no lifecycle to reach here, ignoring",
                           category: host.logCategory)
