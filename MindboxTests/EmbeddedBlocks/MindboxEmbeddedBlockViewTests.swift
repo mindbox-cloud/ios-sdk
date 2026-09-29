@@ -1487,7 +1487,7 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.view.subviews.contains { $0 is EmbeddedBlockShimmerView })
     }
 
-    @Test("Reload of an automatic block after an empty answer keeps it hidden")
+    @Test("Reload of an automatic block after an empty answer keeps it hidden while the answer is on its way")
     func reloadOfAnAutomaticBlockAfterEmptyKeepsItHidden() async {
         let memory = EmbeddedBlockPlaceMemoryMock(shownPlaces: ["block-id"])
         let block = BlockFixture(resolution: .empty, loadingStrategy: .automatic, memory: memory)
@@ -1495,7 +1495,15 @@ struct MindboxEmbeddedBlockViewTests {
         await mainQueueTurn()
         #expect(block.view.intrinsicContentSize.height == 0)
 
+        // The answer is held back: what the block shows meanwhile is the reload's first look, decided
+        // by the strategy and the memory the empty answer just dropped — not a placeholder.
+        block.bed.resolver.isDeferred = true
         block.view.reload()
+
+        #expect(block.view.intrinsicContentSize.height == 0)
+        #expect(block.view.subviews.isEmpty)
+
+        block.bed.resolver.flush()
 
         #expect(block.view.intrinsicContentSize.height == 0)
         #expect(block.view.subviews.isEmpty)
