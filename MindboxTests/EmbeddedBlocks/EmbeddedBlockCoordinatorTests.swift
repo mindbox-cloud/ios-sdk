@@ -28,7 +28,7 @@ struct EmbeddedBlockCoordinatorTests {
     func updateWritesOnScheduledTurn() {
         guard #available(iOS 13.0, *) else { return }
 
-        var written = [MindboxEmbeddedBlockAppearance]()
+        var written = [MindboxEmbeddedBlockAppearance?]()
         var scheduled = [() -> Void]()
         let coordinator = EmbeddedBlockRepresentable.Coordinator(
             appearance: Binding(get: { .placeholder }, set: { written.append($0) }),
@@ -54,7 +54,7 @@ struct EmbeddedBlockCoordinatorTests {
     func detachDropsScheduledWrite() {
         guard #available(iOS 13.0, *) else { return }
 
-        var written = [MindboxEmbeddedBlockAppearance]()
+        var written = [MindboxEmbeddedBlockAppearance?]()
         var scheduled = [() -> Void]()
         let coordinator = EmbeddedBlockRepresentable.Coordinator(
             appearance: Binding(get: { .placeholder }, set: { written.append($0) }),
@@ -104,7 +104,7 @@ struct EmbeddedBlockCoordinatorTests {
     func contentIsWrittenUnderTheAnimation() {
         guard #available(iOS 13.0, *) else { return }
 
-        var written = [MindboxEmbeddedBlockAppearance]()
+        var written = [MindboxEmbeddedBlockAppearance?]()
         var scheduled = [() -> Void]()
         var animatedWrites = 0
         let coordinator = EmbeddedBlockRepresentable.Coordinator(
@@ -131,7 +131,7 @@ struct EmbeddedBlockCoordinatorTests {
     func contentLandsAtOnceUnderReduceMotion() {
         guard #available(iOS 13.0, *) else { return }
 
-        var written = [MindboxEmbeddedBlockAppearance]()
+        var written = [MindboxEmbeddedBlockAppearance?]()
         var scheduled = [() -> Void]()
         var animatedWrites = 0
         let coordinator = EmbeddedBlockRepresentable.Coordinator(
@@ -159,7 +159,7 @@ struct EmbeddedBlockCoordinatorTests {
     func collapseAndErrorAreNotAnimated(newAppearance: MindboxEmbeddedBlockAppearance) {
         guard #available(iOS 13.0, *) else { return }
 
-        var written = [MindboxEmbeddedBlockAppearance]()
+        var written = [MindboxEmbeddedBlockAppearance?]()
         var scheduled = [() -> Void]()
         var animatedWrites = 0
         let coordinator = EmbeddedBlockRepresentable.Coordinator(
@@ -186,7 +186,7 @@ struct EmbeddedBlockCoordinatorTests {
     func contentLandsAtOnceWithTheAnimationOff() {
         guard #available(iOS 13.0, *) else { return }
 
-        var written = [MindboxEmbeddedBlockAppearance]()
+        var written = [MindboxEmbeddedBlockAppearance?]()
         var scheduled = [() -> Void]()
         var animatedWrites = 0
         let coordinator = EmbeddedBlockRepresentable.Coordinator(

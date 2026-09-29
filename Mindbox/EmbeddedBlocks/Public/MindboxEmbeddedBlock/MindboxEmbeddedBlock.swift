@@ -65,10 +65,6 @@ public struct MindboxEmbeddedBlock: View {
     private let onEmpty: (() -> Void)?
     private let onFail: ((MindboxEmbeddedBlockFailReason) -> Void)?
 
-    /// Decided once, when the block is created: `body` may be evaluated many times, and the state it
-    /// seeds takes only the first value anyway.
-    private let initialAppearance: MindboxEmbeddedBlockAppearance
-
     private(set) var placeholderBuilder: (() -> AnyView)?
     private(set) var errorBuilder: (() -> AnyView)?
 
@@ -114,10 +110,6 @@ public struct MindboxEmbeddedBlock: View {
         self.onLoad = onLoad
         self.onEmpty = onEmpty
         self.onFail = onFail
-        // Before the first frame: the body's state starts from it, so a hidden block is zero points
-        // tall from its very first layout.
-        self.initialAppearance = MindboxEmbeddedBlockView.initialAppearance(placeSystemName: self.placeSystemName,
-                                                                            loadingStrategy: loadingStrategy)
     }
 
     /// Shows this view instead of the SDK shimmer while the block is loading.
@@ -148,7 +140,6 @@ public struct MindboxEmbeddedBlock: View {
                           timeout: timeout,
                           loadingStrategy: loadingStrategy,
                           animatesReveal: animatesReveal,
-                          initialAppearance: initialAppearance,
                           onLoad: onLoad,
                           onEmpty: onEmpty,
                           onFail: onFail,
@@ -172,30 +163,16 @@ private struct EmbeddedBlockBody: View {
     let placeholder: (() -> AnyView)?
     let errorContent: (() -> AnyView)?
 
-    @State private var appearance: MindboxEmbeddedBlockAppearance
+    /// What the container reported, once it exists. Until then the look is the first look — read
+    /// here, when the body is first built, and not when the block value is created: a value is
+    /// made on every pass of its parent's body, and may be made before the SDK is initialized.
+    @State private var appearance: MindboxEmbeddedBlockAppearance?
 
-    init(placeSystemName: String,
-         height: CGFloat,
-         timeout: TimeInterval?,
-         loadingStrategy: MindboxEmbeddedBlockLoadingStrategy,
-         animatesReveal: Bool,
-         initialAppearance: MindboxEmbeddedBlockAppearance,
-         onLoad: (() -> Void)?,
-         onEmpty: (() -> Void)?,
-         onFail: ((MindboxEmbeddedBlockFailReason) -> Void)?,
-         placeholder: (() -> AnyView)?,
-         errorContent: (() -> AnyView)?) {
-        self.placeSystemName = placeSystemName
-        self.height = height
-        self.timeout = timeout
-        self.loadingStrategy = loadingStrategy
-        self.animatesReveal = animatesReveal
-        self.onLoad = onLoad
-        self.onEmpty = onEmpty
-        self.onFail = onFail
-        self.placeholder = placeholder
-        self.errorContent = errorContent
-        _appearance = State(initialValue: initialAppearance)
+    /// The first look is known before the first frame, so a block that waits hidden is zero points
+    /// tall from its very first layout.
+    private var shownAppearance: MindboxEmbeddedBlockAppearance {
+        appearance ?? MindboxEmbeddedBlockView.initialAppearance(placeSystemName: placeSystemName,
+                                                                 loadingStrategy: loadingStrategy)
     }
 
     var body: some View {
@@ -213,11 +190,11 @@ private struct EmbeddedBlockBody: View {
                                        hasErrorView: errorContent != nil)
             hostLayer
         }
-        .frame(height: appearance == .collapsed ? 0 : max(0, height))
+        .frame(height: shownAppearance == .collapsed ? 0 : max(0, height))
     }
 
     @ViewBuilder private var hostLayer: some View {
-        switch appearance {
+        switch shownAppearance {
         case .placeholder:
             if let placeholder {
                 placeholder()
@@ -241,7 +218,8 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
     let loadingStrategy: MindboxEmbeddedBlockLoadingStrategy
     let animatesReveal: Bool
 
-    @Binding var appearance: MindboxEmbeddedBlockAppearance
+    /// `nil` until the container has reported anything: the body then shows the first look.
+    @Binding var appearance: MindboxEmbeddedBlockAppearance?
 
     let onLoad: (() -> Void)?
     let onEmpty: (() -> Void)?
@@ -316,7 +294,7 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
 
     final class Coordinator: MindboxEmbeddedBlockViewDelegate {
 
-        var appearance: Binding<MindboxEmbeddedBlockAppearance>
+        var appearance: Binding<MindboxEmbeddedBlockAppearance?>
         var onLoad: (() -> Void)?
         var onEmpty: (() -> Void)?
         var onFail: ((MindboxEmbeddedBlockFailReason) -> Void)?
@@ -336,7 +314,7 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
         /// `withAnimation` with the SDK's reveal outside tests.
         private let animate: (@escaping () -> Void) -> Void
 
-        init(appearance: Binding<MindboxEmbeddedBlockAppearance>,
+        init(appearance: Binding<MindboxEmbeddedBlockAppearance?>,
              onLoad: (() -> Void)?,
              onEmpty: (() -> Void)?,
              onFail: ((MindboxEmbeddedBlockFailReason) -> Void)?,

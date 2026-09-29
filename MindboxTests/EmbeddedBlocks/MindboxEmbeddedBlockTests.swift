@@ -252,6 +252,24 @@ struct MindboxEmbeddedBlockTests {
         #expect(memory.askedPlaces == ["stories"])
     }
 
+    /// A SwiftUI value is created on every pass of its parent's body, and may be created before the
+    /// SDK is initialized: the first look is for the body to read, once it is built.
+    @Test("Creating the block asks nothing of the memory; the body does")
+    func creatingTheBlockDoesNotAskTheMemory() {
+        guard #available(iOS 13.0, *) else { return }
+
+        let memory = EmbeddedBlockPlaceMemoryMock(shownPlaces: ["stories"])
+
+        withTestContainer(memory: memory) {
+            let block = MindboxEmbeddedBlock(placeSystemName: "stories", height: 104, loadingStrategy: .automatic)
+            #expect(memory.askedPlaces.isEmpty)
+
+            let hosting = UIHostingController(rootView: block)
+            _ = hosting.sizeThatFits(in: CGSize(width: 320, height: CGFloat.greatestFiniteMagnitude))
+            #expect(memory.askedPlaces.contains("stories"))
+        }
+    }
+
     @Test("The SwiftUI body is laid out from the first look before the container answers",
           arguments: [(true, CGFloat(104)), (false, CGFloat(0))])
     func bodyStartsFromTheInitialAppearance(isRemembered: Bool, expectedHeight: CGFloat) {
