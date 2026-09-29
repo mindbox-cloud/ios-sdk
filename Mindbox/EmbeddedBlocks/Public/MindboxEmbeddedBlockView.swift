@@ -15,11 +15,11 @@ import MindboxLogger
 /// should occupy.
 /// Put it anywhere in the app and constrain its position and width only — the height is applied
 /// by the container itself through `intrinsicContentSize`: the one given at creation while the
-/// content is loading and shown, and 0 when there is nothing to show (a failure or an empty
-/// block), so the block takes no space and is invisible in the host layout. What the block shows
-/// before the SDK answers is decided by `loadingStrategy`, given at creation: a placeholder, nothing,
-/// or — by default — nothing until the place has shown content once on this device and a placeholder
-/// from then on.
+/// content is shown, and 0 when there is nothing to show (a failure or an empty block), so the
+/// block takes no space and is invisible in the host layout. Whether it takes that height while
+/// the content is loading is decided by `loadingStrategy`, given at creation: a placeholder,
+/// nothing, or — by default — nothing until the place has shown content once on this device and a
+/// placeholder from then on.
 /// Both looks can be customized: `placeholderView` replaces the stock loading shimmer, and
 /// `errorView` opts into showing a failure instead of collapsing.
 ///
@@ -230,15 +230,16 @@ public final class MindboxEmbeddedBlockView: UIView {
     /// - Parameters:
     ///   - placeSystemName: The place system name from the admin panel. Whitespace around it is
     ///     ignored; the name itself is matched as it is, case included.
-    ///   - height: The height the block occupies while loading and shown. Reserving it is the
-    ///     host's job and there is no default: a height of 0 or less leaves the block invisible
-    ///     whatever its content turns out to be, so the SDK reports it as an integration error.
+    ///   - height: The height the block occupies when shown — and while loading, unless it waits
+    ///     hidden by its `loadingStrategy`. Reserving it is the host's job and there is no default:
+    ///     a height of 0 or less leaves the block invisible whatever its content turns out to be,
+    ///     so the SDK reports it as an integration error.
     ///   - loadingStrategy: What the block shows until the SDK answers: a placeholder, nothing, or
     ///     `automatic` — the default — hidden until the place has shown content once on this device
     ///     and a placeholder from then on.
     ///   - timeout: How long the block waits to learn what it shows — the config has to
     ///     arrive and the selection has to run — before failing as `networkError`, in seconds;
-    ///     `errorView` applies. `nil` means the SDK default of 30. An answer that arrives after
+    ///     `errorView` applies unless the block waited hidden. `nil` means the SDK default of 30. An answer that arrives after
     ///     that no longer expands the block; the next attempt starts when the block enters the
     ///     window again. The separate budget a loaded page gets to render itself is not affected.
     ///   - animatesReveal: Whether the SDK animates the reveal of the content. `true` by default.

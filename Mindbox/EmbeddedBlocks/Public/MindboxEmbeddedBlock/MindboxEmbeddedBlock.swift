@@ -15,8 +15,8 @@ import UIKit
 /// Created with the `placeSystemName` of the place from the admin panel and the `height` the
 /// block should occupy.
 /// Place it anywhere in a layout — the caller decides only the position and the width. The block
-/// keeps the given height while its content is loading and shown; a block with nothing to show
-/// collapses to zero height. What the block shows before the SDK answers is decided by
+/// takes the given height when its content is shown; a block with nothing to show collapses to
+/// zero height. Whether it takes that height while the content is loading is decided by
 /// `loadingStrategy`: a placeholder, nothing, or — by default — nothing until the place has shown
 /// content once on this device and a placeholder from then on. The first look is known before the
 /// first frame, so a block that waits hidden never flashes reserved space.
@@ -71,13 +71,15 @@ public struct MindboxEmbeddedBlock: View {
     /// - Parameters:
     ///   - placeSystemName: The system name of the place from the admin panel. Whitespace around
     ///     it is ignored; the name itself is matched as it is, case included.
-    ///   - height: The height the block occupies while loading and shown. A new value resizes the
-    ///     block in place, without reloading its content.
+    ///   - height: The height the block occupies when shown — and while loading, unless it waits
+    ///     hidden by its `loadingStrategy`. A new value resizes the block in place, without
+    ///     reloading its content.
     ///   - loadingStrategy: What the block shows until the SDK answers: a placeholder, nothing, or
     ///     `automatic` — the default — hidden until the place has shown content once on this device
     ///     and a placeholder from then on. Read once, when the block is created.
     ///   - timeout: How long the block waits to learn what it shows before failing as
-    ///     `networkError`, in seconds. `nil` means the SDK default of 30. An answer that arrives after
+    ///     `networkError`, in seconds; `errorView` applies unless the block waited hidden. `nil`
+    ///     means the SDK default of 30. An answer that arrives after
     ///     that no longer expands the block; the next attempt starts when the block enters the
     ///     window again.
     ///   - animatesReveal: Whether the SDK animates the reveal of the content — a fade, and the

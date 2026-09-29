@@ -32,9 +32,10 @@ public protocol MindboxEmbeddedBlockViewDelegate: AnyObject {
     func mindboxEmbeddedBlockViewDidBecomeEmpty(_ blockView: MindboxEmbeddedBlockView)
 
     /// The block could not be shown: the SDK had no config or never answered, the page could not be
-    /// loaded, the content is malformed or the SDK hit an internal error. The container collapses to zero height, or keeps
-    /// its height and shows `errorView` when one is set. `reason` says why, for logs and analytics —
-    /// match it with a `default`, a later SDK may add reasons.
+    /// loaded, the content is malformed or the SDK hit an internal error. The container collapses to
+    /// zero height, or keeps its height and shows `errorView` when one is set — unless it waited
+    /// hidden: a block that never took its space does not take it for an error screen. `reason` says
+    /// why, for logs and analytics — match it with a `default`, a later SDK may add reasons.
     func mindboxEmbeddedBlockViewDidFail(_ blockView: MindboxEmbeddedBlockView,
                                          reason: MindboxEmbeddedBlockFailReason)
 }

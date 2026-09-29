@@ -38,7 +38,8 @@ public enum MindboxEmbeddedBlockAppearance {
     /// Never appears for an empty place.
     case error
 
-    /// The block occupies no space: a failure without an error screen, or an empty place. The wrapper
-    /// gives the space back to the layout.
+    /// The block occupies no space: a block waiting hidden for its content, a failure without an
+    /// error screen, or an empty place. The wrapper gives the space back to the layout — or, for a
+    /// block that waits hidden, never takes it before the content arrives.
     case collapsed
 }
