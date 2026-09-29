@@ -21,20 +21,25 @@ final class OperationActionHandler: WebBridgeActionHandler {
     private lazy var featureToggleManager: FeatureToggleManager = makeFeatureToggleManager()
     private lazy var databaseRepository: DatabaseRepositoryProtocol = makeDatabaseRepository()
     private lazy var eventRepository: EventRepository = makeEventRepository()
+    private lazy var inAppEventSender: InappMessageEventSender = makeInAppEventSender()
 
     private let makeFeatureToggleManager: () -> FeatureToggleManager
     private let makeDatabaseRepository: () -> DatabaseRepositoryProtocol
     private let makeEventRepository: () -> EventRepository
+    private let makeInAppEventSender: () -> InappMessageEventSender
 
     init(featureToggleManager: @escaping @autoclosure () -> FeatureToggleManager
          = DI.injectOrFail(FeatureToggleManager.self),
          databaseRepository: @escaping @autoclosure () -> DatabaseRepositoryProtocol
          = DI.injectOrFail(DatabaseRepositoryProtocol.self),
          eventRepository: @escaping @autoclosure () -> EventRepository
-         = DI.injectOrFail(EventRepository.self)) {
+         = DI.injectOrFail(EventRepository.self),
+         inAppEventSender: @escaping @autoclosure () -> InappMessageEventSender
+         = DI.injectOrFail(InappMessageEventSender.self)) {
         self.makeFeatureToggleManager = featureToggleManager
         self.makeDatabaseRepository = databaseRepository
         self.makeEventRepository = eventRepository
+        self.makeInAppEventSender = inAppEventSender
     }
 
     func handle(_ message: BridgeMessage, host: WebBridgeHost) {
@@ -63,6 +68,7 @@ private extension OperationActionHandler {
     func queue(_ operation: (name: String, body: String), message: BridgeMessage, host: WebBridgeHost) {
         let customEvent = CustomEvent(name: operation.name, payload: operation.body)
         let event = Event(type: .customEvent, body: BodyEncoder(encodable: customEvent).body)
+        inAppEventSender.sendEventIfEnabled(operation.name, jsonString: operation.body)
 
         do {
             try databaseRepository.create(event: event)
@@ -123,6 +129,7 @@ private extension OperationActionHandler {
                 host.send(outgoing)
             }
         }
+        inAppEventSender.sendEventIfEnabled(operation.name, jsonString: operation.body)
     }
 
     /// The operation name and its body, with the in-app tags merged in and encoded ready to send.
