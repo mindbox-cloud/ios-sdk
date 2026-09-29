@@ -32,16 +32,7 @@ final class ShowInAppActionHandler: WebBridgeActionHandler {
             params = sent
         }
 
-        let index = payload["index"].flatMap { value -> Int? in
-            guard case .int(let index) = value else { return nil }
-            return index
-        }
-        let sourceInAppId: String? = {
-            guard case .string(let source)? = payload["sourceInappId"] else { return nil }
-            return source
-        }()
-
-        Logger.common(message: "[WebView] showInApp: inappId=\(inAppId) index=\(index.map(String.init) ?? "nil") sourceInappId=\(sourceInAppId ?? "nil") with \(params.count) param(s)",
+        Logger.common(message: "[WebView] showInApp: inappId=\(inAppId) with \(params.count) param(s)",
                       level: .info,
                       category: host.logCategory)
 

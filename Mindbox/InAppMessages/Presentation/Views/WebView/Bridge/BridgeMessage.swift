@@ -587,12 +587,12 @@ public struct BridgeMessage: Codable {
 
         /// JS asks to show one in-app from a block's page, by id.
         ///
-        /// `sourceInappId` is the block's in-app the tap came from. `params` is forwarded untouched and merged
-        /// flat into the shown in-app's start payload, where an incoming key overwrites.
+        /// `params` is forwarded untouched and merged flat into the shown in-app's start payload, where an
+        /// incoming key overwrites.
         ///
         /// - Payload:
         ///   ```json
-        ///   { "inappId": "<string>", "index": <int>, "sourceInappId": "<string>", "params": { } }
+        ///   { "inappId": "<string>", "params": { } }
         ///   ```
         /// - Response:
         ///   ```json
