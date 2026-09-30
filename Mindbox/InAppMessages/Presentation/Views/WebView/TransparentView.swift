@@ -50,7 +50,7 @@ final class TransparentView: UIView {
          tags: [String: String]?,
          actionRegistry: WebBridgeActionRegistry
          = WebBridgeActionRegistry(handlers: WebBridgeActionHandlerFactory.makeHandlers()),
-         noCacheRetryPolicy: WebViewNoCacheRetryPolicy = TransparentView.makeNoCacheRetryPolicy()) {
+         noCacheRetryPolicy: WebViewNoCacheRetryPolicy = WebViewNoCacheRetryPolicy()) {
         self.actionRegistry = actionRegistry
         self.noCacheRetryPolicy = noCacheRetryPolicy
         self.params = params
@@ -64,7 +64,7 @@ final class TransparentView: UIView {
 
     override init(frame: CGRect) {
         self.actionRegistry = WebBridgeActionRegistry(handlers: WebBridgeActionHandlerFactory.makeHandlers())
-        self.noCacheRetryPolicy = TransparentView.makeNoCacheRetryPolicy()
+        self.noCacheRetryPolicy = WebViewNoCacheRetryPolicy()
         self.params = nil
         self.operation = nil
         self.userAgent = ""
@@ -76,7 +76,7 @@ final class TransparentView: UIView {
 
     required init?(coder: NSCoder) {
         self.actionRegistry = WebBridgeActionRegistry(handlers: WebBridgeActionHandlerFactory.makeHandlers())
-        self.noCacheRetryPolicy = TransparentView.makeNoCacheRetryPolicy()
+        self.noCacheRetryPolicy = WebViewNoCacheRetryPolicy()
         self.params = nil
         self.operation = nil
         self.userAgent = ""
@@ -89,10 +89,6 @@ final class TransparentView: UIView {
     deinit {
         endBridgeSession()
         Logger.common(message: "[WebView] Deinit TransparentView", category: .webViewInAppMessages)
-    }
-
-    static func makeNoCacheRetryPolicy() -> WebViewNoCacheRetryPolicy {
-        WebViewNoCacheRetryPolicy { InAppWebViewDataStore.isCacheFeatureEnabled }
     }
 
     private func commonInit() {

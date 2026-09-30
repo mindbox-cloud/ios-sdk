@@ -50,8 +50,7 @@ final class EmbeddedBlockWebViewPage: NSObject, EmbeddedBlockPageHosting {
          registry: MindboxWebPageRegistry = .shared,
          actionRegistry: WebBridgeActionRegistry
          = WebBridgeActionRegistry(handlers: WebBridgeActionHandlerFactory.makeHandlers()),
-         noCacheRetryPolicy: WebViewNoCacheRetryPolicy
-         = WebViewNoCacheRetryPolicy { InAppWebViewDataStore.isCacheFeatureEnabled }) {
+         noCacheRetryPolicy: WebViewNoCacheRetryPolicy = WebViewNoCacheRetryPolicy()) {
         self.content = content
         self.noCacheRetryPolicy = noCacheRetryPolicy
         // The block does not borrow the prewarmed instance: it would hold it for as long as its
