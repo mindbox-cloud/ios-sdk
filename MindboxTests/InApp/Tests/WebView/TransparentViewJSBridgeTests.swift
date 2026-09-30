@@ -193,6 +193,21 @@ final class TransparentViewJSBridgeTests {
         #expect(facade.sentRequests.count == expectedPushes)
     }
 
+    @Test("An answer that completes while the popup is open reaches the page, and none once the page closed it",
+          .tags(.webView), arguments: [(ShowState.open, 1), (.closed, 0)])
+    func lateAnswerReachesThePageOnlyWhileOpen(state: ShowState, expectedAnswers: Int) {
+        let view = makeView(tags: nil, handlers: [LifecycleActionHandler()])
+        if state == .closed {
+            send(.close, payload: "{}", to: view)
+        }
+        let sentBeforeAnswer = facade.sentMessages.count
+        let request = BridgeMessage(type: .request, action: .syncOperation, payload: .string("{}"))
+
+        view.respondSuccess(to: request)
+
+        #expect(facade.sentMessages.count - sentBeforeAnswer == expectedAnswers)
+    }
+
     // MARK: - Page close
 
     enum BackToBack: CaseIterable {
