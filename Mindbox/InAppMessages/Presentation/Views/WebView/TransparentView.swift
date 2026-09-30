@@ -22,8 +22,6 @@ final class TransparentView: UIView {
     private let inAppId: String
     let tags: [String: String]?
 
-    /// Handlers for the actions that no longer live in the switch below. Built per show, not
-    /// shared: handlers moving in here own state that belongs to one page.
     private let actionRegistry: WebBridgeActionRegistry
     private var lastReadyCheckedUrl: String?
     private var readyChecker: WebViewReadyChecker?
@@ -34,10 +32,9 @@ final class TransparentView: UIView {
     /// later ready-check give-up (a post-load navigation dropped the bridge) has no other
     /// closing authority — it must close the show itself.
     private var hasReceivedInit = false
+    private var hasEndedBridgeSession = false
     private var hasCapturedObservedHosts = false
-    private let noCacheRetryPolicy = WebViewNoCacheRetryPolicy {
-        InAppWebViewDataStore.isCacheFeatureEnabled
-    }
+    private let noCacheRetryPolicy: WebViewNoCacheRetryPolicy
     lazy var webPageRegistry = MindboxWebPageRegistry.shared
     /// A page joins the broadcast set on its first `ready`: registering earlier would aim
     /// `localState.changed` at a document that has no bridge yet.
@@ -52,8 +49,10 @@ final class TransparentView: UIView {
          inAppId: String,
          tags: [String: String]?,
          actionRegistry: WebBridgeActionRegistry
-         = WebBridgeActionRegistry(handlers: WebBridgeActionHandlerFactory.makeHandlers())) {
+         = WebBridgeActionRegistry(handlers: WebBridgeActionHandlerFactory.makeHandlers()),
+         noCacheRetryPolicy: WebViewNoCacheRetryPolicy = TransparentView.makeNoCacheRetryPolicy()) {
         self.actionRegistry = actionRegistry
+        self.noCacheRetryPolicy = noCacheRetryPolicy
         self.params = params
         self.operation = operation
         self.userAgent = userAgent
@@ -65,6 +64,7 @@ final class TransparentView: UIView {
 
     override init(frame: CGRect) {
         self.actionRegistry = WebBridgeActionRegistry(handlers: WebBridgeActionHandlerFactory.makeHandlers())
+        self.noCacheRetryPolicy = TransparentView.makeNoCacheRetryPolicy()
         self.params = nil
         self.operation = nil
         self.userAgent = ""
@@ -76,6 +76,7 @@ final class TransparentView: UIView {
 
     required init?(coder: NSCoder) {
         self.actionRegistry = WebBridgeActionRegistry(handlers: WebBridgeActionHandlerFactory.makeHandlers())
+        self.noCacheRetryPolicy = TransparentView.makeNoCacheRetryPolicy()
         self.params = nil
         self.operation = nil
         self.userAgent = ""
@@ -86,9 +87,12 @@ final class TransparentView: UIView {
     }
 
     deinit {
-        readyChecker?.cancel()
-        actionRegistry.tearDown()
+        endBridgeSession()
         Logger.common(message: "[WebView] Deinit TransparentView", category: .webViewInAppMessages)
+    }
+
+    static func makeNoCacheRetryPolicy() -> WebViewNoCacheRetryPolicy {
+        WebViewNoCacheRetryPolicy { InAppWebViewDataStore.isCacheFeatureEnabled }
     }
 
     private func commonInit() {
@@ -113,7 +117,6 @@ final class TransparentView: UIView {
         setupTimeoutTimer()
 
         facade?.loadHTML(baseUrl: baseUrl, contentUrl: contentUrl) { [weak self] in
-            self?.quizInitTimeoutWorkItem?.cancel()
             self?.delegate?.closeLoadFailedWebViewVC(
                 reason: "[WebView] Failed to load HTML content from baseUrl=\(baseUrl), contentUrl=\(contentUrl)"
             )
@@ -122,6 +125,15 @@ final class TransparentView: UIView {
 
     func cleanUp() {
         facade?.cleanWebView()
+    }
+
+    func endBridgeSession() {
+        guard !hasEndedBridgeSession else { return }
+        hasEndedBridgeSession = true
+        cancelTimeoutTimer()
+        readyChecker?.cancel()
+        readyChecker = nil
+        actionRegistry.tearDown()
     }
 
     /// Persists the hosts this show's resources actually came from so the next launch's
@@ -221,11 +233,7 @@ extension TransparentView: WebBridgeLifecycleHosting {
     }
 
     func bridgeDidRequestClose() {
-        quizInitTimeoutWorkItem?.cancel()
-        // Whatever holds the device is released before the window goes: a haptic pattern
-        // playing into a closed show, or a sensor callback reaching a dead page, is the
-        // shape crashes come in.
-        actionRegistry.tearDown()
+        endBridgeSession()
         webViewAction?.onClose()
     }
 
@@ -241,6 +249,13 @@ extension TransparentView: WebBridgeLifecycleHosting {
 extension TransparentView: WebBridgeMessageDelegate {
     func webBridge(_ bridge: MindboxWebBridge, didReceiveBridgeMessage message: BridgeMessage) {
         let action = message.action
+
+        guard !hasEndedBridgeSession else {
+            Logger.common(message: "[WebView] Bridge: ignoring \(message.type.rawValue) \(action), the show has closed",
+                          category: .webViewInAppMessages)
+            return
+        }
+
         let data = message.payloadString
 
         Logger.common(
@@ -251,6 +266,11 @@ extension TransparentView: WebBridgeMessageDelegate {
         if message.type == .request, message.parsedAction == .ready, !isRegisteredForBroadcasts {
             isRegisteredForBroadcasts = true
             webPageRegistry.register(self)
+        }
+
+        if message.type == .error {
+            bridgeDidRequestClose()
+            return
         }
 
         actionRegistry.handle(message, host: self)
@@ -272,6 +292,7 @@ extension TransparentView: WebBridgeNavigationDelegate {
     func webBridge(_ bridge: MindboxWebBridge, didFinishNavigation url: URL?) {
         let urlString = url?.absoluteString ?? "unknown"
         Logger.common(message: "[WebView] WKNavigationDelegate: Upload completed \(urlString)", category: .webViewInAppMessages)
+        guard !hasEndedBridgeSession else { return }
 
         // Avoid duplicate checks on multiple didFinish calls for the same URL.
         guard lastReadyCheckedUrl != urlString else { return }
@@ -316,6 +337,7 @@ extension TransparentView: WebBridgeNavigationDelegate {
             level: isRecoverable ? .default : .debug,
             category: .webViewInAppMessages
         )
+        guard !hasEndedBridgeSession else { return }
         guard noCacheRetryPolicy.onHTTPError(url: url, hasReceivedInit: hasReceivedInit) else { return }
         retryContentPageBypassingCache(failedURL: url)
     }
@@ -350,14 +372,21 @@ extension TransparentView: WebBridgeNavigationDelegate {
     
     func webBridge(_ bridge: MindboxWebBridge, decidePolicyFor url: URL?, navigationType: WKNavigationType, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         let decision = WebViewNavigationPolicy.decision(for: navigationType, url: url)
-        WebViewNavigationPolicy.log(decision, navigationType: navigationType, url: url, category: .webViewInAppMessages)
 
         switch decision {
         case .allow:
+            WebViewNavigationPolicy.log(decision, navigationType: navigationType, url: url, category: .webViewInAppMessages)
             decisionHandler(.allow)
 
         case .handInBack(let url):
             decisionHandler(.cancel)
+
+            guard !hasEndedBridgeSession else {
+                Logger.common(message: "[WebView] Bridge: ignoring intercepted navigation (\(navigationType.debugLabel)) to \(url?.absoluteString ?? "unknown"), the show has closed",
+                              category: .webViewInAppMessages)
+                return
+            }
+            WebViewNavigationPolicy.log(decision, navigationType: navigationType, url: url, category: .webViewInAppMessages)
 
             guard let url = url else { return }
 
@@ -376,6 +405,11 @@ extension TransparentView: WebBridgeNavigationDelegate {
 extension TransparentView: MindboxWebPage {
 
     func push(_ action: BridgeMessage.Action, payload: JSONValue) {
+        guard !hasEndedBridgeSession else {
+            Logger.common(message: "[WebView] Bridge: ignoring push \(action.rawValue), the show has closed",
+                          category: .webViewInAppMessages)
+            return
+        }
         facade?.sendToJS(BridgeMessage(type: .request, action: action, payload: payload))
     }
 }

@@ -43,7 +43,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
     private let onTapAction: InAppMessageTapAction
     private let windowProvider: () -> UIWindow?
     var isTimeoutClose = false
-    private var hasReportedTerminalError = false
+    private var hasClosed = false
     private var hasOnPresentedBeenCalled = false
 
     private enum Constants {
@@ -114,12 +114,11 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
 
             webView.delegate = self
             webView.webViewAction = self
+            self.transparentWebView = webView
             webView.loadHTMLPage(
                 baseUrl: webviewLayer.baseUrl,
                 contentUrl: webviewLayer.contentUrl
             )
-
-            self.transparentWebView = webView
         default:
             reportErrorAndClose(
                 .webviewPresentationFailed("[WebView] Invalid background layer type for in-app id \(id).")
@@ -203,14 +202,14 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
 
     @objc
     private func appDidEnterBackground() {
-        guard !hasOnPresentedBeenCalled, !hasReportedTerminalError else { return }
+        guard !hasOnPresentedBeenCalled, !hasClosed else { return }
         transparentWebView?.cancelTimeoutTimer()
         Logger.common(message: "[WebView] App entered background, timeout timer cancelled for in-app id \(id)", category: .webViewInAppMessages)
     }
 
     @objc
     private func appWillEnterForeground() {
-        guard !hasOnPresentedBeenCalled, !hasReportedTerminalError else { return }
+        guard !hasOnPresentedBeenCalled, !hasClosed else { return }
         transparentWebView?.restartTimeoutTimer()
         Logger.common(message: "[WebView] App entering foreground, timeout timer restarted for in-app id \(id)", category: .webViewInAppMessages)
     }
@@ -263,6 +262,7 @@ extension WebViewController: WebViewAction {
         Logger.common(message: "[WebView] TransparentWebView: received init action", category: .webViewInAppMessages)
         removeLifecycleObservers()
         DispatchQueue.main.async {
+            guard !self.hasClosed else { return }
             if let window = self.windowProvider() {
                 window.isUserInteractionEnabled = true
                 UIView.animate(withDuration: Constants.revealDuration) {
@@ -290,12 +290,12 @@ extension WebViewController: WebViewAction {
     }
 
     func onClose() {
-        Logger.common(message: "[WebView] WebViewVC closeWebView", category: .webViewInAppMessages)
-        onCloseInApp()
+        close(reporting: nil)
     }
 
     func onHide() {
         DispatchQueue.main.async {
+            guard !self.hasClosed else { return }
             if let window = self.windowProvider() {
                 window.isUserInteractionEnabled = false
                 window.alpha = 0.00
@@ -319,12 +319,18 @@ private extension WebViewController {
     }
 
     func reportErrorAndClose(_ error: InAppPresentationError) {
-        guard !hasReportedTerminalError else {
-            return
+        close(reporting: error)
+    }
+
+    func close(reporting error: InAppPresentationError?) {
+        guard !hasClosed else { return }
+        hasClosed = true
+        transparentWebView?.endBridgeSession()
+        if let error {
+            isTimeoutClose = true
+            onError(error)
         }
-        hasReportedTerminalError = true
-        isTimeoutClose = true
-        onError(error)
-        onClose()
+        Logger.common(message: "[WebView] WebViewVC closeWebView", category: .webViewInAppMessages)
+        onCloseInApp()
     }
 }
