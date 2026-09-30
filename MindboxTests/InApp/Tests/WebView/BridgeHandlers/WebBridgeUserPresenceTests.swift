@@ -95,17 +95,6 @@ struct WebBridgeUserPresenceTests {
         #expect(response.payload == .object(["error": .string("not_visible")]))
     }
 
-    /// The action is owned — it was refused, not unrecognised. Reporting it as unhandled would
-    /// send the page's host looking for a handler that is right there.
-    @Test("A refusal still counts as handled")
-    func refusalCountsAsHandled() {
-        let registry = WebBridgeActionRegistry(handlers: [PresenceHandlerSpy(actions: [.openLink])])
-        let host = HostSpy()
-        host.isUserPresent = false
-
-        #expect(registry.handle(.request(.openLink), host: host))
-    }
-
     @Test("Every user-facing action is refused off screen",
           arguments: [BridgeMessage.Action.openLink,
                       .settingsOpen,

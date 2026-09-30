@@ -164,13 +164,6 @@ struct MindboxWebBridgeStalenessTests {
 @MainActor
 struct MindboxWebBridgeMessageGateTests {
 
-    private final class MessageSpy: WebBridgeMessageDelegate {
-        private(set) var received: [BridgeMessage] = []
-        func webBridge(_ bridge: MindboxWebBridge, didReceiveBridgeMessage message: BridgeMessage) {
-            received.append(message)
-        }
-    }
-
     /// WKScriptMessage's real initializer is WebKit-internal; the bridge only reads
     /// `name` and `body`.
     private final class FakeScriptMessage: WKScriptMessage {
@@ -266,6 +259,13 @@ struct MindboxWebBridgeMessageGateTests {
     }
 }
 
+private final class MessageSpy: WebBridgeMessageDelegate {
+    private(set) var received: [BridgeMessage] = []
+    func webBridge(_ bridge: MindboxWebBridge, didReceiveBridgeMessage message: BridgeMessage) {
+        received.append(message)
+    }
+}
+
 @Suite("MindboxWebBridge answers", .tags(.webView))
 @MainActor
 struct MindboxWebBridgeAnswerTests {
@@ -295,6 +295,21 @@ struct MindboxWebBridgeAnswerTests {
         #expect(envelope["id"] as? String == request.id.uuidString.lowercased())
         let payload = try #require(bed.payloadObject(of: envelope))
         #expect(payload["error"] as? String == "unknown_action")
+    }
+
+    @Test("A request for an action outside the vocabulary never reaches the host, a known one still does")
+    func unknownActionIsNotForwardedToTheHost() throws {
+        let bed = AnswerBed(.overlay)
+        let host = MessageSpy()
+        bed.bridge.messageDelegate = host
+        let unknown = try #require(BridgeMessage(type: .request, action: "totally.new", payload: "{}"))
+        let known = BridgeMessage.request(.log, payload: .string("{}"))
+
+        try bed.post(unknown)
+        try bed.post(known)
+
+        #expect(bed.sentEnvelopes().map { $0["id"] as? String } == [unknown.id.uuidString.lowercased()])
+        #expect(host.received.map(\.id) == [known.id])
     }
 
     @Test("close, init, click, hide and log are answered exactly once with {\"success\":true}",
