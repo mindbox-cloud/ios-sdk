@@ -60,7 +60,8 @@ public struct MindboxEmbeddedBlock: View {
     /// What the block shows until the SDK answers, given at creation. See `MindboxEmbeddedBlockLoadingStrategy`.
     public let loadingStrategy: MindboxEmbeddedBlockLoadingStrategy
 
-    /// Whether the SDK animates the reveal of the content, given at creation.
+    /// Whether the SDK animates the reveal of the content, given at creation. The system's Reduce
+    /// Motion setting turns the animation off as well.
     public let animatesReveal: Bool
 
     private let onLoad: (() -> Void)?
@@ -85,8 +86,9 @@ public struct MindboxEmbeddedBlock: View {
     ///     that no longer expands the block; the next attempt starts when the block enters the
     ///     window again.
     ///   - animatesReveal: Whether the SDK animates the reveal of the content — a fade, and the
-    ///     growth of a block that waited hidden. `true` by default. Turn it off to animate the
-    ///     block's container yourself in `onLoad`. Read once, when the block is created.
+    ///     growth of a block that waited hidden. `true` by default; the system's Reduce Motion
+    ///     setting turns the animation off as well. Turn it off to animate the block's container
+    ///     yourself in `onLoad`. Read once, when the block is created.
     ///   - onLoad: The block content is shown and the container is visible. A block that waited
     ///     hidden grows from 0 to `height` here; a `List` row that holds it changes its height on
     ///     this call.

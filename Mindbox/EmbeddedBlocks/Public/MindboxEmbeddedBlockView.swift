@@ -50,7 +50,8 @@ public final class MindboxEmbeddedBlockView: UIView {
     public let loadingStrategy: MindboxEmbeddedBlockLoadingStrategy
 
     /// Whether the SDK animates the reveal of the content, given at creation. `false` swaps the layers
-    /// and applies the height at once — for a host that animates the block's container itself.
+    /// and applies the height at once — for a host that animates the block's container itself. The
+    /// system's Reduce Motion setting turns the animation off as well.
     public let animatesReveal: Bool
 
     /// Receives the block events. Assigning a delegate after the content already resolved still
@@ -242,7 +243,8 @@ public final class MindboxEmbeddedBlockView: UIView {
     ///     `errorView` applies unless the block waited hidden. `nil` means the SDK default of 30. An answer that arrives after
     ///     that no longer expands the block; the next attempt starts when the block enters the
     ///     window again. The separate budget a loaded page gets to render itself is not affected.
-    ///   - animatesReveal: Whether the SDK animates the reveal of the content. `true` by default.
+    ///   - animatesReveal: Whether the SDK animates the reveal of the content. `true` by default;
+    ///     the system's Reduce Motion setting turns the animation off as well.
     public convenience init(placeSystemName: String,
                             height: CGFloat,
                             loadingStrategy: MindboxEmbeddedBlockLoadingStrategy = .automatic,
