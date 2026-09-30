@@ -372,6 +372,47 @@ struct MindboxWebBridgeAnswerTests {
         #expect(bed.dataPushConfirmations == 1)
     }
 
+    @Test("A page response with the id of the page's own request confirms no push, answered or not")
+    func pageResponseToItsOwnRequestConfirmsNothing() throws {
+        let bed = AnswerBed(.embeddedBlock, handlers: [LogActionHandler(), FilterShowableInappsActionHandler()])
+        let answered = BridgeMessage.request(.log, payload: .string("{}"))
+        let unanswered = BridgeMessage.request(.filterShowableInapps, payload: .object(["inappIds": .array([.string("story-1")])]))
+
+        try bed.post(answered)
+        try bed.post(unanswered)
+        try #require(bed.sentEnvelopes().map { $0["id"] as? String } == [answered.id.uuidString.lowercased()])
+
+        try bed.post(BridgeMessage(type: .response, action: .initDataUpdated, payload: .object(["success": .bool(true)]), id: answered.id))
+        try bed.post(BridgeMessage(type: .response, action: .initDataUpdated, payload: .object(["success": .bool(true)]), id: unanswered.id))
+
+        #expect(bed.dataPushConfirmations == 0)
+    }
+
+    @Test("Answering a page request that reuses a pushed id leaves the push waiting for its confirmation")
+    func answerToPageRequestKeepsThePushPending() throws {
+        let bed = AnswerBed(.embeddedBlock, handlers: [LogActionHandler()])
+        let pushed = BridgeMessage(type: .request, action: .initDataUpdated, payload: .object([:]))
+        bed.bridge.send(pushed)
+
+        try bed.post(BridgeMessage(type: .request, action: .log, payload: .string("{}"), id: pushed.id))
+        try #require(bed.sentEnvelopes().map { $0["type"] as? String } == ["request", "response"])
+        try bed.post(BridgeMessage(type: .response, action: .initDataUpdated, payload: .object(["success": .bool(true)]), id: pushed.id))
+
+        #expect(bed.dataPushConfirmations == 1)
+    }
+
+    @Test("A page error to a pushed request settles it, so a later answer with its id confirms nothing")
+    func pageErrorSettlesThePush() throws {
+        let bed = AnswerBed(.embeddedBlock)
+        let pushed = BridgeMessage(type: .request, action: .initDataUpdated, payload: .object([:]))
+        bed.bridge.send(pushed)
+
+        try bed.post(BridgeMessage(type: .error, action: .initDataUpdated, payload: .object(["error": .string("unknown_action")]), id: pushed.id))
+        try bed.post(BridgeMessage(type: .response, action: .initDataUpdated, payload: .object(["success": .bool(true)]), id: pushed.id))
+
+        #expect(bed.dataPushConfirmations == 0)
+    }
+
     @Test("A request without a string action gets no answer at all",
           arguments: Surface.allCases, ["", #""action":5,"#, #""action":null,"#])
     func requestWithoutStringActionIsNotAnswered(surface: Surface, actionField: String) {
