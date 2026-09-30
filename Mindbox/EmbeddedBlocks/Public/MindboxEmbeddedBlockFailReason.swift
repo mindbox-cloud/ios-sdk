@@ -25,8 +25,9 @@ public struct MindboxEmbeddedBlockFailReason: RawRepresentable, Hashable, Sendab
     /// The content is unavailable because of the environment: the config could not be downloaded
     /// and nothing is cached, the SDK gave no answer within the block's wait budget, the block's
     /// page could not be loaded, or the segmentation or geo the targeting needs could not be
-    /// fetched — typically a network problem. A `reload()` asks again, with one exception: a
-    /// segmentation or geo fetch the server itself failed is not retried until the next session.
+    /// fetched — typically a network problem. A segmentation or geo fetch that failed is not asked
+    /// again within the session, whatever the reason; a block at that place fails the same way
+    /// until the next launch.
     public static let networkError = MindboxEmbeddedBlockFailReason(rawValue: "networkError")
 
     /// An error on the Mindbox side: the page loaded but never reported its content or reported

@@ -311,14 +311,3 @@ extension MindboxError {
         }
     }
 }
-
-extension MindboxError {
-    /// Whether a fetch that failed this way stays failed for the session. The server's answer does:
-    /// asking again would get the same. Being offline does not — the next pass asks again.
-    var holdsForSession: Bool {
-        if case .connectionError = self {
-            return false
-        }
-        return true
-    }
-}
