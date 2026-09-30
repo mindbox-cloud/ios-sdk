@@ -31,7 +31,6 @@ public extension WebBridgeNavigationDelegate {
 }
 
 protocol BridgePendingStore: AnyObject {
-    func addPending(_ id: UUID)
     func removePending(_ id: UUID)
     func containsPending(_ id: UUID) -> Bool
 }
@@ -101,13 +100,9 @@ public final class MindboxWebBridge: NSObject {
             category: .webViewInAppMessages
         )
 
-        switch message.type {
-            case .request:
-                pendingRequestIds.insert(message.id)
-            case .response:
-                pendingRequestIds.remove(message.id)
-            case .error:
-                pendingRequestIds.remove(message.id)
+        let tracksPending = message.type == .request
+        if tracksPending {
+            pendingRequestIds.insert(message.id)
         }
 
         let script = Constants.WebViewBridgeJS.sendScript(json: json)
@@ -117,7 +112,7 @@ public final class MindboxWebBridge: NSObject {
                 message: "[WebView] Bridge: webView deallocated, cannot send message",
                 category: .webViewInAppMessages
             )
-            pendingRequestIds.remove(message.id)
+            if tracksPending { pendingRequestIds.remove(message.id) }
             return
         }
 
@@ -127,7 +122,7 @@ public final class MindboxWebBridge: NSObject {
                     message: "[WebView] Bridge: failed to send \(message.type.rawValue) id \(message.id) to JS. Error: \(error.localizedDescription)",
                     category: .webViewInAppMessages
                 )
-                self.pendingRequestIds.remove(message.id)
+                if tracksPending { self.pendingRequestIds.remove(message.id) }
                 return
             }
 
@@ -136,7 +131,7 @@ public final class MindboxWebBridge: NSObject {
                     message: "[WebView] Bridge: JS rejected \(message.type.rawValue) id \(message.id). Result: \(String(describing: result))",
                     category: .webViewInAppMessages
                 )
-                self.pendingRequestIds.remove(message.id)
+                if tracksPending { self.pendingRequestIds.remove(message.id) }
                 return
             }
 
@@ -312,10 +307,6 @@ extension MindboxWebBridge: WKNavigationDelegate {
 }
 
 extension MindboxWebBridge: BridgePendingStore {
-    func addPending(_ id: UUID) {
-        pendingRequestIds.insert(id)
-    }
-
     func removePending(_ id: UUID) {
         pendingRequestIds.remove(id)
     }

@@ -45,8 +45,6 @@ final class RequestMessageHandler: BridgeMessageHandler {
                 bridge: MindboxWebBridge,
                 pending: BridgePendingStore) {
 
-        pending.addPending(message.id)
-
         let requestLogMessage = "[WebView] Bridge: handling request id \(message.id). " +
             "message: version=\(message.version) type=\(message.type.rawValue) " +
             "action=\(message.action) payload=\(String(describing: message.payloadAny)) " +

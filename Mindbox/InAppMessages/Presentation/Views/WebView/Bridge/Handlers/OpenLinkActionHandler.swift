@@ -106,7 +106,7 @@ private extension OpenLinkActionHandler {
 
         // UIKit silently skips `present` — and with it the completion the answer is sent from —
         // when the presenter is already presenting. A second link tapped while Safari is up would
-        // leave the page on a promise nothing settles, and its id pending forever. Walking to the
+        // leave the page on a promise nothing settles. Walking to the
         // top of the chain is the same answer the block host gives to "what do I present from",
         // made here so every host gets it: the protocol promises a controller, not an idle one.
         while let presented = presenter.presentedViewController {
