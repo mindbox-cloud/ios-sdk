@@ -568,16 +568,12 @@ public final class MindboxEmbeddedBlockView: UIView {
         case .empty:
             return .collapsed
         case .loading:
-            // A block that ceded its space keeps what it shows. One that shows content keeps its
-            // space in a placeholder while its page is replaced — whatever the strategy, shrinking
-            // to nothing and growing back would be a jump for no reason. The first wait is the
-            // strategy's call.
-            guard !hasSettled else { return settledAppearance }
-
-            if shownAppearance == .content { return .placeholder }
-
-            return Self.initialAppearance(for: loadingStrategy,
-                                          hasShownContentBefore: placeMemory.hasShownContent(at: placeSystemName))
+            // A block that ceded its space keeps what it shows. One that holds its place — showing
+            // content, or already waiting in a placeholder for a replaced page — keeps that space in
+            // a placeholder, whatever the strategy: shrinking to nothing and growing back would be a
+            // jump for no reason. The first wait is the strategy's call, made through `hasSettled`
+            // at creation and on `reload()`.
+            return hasSettled ? settledAppearance : .placeholder
         case .failed:
             guard hasSettled else { return errorView == nil ? .collapsed : .error }
 

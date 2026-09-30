@@ -1494,6 +1494,23 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.view.subviews.contains { $0 is EmbeddedBlockShimmerView } == false)
     }
 
+    @Test("A hidden block waiting in a placeholder for its replaced page keeps it when it comes back on screen")
+    func hiddenBlockKeepsThePlaceholderAcrossAReturn() {
+        let block = BlockFixture(loadingStrategy: .hidden)
+        block.attachToWindow()
+        block.page?.reportRendered(1)
+        block.bed.resolver.resolution = .content(.other)
+        block.bed.announceNewConfig()
+
+        // Off the screen and back while the new page is still on its way: `start()` reports
+        // `.loading` again, and the block already shows a placeholder, not content.
+        block.removeFromWindow()
+        block.attachToWindow()
+
+        #expect(block.view.intrinsicContentSize.height == 120)
+        #expect(block.view.subviews.contains { $0 is EmbeddedBlockShimmerView })
+    }
+
     @Test("A hidden block that failed after showing content waits hidden again, not in a placeholder")
     func hiddenBlockThatCededItsSpaceWaitsHiddenAgain() {
         let block = BlockFixture(loadingStrategy: .hidden)
