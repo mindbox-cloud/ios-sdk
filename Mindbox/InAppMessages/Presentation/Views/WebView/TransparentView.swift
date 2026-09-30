@@ -199,6 +199,11 @@ extension TransparentView: WebBridgeHost {
     var isUserPresent: Bool { true }
 
     func send(_ message: BridgeMessage) {
+        guard !hasEndedBridgeSession else {
+            Logger.common(message: "[WebView] Bridge: ignoring \(message.type.rawValue) \(message.action) to the page, the show has closed",
+                          category: .webViewInAppMessages)
+            return
+        }
         facade?.sendToJS(message)
     }
 
