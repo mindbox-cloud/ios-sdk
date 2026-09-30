@@ -628,6 +628,22 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.failureReporter.reported.isEmpty)
     }
 
+    @Test("A place the pass could not check fails the block as networkError without a report of its own")
+    func uncheckedPlaceFailsAsNetworkError() {
+        let bed = EmbeddedBlockTestBed(resolution: .targetingUnavailable)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.start()
+
+        #expect(states == [.loading, .failed(.networkError)])
+        #expect(bed.pageFactory.pages.isEmpty)
+        #expect(bed.provider.contentView == nil)
+        // The pass already reported the failed fetch per candidate it cut.
+        #expect(bed.failureReporter.reported.isEmpty)
+        #expect(bed.failureReporter.unansweredWaits.isEmpty)
+    }
+
     @Test("An unavailable config asked again in the session fails again but reports once")
     func unavailableConfigAskedAgainReportsOnce() {
         let bed = EmbeddedBlockTestBed(resolution: .configUnavailable)

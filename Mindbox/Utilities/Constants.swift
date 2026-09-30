@@ -121,6 +121,9 @@ enum Constants {
 
         /// Sized for a no-network cold start (in sync with Android).
         static let answerTimeoutSeconds = 30
+
+        /// The SDK's own reveal of the content: the fade, and the growth of a block that started hidden.
+        static let revealAnimationDuration: TimeInterval = 0.25
     }
 
     enum MagicNumbers {

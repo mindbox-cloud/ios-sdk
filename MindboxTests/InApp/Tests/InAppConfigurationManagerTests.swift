@@ -331,6 +331,22 @@ struct InAppConfigurationManagerTests {
         #expect(answers.all == [.decided(nil)])
     }
 
+    @Test("A place the pass could not check is passed on as unavailable, not as decided")
+    func uncheckedPlaceIsPassedOnAsUnavailable() async throws {
+        let facade = try #require(DI.injectOrFail(InAppConfigurationDataFacadeProtocol.self) as? MockInAppConfigurationDataFacade)
+        facade.cutByFetchFailure = true
+        defer { facade.cutByFetchFailure = false }
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.data(try fixtureData()))
+
+        let answers = Answers<EmbeddedPlaceSelection>()
+        manager.selectInappForPlace("no-such-place", trigger: nil) { answer, _ in answers.append(answer) }
+
+        try await waitUntil(!answers.isEmpty)
+        #expect(answers.all == [.targetingUnavailable])
+    }
+
     @Test("A place asked before the config resolves once it lands")
     func placeAskedBeforeConfigResolvesOnArrival() async throws {
         manager.prepareConfiguration()

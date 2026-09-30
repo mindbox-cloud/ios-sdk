@@ -245,6 +245,17 @@ final class EmbeddedBlockWebViewProvider {
             failures.reportUnansweredWaitOnce(processingDuration)
             settle(failed)
 
+        case .targetingUnavailable:
+            dropPage()
+            let failed = EmbeddedBlockState.failed(.networkError)
+            guard outcome != failed else { return }
+
+            // A 5xx the pass reported for every candidate it cut, and offline is not reported at all;
+            // nothing to add here.
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the place could not be checked — failing",
+                          level: .error, category: .embeddedBlocks)
+            settle(failed)
+
         case .content(let fresh):
             applyContent(fresh, processingDuration: processingDuration)
         }

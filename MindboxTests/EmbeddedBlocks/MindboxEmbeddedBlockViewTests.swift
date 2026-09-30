@@ -744,6 +744,7 @@ struct MindboxEmbeddedBlockViewTests {
     func paddedPlaceNameIsNormalized() {
         let bed = EmbeddedBlockTestBed()
         let factory = EmbeddedBlockContentProviderFactoryMock(provider: bed.provider)
+        let memory = EmbeddedBlockPlaceMemoryMock()
         // The container is process-global and the mode swap rebuilds it: save and restore both.
         let savedBuilder = MBInject.buildTestContainer
         let savedMode = MBInject.mode
@@ -754,14 +755,17 @@ struct MindboxEmbeddedBlockViewTests {
         MBInject.buildTestContainer = {
             let container = MBContainer()
             container.register(EmbeddedBlockContentProviderMaking.self) { factory }
+            container.register(EmbeddedBlockPlaceRemembering.self) { memory }
             return container
         }
         MBInject.mode = .test
 
-        let view = MindboxEmbeddedBlockView(placeSystemName: "  stories \n", height: 120)
+        let view = MindboxEmbeddedBlockView(placeSystemName: "  stories \n", height: 120, loadingStrategy: .placeholder)
 
         #expect(view.placeSystemName == "stories")
         #expect(factory.requestedPlaces == ["stories"])
+        // The memory is keyed by the same normalized name, or a padded name would never find its record.
+        #expect(memory.askedPlaces == ["stories"])
     }
 
     @Test("Only the surrounding whitespace goes, the name itself is kept as it is",
@@ -1280,6 +1284,507 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.page?.cancelCount == 1)
     }
 
+    // MARK: - Loading strategy
+
+    @Test("The first look follows the strategy and the place's memory",
+          arguments: [
+              (MindboxEmbeddedBlockLoadingStrategy.placeholder, false, MindboxEmbeddedBlockAppearance.placeholder),
+              (.placeholder, true, .placeholder),
+              (.hidden, false, .collapsed),
+              (.hidden, true, .collapsed),
+              (.automatic, false, .collapsed),
+              (.automatic, true, .placeholder)
+          ])
+    func initialAppearanceFollowsTheStrategyAndTheMemory(strategy: MindboxEmbeddedBlockLoadingStrategy,
+                                                         hasShownBefore: Bool,
+                                                         expected: MindboxEmbeddedBlockAppearance) {
+        #expect(MindboxEmbeddedBlockView.initialAppearance(for: strategy, hasShownContentBefore: hasShownBefore) == expected)
+    }
+
+    @Test("A hidden block starts collapsed and reserves no space")
+    func hiddenBlockStartsCollapsed() {
+        let block = BlockFixture(loadingStrategy: .hidden)
+        let appearance = EmbeddedBlockAppearanceSpy()
+
+        block.view.setAppearanceObserver { appearance.record($0) }
+
+        #expect(block.view.intrinsicContentSize.height == 0)
+        #expect(block.view.subviews.isEmpty)
+        #expect(appearance.values == [.collapsed])
+    }
+
+    @Test("A placeholder block starts with the shimmer whatever the place remembers", arguments: [false, true])
+    func placeholderBlockStartsWithTheShimmer(hasShownBefore: Bool) {
+        let memory = EmbeddedBlockPlaceMemoryMock(shownPlaces: hasShownBefore ? ["block-id"] : [])
+        let block = BlockFixture(loadingStrategy: .placeholder, memory: memory)
+
+        #expect(block.view.intrinsicContentSize.height == 120)
+        #expect(block.view.subviews.contains { $0 is EmbeddedBlockShimmerView })
+    }
+
+    @Test("A hidden block starts collapsed whatever the place remembers", arguments: [false, true])
+    func hiddenBlockIgnoresTheMemory(hasShownBefore: Bool) {
+        let memory = EmbeddedBlockPlaceMemoryMock(shownPlaces: hasShownBefore ? ["block-id"] : [])
+        let block = BlockFixture(loadingStrategy: .hidden, memory: memory)
+
+        #expect(block.view.intrinsicContentSize.height == 0)
+        #expect(block.view.subviews.isEmpty)
+    }
+
+    @Test("An automatic block starts hidden where nothing was shown and with a placeholder where content was",
+          arguments: [(false, CGFloat(0)), (true, CGFloat(120))])
+    func automaticBlockFollowsTheMemory(hasShownBefore: Bool, height: CGFloat) {
+        let memory = EmbeddedBlockPlaceMemoryMock(shownPlaces: hasShownBefore ? ["block-id"] : [])
+        let block = BlockFixture(loadingStrategy: .automatic, memory: memory)
+
+        #expect(block.view.intrinsicContentSize.height == height)
+        #expect(block.view.subviews.contains { $0 is EmbeddedBlockShimmerView } == hasShownBefore)
+    }
+
+    @Test("A hidden block's custom placeholder is never shown")
+    func hiddenBlockShowsNoCustomPlaceholder() {
+        let block = BlockFixture(loadingStrategy: .hidden)
+        let placeholder = UIView()
+
+        block.view.placeholderView = placeholder
+        block.attachToWindow()
+
+        #expect(placeholder.superview == nil)
+        #expect(block.view.intrinsicContentSize.height == 0)
+    }
+
+    @Test("A hidden block takes its height when its content is shown and reports didLoad")
+    func hiddenBlockExpandsOnContent() async throws {
+        let block = BlockFixture(loadingStrategy: .hidden)
+        let delegate = EmbeddedBlockViewDelegateMock()
+        let appearance = EmbeddedBlockAppearanceSpy()
+        block.view.delegate = delegate
+        block.attachToWindow()
+        block.view.setAppearanceObserver { appearance.record($0) }
+
+        block.page?.reportRendered(2)
+        await mainQueueTurn()
+
+        let page = try #require(block.page)
+        #expect(block.view.intrinsicContentSize.height == 120)
+        #expect(page.view.superview === block.view)
+        #expect(appearance.values == [.collapsed, .content])
+        #expect(delegate.events == [.loaded])
+    }
+
+    @Test("A hidden block stays collapsed on an empty place and reports it")
+    func hiddenBlockStaysCollapsedOnEmpty() async {
+        let block = BlockFixture(resolution: .empty, loadingStrategy: .hidden)
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.attachToWindow()
+        await mainQueueTurn()
+
+        #expect(block.view.intrinsicContentSize.height == 0)
+        #expect(block.view.subviews.isEmpty)
+        #expect(delegate.events == [.empty])
+    }
+
+    /// Ten hidden places and one network failure must not become ten error screens: the error view is
+    /// for a block that already took its space. The host still hears about the failure.
+    @Test("A hidden block stays collapsed on a failure even with an error view, and still reports it")
+    func hiddenBlockIgnoresTheErrorView() async {
+        let block = BlockFixture(loadingStrategy: .hidden)
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.view.errorView = UIView()
+        block.attachToWindow()
+
+        block.page?.failLoad()
+        await mainQueueTurn()
+
+        #expect(block.view.intrinsicContentSize.height == 0)
+        #expect(block.view.subviews.isEmpty)
+        #expect(delegate.events == [.failed(.networkError)])
+    }
+
+    @Test("A hidden block the SDK never answered stays collapsed with an error view set")
+    func hiddenBlockNeverAnsweredStaysCollapsed() async {
+        let block = BlockFixture(loadingStrategy: .hidden)
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.view.errorView = UIView()
+        block.bed.resolver.isDeferred = true
+        block.attachToWindow()
+
+        block.expireTimeout()
+        await mainQueueTurn()
+
+        #expect(block.view.intrinsicContentSize.height == 0)
+        #expect(block.view.subviews.isEmpty)
+        #expect(delegate.events == [.failed(.networkError)])
+    }
+
+    @Test("A hidden block that was shown and then fails shows the error view: it already took its space")
+    func hiddenBlockShownThenFailedShowsTheErrorView() async {
+        let block = BlockFixture(loadingStrategy: .hidden)
+        let errorView = UIView()
+        block.view.errorView = errorView
+        block.attachToWindow()
+        block.page?.reportRendered(1)
+        await mainQueueTurn()
+
+        block.page?.failLoad()
+        await mainQueueTurn()
+
+        #expect(block.view.intrinsicContentSize.height == 120)
+        #expect(block.view.subviews.contains(errorView))
+    }
+
+    @Test("A hidden block that failed is revealed only by content on a silent retry")
+    func hiddenBlockRetryRevealsOnlyWithContent() async {
+        let block = BlockFixture(loadingStrategy: .hidden)
+        block.attachToWindow()
+        block.page?.failLoad()
+        await mainQueueTurn()
+
+        block.removeFromWindow()
+        block.attachToWindow()
+
+        #expect(block.view.intrinsicContentSize.height == 0)
+        #expect(block.view.subviews.isEmpty)
+
+        block.page?.reportRendered(1)
+
+        #expect(block.view.intrinsicContentSize.height == 120)
+    }
+
+    @Test("Reload keeps a hidden block collapsed until content, even after content was shown")
+    func reloadKeepsAHiddenBlockCollapsed() {
+        let block = BlockFixture(loadingStrategy: .hidden)
+        block.attachToWindow()
+        block.page?.reportRendered(1)
+        let appearance = EmbeddedBlockAppearanceSpy()
+        block.view.setAppearanceObserver { appearance.record($0) }
+
+        block.view.reload()
+
+        #expect(appearance.values == [.content, .collapsed])
+        #expect(block.view.intrinsicContentSize.height == 0)
+        #expect(block.view.subviews.isEmpty)
+
+        block.page?.reportRendered(1)
+
+        #expect(appearance.last == .content)
+        #expect(block.view.intrinsicContentSize.height == 120)
+    }
+
+    @Test("A hidden block that shows content keeps its space in a placeholder while its page is replaced")
+    func hiddenBlockKeepsItsSpaceWhileItsPageIsReplaced() {
+        let block = BlockFixture(loadingStrategy: .hidden)
+        block.attachToWindow()
+        block.page?.reportRendered(1)
+        #expect(block.view.intrinsicContentSize.height == 120)
+
+        // The place now points at another page: the provider drops the shown one and loads anew.
+        block.bed.resolver.resolution = .content(.other)
+        block.bed.announceNewConfig()
+
+        #expect(block.view.intrinsicContentSize.height == 120)
+        #expect(block.view.subviews.contains { $0 is EmbeddedBlockShimmerView })
+
+        block.page?.reportRendered(1)
+
+        #expect(block.view.intrinsicContentSize.height == 120)
+        #expect(block.view.subviews.contains { $0 is EmbeddedBlockShimmerView } == false)
+    }
+
+    @Test("A hidden block waiting in a placeholder for its replaced page keeps it when it comes back on screen")
+    func hiddenBlockKeepsThePlaceholderAcrossAReturn() {
+        let block = BlockFixture(loadingStrategy: .hidden)
+        block.attachToWindow()
+        block.page?.reportRendered(1)
+        block.bed.resolver.resolution = .content(.other)
+        block.bed.announceNewConfig()
+
+        // Off the screen and back while the new page is still on its way: `start()` reports
+        // `.loading` again, and the block already shows a placeholder, not content.
+        block.removeFromWindow()
+        block.attachToWindow()
+
+        #expect(block.view.intrinsicContentSize.height == 120)
+        #expect(block.view.subviews.contains { $0 is EmbeddedBlockShimmerView })
+    }
+
+    @Test("A hidden block that failed after showing content waits hidden again, not in a placeholder")
+    func hiddenBlockThatCededItsSpaceWaitsHiddenAgain() {
+        let block = BlockFixture(loadingStrategy: .hidden)
+        block.attachToWindow()
+        block.page?.reportRendered(1)
+        block.page?.failLoad()
+        #expect(block.view.intrinsicContentSize.height == 0)
+
+        block.bed.resolver.resolution = .content(.other)
+        block.bed.announceNewConfig()
+
+        #expect(block.view.intrinsicContentSize.height == 0)
+        #expect(block.view.subviews.contains { $0 is EmbeddedBlockShimmerView } == false)
+    }
+
+    @Test("Reload of an automatic block shows the placeholder once the place is remembered")
+    func reloadOfAnAutomaticBlockFollowsTheMemory() {
+        let block = BlockFixture(loadingStrategy: .automatic)
+        block.attachToWindow()
+        #expect(block.view.intrinsicContentSize.height == 0)
+        block.page?.reportRendered(1)
+
+        block.view.reload()
+
+        #expect(block.view.intrinsicContentSize.height == 120)
+        #expect(block.view.subviews.contains { $0 is EmbeddedBlockShimmerView })
+    }
+
+    @Test("Reload of an automatic block after an empty answer keeps it hidden while the answer is on its way")
+    func reloadOfAnAutomaticBlockAfterEmptyKeepsItHidden() async {
+        let memory = EmbeddedBlockPlaceMemoryMock(shownPlaces: ["block-id"])
+        let block = BlockFixture(resolution: .empty, loadingStrategy: .automatic, memory: memory)
+        block.attachToWindow()
+        await mainQueueTurn()
+        #expect(block.view.intrinsicContentSize.height == 0)
+
+        // The answer is held back: what the block shows meanwhile is the reload's first look, decided
+        // by the strategy and the memory the empty answer just dropped — not a placeholder.
+        block.bed.resolver.isDeferred = true
+        block.view.reload()
+
+        #expect(block.view.intrinsicContentSize.height == 0)
+        #expect(block.view.subviews.isEmpty)
+
+        block.bed.resolver.flush()
+
+        #expect(block.view.intrinsicContentSize.height == 0)
+        #expect(block.view.subviews.isEmpty)
+    }
+
+    // MARK: - Place memory
+
+    @Test("Shown content is remembered at the place, whatever the strategy",
+          arguments: [MindboxEmbeddedBlockLoadingStrategy.automatic, .placeholder, .hidden])
+    func shownContentIsRemembered(strategy: MindboxEmbeddedBlockLoadingStrategy) {
+        let block = BlockFixture(loadingStrategy: strategy)
+        block.attachToWindow()
+
+        block.page?.reportRendered(1)
+
+        #expect(block.memory.shownPlaces == ["block-id"])
+    }
+
+    @Test("Content is remembered when it is shown, not when it merely resolved")
+    func contentIsRememberedOnShowOnly() {
+        let block = BlockFixture()
+        block.attachToWindow()
+
+        #expect(block.memory.remembered.isEmpty)
+    }
+
+    @Test("An empty place is forgotten")
+    func emptyPlaceIsForgotten() {
+        let memory = EmbeddedBlockPlaceMemoryMock(shownPlaces: ["block-id"])
+        let block = BlockFixture(resolution: .empty, memory: memory)
+
+        block.attachToWindow()
+
+        #expect(memory.shownPlaces.isEmpty)
+        #expect(memory.forgotten == ["block-id"])
+    }
+
+    @Test("A page that rendered nothing forgets the place")
+    func pageThatRenderedNothingForgetsThePlace() {
+        let memory = EmbeddedBlockPlaceMemoryMock(shownPlaces: ["block-id"])
+        let block = BlockFixture(memory: memory)
+        block.attachToWindow()
+
+        block.page?.reportRendered(0)
+
+        #expect(memory.shownPlaces.isEmpty)
+    }
+
+    @Test("A failure leaves the memory as it is", arguments: [true, false])
+    func failureLeavesTheMemoryAlone(hasShownBefore: Bool) async {
+        let memory = EmbeddedBlockPlaceMemoryMock(shownPlaces: hasShownBefore ? ["block-id"] : [])
+        let block = BlockFixture(memory: memory)
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.attachToWindow()
+
+        block.page?.failLoad()
+        await mainQueueTurn()
+
+        // It was a failure the host heard about, not an outcome that went unnoticed.
+        #expect(delegate.events == [.failed(.networkError)])
+        #expect(memory.hasShownContent(at: "block-id") == hasShownBefore)
+        #expect(memory.forgotten.isEmpty)
+        #expect(memory.remembered.isEmpty)
+    }
+
+    @Test("A place the pass could not check fails the automatic block and keeps its record")
+    func uncheckedPlaceKeepsTheMemoryAndFails() async {
+        let memory = EmbeddedBlockPlaceMemoryMock(shownPlaces: ["block-id"])
+        let block = BlockFixture(resolution: .targetingUnavailable, loadingStrategy: .automatic, memory: memory)
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        let errorView = UIView()
+        block.view.errorView = errorView
+
+        block.attachToWindow()
+        await mainQueueTurn()
+
+        #expect(delegate.events == [.failed(.networkError)])
+        #expect(memory.hasShownContent(at: "block-id"))
+        #expect(memory.forgotten.isEmpty)
+        // The record gave the block a placeholder, so the failure keeps the height for the error view.
+        #expect(block.view.subviews.contains(errorView))
+    }
+
+    @Test("A block the SDK never answered leaves the memory as it is")
+    func neverAnsweredBlockLeavesTheMemoryAlone() async {
+        let memory = EmbeddedBlockPlaceMemoryMock(shownPlaces: ["block-id"])
+        let block = BlockFixture(memory: memory)
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.bed.resolver.isDeferred = true
+        block.attachToWindow()
+
+        block.expireTimeout()
+        await mainQueueTurn()
+
+        #expect(delegate.events == [.failed(.networkError)])
+        #expect(memory.shownPlaces == ["block-id"])
+        #expect(memory.forgotten.isEmpty)
+    }
+
+    @Test("A place remembered on one launch gives the automatic block a placeholder on the next")
+    func memorySurvivesToTheNextLaunch() {
+        let memory = EmbeddedBlockPlaceMemoryMock()
+        let firstLaunch = BlockFixture(loadingStrategy: .automatic, memory: memory)
+        firstLaunch.attachToWindow()
+        firstLaunch.page?.reportRendered(1)
+
+        let nextLaunch = BlockFixture(loadingStrategy: .automatic, memory: memory)
+
+        #expect(nextLaunch.view.intrinsicContentSize.height == 120)
+        #expect(nextLaunch.view.subviews.contains { $0 is EmbeddedBlockShimmerView })
+    }
+
+    // MARK: - Reveal animation
+
+    @Test("Content replacing the placeholder fades in")
+    func contentFadesInOverThePlaceholder() {
+        let block = BlockFixture()
+        block.attachToWindow()
+
+        block.page?.reportRendered(1)
+
+        #expect(block.reveal.runs == [Constants.EmbeddedBlock.revealAnimationDuration])
+    }
+
+    @Test("A hidden block grows to its height with animation when its content arrives")
+    func hiddenBlockGrowsWithAnimation() {
+        let block = BlockFixture(loadingStrategy: .hidden)
+        let host = LayoutRecordingHost()
+        host.isInsideAnimation = { [reveal = block.reveal] in reveal.isApplyingAnimations }
+        block.attachToHost(host)
+        host.layouts.removeAll()
+        // Something of the host's own is pending: it must not ride along with the growth.
+        host.setNeedsLayout()
+
+        block.page?.reportRendered(1)
+
+        // The fade of the content and the growth of the height.
+        #expect(block.reveal.runs.count == 2)
+        // The host's pending layout settles outside the animation first; the growth is laid out inside it.
+        #expect(host.layouts == ["outside", "inside"])
+        #expect(block.view.frame.height == 120)
+    }
+
+    @Test("The growth is laid out from the window: a stack view above the block's superview grows inside the animation")
+    func growthLaysOutTheWholeWindow() {
+        let block = BlockFixture(loadingStrategy: .hidden)
+        let stack = LayoutRecordingStack()
+        stack.isInsideAnimation = { [reveal = block.reveal] in reveal.isApplyingAnimations }
+        let header = UILabel()
+        header.text = "Header"
+        let footer = UILabel()
+        footer.text = "Footer"
+        // Header, the block in a wrapper of its own, footer: the wrapper is the block's superview, the
+        // stack is above it and has to grow for the footer to move down.
+        let wrapper = UIView()
+        block.attachToStack(stack, arranging: [header, wrapper, footer], blockInside: wrapper)
+        stack.layouts.removeAll()
+
+        block.page?.reportRendered(1)
+
+        #expect(block.reveal.runs.count == 2)
+        #expect(stack.layouts.contains("inside"))
+        #expect(wrapper.frame.height == 120)
+        #expect(footer.frame.minY == header.frame.maxY + 120)
+    }
+
+    @Test("A wrapper that lays the block out gets the fade only: the height is its own to animate")
+    func wrapperLaidOutBlockGetsTheFadeOnly() {
+        let block = BlockFixture(loadingStrategy: .hidden)
+        block.view.setAppearanceObserver { _ in }
+        block.attachToWindow()
+
+        block.page?.reportRendered(1)
+
+        #expect(block.reveal.runs.count == 1)
+    }
+
+    @Test("Content shown again on a return is not animated again")
+    func returningContentIsNotAnimatedAgain() {
+        let block = BlockFixture()
+        block.attachToWindow()
+        block.page?.reportRendered(1)
+        let runsAfterTheReveal = block.reveal.runs.count
+
+        block.removeFromWindow()
+        block.attachToWindow()
+
+        #expect(block.reveal.runs.count == runsAfterTheReveal)
+    }
+
+    @Test("Neither a collapse nor an error screen is animated")
+    func collapseAndErrorScreenAreNotAnimated() {
+        let block = BlockFixture()
+        block.view.errorView = UIView()
+        block.attachToWindow()
+
+        block.page?.failLoad()
+        block.view.errorView = nil
+
+        #expect(block.reveal.runs.isEmpty)
+    }
+
+    @Test("With the animation turned off the content lands at once")
+    func animationOffRevealsAtOnce() {
+        let block = BlockFixture(loadingStrategy: .hidden, animatesReveal: false)
+        block.attachToWindow()
+
+        block.page?.reportRendered(1)
+
+        #expect(block.reveal.runs.isEmpty)
+        #expect(block.view.intrinsicContentSize.height == 120)
+        #expect(block.view.subviews.count == 1)
+    }
+
+    @Test("Reduce Motion turns the reveal animation off")
+    func reduceMotionTurnsTheAnimationOff() {
+        let block = BlockFixture(loadingStrategy: .hidden)
+        block.reveal.isReduceMotionEnabled = true
+        block.attachToWindow()
+
+        block.page?.reportRendered(1)
+
+        #expect(block.reveal.runs.isEmpty)
+        #expect(block.view.intrinsicContentSize.height == 120)
+    }
+
     // MARK: - Helpers
 
     /// Outcomes are delivered on the next turn of the main queue, so a block queued after them
@@ -1290,6 +1795,31 @@ struct MindboxEmbeddedBlockViewTests {
                 continuation.resume()
             }
         }
+    }
+}
+
+/// A host that writes down every layout pass and whether it ran inside the reveal animation.
+private final class LayoutRecordingHost: UIView {
+
+    var isInsideAnimation: () -> Bool = { false }
+
+    var layouts: [String] = []
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        layouts.append(isInsideAnimation() ? "inside" : "outside")
+    }
+}
+
+private final class LayoutRecordingStack: UIStackView {
+
+    var isInsideAnimation: () -> Bool = { false }
+
+    var layouts: [String] = []
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        layouts.append(isInsideAnimation() ? "inside" : "outside")
     }
 }
 
@@ -1304,26 +1834,77 @@ private final class BlockFixture {
     /// command rather than through a sleep: `expireTimeout()`.
     let waitBudgetBed: EmbeddedBlockWaitBudgetBed
 
+    /// The place's memory across launches: a fixture built over the same mock is the block's next launch.
+    let memory: EmbeddedBlockPlaceMemoryMock
+
+    /// The SDK's reveal animation, run on the spot and counted.
+    let reveal: EmbeddedBlockRevealAnimationSpy
+
     let view: MindboxEmbeddedBlockView
 
     private let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 320, height: 480))
 
     var page: EmbeddedBlockPageMock? { bed.page }
 
+    /// `placeholder` by default: most of the suite is about what happens after the block took its
+    /// space, and that is the look every block used to start with.
     init(height: CGFloat = 120,
-         resolution: EmbeddedBlockResolution = .content(.stub)) {
+         resolution: EmbeddedBlockResolution = .content(.stub),
+         loadingStrategy: MindboxEmbeddedBlockLoadingStrategy = .placeholder,
+         animatesReveal: Bool = true,
+         memory: EmbeddedBlockPlaceMemoryMock = EmbeddedBlockPlaceMemoryMock()) {
         let bed = EmbeddedBlockTestBed(resolution: resolution)
         let waitBudgetBed = EmbeddedBlockWaitBudgetBed()
+        let reveal = EmbeddedBlockRevealAnimationSpy()
         self.bed = bed
         self.waitBudgetBed = waitBudgetBed
+        self.memory = memory
+        self.reveal = reveal
         self.view = MindboxEmbeddedBlockView(placeSystemName: "block-id",
                                              height: height,
                                              contentProvider: bed.provider,
+                                             placeMemory: memory,
+                                             loadingStrategy: loadingStrategy,
+                                             animatesReveal: animatesReveal,
+                                             revealAnimation: reveal.animation,
                                              makeWaitBudget: { _, _ in waitBudgetBed.budget })
     }
 
     func attachToWindow() {
         window.addSubview(view)
+    }
+
+    /// The block inside a host view laid out by constraints, the way an app puts it in a stack or a
+    /// cell: the host's layout is what the growth animation drives.
+    func attachToHost(_ host: UIView) {
+        host.frame = window.bounds
+        window.addSubview(host)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        host.addSubview(view)
+        NSLayoutConstraint.activate([
+            view.topAnchor.constraint(equalTo: host.topAnchor),
+            view.leadingAnchor.constraint(equalTo: host.leadingAnchor),
+            view.trailingAnchor.constraint(equalTo: host.trailingAnchor)
+        ])
+        host.layoutIfNeeded()
+    }
+
+    /// The block in a vertical stack, inside a wrapper of its own: the stack is an ancestor above
+    /// the block's superview, the way a section of an app screen holds a block among other views.
+    func attachToStack(_ stack: UIStackView, arranging views: [UIView], blockInside wrapper: UIView) {
+        stack.axis = .vertical
+        stack.frame = window.bounds
+        window.addSubview(stack)
+        views.forEach(stack.addArrangedSubview)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        wrapper.addSubview(view)
+        NSLayoutConstraint.activate([
+            view.topAnchor.constraint(equalTo: wrapper.topAnchor),
+            view.leadingAnchor.constraint(equalTo: wrapper.leadingAnchor),
+            view.trailingAnchor.constraint(equalTo: wrapper.trailingAnchor),
+            view.bottomAnchor.constraint(equalTo: wrapper.bottomAnchor)
+        ])
+        stack.layoutIfNeeded()
     }
 
     func removeFromWindow() {
@@ -1365,6 +1946,8 @@ private final class OwnBudgetBlockFixture {
         self.view = MindboxEmbeddedBlockView(placeSystemName: "block-id",
                                              height: 120,
                                              contentProvider: bed.provider,
+                                             placeMemory: EmbeddedBlockPlaceMemoryMock(),
+                                             loadingStrategy: .placeholder,
                                              timeout: timeout,
                                              makeWaitBudget: { place, duration in
                                                  EmbeddedBlockWaitBudget(placeSystemName: place,

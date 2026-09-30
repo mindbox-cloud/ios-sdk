@@ -200,6 +200,11 @@ struct EmbeddedBlockResolverTests {
     func decidedPassWithoutWinnerIsEmpty() {
         #expect(EmbeddedBlockResolver.resolution(from: .decided(nil), place: "stories-list-container") == .empty)
     }
+
+    @Test("A place the pass could not check is not an empty place")
+    func uncheckedPlaceIsNotEmpty() {
+        #expect(EmbeddedBlockResolver.resolution(from: .targetingUnavailable, place: "stories-list-container") == .targetingUnavailable)
+    }
 }
 
 /// A loader that answers only when asked to: this is how the resolver's behaviour while a load is

@@ -270,6 +270,74 @@ final class InAppConfigurationDataFacadeTests: XCTestCase {
         XCTAssertTrue(mockFailureManager.failures.allSatisfy { $0.reason == .customerSegmentRequestFailed })
     }
 
+    private func fetchDependencies() {
+        let expectation = expectation(description: "fetch dependencies")
+        dataFacade.fetchDependencies(model: nil) { expectation.fulfill() }
+        waitForExpectations(timeout: 1)
+    }
+
+    func test_reportsUnchecked_whenSegmentationFailedOnTheServerAndACandidateDependsOnIt() {
+        dataFacade.targetingChecker.context.segmentInapps = ["inapp-segment"]
+        dataFacade.targetingChecker.context.segments = ["segment-id"]
+        mockSegmentation.stubError = .serverError(.init(status: .internalServerError, errorMessage: "Internal Server error", httpStatusCode: 500))
+        fetchDependencies()
+
+        let unchecked = dataFacade.collectTargetingFailures(forFailedTargetingInappIds: ["inapp-segment", "inapp-other"], tagsByInappId: [:])
+
+        XCTAssertTrue(unchecked)
+        XCTAssertEqual(mockFailureManager.failures.map(\.inappId), ["inapp-segment"])
+    }
+
+    func test_reportsUnchecked_whenSegmentationFailedOfflineButReportsNoFailure() {
+        dataFacade.targetingChecker.context.segmentInapps = ["inapp-segment"]
+        dataFacade.targetingChecker.context.segments = ["segment-id"]
+        mockSegmentation.stubError = .connectionError
+        fetchDependencies()
+
+        let unchecked = dataFacade.collectTargetingFailures(forFailedTargetingInappIds: ["inapp-segment"], tagsByInappId: [:])
+
+        // Offline is not the server's doing: the place hears it, the analytics do not.
+        XCTAssertTrue(unchecked)
+        XCTAssertTrue(mockFailureManager.failures.isEmpty)
+    }
+
+    func test_reportsUnchecked_whenGeoFailedOffline() {
+        let networkFetcher = DI.injectOrFail(NetworkFetcher.self) as? MockNetworkFetcher
+        networkFetcher?.error = .connectionError
+        dataFacade.targetingChecker.context.geoInapps = ["inapp-geo"]
+        dataFacade.targetingChecker.context.isNeedGeoRequest = true
+        fetchDependencies()
+
+        let unchecked = dataFacade.collectTargetingFailures(forFailedTargetingInappIds: ["inapp-geo"], tagsByInappId: [:])
+
+        XCTAssertTrue(unchecked)
+        XCTAssertTrue(mockFailureManager.failures.isEmpty)
+    }
+
+    func test_reportsChecked_whenNoFailedCandidateDependsOnTheFailedFetch() {
+        dataFacade.targetingChecker.context.segmentInapps = ["inapp-segment"]
+        dataFacade.targetingChecker.context.segments = ["segment-id"]
+        mockSegmentation.stubError = .connectionError
+        fetchDependencies()
+
+        let unchecked = dataFacade.collectTargetingFailures(forFailedTargetingInappIds: ["inapp-other"], tagsByInappId: [:])
+
+        XCTAssertFalse(unchecked)
+    }
+
+    func test_reportsChecked_onTheNextPassWhoseFetchSucceeded() {
+        dataFacade.targetingChecker.context.segmentInapps = ["inapp-segment"]
+        dataFacade.targetingChecker.context.segments = ["segment-id"]
+        mockSegmentation.stubError = .connectionError
+        fetchDependencies()
+        XCTAssertTrue(dataFacade.collectTargetingFailures(forFailedTargetingInappIds: ["inapp-segment"], tagsByInappId: [:]))
+
+        mockSegmentation.stubError = nil
+        fetchDependencies()
+
+        XCTAssertFalse(dataFacade.collectTargetingFailures(forFailedTargetingInappIds: ["inapp-segment"], tagsByInappId: [:]))
+    }
+
     func test_addFailure_whenSegmentationRequestFailedBefore_returnsCachedFailureOnNextFetch() {
         SessionTemporaryStorage.shared.segmentationRequestResult = nil
         let targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)

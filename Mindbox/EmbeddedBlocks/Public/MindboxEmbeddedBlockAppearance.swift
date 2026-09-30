@@ -25,7 +25,7 @@ import Foundation
 /// Deliberately not part of the public API: available only through `@_spi(Internal) import Mindbox`.
 /// The host observes outcomes through `MindboxEmbeddedBlockViewDelegate` and nothing else.
 @_spi(Internal)
-public enum MindboxEmbeddedBlockAppearance {
+public enum MindboxEmbeddedBlockAppearance: Sendable {
 
     /// The content is loading. A wrapper with a placeholder of its own draws it; without one the
     /// container's shimmer is already on screen.
@@ -38,7 +38,8 @@ public enum MindboxEmbeddedBlockAppearance {
     /// Never appears for an empty place.
     case error
 
-    /// The block occupies no space: a failure without an error screen, or an empty place. The wrapper
-    /// gives the space back to the layout.
+    /// The block occupies no space: a block waiting hidden for its content, a failure without an
+    /// error screen, or an empty place. The wrapper gives the space back to the layout — or, for a
+    /// block that waits hidden, never takes it before the content arrives.
     case collapsed
 }

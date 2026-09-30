@@ -675,6 +675,108 @@ final class EmbeddedBlockTestBed {
     }
 }
 
+/// The place's memory across launches, kept in memory: a fixture built over the same mock is the
+/// "next launch" of the block.
+final class EmbeddedBlockPlaceMemoryMock: EmbeddedBlockPlaceRemembering {
+
+    private(set) var shownPlaces: Set<String>
+
+    private(set) var remembered: [String] = []
+
+    private(set) var forgotten: [String] = []
+
+    /// The places the block asked about — what it was created for, normalized.
+    private(set) var askedPlaces: [String] = []
+
+    init(shownPlaces: Set<String> = []) {
+        self.shownPlaces = shownPlaces
+    }
+
+    func hasShownContent(at place: String) -> Bool {
+        askedPlaces.append(place)
+        return shownPlaces.contains(place)
+    }
+
+    func rememberShownContent(at place: String) {
+        shownPlaces.insert(place)
+        remembered.append(place)
+    }
+
+    func forgetPlace(_ place: String) {
+        shownPlaces.remove(place)
+        forgotten.append(place)
+    }
+
+    private(set) var forgotAllCount = 0
+
+    func forgetAllPlaces() {
+        shownPlaces.removeAll()
+        forgotAllCount += 1
+    }
+}
+
+/// The SDK's reveal animation run on the spot: the animations apply at once, the way UIKit sets the
+/// model values, and every run is counted — the fade of the content is one run, the growth of a
+/// block that waited hidden another.
+final class EmbeddedBlockRevealAnimationSpy {
+
+    private(set) var runs: [TimeInterval] = []
+
+    var isReduceMotionEnabled = false
+
+    /// `true` — the completion waits for `finish()`, as it waits for the end of a real animation.
+    var isDeferred = false
+
+    /// `true` — the animations block itself waits for `applyAnimations()`: this is how the state
+    /// the animation starts from gets seen, before UIKit would set the model values.
+    var holdsAnimations = false
+
+    /// `true` while the animations block runs: what happens then is what UIKit would animate.
+    private(set) var isApplyingAnimations = false
+
+    private var pendingAnimations: [() -> Void] = []
+
+    private var pendingCompletions: [() -> Void] = []
+
+    var animation: EmbeddedBlockRevealAnimation {
+        EmbeddedBlockRevealAnimation(run: { [weak self] duration, animations, completion in
+            guard let self else { return }
+
+            self.runs.append(duration)
+            if self.holdsAnimations {
+                self.pendingAnimations.append(animations)
+            } else {
+                self.apply(animations)
+            }
+            if self.isDeferred {
+                self.pendingCompletions.append(completion)
+            } else {
+                completion()
+            }
+        }, isReduceMotionEnabled: { [weak self] in
+            self?.isReduceMotionEnabled ?? false
+        })
+    }
+
+    func applyAnimations() {
+        let animations = pendingAnimations
+        pendingAnimations = []
+        animations.forEach(apply)
+    }
+
+    func finish() {
+        let completions = pendingCompletions
+        pendingCompletions = []
+        completions.forEach { $0() }
+    }
+
+    private func apply(_ animations: () -> Void) {
+        isApplyingAnimations = true
+        animations()
+        isApplyingAnimations = false
+    }
+}
+
 final class EmbeddedBlockAppearanceSpy {
 
     private(set) var values: [MindboxEmbeddedBlockAppearance] = []

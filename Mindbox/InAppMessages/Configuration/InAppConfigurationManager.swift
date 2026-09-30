@@ -20,6 +20,11 @@ enum EmbeddedPlaceSelection: Equatable {
 
     case configUnavailable
 
+    /// The pass had no winner because a candidate could not be checked: the segmentation or geo its
+    /// targeting needs failed to fetch. Not an empty place — the block fails, and a place that showed
+    /// content before keeps its record.
+    case targetingUnavailable
+
     var inapp: InAppTransitionData? {
         if case .decided(let inapp) = self { return inapp }
         return nil
@@ -146,8 +151,8 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
                 return
             }
 
-            inappMapper.selectInappForPlace(place, trigger: trigger, candidates) { [now] inapp in
-                completion(.decided(inapp), now() - requestedAt)
+            inappMapper.selectInappForPlace(place, trigger: trigger, candidates) { [now] selection in
+                completion(selection, now() - requestedAt)
             }
         }
     }

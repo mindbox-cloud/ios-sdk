@@ -65,6 +65,12 @@ struct EmbeddedBlockResolveTests {
     private func resolvePlace(_ place: String,
                               trigger: ApplicationEvent? = nil,
                               candidates: ConfigCandidates? = nil) async -> InAppTransitionData? {
+        await selectPlace(place, trigger: trigger, candidates: candidates).inapp
+    }
+
+    private func selectPlace(_ place: String,
+                             trigger: ApplicationEvent? = nil,
+                             candidates: ConfigCandidates? = nil) async -> EmbeddedPlaceSelection {
         await withCheckedContinuation { continuation in
             mapper.selectInappForPlace(place, trigger: trigger, candidates ?? self.candidates) { continuation.resume(returning: $0) }
         }
@@ -286,6 +292,72 @@ struct EmbeddedBlockResolveTests {
 
         #expect(await resolvePlace(Constants.abPlace, candidates: config.candidates) == nil)
         #expect(dataFacade.trackTargetingCalls.contains { $0.id == Constants.abBlockId })
+    }
+
+    @Test("A place with no winner is undecided when a fetch failure cut a candidate")
+    func placeCutByFetchFailureIsNotEmpty() async {
+        let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+        persistenceStorage.deviceUUID = Constants.deviceCuttingAbBlock
+        dataFacade.cutByFetchFailure = true
+
+        #expect(await selectPlace(Constants.abPlace, candidates: config.candidates) == .targetingUnavailable)
+        // Not a selection: what the pass buffered goes out as failures, as for an empty place.
+        #expect(dataFacade.sendCollectedFailuresCalls == 1)
+    }
+
+    @Test("A failed segmentation fetch leaves a place whose block needs the segment unchecked, not empty",
+          arguments: [MindboxError.connectionError, MindboxError.serverError(.init(status: .internalServerError, errorMessage: "500", httpStatusCode: 500))])
+    func fetchFailureLeavesSegmentPlaceUnchecked(error: MindboxError) async {
+        let segmentation = MockSegmentationService()
+        segmentation.stubError = error
+        let failures = MockInappShowFailureManager()
+        let realMapper = makeMapper(segmentation: segmentation, failures: failures)
+
+        let selection = await withCheckedContinuation { continuation in
+            realMapper.selectInappForPlace("segment-block-place", trigger: nil, candidates) { continuation.resume(returning: $0) }
+        }
+
+        #expect(selection == .targetingUnavailable)
+        // Only the server's own failure is reported, for the block the pass cut.
+        let reportedIds = failures.failures.map(\.inappId)
+        if case .serverError = error {
+            #expect(reportedIds == ["eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"])
+        } else {
+            #expect(reportedIds.isEmpty)
+        }
+    }
+
+    @Test("A segment the customer is not in makes the place empty, not unchecked")
+    func unmatchedSegmentPlaceIsEmpty() async {
+        let realMapper = makeMapper(segmentation: MockSegmentationService(), failures: MockInappShowFailureManager())
+
+        let selection = await withCheckedContinuation { continuation in
+            realMapper.selectInappForPlace("segment-block-place", trigger: nil, candidates) { continuation.resume(returning: $0) }
+        }
+
+        #expect(selection == .decided(nil))
+    }
+
+    private func makeMapper(segmentation: SegmentationServiceProtocol, failures: InappShowFailureManagerProtocol) -> InappMapper {
+        let targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
+        let facade = InAppConfigurationDataFacade(segmentationService: segmentation,
+                                                  targetingChecker: targetingChecker,
+                                                  imageService: DI.injectOrFail(ImageDownloadServiceProtocol.self),
+                                                  tracker: DI.injectOrFail(InAppMessagesTracker.self),
+                                                  failureManager: failures)
+        return InappMapper(targetingChecker: targetingChecker,
+                           inappFilterService: DI.injectOrFail(InappFilterProtocol.self),
+                           dataFacade: facade)
+    }
+
+    @Test("A winner is a winner even when a fetch failure cut someone else")
+    func winnerBeatsAFetchFailureElsewhere() async throws {
+        let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+        persistenceStorage.deviceUUID = Constants.deviceKeepingAbBlock
+        dataFacade.cutByFetchFailure = true
+
+        let selection = await selectPlace(Constants.abPlace, candidates: config.candidates)
+        #expect(selection.inapp?.inAppId == Constants.abBlockId)
     }
 
     @Test("In the A/B branch that keeps it, the in-app wins its place")

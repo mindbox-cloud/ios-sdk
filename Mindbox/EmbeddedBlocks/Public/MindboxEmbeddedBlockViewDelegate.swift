@@ -19,7 +19,10 @@ import Foundation
 /// its own delegate) to tell them apart.
 public protocol MindboxEmbeddedBlockViewDelegate: AnyObject {
 
-    /// The block content is shown: the container has taken its own height and is visible.
+    /// The block content is shown: the container has taken its own height and is visible. A block
+    /// that waited hidden takes that height here, growing from 0 — a host that measures the block
+    /// itself, a table or a collection view among them, remeasures the row on this call, as it does
+    /// on empty and failure.
     func mindboxEmbeddedBlockViewDidLoad(_ blockView: MindboxEmbeddedBlockView)
 
     /// There is nothing to show at the place: no campaign behind its place system name, the
@@ -29,9 +32,10 @@ public protocol MindboxEmbeddedBlockViewDelegate: AnyObject {
     func mindboxEmbeddedBlockViewDidBecomeEmpty(_ blockView: MindboxEmbeddedBlockView)
 
     /// The block could not be shown: the SDK had no config or never answered, the page could not be
-    /// loaded, the content is malformed or the SDK hit an internal error. The container collapses to zero height, or keeps
-    /// its height and shows `errorView` when one is set. `reason` says why, for logs and analytics —
-    /// match it with a `default`, a later SDK may add reasons.
+    /// loaded, the content is malformed or the SDK hit an internal error. The container collapses to
+    /// zero height, or keeps its height and shows `errorView` when one is set — unless it waited
+    /// hidden: a block that never took its space does not take it for an error screen. `reason` says
+    /// why, for logs and analytics — match it with a `default`, a later SDK may add reasons.
     func mindboxEmbeddedBlockViewDidFail(_ blockView: MindboxEmbeddedBlockView,
                                          reason: MindboxEmbeddedBlockFailReason)
 }
