@@ -42,8 +42,10 @@ import UIKit
 /// ```
 ///
 /// Both modifiers return the block itself, so they come before any SwiftUI modifier: after
-/// `.frame(…)` or `.padding(…)` the value is no longer a `MindboxEmbeddedBlock`. Neither shows on a
-/// block that waits hidden — `hidden`, or `automatic` at a place with no record yet.
+/// `.frame(…)` or `.padding(…)` the value is no longer a `MindboxEmbeddedBlock`. Neither shows until
+/// the block has taken its place: with `hidden`, or `automatic` at a place with no record yet, the
+/// first wait and a failure on it show nothing. Once content was shown, the block waits in the
+/// `placeholder` while its page is replaced and shows the `errorView` on a failure.
 ///
 /// A collapsed block is zero points tall, but a stack still pays its spacing around it. To hand the
 /// space back completely, drop the whole section from the layout in `onEmpty` — as in the example

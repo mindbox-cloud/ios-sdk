@@ -305,11 +305,9 @@ struct EmbeddedBlockResolveTests {
         #expect(dataFacade.sendCollectedFailuresCalls == 1)
     }
 
-    /// The whole chain with the real facade: the segmentation request fails offline, the block that
-    /// needs the segment is cut, and the place is unchecked rather than empty — no report goes out.
-    @Test("Offline, a place whose block needs a segment is unchecked, not empty",
+    @Test("A failed segmentation fetch leaves a place whose block needs the segment unchecked, not empty",
           arguments: [MindboxError.connectionError, MindboxError.serverError(.init(status: .internalServerError, errorMessage: "500", httpStatusCode: 500))])
-    func offlineSegmentPlaceIsUnchecked(error: MindboxError) async {
+    func fetchFailureLeavesSegmentPlaceUnchecked(error: MindboxError) async {
         let segmentation = MockSegmentationService()
         segmentation.stubError = error
         let failures = MockInappShowFailureManager()

@@ -31,7 +31,8 @@ enum EmbeddedBlockResolution: Equatable {
     case configUnavailable
 
     /// No winner because a candidate could not be checked — its segmentation or geo failed to fetch.
-    /// The pass has already reported that per candidate; the block only fails as `networkError`.
+    /// A 5xx the pass has already reported per candidate; offline goes unreported. The block only
+    /// fails as `networkError`.
     case targetingUnavailable
 
     var content: EmbeddedBlockWebContent? {
