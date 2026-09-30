@@ -253,14 +253,7 @@ extension TransparentView: WebBridgeMessageDelegate {
             webPageRegistry.register(self)
         }
 
-        // Journaling only: the dispatcher already refused an unknown action to the page.
-        guard actionRegistry.handle(message, host: self) else {
-            Logger.common(
-                message: "[WebView] Unknown action: \(action) with \(data)",
-                category: .webViewInAppMessages
-            )
-            return
-        }
+        actionRegistry.handle(message, host: self)
     }
 }
 

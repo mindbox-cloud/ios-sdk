@@ -56,8 +56,9 @@ final class RequestMessageHandler: BridgeMessageHandler {
             category: .webViewInAppMessages
         )
 
-        if message.parsedAction == nil {
+        guard message.parsedAction != nil else {
             bridge.send(.refusal(.unknownAction, to: message))
+            return
         }
 
         bridge.messageDelegate?.webBridge(bridge, didReceiveBridgeMessage: message)
