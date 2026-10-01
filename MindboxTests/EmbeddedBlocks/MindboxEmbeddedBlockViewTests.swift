@@ -1736,6 +1736,84 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.reveal.runs.count == 1)
     }
 
+    @Test("A wrapper is told the arrival of content is animated at the moment the observer runs")
+    func wrapperIsToldTheRevealIsAnimated() {
+        let block = BlockFixture(loadingStrategy: .hidden)
+        var reveals: [(MindboxEmbeddedBlockAppearance, Bool)] = []
+        block.view.setAppearanceObserver { [unowned view = block.view] appearance in
+            reveals.append((appearance, view.isRevealAnimated))
+        }
+        block.attachToWindow()
+
+        block.page?.reportRendered(1)
+
+        // The value handed out on subscribing is never a reveal; the content's arrival is.
+        #expect(reveals.first.map { $0.0 == .collapsed && !$0.1 } == true)
+        #expect(reveals.last.map { $0.0 == .content && $0.1 } == true)
+        #expect(reveals.dropLast().allSatisfy { !$0.1 })
+    }
+
+    @Test("A wrapper is told neither a collapse nor an error screen is animated")
+    func wrapperIsToldCollapseAndErrorScreenAreNotAnimated() {
+        let block = BlockFixture()
+        block.view.errorView = UIView()
+        var reveals: [(MindboxEmbeddedBlockAppearance, Bool)] = []
+        block.view.setAppearanceObserver { [unowned view = block.view] appearance in
+            reveals.append((appearance, view.isRevealAnimated))
+        }
+        block.attachToWindow()
+
+        block.page?.failLoad()
+        block.view.errorView = nil
+
+        #expect(reveals.map { $0.0 }.contains(.error))
+        #expect(reveals.map { $0.0 }.contains(.collapsed))
+        #expect(reveals.allSatisfy { !$0.1 })
+    }
+
+    @Test("A wrapper is told content shown again on a return is not animated again")
+    func wrapperIsToldReturningContentIsNotAnimatedAgain() {
+        let block = BlockFixture()
+        block.attachToWindow()
+        block.page?.reportRendered(1)
+        var reveals: [(MindboxEmbeddedBlockAppearance, Bool)] = []
+        block.view.setAppearanceObserver { [unowned view = block.view] appearance in
+            reveals.append((appearance, view.isRevealAnimated))
+        }
+
+        block.removeFromWindow()
+        block.attachToWindow()
+
+        #expect(reveals.allSatisfy { $0.0 == .content && !$0.1 })
+    }
+
+    @Test("With the animation turned off, or Reduce Motion on, a wrapper is told the content lands at once")
+    func wrapperIsToldTheGatesCloseTheReveal() {
+        let off = BlockFixture(loadingStrategy: .hidden, animatesReveal: false)
+        var offReveals: [Bool] = []
+        off.view.setAppearanceObserver { [unowned view = off.view] _ in offReveals.append(view.isRevealAnimated) }
+        off.attachToWindow()
+        off.page?.reportRendered(1)
+
+        let reduced = BlockFixture(loadingStrategy: .hidden)
+        reduced.reveal.isReduceMotionEnabled = true
+        var reducedReveals: [Bool] = []
+        reduced.view.setAppearanceObserver { [unowned view = reduced.view] _ in reducedReveals.append(view.isRevealAnimated) }
+        reduced.attachToWindow()
+        reduced.page?.reportRendered(1)
+
+        #expect(off.view.intrinsicContentSize.height == 120)
+        #expect(offReveals.allSatisfy { !$0 })
+        #expect(reduced.view.intrinsicContentSize.height == 120)
+        #expect(reducedReveals.allSatisfy { !$0 })
+    }
+
+    @Test("The reveal duration a wrapper reads is the SDK's own")
+    func wrapperReadsTheSDKsRevealDuration() {
+        #expect(MindboxEmbeddedBlockView.revealAnimationDuration == Constants.EmbeddedBlock.revealAnimationDuration)
+        #expect(MindboxEmbeddedBlockView.revealAnimationDuration > 0)
+    }
+
     @Test("Content shown again on a return is not animated again")
     func returningContentIsNotAnimatedAgain() {
         let block = BlockFixture()
