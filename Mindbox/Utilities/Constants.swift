@@ -58,6 +58,8 @@ enum Constants {
         }
 
         static let bridgeFunctionReadyCheck = "(() => typeof window.bridgeMessagesHandlers !== 'undefined' && typeof window.bridgeMessagesHandlers.emit === 'function')()"
+
+        static let pingScript = "(()=>{try{window.webkit.messageHandlers.\(handlerName).postMessage('');return!0}catch(_){return!1}})()"
     }
 
     enum WebViewHTTPErrorJS {

@@ -12,6 +12,7 @@ protocol WebVCDelegate: AnyObject {
     func closeTapWebViewVC()
     func closeTimeoutWebViewVC()
     func closeLoadFailedWebViewVC(reason: String)
+    func closeBridgeUnavailableWebViewVC(reason: String)
 }
 
 final class WebViewController: UIViewController, InappViewControllerProtocol {
@@ -246,6 +247,13 @@ extension WebViewController: WebVCDelegate {
         Logger.common(message: "[WebView] WebViewVC closeLoadFailedWebViewVC. Reason: \(reason)", category: .webViewInAppMessages)
         reportErrorAndClose(
             .webviewLoadFailed(reason)
+        )
+    }
+
+    func closeBridgeUnavailableWebViewVC(reason: String) {
+        Logger.common(message: "[WebView] WebViewVC closeBridgeUnavailableWebViewVC. Reason: \(reason)", category: .webViewInAppMessages)
+        reportErrorAndClose(
+            .webviewBridgeUnavailable(reason)
         )
     }
 }
