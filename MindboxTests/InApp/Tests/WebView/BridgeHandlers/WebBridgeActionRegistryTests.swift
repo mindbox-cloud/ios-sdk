@@ -21,9 +21,8 @@ struct WebBridgeActionRegistryTests {
         let registry = WebBridgeActionRegistry(handlers: [log, haptic])
         let message = BridgeMessage.request(.haptic)
 
-        let didHandle = registry.handle(message, host: HostSpy())
+        registry.handle(message, host: HostSpy())
 
-        #expect(didHandle)
         #expect(haptic.handled.map(\.id) == [message.id])
         #expect(log.handled.isEmpty)
     }
@@ -47,9 +46,8 @@ struct WebBridgeActionRegistryTests {
         let host = HostSpy()
         let message = BridgeMessage.request(.haptic)
 
-        let didHandle = registry.handle(message, host: host)
+        registry.handle(message, host: host)
 
-        #expect(didHandle)
         #expect(host.sent.count == 1)
         let response = try #require(host.sent.first)
         #expect(response.type == .error)
@@ -58,15 +56,14 @@ struct WebBridgeActionRegistryTests {
         #expect(response.payload == .object(["error": .string("not_served")]))
     }
 
-    @Test("An action outside the known vocabulary is not handled and not refused a second time")
-    func reportsUnknownAction() {
+    @Test("An action outside the known vocabulary is not refused a second time")
+    func unknownActionIsNotRefusedTwice() {
         let registry = WebBridgeActionRegistry(handlers: [HandlerSpy(actions: [.log])])
         let host = HostSpy()
         let message = BridgeMessage(type: .request, action: "someFutureAction", payload: nil)
 
-        let didHandle = registry.handle(message, host: host)
+        registry.handle(message, host: host)
 
-        #expect(!didHandle)
         #expect(host.sent.isEmpty)
     }
 
@@ -84,25 +81,18 @@ struct WebBridgeActionRegistryTests {
 
     // MARK: - Requests only
 
-    /// A host hands the registry everything the dispatcher matched, and a response the page sent
-    /// back — its confirmation of a `motion.event` we pushed — is not an action anybody owns.
-    /// Reporting it as unhandled would put `Unknown action: motion.event` in the log on every
-    /// confirmed gesture.
-    ///
     /// Both kinds in one test rather than as arguments: `MessageType` does not cross into a test
     /// as a parameter under the Swift 6 language mode.
-    @Test("Anything that is not a request is swallowed as handled")
+    @Test("Anything that is not a request is swallowed without an answer")
     func nonRequestIsSwallowed() {
         let motion = HandlerSpy(actions: [.motionStart])
         let registry = WebBridgeActionRegistry(handlers: [motion])
         let host = HostSpy()
         let event = BridgeMessage.Action.motionEvent.rawValue
 
-        let didHandleResponse = registry.handle(BridgeMessage(type: .response, action: event, payload: nil), host: host)
-        let didHandleError = registry.handle(BridgeMessage(type: .error, action: event, payload: nil), host: host)
+        registry.handle(BridgeMessage(type: .response, action: event, payload: nil), host: host)
+        registry.handle(BridgeMessage(type: .error, action: event, payload: nil), host: host)
 
-        #expect(didHandleResponse)
-        #expect(didHandleError)
         #expect(motion.handled.isEmpty)
         #expect(host.sent.isEmpty)
     }
@@ -116,12 +106,11 @@ struct WebBridgeActionRegistryTests {
         let host = HostSpy()
         host.isUserPresent = false
 
-        let didHandle = registry.handle(BridgeMessage(type: .response,
-                                                      action: BridgeMessage.Action.openLink.rawValue,
-                                                      payload: nil),
-                                        host: host)
+        registry.handle(BridgeMessage(type: .response,
+                                      action: BridgeMessage.Action.openLink.rawValue,
+                                      payload: nil),
+                        host: host)
 
-        #expect(didHandle)
         #expect(openLink.handled.isEmpty)
         #expect(host.sent.isEmpty, "the presence gate answers requests, and this is not one")
     }

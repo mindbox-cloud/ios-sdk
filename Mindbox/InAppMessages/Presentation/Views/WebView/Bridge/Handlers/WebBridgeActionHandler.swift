@@ -67,35 +67,23 @@ final class WebBridgeActionRegistry {
         }
     }
 
-    /// - Returns: `false` when the action is outside the vocabulary. Not an error in itself — the
-    ///   web vocabulary is allowed to be newer than the SDK, and the dispatcher has already refused
-    ///   it — so how loudly to report it is the caller's call. Anything that is not a request is
-    ///   reported as handled: it was never a handler's to answer.
-    @discardableResult
-    func handle(_ message: BridgeMessage, host: WebBridgeHost) -> Bool {
-        // Handlers are promised requests only, and it is this door that has to keep the promise:
-        // a host forwards everything the dispatcher matched, confirmed responses to what we sent
-        // the page included. A confirmed `motion.event` is not an unknown action — it is not an
-        // action at all — so it is swallowed here rather than reported to the host as one.
-        guard message.type == .request else { return true }
+    func handle(_ message: BridgeMessage, host: WebBridgeHost) {
+        guard message.type == .request else { return }
 
-        guard let action = message.parsedAction else { return false }
+        guard let action = message.parsedAction else { return }
 
         guard let owner = owners[action] else {
             host.respondError(.notServed, detail: "no handler owns this action", to: message)
-            return true
+            return
         }
 
         // The one door for `requiresUserPresence`: a handler that never runs cannot act on a page
-        // nobody is looking at, whatever it was going to do. A refusal still counts as handled —
-        // the action is owned, and reporting it as unknown would send the caller looking for a
-        // missing handler.
+        // nobody is looking at, whatever it was going to do.
         guard !action.requiresUserPresence || host.requireUserPresence(for: message) else {
-            return true
+            return
         }
 
         owner.handle(message, host: host)
-        return true
     }
 
     func tearDown() {

@@ -572,8 +572,8 @@ public struct BridgeMessage: Codable {
 
         /// JS reports how many items it actually rendered, exactly once per load.
         ///
-        /// A count of zero is a legitimate "nothing to show", not a failure. A count that is not a
-        /// whole non-negative number is refused with an error, never rounded.
+        /// A count of zero is a legitimate "nothing to show", not a failure. A host that listens
+        /// refuses a count that is not a whole non-negative number, and never rounds it.
         ///
         /// - Payload:
         ///   ```json

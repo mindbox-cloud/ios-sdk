@@ -195,12 +195,7 @@ extension EmbeddedBlockWebViewPage: WebBridgeMessageDelegate {
             registerForBroadcasts()
         }
 
-        // Journaling only: the dispatcher already refused an unknown action to the page.
-        guard actionRegistry.handle(message, host: self) else {
-            Logger.common(message: "[EmbeddedBlock] Unknown bridge action '\(message.action)'",
-                          category: .embeddedBlocks)
-            return
-        }
+        actionRegistry.handle(message, host: self)
     }
 
     private func registerForBroadcasts() {

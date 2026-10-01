@@ -152,6 +152,23 @@ struct ContentRenderedActionHandlerTests {
         #expect(response.type == .response)
         #expect(response.payload == .object(["success": .bool(true)]))
     }
+
+    @Test("A host that listens for no content acknowledges without reading the count", arguments: [
+        JSONValue.object([:]),
+        .object(["count": .string("many")]),
+        .object(["count": .double(3.6)]),
+        .object(["count": .int(-1)])
+    ])
+    func hostWithoutCapabilityAcknowledgesAnyCount(payload: JSONValue) throws {
+        let host = HostSpy()
+
+        ContentRenderedActionHandler().handle(.request(.contentRendered, payload: payload), host: host)
+
+        #expect(host.sent.count == 1)
+        let response = try #require(host.sent.first)
+        #expect(response.type == .response)
+        #expect(response.payload == .object(["success": .bool(true)]))
+    }
 }
 
 // MARK: - Doubles
