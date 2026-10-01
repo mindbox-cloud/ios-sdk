@@ -122,5 +122,9 @@ final class ErrorMessageHandler: BridgeMessageHandler {
             message: errorLogMessage,
             category: .webViewInAppMessages
         )
+
+        if hadPending {
+            bridge.messageDelegate?.webBridge(bridge, didReceiveBridgeMessage: message)
+        }
     }
 }

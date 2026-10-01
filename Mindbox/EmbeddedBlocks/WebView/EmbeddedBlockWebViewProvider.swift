@@ -365,8 +365,8 @@ final class EmbeddedBlockWebViewProvider {
 
     // MARK: - The data push's confirmation
 
-    /// A page that misses the ack is rebuilt from scratch, in sync with Android. An error answer
-    /// counts as silence — the web layer drops error envelopes before they arrive.
+    /// An error answer to the push confirms nothing: like silence, it leaves the page to be rebuilt
+    /// when the ack budget runs out.
     private func armDataPushAck() {
         cancelDataPushAck()
 

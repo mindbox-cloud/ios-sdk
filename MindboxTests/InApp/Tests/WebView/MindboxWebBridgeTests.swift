@@ -413,6 +413,50 @@ struct MindboxWebBridgeAnswerTests {
         #expect(bed.dataPushConfirmations == 0)
     }
 
+    @Test("A page error to a request the SDK sent reaches the host, one to an id the SDK never sent does not")
+    func pageErrorReachesTheHostOnlyForAPendingRequest() throws {
+        let bed = AnswerBed(.overlay)
+        let host = MessageSpy()
+        bed.bridge.messageDelegate = host
+        let pushed = BridgeMessage(type: .request, action: .localStateChanged, payload: .object([:]))
+        bed.bridge.send(pushed)
+
+        try bed.post(BridgeMessage(type: .error, action: .localStateChanged, payload: .object(["error": .string("malformed")])))
+        try bed.post(BridgeMessage(type: .error, action: .localStateChanged, payload: .object(["error": .string("malformed")]), id: pushed.id))
+
+        #expect(host.received.map(\.id) == [pushed.id])
+        #expect(host.received.map(\.type) == [.error])
+    }
+
+    @Test("A page error to a broadcast the overlay pushed closes it once, the way a page close does, and fails nothing")
+    func pageErrorToAPushClosesTheOverlay() throws {
+        let bed = AnswerBed(.overlay, handlers: [LifecycleActionHandler()])
+        let overlay = try #require(bed.overlay)
+        overlay.push(.localStateChanged, payload: .object(["version": .int(3)]))
+        let pushedId = try #require(UUID(uuidString: bed.sentEnvelopes().first?["id"] as? String ?? ""))
+
+        try bed.post(BridgeMessage(type: .error,
+                                   action: .localStateChanged,
+                                   payload: .object(["error": .string("localState.changed payload is missing the data object")]),
+                                   id: pushedId))
+
+        #expect(bed.show.events == ["close"])
+        #expect(bed.sentEnvelopes().map { $0["type"] as? String } == ["request"])
+    }
+
+    @Test("After a show on a reused WebView closed, the next show on it still hears its own page")
+    func nextShowOnAReusedWebViewHearsItsPage() throws {
+        let closed = AnswerBed(.overlay, handlers: [LifecycleActionHandler()])
+        try closed.post(.request(.close, payload: .string("{}")))
+        let next = AnswerBed(.overlay, handlers: [LifecycleActionHandler()], reusingWebViewOf: closed)
+
+        try next.post(.request(.`init`, payload: .string("{}")))
+        try closed.post(.request(.click, payload: .string("{}")))
+
+        #expect(closed.show.events == ["close"])
+        #expect(next.show.events == ["init"])
+    }
+
     @Test("A request without a string action gets no answer at all",
           arguments: Surface.allCases, ["", #""action":5,"#, #""action":null,"#])
     func requestWithoutStringActionIsNotAnswered(surface: Surface, actionField: String) {
@@ -546,14 +590,19 @@ private final class AnswerBed {
     }
 
     let bridge: MindboxWebBridge
+    let show = ShowControllerSpy()
     private(set) var dataPushConfirmations = 0
 
-    private let webView = EvaluationSpyWebView(frame: .zero, configuration: WKWebViewConfiguration())
+    private let webView: EvaluationSpyWebView
     private let navigationFactory = WKWebView(frame: .zero, configuration: WKWebViewConfiguration())
     private var host: WebBridgeHost?
 
+    var overlay: TransparentView? { host as? TransparentView }
+
     init(_ surface: MindboxWebBridgeAnswerTests.Surface,
-         handlers: [WebBridgeActionHandler] = WebBridgeActionHandlerFactory.makeHandlers()) {
+         handlers: [WebBridgeActionHandler] = WebBridgeActionHandlerFactory.makeHandlers(),
+         reusingWebViewOf previous: AnswerBed? = nil) {
+        webView = previous?.webView ?? EvaluationSpyWebView(frame: .zero, configuration: WKWebViewConfiguration())
         bridge = MindboxWebBridge(webView: webView)
         let facade = BridgeForwardingFacade(bridge: bridge, webView: webView)
         let registry = WebBridgeActionRegistry(handlers: handlers)
@@ -569,6 +618,8 @@ private final class AnswerBed {
                                        actionRegistry: registry)
             view.facade = facade
             view.webPageRegistry = MindboxWebPageRegistry()
+            view.delegate = show
+            view.webViewAction = show
             facade.setBridgeMessageDelegate(view)
             host = view
         case .embeddedBlock:

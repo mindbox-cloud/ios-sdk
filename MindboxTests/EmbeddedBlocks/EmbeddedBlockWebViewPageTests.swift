@@ -220,6 +220,20 @@ struct EmbeddedBlockWebViewPageTests {
         #expect(bed.facade.sentMessages.isEmpty)
     }
 
+    @Test("A page error to a push leaves the block on screen, failed by nothing and answered by nothing")
+    func pageErrorLeavesTheBlockOnScreen() {
+        let bed = PageBed()
+
+        bed.receive(BridgeMessage(type: .error,
+                                  action: .initDataUpdated,
+                                  payload: .object(["error": .string("initDataUpdated payload is missing the stories array")])))
+
+        #expect(bed.failures == 0)
+        #expect(bed.unreadableReports == 0)
+        #expect(bed.ackCount == 0)
+        #expect(bed.facade.sentMessages.isEmpty)
+    }
+
     @Test("An overlay's lifecycle message is answered with exactly one success",
           arguments: [BridgeMessage.Action.close, .`init`, .click, .hide])
     func overlayLifecycleMessageIsAcknowledged(action: BridgeMessage.Action) throws {
