@@ -163,7 +163,7 @@ final class EmbeddedBlockPageMock: EmbeddedBlockPageHosting {
 
     var onShowableQuestion: (([String], @escaping ([String]) -> Void) -> Void)?
 
-    var onShowInAppRequest: ((String, [String: JSONValue], @escaping (Result<Void, ShowInAppRefusal>) -> Void) -> Void)?
+    var onShowInAppRequest: ((String, [String: JSONValue], @escaping (Result<Void, BridgeErrorCode>) -> Void) -> Void)?
 
     var onDataPushConfirmed: (() -> Void)?
 
@@ -281,7 +281,7 @@ private final class EmbeddedBlockPageMockHost: WebBridgeHost, WebBridgeContentHo
 
     func bridgeDidRequestShowInApp(id: String,
                                    params: [String: JSONValue],
-                                   completion: @escaping (Result<Void, ShowInAppRefusal>) -> Void) {
+                                   completion: @escaping (Result<Void, BridgeErrorCode>) -> Void) {
         page.onShowInAppRequest?(id, params, completion)
     }
 }
@@ -427,14 +427,14 @@ final class EmbeddedBlockInappServiceMock: EmbeddedBlockInappServing {
     private(set) var shown: [(id: String, params: [String: JSONValue])] = []
 
     private var pending: [([String]) -> Void] = []
-    private var showCompletions: [(Result<Void, ShowInAppRefusal>) -> Void] = []
+    private var showCompletions: [(Result<Void, BridgeErrorCode>) -> Void] = []
 
-    func showInapp(id: String, params: [String: JSONValue], completion: @escaping (Result<Void, ShowInAppRefusal>) -> Void) {
+    func showInapp(id: String, params: [String: JSONValue], completion: @escaping (Result<Void, BridgeErrorCode>) -> Void) {
         shown.append((id, params))
         showCompletions.append(completion)
     }
 
-    func finishShow(_ outcome: Result<Void, ShowInAppRefusal>) {
+    func finishShow(_ outcome: Result<Void, BridgeErrorCode>) {
         let completions = showCompletions
         showCompletions = []
         completions.forEach { $0(outcome) }

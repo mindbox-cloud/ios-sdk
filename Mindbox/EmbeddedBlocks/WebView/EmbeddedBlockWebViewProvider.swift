@@ -480,11 +480,11 @@ final class EmbeddedBlockWebViewProvider {
 
     /// A page whose block has collapsed or failed is still alive and can still ask — but no user
     /// touch stands behind it, and the in-app would appear over the app out of nowhere.
-    private func showInapp(id inappId: String, params: [String: JSONValue], completion: @escaping (Result<Void, ShowInAppRefusal>) -> Void) {
+    private func showInapp(id inappId: String, params: [String: JSONValue], completion: @escaping (Result<Void, BridgeErrorCode>) -> Void) {
         guard isStarted, isAttemptAlive else {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': refused a show request from a block that is not shown",
                           category: .embeddedBlocks)
-            completion(.failure(.sourceDismissed))
+            completion(.failure(.notVisible))
             return
         }
 

@@ -322,7 +322,7 @@ private final class PageBed {
     private(set) var ackCount = 0
 
     private var pageCompletions: [([String]) -> Void] = []
-    private var showCompletions: [(Result<Void, ShowInAppRefusal>) -> Void] = []
+    private var showCompletions: [(Result<Void, BridgeErrorCode>) -> Void] = []
 
     private lazy var bridge = MindboxWebBridge(webView: facade.webView)
 
@@ -367,7 +367,7 @@ private final class PageBed {
         facade.messageDelegate?.webBridge(bridge, didReceiveBridgeMessage: message)
     }
 
-    func finishShow(_ outcome: Result<Void, ShowInAppRefusal>) {
+    func finishShow(_ outcome: Result<Void, BridgeErrorCode>) {
         showCompletions.forEach { $0(outcome) }
     }
 

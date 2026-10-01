@@ -66,26 +66,30 @@ struct SettingsActionHandlerTests {
         #expect(host.sent.first?.payload == .object(["success": .bool(true)]))
     }
 
-    @Test("An unknown target is refused without reaching the system")
-    func unknownTargetIsRefused() throws {
+    @Test("An unknown target is refused as an unsupported value without reaching the system",
+          arguments: ["somewhere-else", " "])
+    func unknownTargetIsRefused(target: String) throws {
         let (handler, opener, host, notifications) = makeSUT()
 
-        handler.handle(.request(.settingsOpen, payload: .object(["target": .string("somewhere-else")])), host: host)
+        handler.handle(.request(.settingsOpen, payload: .object(["target": .string(target)])), host: host)
 
         #expect(opener.opened.isEmpty)
         #expect(notifications.callCount == 0)
         let response = try #require(host.sent.first)
         #expect(response.type == .error)
-        #expect(response.payload == .object(["error": .string("Invalid or unknown settings type")]))
+        #expect(response.payload == .object(["error": .string("unsupported_value")]))
     }
 
-    @Test("A payload without a target is refused")
-    func missingTargetIsRefused() throws {
+    @Test("A target that is missing, empty or not a string is refused as an invalid payload",
+          arguments: [#"{}"#, #"{"target":""}"#, #"{"target":5}"#])
+    func missingTargetIsRefused(payload: String) throws {
         let (handler, _, host, _) = makeSUT()
 
-        handler.handle(.request(.settingsOpen, payload: .object([:])), host: host)
+        handler.handle(.request(.settingsOpen, payload: .string(payload)), host: host)
 
-        #expect(host.sent.first?.type == .error)
+        let response = try #require(host.sent.first)
+        #expect(response.type == .error)
+        #expect(response.payload == .object(["error": .string("invalid_payload")]))
     }
 
     @Test("A payload sent as a JSON string is understood too")

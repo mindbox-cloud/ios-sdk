@@ -57,14 +57,7 @@ final class RequestMessageHandler: BridgeMessageHandler {
         )
 
         guard let action = message.parsedAction else {
-            let refusal = BridgeMessage(
-                type: .error,
-                action: message.action,
-                payload: .object(["error": .string("unknown action '\(message.action)'")]),
-                id: message.id
-            )
-
-            bridge.send(refusal)
+            bridge.send(.refusal(.unknownAction, to: message))
             bridge.messageDelegate?.webBridge(bridge, didReceiveBridgeMessage: message)
             return
         }

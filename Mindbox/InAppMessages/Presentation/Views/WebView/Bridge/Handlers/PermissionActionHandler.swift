@@ -34,24 +34,24 @@ final class PermissionActionHandler: WebBridgeActionHandler {
 
     func handle(_ message: BridgeMessage, host: WebBridgeHost) {
         guard case .string(let typeString)? = message.payloadObject?["type"], !typeString.isEmpty else {
-            host.respondError("Invalid payload: missing or empty 'type' field", to: message)
+            host.respondError(.invalidPayload, detail: "missing or empty 'type' field", to: message)
             return
         }
 
         guard let type = PermissionType(rawValue: typeString) else {
-            host.respondError("Unknown permission type: '\(typeString)'", to: message)
+            host.respondError(.unsupportedValue, detail: "unknown permission type '\(typeString)'", to: message)
             return
         }
 
         guard let handler = registry.handler(for: type) else {
-            host.respondError("No handler registered for permission type: '\(typeString)'", to: message)
+            host.respondError(.internalError, detail: "no handler registered for permission type '\(typeString)'", to: message)
             return
         }
 
         // Asking without the usage description in place would kill the host app rather than
-        // return a refusal, so the missing key is reported to the page instead.
+        // return a refusal, so the request is refused before the system is asked.
         for key in handler.requiredInfoPlistKeys where infoPlistValue(key) == nil {
-            host.respondError("Missing Info.plist key: \(key)", to: message)
+            host.respondError(.permissionFailed, detail: "missing Info.plist key \(key)", to: message)
             return
         }
 
@@ -69,7 +69,7 @@ final class PermissionActionHandler: WebBridgeActionHandler {
                 case .denied(let dialogShown):
                     Self.respond("denied", dialogShown: dialogShown, to: message, host: host)
                 case .error(let reason):
-                    host.respondError(reason, to: message)
+                    host.respondError(.permissionFailed, detail: reason, to: message)
                 }
             }
         }

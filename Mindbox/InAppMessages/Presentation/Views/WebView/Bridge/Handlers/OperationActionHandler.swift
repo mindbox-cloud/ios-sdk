@@ -44,7 +44,8 @@ final class OperationActionHandler: WebBridgeActionHandler {
 
     func handle(_ message: BridgeMessage, host: WebBridgeHost) {
         guard let operation = operation(from: message, host: host) else {
-            host.respondError("Invalid payload: could not parse operation/body or encode the operation body",
+            host.respondError(.invalidPayload,
+                              detail: "could not parse operation/body or encode the operation body",
                               to: message)
             return
         }
@@ -79,7 +80,7 @@ private extension OperationActionHandler {
             Logger.common(message: "[WebView] asyncOperation '\(operation.name)' failed: \(error)",
                           level: .error,
                           category: host.logCategory)
-            host.respondError("Failed to queue operation: \(error.localizedDescription)", to: message)
+            host.respondError(.operationFailed, detail: "failed to queue operation '\(operation.name)': \(error)", to: message)
             return
         }
 

@@ -31,18 +31,18 @@ struct WebBridgeHostResponseTests {
         #expect(response.payload == .object(["success": .bool(true)]))
     }
 
-    @Test("An error response is typed as an error and carries the reason")
-    func errorCarriesReason() throws {
+    @Test("An error response is typed as an error and carries only the code, never the detail")
+    func errorCarriesCode() throws {
         let host = HostSpy()
         let message = BridgeMessage(type: .request, action: BridgeMessage.Action.haptic.rawValue, payload: nil)
 
-        host.respondError("Invalid payload", to: message)
+        host.respondError(.invalidPayload, detail: "missing 'style' field", to: message)
 
         let response = try #require(host.sent.first)
         #expect(response.id == message.id)
         #expect(response.action == message.action)
         #expect(response.type == .error)
-        #expect(response.payload == .object(["error": .string("Invalid payload")]))
+        #expect(response.payload == .object(["error": .string("invalid_payload")]))
     }
 
     @Test("A content response carries the payload it was given")

@@ -73,7 +73,7 @@ struct ContentRenderedActionHandlerTests {
         #expect(host.rendered.isEmpty)
         let response = try #require(host.sent.first)
         #expect(response.type == .error)
-        #expect(response.payload == .object(["error": .string("Invalid payload: missing or non-numeric 'count'")]))
+        #expect(response.payload == .object(["error": .string("invalid_payload")]))
         #expect(host.unreadableReports == 1)
     }
 
@@ -98,7 +98,7 @@ struct ContentRenderedActionHandlerTests {
         #expect(host.rendered.isEmpty)
         let response = try #require(host.sent.first)
         #expect(response.type == .error)
-        #expect(response.payload == .object(["error": .string("Invalid payload: 'count' must be a whole number, got 3.6")]))
+        #expect(response.payload == .object(["error": .string("invalid_payload")]))
         #expect(host.unreadableReports == 1)
     }
 
@@ -137,7 +137,7 @@ struct ContentRenderedActionHandlerTests {
         #expect(host.rendered.isEmpty)
         let response = try #require(host.sent.first)
         #expect(response.type == .error)
-        #expect(response.payload == .object(["error": .string("Invalid payload: 'count' must not be negative, got -1")]))
+        #expect(response.payload == .object(["error": .string("invalid_payload")]))
         #expect(host.unreadableReports == 1)
     }
 

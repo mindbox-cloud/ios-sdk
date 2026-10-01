@@ -76,17 +76,9 @@ struct BridgeMessagePermissionTests {
         #expect(payloadDict["dialogShown"] as? Bool == false)
     }
 
-    @Test("Error response encodes error message in payload")
+    @Test("Error response encodes the error code in payload")
     func errorResponseEncodesCorrectly() throws {
-        let id = UUID()
-        let errorText = "Missing Info.plist key: NSLocationWhenInUseUsageDescription"
-        let message = BridgeMessage(
-            type: .error,
-            action: BridgeMessage.Action.permissionRequest,
-            payload: .object(["error": .string(errorText)]),
-            id: id,
-            timestamp: 1_710_340_800_000
-        )
+        let message = BridgeMessage.refusal(.permissionFailed, to: .request(.permissionRequest))
 
         let json = try #require(message.jsonString())
         let data = try #require(json.data(using: .utf8))
@@ -101,7 +93,7 @@ struct BridgeMessagePermissionTests {
         let payloadDict = try #require(
             try JSONSerialization.jsonObject(with: payloadData) as? [String: String]
         )
-        #expect(payloadDict["error"] == errorText)
+        #expect(payloadDict["error"] == "permission_failed")
     }
 
     // MARK: - Deserialization: JS → Native request

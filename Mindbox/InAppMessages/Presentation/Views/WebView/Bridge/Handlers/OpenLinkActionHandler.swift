@@ -30,12 +30,12 @@ final class OpenLinkActionHandler: WebBridgeActionHandler {
         guard case .string(let requestedURL)? = message.payloadObject?["url"],
               case let urlString = requestedURL.trimmingCharacters(in: .whitespacesAndNewlines),
               !urlString.isEmpty else {
-            host.respondError("Invalid payload: missing or empty 'url' field", to: message)
+            host.respondError(.invalidPayload, detail: "missing or empty 'url' field", to: message)
             return
         }
 
         guard let url = URL(string: urlString) else {
-            host.respondError("Invalid URL: '\(urlString)' could not be parsed", to: message)
+            host.respondError(.invalidURL, detail: "'\(urlString)' could not be parsed", to: message)
             return
         }
 
@@ -100,7 +100,7 @@ private extension OpenLinkActionHandler {
             Logger.common(message: "[WebView] navigate: no presenting view controller found",
                           level: .default,
                           category: host.logCategory)
-            host.respondError("Failed to open URL: no presenting view controller", to: message)
+            host.respondError(.openFailed, detail: "no presenting view controller for '\(url.absoluteString)'", to: message)
             return
         }
 

@@ -95,7 +95,7 @@ struct EmbeddedBlockInappServiceTests {
     @Test("A tap that resolves to nothing schedules nothing and answers unknown_inapp")
     func tapResolvingToNothingAnswersUnknownInapp() {
         var shownCount = 0
-        var outcomes: [Result<Void, ShowInAppRefusal>] = []
+        var outcomes: [Result<Void, BridgeErrorCode>] = []
         let service = EmbeddedBlockInappService(
             fetchInappToShow: { _, _, completion in completion(nil) },
             showNow: { _, _, _ in shownCount += 1 }
@@ -110,7 +110,7 @@ struct EmbeddedBlockInappServiceTests {
 
     @Test("A show that opened answers success")
     func openedShowAnswersSuccess() {
-        var outcomes: [Result<Void, ShowInAppRefusal>] = []
+        var outcomes: [Result<Void, BridgeErrorCode>] = []
         let service = EmbeddedBlockInappService(
             fetchInappToShow: { id, _, completion in completion(Self.formData(id: id)) },
             showNow: { _, _, completion in completion(.success(())) }
@@ -123,7 +123,7 @@ struct EmbeddedBlockInappServiceTests {
 
     @Test("A show that failed on the way to the screen answers show_failed")
     func failedShowAnswersShowFailed() {
-        var outcomes: [Result<Void, ShowInAppRefusal>] = []
+        var outcomes: [Result<Void, BridgeErrorCode>] = []
         let service = EmbeddedBlockInappService(
             fetchInappToShow: { id, _, completion in completion(Self.formData(id: id)) },
             showNow: { _, _, completion in completion(.failure(.failedToLoadWindow)) }
@@ -240,14 +240,14 @@ private final class ServiceBed {
     }
 }
 
-private extension Result where Success == Void, Failure == ShowInAppRefusal {
+private extension Result where Success == Void, Failure == BridgeErrorCode {
 
     var isSuccess: Bool {
         if case .success = self { return true }
         return false
     }
 
-    var refusal: ShowInAppRefusal? {
+    var refusal: BridgeErrorCode? {
         if case .failure(let refusal) = self { return refusal }
         return nil
     }

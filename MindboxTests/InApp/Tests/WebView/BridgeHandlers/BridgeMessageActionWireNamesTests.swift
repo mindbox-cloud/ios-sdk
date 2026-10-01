@@ -9,7 +9,7 @@
 import Testing
 @_spi(Internal) @testable import Mindbox
 
-@Suite("BridgeMessage action wire names", .tags(.webView))
+@Suite("Bridge wire names: actions and error codes", .tags(.webView))
 struct BridgeMessageActionWireNamesTests {
 
     // These strings are the contract with the pages already shipped: every other suite builds and
@@ -29,5 +29,25 @@ struct BridgeMessageActionWireNamesTests {
     func dottedActionKeepsItsWireName(action: BridgeMessage.Action, wireName: String) {
         #expect(action.rawValue == wireName)
         #expect(BridgeMessage.Action(rawValue: wireName) == action)
+    }
+
+    @Test("The error codes keep the contract's wire values in the contract's order")
+    func errorCodesKeepTheirWireValues() {
+        #expect(BridgeErrorCode.allCases.map(\.rawValue) == [
+            "unknown_action",
+            "not_served",
+            "not_visible",
+            "invalid_payload",
+            "unsupported_value",
+            "invalid_url",
+            "blocked_scheme",
+            "open_failed",
+            "permission_failed",
+            "gestures_unavailable",
+            "operation_failed",
+            "unknown_inapp",
+            "show_failed",
+            "internal_error"
+        ])
     }
 }

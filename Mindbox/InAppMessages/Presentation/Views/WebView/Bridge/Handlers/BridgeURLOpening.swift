@@ -61,7 +61,7 @@ extension BridgeURLOpening {
                             level: .default,
                             category: host.logCategory
                         )
-                        host.respondError("Failed to open URL: '\(url.absoluteString)'", to: message)
+                        host.respondError(.openFailed, detail: "the system did not open '\(url.absoluteString)'", to: message)
                     }
                 }
             }

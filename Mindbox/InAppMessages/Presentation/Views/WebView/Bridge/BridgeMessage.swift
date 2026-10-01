@@ -494,7 +494,7 @@ public struct BridgeMessage: Codable {
         ///   ```
         /// - Error (all requested gestures unavailable):
         ///   ```json
-        ///   { "error": "No sensors available for requested gestures: flip" }
+        ///   { "error": "gestures_unavailable" }
         ///   ```
         ///
         /// > Note: When shake is active, the system "Undo Typing" alert is suppressed
