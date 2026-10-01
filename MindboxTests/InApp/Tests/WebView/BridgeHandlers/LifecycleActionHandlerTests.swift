@@ -19,17 +19,18 @@ struct LifecycleActionHandlerTests {
         #expect(LifecycleActionHandler().actions == [.close, .`init`, .click, .hide])
     }
 
-    @Test("Each action reaches its own callback", arguments: [
+    @Test("Each action is answered first, then reaches its own callback", arguments: [
         (BridgeMessage.Action.`init`, "init"),
         (.close, "close"),
-        (.hide, "hide")
+        (.hide, "hide"),
+        (.click, "click")
     ])
-    func actionReachesItsCallback(action: BridgeMessage.Action, expected: String) {
+    func actionIsAnsweredThenReachesItsCallback(action: BridgeMessage.Action, expected: String) {
         let host = LifecycleHostSpy()
 
         LifecycleActionHandler().handle(.request(action), host: host)
 
-        #expect(host.events == [expected])
+        #expect(host.events == ["answered", expected])
     }
 
     /// What a tap means is decided above the bridge, so the payload travels untouched.
@@ -40,33 +41,35 @@ struct LifecycleActionHandlerTests {
 
         LifecycleActionHandler().handle(.request(.click, payload: .string(payload)), host: host)
 
-        #expect(host.events == ["click"])
         #expect(host.clickPayloads == [payload])
     }
 
-    /// None of the four is deferred, so the dispatcher has already answered. Answering again
-    /// would arrive against an id JS has closed.
-    @Test("Never answers, whatever the action")
-    func neverAnswers() {
+    @Test("Answers exactly one success, whatever the action",
+          arguments: [BridgeMessage.Action.`init`, .close, .hide, .click])
+    func answersExactlyOneSuccess(action: BridgeMessage.Action) throws {
         let host = LifecycleHostSpy()
+        let message = BridgeMessage.request(action)
 
-        for action in [BridgeMessage.Action.`init`, .close, .hide, .click] {
-            LifecycleActionHandler().handle(.request(action), host: host)
-        }
+        LifecycleActionHandler().handle(message, host: host)
 
-        #expect(host.sent.isEmpty)
+        #expect(host.sent.count == 1)
+        let response = try #require(host.sent.first)
+        #expect(response.type == .response)
+        #expect(response.id == message.id)
+        #expect(response.payload == .object(["success": .bool(true)]))
     }
 
-    /// The point of the capability design: a page may speak the whole vocabulary wherever it
-    /// lives, and a surface with no window to close simply does not listen. Not an error —
-    /// the day such a surface wants these, it conforms and nothing else changes.
-    @Test("A host without the capability drops the action instead of failing")
-    func hostWithoutCapabilityIgnoresAction() {
+    @Test("A host without the capability is answered success instead of failing",
+          arguments: [BridgeMessage.Action.`init`, .close, .hide, .click])
+    func hostWithoutCapabilityIsAnsweredSuccess(action: BridgeMessage.Action) throws {
         let host = HostSpy()
 
-        LifecycleActionHandler().handle(.request(.close), host: host)
+        LifecycleActionHandler().handle(.request(action), host: host)
 
-        #expect(host.sent.isEmpty)
+        #expect(host.sent.count == 1)
+        let response = try #require(host.sent.first)
+        #expect(response.type == .response)
+        #expect(response.payload == .object(["success": .bool(true)]))
     }
 }
 
@@ -87,6 +90,7 @@ private final class LifecycleHostSpy: WebBridgeHost, WebBridgeLifecycleHosting {
 
     func send(_ message: BridgeMessage) {
         sent.append(message)
+        events.append("answered")
     }
 
     func makeStartPayload(_ completion: @escaping (JSONValue) -> Void) {

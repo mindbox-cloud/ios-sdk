@@ -11,9 +11,9 @@ import Foundation
 /// Assembles the handler set a bridge session runs with.
 ///
 /// One set, the same for every WebView. There is no per-surface list on purpose: an action a
-/// host does not listen for is journalled and dropped, so a page may speak the whole vocabulary
-/// wherever it lives. Teaching a new surface an existing action is a conformance on that host,
-/// not a new entry here.
+/// host does not listen for is still answered by its handler, so a page may speak the whole
+/// vocabulary wherever it lives. Teaching a new surface an existing action is a conformance on
+/// that host, not a new entry here.
 enum WebBridgeActionHandlerFactory {
 
     /// Fresh instances every call: several handlers keep state belonging to one page — a

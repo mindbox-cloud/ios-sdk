@@ -17,8 +17,6 @@ struct ReadyActionHandlerTests {
         #expect(ReadyActionHandler().actions == [.ready])
     }
 
-    /// `ready` is deferred: the blanket `{success: true}` would tell the page nothing, and this
-    /// is the one answer it cannot start without.
     @Test("Answers with the page's own start payload")
     func answersWithHostPayload() throws {
         let host = HostSpy()

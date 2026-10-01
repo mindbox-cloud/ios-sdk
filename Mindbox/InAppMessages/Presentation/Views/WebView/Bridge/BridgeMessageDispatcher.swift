@@ -56,21 +56,8 @@ final class RequestMessageHandler: BridgeMessageHandler {
             category: .webViewInAppMessages
         )
 
-        guard let action = message.parsedAction else {
+        if message.parsedAction == nil {
             bridge.send(.refusal(.unknownAction, to: message))
-            bridge.messageDelegate?.webBridge(bridge, didReceiveBridgeMessage: message)
-            return
-        }
-
-        if !action.isDeferred {
-            let response = BridgeMessage(
-                type: .response,
-                action: message.action,
-                payload: .object(["success": .bool(true)]),
-                id: message.id
-            )
-
-            bridge.send(response)
         }
 
         bridge.messageDelegate?.webBridge(bridge, didReceiveBridgeMessage: message)

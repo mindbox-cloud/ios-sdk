@@ -13,14 +13,11 @@ import Testing
 ///
 /// Every other suite either builds a handler directly or injects a registry of its own, so a
 /// handler written, tested and then left out of the factory would pass all of them while the
-/// action silently did nothing in the app — and for a deferred action, "nothing" means the page
-/// waits for an answer that never comes.
+/// page was refused the action as not served.
 @Suite("WebBridgeActionHandlerFactory", .tags(.webView))
 struct WebBridgeActionHandlerFactoryTests {
 
-    /// Actions the registry is not meant to own: all of these travel native → JS and never
-    /// arrive as a request.
-    private static let notOwnedByRegistry: Set<BridgeMessage.Action> = [
+    private static let requestedOnlyBySDK: Set<BridgeMessage.Action> = [
         .navigationIntercepted,
         .motionEvent,
         .initDataUpdated,
@@ -33,7 +30,7 @@ struct WebBridgeActionHandlerFactoryTests {
             $0.formUnion($1.actions)
         }
 
-        let expected = Set(BridgeMessage.Action.allCases).subtracting(Self.notOwnedByRegistry)
+        let expected = Set(BridgeMessage.Action.allCases).subtracting(Self.requestedOnlyBySDK)
 
         #expect(expected.subtracting(owned).isEmpty, "actions with no handler in the shipped set")
     }
@@ -44,7 +41,7 @@ struct WebBridgeActionHandlerFactoryTests {
             $0.formUnion($1.actions)
         }
 
-        #expect(owned.isDisjoint(with: Self.notOwnedByRegistry))
+        #expect(owned.isDisjoint(with: Self.requestedOnlyBySDK))
     }
 
     /// Two handlers claiming one action is resolved by the registry, but silently — the set

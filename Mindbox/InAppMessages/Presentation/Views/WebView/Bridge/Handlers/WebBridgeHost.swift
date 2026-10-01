@@ -101,7 +101,7 @@ extension WebBridgeHost {
 ///
 /// A capability, not a layer. Any page may send these — whether they mean anything depends on
 /// who hosts it. A page sending `close` to a host that does not conform is not an error: the
-/// message is journalled and dropped.
+/// message is acknowledged and journalled.
 protocol WebBridgeLifecycleHosting: AnyObject {
 
     func bridgeDidInit()

@@ -18,15 +18,18 @@ struct LogActionHandlerTests {
         #expect(LogActionHandler().actions == [.log])
     }
 
-    /// `log` is not deferred, so `RequestMessageHandler` has already sent `{success: true}` by
-    /// the time the handler runs. A second answer would arrive against an id JS has closed.
-    @Test("Never answers: the dispatcher already acknowledged this action")
-    func neverAnswers() {
+    @Test("Answers exactly one success")
+    func answersExactlyOneSuccess() throws {
         let host = HostSpy()
+        let message = BridgeMessage.request(.log, payload: .string("hello from the page"))
 
-        LogActionHandler().handle(.request(.log, payload: .string("hello from the page")), host: host)
+        LogActionHandler().handle(message, host: host)
 
-        #expect(host.sent.isEmpty)
+        #expect(host.sent.count == 1)
+        let response = try #require(host.sent.first)
+        #expect(response.type == .response)
+        #expect(response.id == message.id)
+        #expect(response.payload == .object(["success": .bool(true)]))
     }
 
     @Test("Runs whatever shape the payload arrived in")
@@ -38,7 +41,7 @@ struct LogActionHandlerTests {
         handler.handle(.request(.log, payload: .object(["message": .string("an object")])), host: host)
         handler.handle(.request(.log, payload: nil), host: host)
 
-        #expect(host.sent.isEmpty)
+        #expect(host.sent.map(\.type) == [.response, .response, .response])
     }
 }
 

@@ -63,18 +63,6 @@ struct WebBridgeUserPresenceTests {
         #expect(!BridgeMessage.Action.motionStop.requiresUserPresence)
     }
 
-    /// The refusal travels as the answer to the request. An action already answered
-    /// `{success: true}` by the dispatcher has no answer left to spend on it, so the two sets
-    /// cannot drift apart.
-    @Test("Every action that requires presence answers for itself")
-    func presenceGatedActionsAreDeferred() {
-        let gated = BridgeMessage.Action.allCases.filter(\.requiresUserPresence)
-        let everyGatedActionAnswersForItself = gated.allSatisfy(\.isDeferred)
-
-        #expect(!gated.isEmpty)
-        #expect(everyGatedActionAnswersForItself)
-    }
-
     // MARK: - The registry gate
 
     @Test("A user-facing action never reaches its handler off screen")

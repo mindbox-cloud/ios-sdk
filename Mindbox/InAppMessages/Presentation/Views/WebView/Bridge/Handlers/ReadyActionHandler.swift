@@ -11,9 +11,6 @@ import Foundation
 /// The page reports it can receive messages, and is answered with what it needs to configure
 /// itself.
 ///
-/// Deferred, and deliberately so: the blanket `{success: true}` would tell the page nothing,
-/// and this is the one answer it cannot start without.
-///
 /// What goes into the payload belongs to the host — an in-app knows its operation, a block
 /// knows its configuration entry — so this handler only decides *when* to answer, never *with
 /// what*.

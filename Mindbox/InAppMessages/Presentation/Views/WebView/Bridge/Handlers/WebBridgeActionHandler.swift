@@ -21,11 +21,8 @@ protocol WebBridgeActionHandler: AnyObject {
     var actions: Set<BridgeMessage.Action> { get }
 
     /// Main thread. `message.type` is always `.request`, and its action is always one of
-    /// `actions`.
-    ///
-    /// An action that is `isDeferred` must answer exactly once through `host`. One that is not
-    /// must not answer at all: `RequestMessageHandler` has already sent `{success: true}` for it,
-    /// and a second answer would arrive against an id JS has closed.
+    /// `actions`. Answers exactly once through `host`, unless it hands the question on to a host
+    /// that drops it (see ``WebBridgeInappRequestHosting``).
     func handle(_ message: BridgeMessage, host: WebBridgeHost)
 
     /// The session is over — the page is going away, or it asked to be closed. Whatever holds
@@ -39,7 +36,7 @@ extension WebBridgeActionHandler {
     func tearDown() {}
 }
 
-/// Routes a bridge request to whoever owns its action.
+/// Routes a bridge request to whoever owns its action, and refuses one nobody owns.
 ///
 /// One registry per bridge session, built from handler instances of that same session: several
 /// handlers keep state that belongs to one page — a prepared haptic engine, a motion
@@ -70,10 +67,10 @@ final class WebBridgeActionRegistry {
         }
     }
 
-    /// - Returns: `false` when no handler owns the action. Not an error in itself — the web
-    ///   vocabulary is allowed to be newer than the SDK — so how loudly to report it is the
-    ///   caller's call. Anything that is not a request is reported as handled: it was never a
-    ///   handler's to answer.
+    /// - Returns: `false` when the action is outside the vocabulary. Not an error in itself — the
+    ///   web vocabulary is allowed to be newer than the SDK, and the dispatcher has already refused
+    ///   it — so how loudly to report it is the caller's call. Anything that is not a request is
+    ///   reported as handled: it was never a handler's to answer.
     @discardableResult
     func handle(_ message: BridgeMessage, host: WebBridgeHost) -> Bool {
         // Handlers are promised requests only, and it is this door that has to keep the promise:
@@ -82,8 +79,11 @@ final class WebBridgeActionRegistry {
         // action at all — so it is swallowed here rather than reported to the host as one.
         guard message.type == .request else { return true }
 
-        guard let action = message.parsedAction, let owner = owners[action] else {
-            return false
+        guard let action = message.parsedAction else { return false }
+
+        guard let owner = owners[action] else {
+            host.respondError(.notServed, detail: "no handler owns this action", to: message)
+            return true
         }
 
         // The one door for `requiresUserPresence`: a handler that never runs cannot act on a page
