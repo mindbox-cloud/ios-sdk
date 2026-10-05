@@ -223,8 +223,8 @@ extension WebViewController: WebVCDelegate {
         Logger.common(message: "[WebView] WebViewVC closeTimeoutOrErrorWebViewVC", category: .webViewInAppMessages)
         reportErrorAndClose(
             Self.timeoutError(
-                readyCheckGaveUp: transparentWebView?.readyCheckDidGiveUp == true,
                 inAppId: id,
+                readyCheckFailure: transparentWebView?.readyCheckFailure,
                 httpErrorDetail: transparentWebView?.noCacheRetryTelemetryDetail
             )
         )
@@ -235,11 +235,20 @@ extension WebViewController: WebVCDelegate {
     /// "the page never finished loading" (a load defect). `httpErrorDetail` adds the
     /// concrete cause when a script subresource answered with an HTTP error — with it a
     /// poisoned-cache death names the resource and status instead of a generic timeout.
-    static func timeoutError(readyCheckGaveUp: Bool, inAppId: String, httpErrorDetail: String? = nil) -> InAppPresentationError {
+    /// `readyCheckFailure` is the ready check's give-up reason, `nil` while it hasn't given up — one
+    /// value, so the category and the status that explains it can't disagree.
+    static func timeoutError(
+        inAppId: String,
+        readyCheckFailure: String?,
+        httpErrorDetail: String? = nil
+    ) -> InAppPresentationError {
         let suffix = httpErrorDetail.map { " \($0)" } ?? ""
-        return readyCheckGaveUp
-            ? .webviewPresentationFailed("[WebView] JS bridge missing after page load (init timeout) for in-app id \(inAppId).\(suffix)")
-            : .webviewLoadFailed("[WebView] WebView initialization timeout for in-app id \(inAppId).\(suffix)")
+        guard let readyCheckFailure else {
+            return .webviewLoadFailed("[WebView] WebView initialization timeout for in-app id \(inAppId).\(suffix)")
+        }
+        return .webviewPresentationFailed(
+            "[WebView] JS bridge missing after page load (init timeout) for in-app id \(inAppId): \(readyCheckFailure).\(suffix)"
+        )
     }
 
     func closeLoadFailedWebViewVC(reason: String) {
