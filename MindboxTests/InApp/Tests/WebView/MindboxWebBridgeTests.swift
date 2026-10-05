@@ -685,6 +685,7 @@ private final class BridgeForwardingFacade: InappWebViewFacadeProtocol {
     func loadHTML(baseUrl: String, contentUrl: String, onFailure: @escaping () -> Void) {}
     func applyViewSettings(scrollViewDelegate: UIScrollViewDelegate?) {}
     func cleanWebView() {}
+    func endShow() {}
     func makeStartPayload(_ completion: @escaping (JSONValue) -> Void) { completion(.string("{}")) }
     func sendInitDataUpdated(params: [String: JSONValue]) {}
     func sendToJS(_ message: BridgeMessage) { bridge.send(message) }

@@ -1005,6 +1005,60 @@ final class PresentationDisplayUseCaseTests: XCTestCase {
     }
 }
 
+@MainActor
+@Suite("Presentation display use case window slot", .tags(.inAppSchedule))
+struct PresentationDisplayUseCaseSlotTests {
+
+    @Test("A present that fails keeps nothing of the show, so the window it made goes away")
+    func failedPresentKeepsNothingOfTheShow() {
+        weak var madeStrategy: PresentationStrategyMock?
+        let sut = PresentationDisplayUseCase(tracker: InAppMessagesTrackerMock(), dependenciesResolver: { _ in
+            let strategy = PresentationStrategyMock(windowToReturn: UIWindow(), presentResult: false)
+            madeStrategy = strategy
+            return (strategy: strategy, factory: ViewFactoryMock(viewControllerToReturn: UIViewController()))
+        })
+
+        sut.presentInAppUIModel(model: Self.modalInApp(),
+                                onPresented: {},
+                                onTapAction: { _, _ in },
+                                onClose: {},
+                                onError: { _ in })
+
+        #expect(madeStrategy == nil)
+    }
+
+    @Test("Taking a window down ends its show before the window goes, and only once")
+    func dismissEndsTheShowBeforeTheWindowGoes() {
+        var events: [String] = []
+        let strategy = PresentationStrategyMock(windowToReturn: UIWindow(), presentResult: true)
+        strategy.onDismiss = { events.append("dismiss") }
+        let sut = PresentationDisplayUseCase(tracker: InAppMessagesTrackerMock(), dependenciesResolver: { _ in
+            (strategy: strategy, factory: ViewFactoryMock(viewControllerToReturn: EndingShowSpy { events.append("endShow") }))
+        })
+        sut.presentInAppUIModel(model: Self.modalInApp(),
+                                onPresented: {},
+                                onTapAction: { _, _ in },
+                                onClose: {},
+                                onError: { _ in })
+
+        sut.dismissInAppUIModel()
+        sut.dismissInAppUIModel()
+
+        #expect(events == ["endShow", "dismiss"])
+    }
+
+    private static func modalInApp() -> InAppFormData {
+        let modal = ModalFormVariant(content: InappFormVariantContent(background: ContentBackground(layers: []), elements: nil))
+        return InAppFormData(inAppId: "inapp-id",
+                             isPriority: false,
+                             delayTime: nil,
+                             imagesDict: [:],
+                             firstImageValue: "",
+                             content: .modal(modal),
+                             frequency: nil)
+    }
+}
+
 final class SnackbarViewControllerTests: XCTestCase {
     func testLayout_whenImageIsMissing_reportsErrorAndCloses() {
         let model = makeSnackbarModel()
@@ -1090,6 +1144,21 @@ private final class InAppMessagesTrackerMock: InAppMessagesTrackerProtocol {
     func trackTargeting(id: String, tags: [String: String]?) throws {}
 }
 
+private final class EndingShowSpy: UIViewController, InAppShowEnding {
+    private let onEndShow: () -> Void
+
+    init(onEndShow: @escaping () -> Void) {
+        self.onEndShow = onEndShow
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    func endShow() { onEndShow() }
+}
+
 private final class PresentationStrategyMock: PresentationStrategyProtocol {
     var window: UIWindow?
     private let windowToReturn: UIWindow?
@@ -1108,7 +1177,11 @@ private final class PresentationStrategyMock: PresentationStrategyProtocol {
         presentResult
     }
 
-    func dismiss(viewController: UIViewController) {}
+    var onDismiss: (() -> Void)?
+
+    func dismiss(viewController: UIViewController) {
+        onDismiss?()
+    }
 
     func setupWindowFrame(model: MindboxFormVariant, imageSize: CGSize) {}
 }

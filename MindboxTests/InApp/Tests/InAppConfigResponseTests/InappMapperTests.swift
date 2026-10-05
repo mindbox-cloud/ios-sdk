@@ -152,7 +152,6 @@ struct InappRemainingTargetingTests {
 
         await handleInapps(event: nil, config: config)
 
-        #expect(!SessionTemporaryStorage.shared.isPresentingInAppMessage)
         assertTargetingEquals(ids: ["1", "2"])
     }
     
