@@ -23,6 +23,7 @@ final class TransparentView: UIView {
     let tags: [String: String]?
 
     private let actionRegistry: WebBridgeActionRegistry
+    private let inappRequests: InappRequestServing
     private var lastReadyCheckedUrl: String?
     private var readyChecker: WebViewReadyChecker?
     /// True when the page finished loading but the JS bridge never appeared within the
@@ -50,8 +51,10 @@ final class TransparentView: UIView {
          tags: [String: String]?,
          actionRegistry: WebBridgeActionRegistry
          = WebBridgeActionRegistry(handlers: WebBridgeActionHandlerFactory.makeHandlers()),
+         inappRequests: InappRequestServing = InappRequestService(),
          noCacheRetryPolicy: WebViewNoCacheRetryPolicy = WebViewNoCacheRetryPolicy()) {
         self.actionRegistry = actionRegistry
+        self.inappRequests = inappRequests
         self.noCacheRetryPolicy = noCacheRetryPolicy
         self.params = params
         self.operation = operation
@@ -64,6 +67,7 @@ final class TransparentView: UIView {
 
     override init(frame: CGRect) {
         self.actionRegistry = WebBridgeActionRegistry(handlers: WebBridgeActionHandlerFactory.makeHandlers())
+        self.inappRequests = InappRequestService()
         self.noCacheRetryPolicy = WebViewNoCacheRetryPolicy()
         self.params = nil
         self.operation = nil
@@ -76,6 +80,7 @@ final class TransparentView: UIView {
 
     required init?(coder: NSCoder) {
         self.actionRegistry = WebBridgeActionRegistry(handlers: WebBridgeActionHandlerFactory.makeHandlers())
+        self.inappRequests = InappRequestService()
         self.noCacheRetryPolicy = WebViewNoCacheRetryPolicy()
         self.params = nil
         self.operation = nil
@@ -248,6 +253,23 @@ extension TransparentView: WebBridgeLifecycleHosting {
 
     func bridgeDidClick(rawPayload: String) {
         webViewAction?.onCompleted(data: rawPayload)
+    }
+}
+
+// MARK: - WebBridgeInappRequestHosting
+
+extension TransparentView: WebBridgeInappRequestHosting {
+
+    func bridgeDidAskShowableInapps(_ ids: [String], completion: @escaping ([String]) -> Void) {
+        inappRequests.showableInappIds(among: ids, askedBy: inAppId, completion: completion)
+    }
+
+    func bridgeDidRequestShowInApp(id: String,
+                                   params: [String: JSONValue],
+                                   completion: @escaping (Result<Void, BridgeErrorCode>) -> Void) {
+        inappRequests.showInapp(id: id, params: params, proceedIf: { [weak self] in
+            self?.hasEndedBridgeSession == false
+        }, completion: completion)
     }
 }
 

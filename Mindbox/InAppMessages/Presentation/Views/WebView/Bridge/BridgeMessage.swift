@@ -585,7 +585,7 @@ public struct BridgeMessage: Codable {
         ///   ```
         case contentRendered
 
-        /// JS asks to show one in-app from a block's page, by id.
+        /// JS asks to show one in-app by id, from a block's page or an overlay's.
         ///
         /// `params` is forwarded untouched and merged flat into the shown in-app's start payload, where an
         /// incoming key overwrites.

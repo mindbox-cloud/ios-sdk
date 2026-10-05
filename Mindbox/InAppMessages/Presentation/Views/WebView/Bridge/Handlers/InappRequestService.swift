@@ -21,14 +21,22 @@ protocol InappRequestServing: AnyObject {
     func showableInappIds(among ids: [String], askedBy askerInappId: String, completion: @escaping ([String]) -> Void)
 
     /// Deliberately unchecked: the page decided when it drew the in-app. Answers once, on the main thread.
-    func showInapp(id: String, params: [String: JSONValue], completion: @escaping (Result<Void, BridgeErrorCode>) -> Void)
+    func showInapp(id: String,
+                   params: [String: JSONValue],
+                   proceedIf askerIsAlive: @escaping () -> Bool,
+                   completion: @escaping (Result<Void, BridgeErrorCode>) -> Void)
 }
 
 final class InappRequestService: InappRequestServing {
 
+    typealias ShowNow = (InAppFormData,
+                         _ processingDuration: TimeInterval,
+                         _ askerIsAlive: @escaping () -> Bool,
+                         _ completion: @escaping (Result<Void, InappShowNowError>) -> Void) -> Void
+
     private let ask: (_ ids: [String], _ askerInappId: String, _ completion: @escaping ([String]) -> Void) -> Void
     private let fetchInappToShow: (_ id: String, _ params: [String: JSONValue], _ completion: @escaping (InAppFormData?) -> Void) -> Void
-    private let showNow: (InAppFormData, _ processingDuration: TimeInterval, _ completion: @escaping (Result<Void, InAppPresentationError>) -> Void) -> Void
+    private let showNow: ShowNow
     private let configIsKnown: () -> Bool
     private let now: () -> TimeInterval
 
@@ -36,7 +44,7 @@ final class InappRequestService: InappRequestServing {
 
     init(ask: ((_ ids: [String], _ askerInappId: String, _ completion: @escaping ([String]) -> Void) -> Void)? = nil,
          fetchInappToShow: ((_ id: String, _ params: [String: JSONValue], _ completion: @escaping (InAppFormData?) -> Void) -> Void)? = nil,
-         showNow: ((InAppFormData, _ processingDuration: TimeInterval, _ completion: @escaping (Result<Void, InAppPresentationError>) -> Void) -> Void)? = nil,
+         showNow: ShowNow? = nil,
          hasConfig: (() -> Bool)? = nil,
          now: @escaping () -> TimeInterval = { CACurrentMediaTime() }) {
         self.now = now
@@ -49,12 +57,18 @@ final class InappRequestService: InappRequestServing {
         self.fetchInappToShow = fetchInappToShow ?? { id, params, completion in
             DI.injectOrFail(InAppConfigurationManagerProtocol.self).getInAppToShowById(id, params: params, completion)
         }
-        self.showNow = showNow ?? { formData, processingDuration, completion in
-            DI.injectOrFail(InappScheduleManagerProtocol.self).showInAppNow(formData, processingDuration: processingDuration, completion: completion)
+        self.showNow = showNow ?? { formData, processingDuration, askerIsAlive, completion in
+            DI.injectOrFail(InappScheduleManagerProtocol.self).showInAppNow(formData,
+                                                                            processingDuration: processingDuration,
+                                                                            proceedIf: askerIsAlive,
+                                                                            completion: completion)
         }
     }
 
-    func showInapp(id: String, params: [String: JSONValue], completion: @escaping (Result<Void, BridgeErrorCode>) -> Void) {
+    func showInapp(id: String,
+                   params: [String: JSONValue],
+                   proceedIf askerIsAlive: @escaping () -> Bool,
+                   completion: @escaping (Result<Void, BridgeErrorCode>) -> Void) {
         // The tap is the trigger: the fetch and the form build count into timeToDisplay, on the overlay pass's clock.
         let tappedAt = now()
         let answer = Self.onTheMainThread(completion)
@@ -62,14 +76,14 @@ final class InappRequestService: InappRequestServing {
             let processingDuration = now() - tappedAt
 
             guard let formData = formData else {
-                Logger.common(message: "[EmbeddedBlock] Nothing to show for in-app \(id)",
-                              level: .error, category: .embeddedBlocks)
+                Logger.common(message: "[InappRequestService] Nothing to show for in-app \(id)",
+                              level: .error, category: .inAppMessages)
                 answer(.failure(.unknownInapp))
                 return
             }
 
-            showNow(formData, processingDuration) { outcome in
-                answer(outcome.mapError { _ in .showFailed })
+            showNow(formData, processingDuration, askerIsAlive) { outcome in
+                answer(outcome.mapError(\.bridgeErrorCode))
             }
         }
     }
@@ -91,6 +105,17 @@ final class InappRequestService: InappRequestServing {
             }
 
             deliver(answer)
+        }
+    }
+}
+
+private extension InappShowNowError {
+    var bridgeErrorCode: BridgeErrorCode {
+        switch self {
+        case .askerLeft:
+            return .notVisible
+        case .presentationFailed:
+            return .showFailed
         }
     }
 }
