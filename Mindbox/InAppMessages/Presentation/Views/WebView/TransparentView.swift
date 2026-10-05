@@ -132,11 +132,15 @@ final class TransparentView: UIView {
         actionRegistry.tearDown()
     }
 
+    func endShow() {
+        endBridgeSession()
+        captureObservedResourceHosts()
+        facade?.endShow()
+    }
+
     /// Persists the hosts this show's resources actually came from so the next launch's
-    /// prewarm can preconnect to them. Called from `viewWillDisappear`, which every
-    /// dismissal path (close action, dim-tap, timeout) goes through while the page is still
-    /// alive; the once-flag is a cheap guard against a repeated disappear.
-    func captureObservedResourceHosts() {
+    /// prewarm can preconnect to them.
+    private func captureObservedResourceHosts() {
         guard !hasCapturedObservedHosts else { return }
         hasCapturedObservedHosts = true
         facade?.evaluateJavaScript(InAppWebViewPrewarmPlanner.observedHostsScript) { result in

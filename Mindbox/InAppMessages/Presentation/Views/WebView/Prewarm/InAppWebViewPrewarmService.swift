@@ -31,6 +31,9 @@ protocol InAppWebViewPrewarmServiceProtocol: AnyObject {
     /// the closed in-app's JS stops running hidden, keeping the process warm for the next show.
     func parkWarmWebView()
 
+    /// Takes the lent instance back at once, so the next show can borrow it in the same turn.
+    func returnWarmWebView(_ webView: WKWebView)
+
     /// Called by a show when its page is done: persists the observed resource hosts for
     /// the next launch's preconnect.
     func rememberObservedHosts(_ hosts: [String])
@@ -179,8 +182,6 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
         // don't keep the page HTML reachable for the rest of the process.
         lastPrewarmContentPage = nil
         guard let webView = warmWebView else { return nil }
-        // Presentation is serialized upstream, but that flag has known races — never let
-        // a second show steal the instance out of an on-screen in-app.
         guard !isLentToShow else { return nil }
         // Never hand out an instance mid-navigation: the show's load would land on a
         // half-committed document and its didFinish can fire before the page's module
@@ -211,19 +212,35 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
             }
             // Only park an instance no live show is presenting (a newer show may have
             // borrowed it before this teardown arrived).
-            guard webView.superview == nil else { return }
-            self.isLentToShow = false
-            // Fully detach the finished show: WKUserContentController retains its script
-            // handlers, so the previous show's bridge would otherwise stay on the
-            // parked instance until the next show replaces it.
-            if #available(iOS 14.0, *) {
-                webView.configuration.userContentController.removeAllScriptMessageHandlers()
-            } else {
-                webView.configuration.userContentController.removeScriptMessageHandler(forName: Constants.WebViewBridgeJS.handlerName)
-                webView.configuration.userContentController.removeScriptMessageHandler(forName: Constants.WebViewHTTPErrorJS.handlerName)
-            }
-            self.loadBlank(on: webView)
+            guard self.isLentToShow, webView.superview == nil else { return }
+            self.park(webView)
         }
+    }
+
+    func returnWarmWebView(_ webView: WKWebView) {
+        guard Thread.isMainThread else {
+            Logger.common(message: "[WebView] Prewarm: returnWarmWebView() called off the main thread — ignoring",
+                          level: .error, category: .webViewInAppMessages)
+            return
+        }
+        guard isLentToShow, webView === warmWebView else { return }
+
+        park(webView)
+    }
+
+    private func park(_ webView: WKWebView) {
+        webView.removeFromSuperview()
+        isLentToShow = false
+        // Fully detach the finished show: WKUserContentController retains its script
+        // handlers, so the previous show's bridge would otherwise stay on the
+        // parked instance until the next show replaces it.
+        if #available(iOS 14.0, *) {
+            webView.configuration.userContentController.removeAllScriptMessageHandlers()
+        } else {
+            webView.configuration.userContentController.removeScriptMessageHandler(forName: Constants.WebViewBridgeJS.handlerName)
+            webView.configuration.userContentController.removeScriptMessageHandler(forName: Constants.WebViewHTTPErrorJS.handlerName)
+        }
+        loadBlank(on: webView)
     }
 
     func rememberObservedHosts(_ hosts: [String]) {

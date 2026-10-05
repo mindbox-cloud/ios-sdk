@@ -16,6 +16,7 @@ public protocol InappWebViewFacadeProtocol: AnyObject {
     func loadHTML(baseUrl: String, contentUrl: String, onFailure: @escaping () -> Void)
     func applyViewSettings(scrollViewDelegate: UIScrollViewDelegate?)
     func cleanWebView()
+    func endShow()
 
     func makeStartPayload(_ completion: @escaping (JSONValue) -> Void)
 
@@ -41,6 +42,7 @@ public final class MindboxWebViewFacade: InappWebViewFacadeProtocol {
 
     private let webView: WKWebView
     private let bridge: MindboxWebBridge
+    private let warmWebViewLender: InAppWebViewPrewarmServiceProtocol?
 
     /// Main-confined, like every other send on this facade.
     private var params: [String: JSONValue]?
@@ -65,28 +67,43 @@ public final class MindboxWebViewFacade: InappWebViewFacadeProtocol {
     private var retainedContentHTML: String?
     private var retainedContentBaseURL: URL?
 
-    public init(params: [String: JSONValue]?,
-                operation: (name: String, body: String)? = nil,
-                userAgent: String,
-                inAppId: String = "",
-                mayBorrowWarmWebView: Bool = true,
-                log: @escaping WebViewLog = { _ in },
-                logError: @escaping WebViewLogError = { _ in }) {
+    public convenience init(params: [String: JSONValue]?,
+                            operation: (name: String, body: String)? = nil,
+                            userAgent: String,
+                            inAppId: String = "",
+                            mayBorrowWarmWebView: Bool = true,
+                            log: @escaping WebViewLog = { _ in },
+                            logError: @escaping WebViewLogError = { _ in }) {
+        self.init(params: params,
+                  operation: operation,
+                  userAgent: userAgent,
+                  inAppId: inAppId,
+                  prewarmService: mayBorrowWarmWebView ? DI.injectOrFail(InAppWebViewPrewarmServiceProtocol.self) : nil,
+                  log: log,
+                  logError: logError)
+    }
+
+    init(params: [String: JSONValue]?,
+         operation: (name: String, body: String)?,
+         userAgent: String,
+         inAppId: String,
+         prewarmService: InAppWebViewPrewarmServiceProtocol?,
+         log: @escaping WebViewLog,
+         logError: @escaping WebViewLogError) {
         // Borrow the prewarmed live instance when available (kept across shows — hidden,
         // not destroyed); otherwise create one on the same shared data store so cached
         // resources stay visible either way. A warm instance can only serve a caller that
         // wants the stock UA: its applicationNameForUserAgent was baked at prewarm
         // creation and cannot change on a live WKWebView.
-        //
-        // A surface opts out when it would hold the instance instead of passing it on: a block
-        // lives as long as its screen, so borrowing would cost every later in-app its head start.
         let webView: WKWebView
-        if mayBorrowWarmWebView,
+        if let prewarmService,
            userAgent == SDKUserAgent.build(),
-           let warm = DI.injectOrFail(InAppWebViewPrewarmServiceProtocol.self).borrowWarmWebView() {
+           let warm = prewarmService.borrowWarmWebView() {
             webView = warm
+            warmWebViewLender = prewarmService
         } else {
             webView = InAppWebViewFactory.make(userAgent: userAgent)
+            warmWebViewLender = nil
         }
         let bridge = MindboxWebBridge(webView: webView)
 
@@ -156,11 +173,23 @@ public final class MindboxWebViewFacade: InappWebViewFacadeProtocol {
 
     public func cleanWebView() {
         DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
+            guard let self, !self.isClosed else { return }
             self.isClosed = true
             self.fetchTask?.cancel()
             self.fetchTask = nil
             self.webView.stopLoading()
+        }
+    }
+
+    public func endShow() {
+        guard !isClosed else { return }
+        isClosed = true
+        fetchTask?.cancel()
+        fetchTask = nil
+        if let warmWebViewLender {
+            warmWebViewLender.returnWarmWebView(webView)
+        } else {
+            webView.stopLoading()
         }
     }
     
@@ -199,28 +228,34 @@ public final class MindboxWebViewFacade: InappWebViewFacadeProtocol {
     }
 
     public func sendToJS(_ message: BridgeMessage) {
+        guard !isClosed else { return }
         bridge.send(message)
     }
 
     public func evaluateJavaScript(_ script: String, completion: @escaping (Result<Any?, Error>) -> Void) {
-        DispatchQueue.main.async { [weak webView] in
-            guard let webView else {
+        let evaluate = { [weak self] in
+            guard let self, !self.isClosed else {
                 let error = MindboxError.internalError(
                     InternalError(
                         errorKey: .general,
-                        reason: "WebView was deallocated before JavaScript execution"
+                        reason: "WebView page was closed before JavaScript execution"
                     )
                 )
                 completion(.failure(error))
                 return
             }
-            webView.evaluateJavaScript(script) { result, error in
+            self.webView.evaluateJavaScript(script) { result, error in
                 if let error {
                     completion(.failure(error))
                 } else {
                     completion(.success(result))
                 }
             }
+        }
+        if Thread.isMainThread {
+            evaluate()
+        } else {
+            DispatchQueue.main.async(execute: evaluate)
         }
     }
     
