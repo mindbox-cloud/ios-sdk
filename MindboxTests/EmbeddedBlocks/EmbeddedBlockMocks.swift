@@ -427,12 +427,17 @@ final class InappRequestServiceMock: InappRequestServing {
     private(set) var askedIds: [[String]] = []
     private(set) var askedBy: [String] = []
     private(set) var shown: [(id: String, params: [String: JSONValue])] = []
+    private(set) var askerChecks: [() -> Bool] = []
 
     private var pending: [([String]) -> Void] = []
     private var showCompletions: [(Result<Void, BridgeErrorCode>) -> Void] = []
 
-    func showInapp(id: String, params: [String: JSONValue], completion: @escaping (Result<Void, BridgeErrorCode>) -> Void) {
+    func showInapp(id: String,
+                   params: [String: JSONValue],
+                   proceedIf askerIsAlive: @escaping () -> Bool,
+                   completion: @escaping (Result<Void, BridgeErrorCode>) -> Void) {
         shown.append((id, params))
+        askerChecks.append(askerIsAlive)
         showCompletions.append(completion)
     }
 

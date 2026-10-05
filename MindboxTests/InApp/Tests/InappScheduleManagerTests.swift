@@ -510,7 +510,7 @@ struct InappScheduleManagerTests {
     private func showNowAndAwaitMainQueue(_ manager: InappScheduleManager,
                                           _ inapp: InAppFormData,
                                           processingDuration: TimeInterval = 0) async {
-        manager.showInAppNow(inapp, processingDuration: processingDuration) { _ in }
+        manager.showInAppNow(inapp, processingDuration: processingDuration, proceedIf: { true }) { _ in }
         await awaitMainQueue()
     }
 
@@ -642,9 +642,9 @@ struct InappScheduleManagerTests {
     func showInAppNow_answersSuccessWhenPresented() async {
         let manager = makeSpiedManager(tracker: InAppMessagesTrackerSpyMock())
         let inapp = createInAppFormData(id: "direct-answered", isPriority: false, delayTime: nil)
-        var outcomes: [Result<Void, InAppPresentationError>] = []
+        var outcomes: [Result<Void, InappShowNowError>] = []
 
-        manager.showInAppNow(inapp, processingDuration: 0) { outcomes.append($0) }
+        manager.showInAppNow(inapp, processingDuration: 0, proceedIf: { true }) { outcomes.append($0) }
         await awaitMainQueue()
         #expect(outcomes.isEmpty)
 
@@ -660,16 +660,16 @@ struct InappScheduleManagerTests {
     func showInAppNow_answersTheErrorWhenFailed() async {
         let manager = makeSpiedManager(tracker: InAppMessagesTrackerSpyMock())
         let inapp = createInAppFormData(id: "direct-failed", isPriority: false, delayTime: nil)
-        var outcomes: [Result<Void, InAppPresentationError>] = []
+        var outcomes: [Result<Void, InappShowNowError>] = []
 
-        manager.showInAppNow(inapp, processingDuration: 0) { outcomes.append($0) }
+        manager.showInAppNow(inapp, processingDuration: 0, proceedIf: { true }) { outcomes.append($0) }
         await awaitMainQueue()
 
         presentationManagerMock.receivedOnError?(.failed("no window"))
         presentationManagerMock.receivedOnError?(.failed("again"))
 
         #expect(outcomes.count == 1)
-        if case .failure(.failed("no window")) = outcomes.first {} else {
+        if case .failure(.presentationFailed(.failed("no window"))) = outcomes.first {} else {
             Issue.record("Expected the first presentation error, got \(String(describing: outcomes.first))")
         }
     }
@@ -678,9 +678,9 @@ struct InappScheduleManagerTests {
     func showInAppNow_errorAfterPresented_answersOnce() async {
         let manager = makeSpiedManager(tracker: InAppMessagesTrackerSpyMock())
         let inapp = createInAppFormData(id: "direct-late-error", isPriority: false, delayTime: nil)
-        var outcomes: [Result<Void, InAppPresentationError>] = []
+        var outcomes: [Result<Void, InappShowNowError>] = []
 
-        manager.showInAppNow(inapp, processingDuration: 0) { outcomes.append($0) }
+        manager.showInAppNow(inapp, processingDuration: 0, proceedIf: { true }) { outcomes.append($0) }
         await awaitMainQueue()
 
         presentationManagerMock.receivedOnPresent?()
@@ -695,9 +695,9 @@ struct InappScheduleManagerTests {
         let trackerSpy = InAppMessagesTrackerSpyMock()
         let manager = makeSpiedManager(tracker: trackerSpy)
         let inapp = createInAppFormData(id: "direct-twice", isPriority: false, delayTime: nil)
-        var outcomes: [Result<Void, InAppPresentationError>] = []
+        var outcomes: [Result<Void, InappShowNowError>] = []
 
-        manager.showInAppNow(inapp, processingDuration: 0) { outcomes.append($0) }
+        manager.showInAppNow(inapp, processingDuration: 0, proceedIf: { true }) { outcomes.append($0) }
         await awaitMainQueue()
 
         presentationManagerMock.receivedOnPresent?()
@@ -712,9 +712,9 @@ struct InappScheduleManagerTests {
     func showInAppNow_closedBeforePresented_answersWithAnError() async {
         let manager = makeSpiedManager(tracker: InAppMessagesTrackerSpyMock())
         let inapp = createInAppFormData(id: "direct-closed", isPriority: false, delayTime: nil)
-        var outcomes: [Result<Void, InAppPresentationError>] = []
+        var outcomes: [Result<Void, InappShowNowError>] = []
 
-        manager.showInAppNow(inapp, processingDuration: 0) { outcomes.append($0) }
+        manager.showInAppNow(inapp, processingDuration: 0, proceedIf: { true }) { outcomes.append($0) }
         await awaitMainQueue()
 
         presentationManagerMock.receivedOnPresentationCompleted?(false)
@@ -730,8 +730,8 @@ struct InappScheduleManagerTests {
     @Test("A show on request that closes a loading show answers that show's request with an error", .tags(.inAppSchedule))
     func showInAppNow_closingALoadingShow_answersItsRequest() async {
         let manager = makeSpiedManager(tracker: InAppMessagesTrackerSpyMock())
-        var firstOutcomes: [Result<Void, InAppPresentationError>] = []
-        manager.showInAppNow(createInAppFormData(id: "first", isPriority: false, delayTime: nil), processingDuration: 0) {
+        var firstOutcomes: [Result<Void, InappShowNowError>] = []
+        manager.showInAppNow(createInAppFormData(id: "first", isPriority: false, delayTime: nil), processingDuration: 0, proceedIf: { true }) {
             firstOutcomes.append($0)
         }
         await awaitMainQueue()
@@ -752,13 +752,13 @@ struct InappScheduleManagerTests {
         let display = PresentationDisplaySpy()
         let delegate = DelegateSpy()
         let manager = makeManagerOnRealPresentation(display, delegate: delegate)
-        var firstOutcomes: [Result<Void, InAppPresentationError>] = []
-        var secondOutcomes: [Result<Void, InAppPresentationError>] = []
+        var firstOutcomes: [Result<Void, InappShowNowError>] = []
+        var secondOutcomes: [Result<Void, InappShowNowError>] = []
 
-        manager.showInAppNow(createInAppFormData(id: "first", isPriority: false, delayTime: nil), processingDuration: 0) {
+        manager.showInAppNow(createInAppFormData(id: "first", isPriority: false, delayTime: nil), processingDuration: 0, proceedIf: { true }) {
             firstOutcomes.append($0)
         }
-        manager.showInAppNow(createInAppFormData(id: "second", isPriority: false, delayTime: nil), processingDuration: 0) {
+        manager.showInAppNow(createInAppFormData(id: "second", isPriority: false, delayTime: nil), processingDuration: 0, proceedIf: { true }) {
             secondOutcomes.append($0)
         }
         await awaitMainQueue(turns: 2)
@@ -787,12 +787,43 @@ struct InappScheduleManagerTests {
         let delegate = DelegateSpy()
         let manager = makeManagerOnRealPresentation(display, delegate: delegate)
 
-        manager.showInAppNow(createInAppFormData(id: "story", isPriority: false, delayTime: nil), processingDuration: 0) { _ in }
+        manager.showInAppNow(createInAppFormData(id: "story", isPriority: false, delayTime: nil), processingDuration: 0, proceedIf: { true }) { _ in }
         let presentCountOnTheNextBlock = await withCheckedContinuation { continuation in
             DispatchQueue.main.async { continuation.resume(returning: display.presentCount) }
         }
 
         #expect(presentCountOnTheNextBlock == 1)
+        await closeWhatIsOnScreen(display)
+    }
+
+    @Test("A show on request whose asker is gone by the main-queue step leaves the in-app on screen and answers askerLeft",
+          .tags(.inAppSchedule))
+    @MainActor
+    func showInAppNow_askerGoneByTheMainStep_leavesTheScreenAlone() async {
+        let display = PresentationDisplaySpy()
+        let delegate = DelegateSpy()
+        let manager = makeManagerOnRealPresentation(display, delegate: delegate)
+        manager.showInAppNow(createInAppFormData(id: "current", isPriority: false, delayTime: nil), processingDuration: 0, proceedIf: { true }) { _ in }
+        await awaitMainQueue()
+        display.receivedOnPresented?()
+        var isAskerAlive = true
+        var outcomes: [Result<Void, InappShowNowError>] = []
+
+        manager.showInAppNow(createInAppFormData(id: "next", isPriority: false, delayTime: nil), processingDuration: 0, proceedIf: { isAskerAlive }) {
+            outcomes.append($0)
+        }
+        isAskerAlive = false
+        await awaitMainQueue()
+
+        #expect(display.onScreen == "current")
+        #expect(display.presentCount == 1)
+        #expect(display.dismissCount == 0)
+        #expect(delegate.dismissedIds.isEmpty)
+        #expect(failureManagerMock.sentFailures.isEmpty)
+        #expect(outcomes.count == 1)
+        if case .failure(.askerLeft) = outcomes.first {} else {
+            Issue.record("Expected askerLeft, got \(String(describing: outcomes.first))")
+        }
         await closeWhatIsOnScreen(display)
     }
 
@@ -829,7 +860,7 @@ struct InappScheduleManagerTests {
         #expect(display.onScreen == "trigger")
         #expect(SessionTemporaryStorage.shared.showBudget.reservations[.overlay("trigger")] != nil)
 
-        manager.showInAppNow(createInAppFormData(id: "story", isPriority: false, delayTime: nil), processingDuration: 0) { _ in }
+        manager.showInAppNow(createInAppFormData(id: "story", isPriority: false, delayTime: nil), processingDuration: 0, proceedIf: { true }) { _ in }
         await awaitMainQueue(turns: 2)
 
         #expect(display.onScreen == "story")

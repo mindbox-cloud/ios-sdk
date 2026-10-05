@@ -547,6 +547,87 @@ struct MindboxWebBridgeAnswerTests {
         #expect(envelope["payload"] as? String == #"{"success":true}"#)
     }
 
+    @Test("The overlay's page gets the selection's answer to which in-apps may show, asked as the overlay's own in-app")
+    func overlayPageGetsTheSelectionsAnswer() throws {
+        let bed = AnswerBed(.overlay, handlers: [FilterShowableInappsActionHandler()])
+        bed.inappRequests.allowed = ["story-2"]
+        let message = BridgeMessage.request(.filterShowableInapps, payload: .object(["inappIds": .array([.string("story-2"), .string("story-3")])]))
+
+        try bed.post(message)
+
+        #expect(bed.inappRequests.askedIds == [["story-2", "story-3"]])
+        #expect(bed.inappRequests.askedBy == ["inapp-1"])
+        let envelope = try #require(bed.sentEnvelopes().first)
+        #expect(envelope["type"] as? String == "response")
+        #expect(bed.payloadObject(of: envelope)?["inappIds"] as? [String] == ["story-2"])
+    }
+
+    @Test("A show the overlay's page asked for and the SDK refused reaches that page, and the overlay stays open")
+    func overlayShowRefusalReachesThePage() throws {
+        let bed = AnswerBed(.overlay, handlers: [ShowInAppActionHandler()])
+        let message = BridgeMessage.request(.showInApp, payload: .object(["inappId": .string("story-2"),
+                                                                          "params": .object(["slide": .string("2")])]))
+
+        try bed.post(message)
+        bed.inappRequests.finishShow(.failure(.unknownInapp))
+
+        #expect(bed.inappRequests.shown.map(\.id) == ["story-2"])
+        #expect(bed.inappRequests.shown.first?.params == ["slide": .string("2")])
+        let envelope = try #require(bed.sentEnvelopes().first)
+        #expect(envelope["type"] as? String == "error")
+        #expect(envelope["payload"] as? String == #"{"error":"unknown_inapp"}"#)
+        #expect(bed.show.events.isEmpty)
+    }
+
+    enum OverlayExit: CaseIterable {
+        case closedByItsPage
+        case endedBySDK
+    }
+
+    @Test("A show the overlay's page asked for may start only while that page is open, and a closed page hears nothing back",
+          arguments: OverlayExit.allCases)
+    func overlayShowMayStartOnlyWhileItsPageIsOpen(exit: OverlayExit) throws {
+        let bed = AnswerBed(.overlay, handlers: [ShowInAppActionHandler(), LifecycleActionHandler()])
+        try bed.post(BridgeMessage.request(.showInApp, payload: .object(["inappId": .string("story-2")])))
+        let askerIsAlive = try #require(bed.inappRequests.askerChecks.first)
+        #expect(askerIsAlive())
+
+        switch exit {
+        case .closedByItsPage:
+            try bed.post(BridgeMessage.request(.close))
+        case .endedBySDK:
+            bed.overlay?.endShow()
+        }
+        let sentBeforeTheAnswer = bed.sentEnvelopes().count
+        bed.inappRequests.finishShow(.success(()))
+
+        #expect(!askerIsAlive())
+        #expect(bed.sentEnvelopes().count == sentBeforeTheAnswer)
+    }
+
+    @Test("A show the overlay's page asked for does not start once that overlay is gone")
+    func overlayShowDoesNotStartOnceTheOverlayIsGone() throws {
+        let inappRequests = InappRequestServiceMock()
+        weak var released: TransparentView?
+
+        autoreleasepool {
+            let overlay = TransparentView(frame: .zero,
+                                          params: [:],
+                                          userAgent: "",
+                                          operation: nil,
+                                          inAppId: "inapp-1",
+                                          tags: nil,
+                                          actionRegistry: WebBridgeActionRegistry(handlers: []),
+                                          inappRequests: inappRequests)
+            overlay.bridgeDidRequestShowInApp(id: "story-2", params: [:]) { _ in }
+            released = overlay
+        }
+
+        try #require(released == nil)
+        let askerIsAlive = try #require(inappRequests.askerChecks.first)
+        #expect(!askerIsAlive())
+    }
+
     private static func answerlessHandlers() -> [WebBridgeActionHandler] {
         let opener = URLOpenerSpy()
         opener.result = true
@@ -591,6 +672,7 @@ private final class AnswerBed {
 
     let bridge: MindboxWebBridge
     let show = ShowControllerSpy()
+    let inappRequests = InappRequestServiceMock()
     private(set) var dataPushConfirmations = 0
 
     private let webView: EvaluationSpyWebView
@@ -615,7 +697,8 @@ private final class AnswerBed {
                                        operation: nil,
                                        inAppId: "inapp-1",
                                        tags: nil,
-                                       actionRegistry: registry)
+                                       actionRegistry: registry,
+                                       inappRequests: inappRequests)
             view.facade = facade
             view.webPageRegistry = MindboxWebPageRegistry()
             view.delegate = show

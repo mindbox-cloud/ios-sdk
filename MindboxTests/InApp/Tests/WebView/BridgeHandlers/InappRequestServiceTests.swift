@@ -67,10 +67,10 @@ struct InappRequestServiceTests {
                 fetched.append((id, params))
                 completion(Self.formData(id: id))
             },
-            showNow: { formData, _, _ in shown.append(formData.inAppId) }
+            showNow: { formData, _, _, _ in shown.append(formData.inAppId) }
         )
 
-        service.showInapp(id: "story-1", params: ["formId": .string("160477")]) { _ in }
+        service.showInapp(id: "story-1", params: ["formId": .string("160477")], proceedIf: { true }) { _ in }
 
         #expect(fetched.map(\.id) == ["story-1"])
         #expect(fetched.map(\.params) == [["formId": .string("160477")]])
@@ -83,11 +83,11 @@ struct InappRequestServiceTests {
         var durations: [TimeInterval] = []
         let service = InappRequestService(
             fetchInappToShow: { id, _, completion in completion(Self.formData(id: id)) },
-            showNow: { _, processingDuration, _ in durations.append(processingDuration) },
+            showNow: { _, processingDuration, _, _ in durations.append(processingDuration) },
             now: { ticks.removeFirst() }
         )
 
-        service.showInapp(id: "story-1", params: [:]) { _ in }
+        service.showInapp(id: "story-1", params: [:], proceedIf: { true }) { _ in }
 
         #expect(durations == [0.25])
     }
@@ -98,10 +98,10 @@ struct InappRequestServiceTests {
         var outcomes: [Result<Void, BridgeErrorCode>] = []
         let service = InappRequestService(
             fetchInappToShow: { _, _, completion in completion(nil) },
-            showNow: { _, _, _ in shownCount += 1 }
+            showNow: { _, _, _, _ in shownCount += 1 }
         )
 
-        service.showInapp(id: "story-1", params: [:]) { outcomes.append($0) }
+        service.showInapp(id: "story-1", params: [:], proceedIf: { true }) { outcomes.append($0) }
 
         #expect(shownCount == 0)
         #expect(outcomes.map(\.isSuccess) == [false])
@@ -113,10 +113,10 @@ struct InappRequestServiceTests {
         var outcomes: [Result<Void, BridgeErrorCode>] = []
         let service = InappRequestService(
             fetchInappToShow: { id, _, completion in completion(Self.formData(id: id)) },
-            showNow: { _, _, completion in completion(.success(())) }
+            showNow: { _, _, _, completion in completion(.success(())) }
         )
 
-        service.showInapp(id: "story-1", params: [:]) { outcomes.append($0) }
+        service.showInapp(id: "story-1", params: [:], proceedIf: { true }) { outcomes.append($0) }
 
         #expect(outcomes.map(\.isSuccess) == [true])
     }
@@ -126,12 +126,75 @@ struct InappRequestServiceTests {
         var outcomes: [Result<Void, BridgeErrorCode>] = []
         let service = InappRequestService(
             fetchInappToShow: { id, _, completion in completion(Self.formData(id: id)) },
-            showNow: { _, _, completion in completion(.failure(.failedToLoadWindow)) }
+            showNow: { _, _, _, completion in completion(.failure(.presentationFailed(.failedToLoadWindow))) }
         )
 
-        service.showInapp(id: "story-1", params: [:]) { outcomes.append($0) }
+        service.showInapp(id: "story-1", params: [:], proceedIf: { true }) { outcomes.append($0) }
 
         #expect(outcomes.first?.refusal == .showFailed)
+    }
+
+    @Test("A show whose asker was gone by the time it would start answers not_visible")
+    func showWithTheAskerGoneAnswersNotVisible() {
+        var outcomes: [Result<Void, BridgeErrorCode>] = []
+        let service = InappRequestService(
+            fetchInappToShow: { id, _, completion in completion(Self.formData(id: id)) },
+            showNow: { _, _, _, completion in completion(.failure(.askerLeft)) }
+        )
+
+        service.showInapp(id: "story-1", params: [:], proceedIf: { true }) { outcomes.append($0) }
+
+        #expect(outcomes.first?.refusal == .notVisible)
+    }
+
+    @Test("The asker's own check reaches the scheduler, asked when the scheduler asks it")
+    func askerCheckReachesTheScheduler() {
+        var handedChecks: [() -> Bool] = []
+        let service = InappRequestService(
+            fetchInappToShow: { id, _, completion in completion(Self.formData(id: id)) },
+            showNow: { _, _, askerIsAlive, _ in handedChecks.append(askerIsAlive) }
+        )
+        var isAskerAlive = true
+
+        service.showInapp(id: "story-1", params: [:], proceedIf: { isAskerAlive }) { _ in }
+
+        #expect(handedChecks.map { $0() } == [true])
+        isAskerAlive = false
+        #expect(handedChecks.map { $0() } == [false])
+    }
+
+    @Test("A tap shown through the scheduler from the container hands it the asker's own check")
+    func containerSchedulerGetsTheAskersCheck() throws {
+        let scheduler = SchedulerSpy()
+        try withScheduler(scheduler) {
+            let service = InappRequestService(fetchInappToShow: { id, _, completion in completion(Self.formData(id: id)) })
+            var isAskerAlive = true
+
+            service.showInapp(id: "story-1", params: [:], proceedIf: { isAskerAlive }) { _ in }
+
+            let handedCheck = try #require(scheduler.askerChecks.first)
+            #expect(handedCheck())
+            isAskerAlive = false
+            #expect(!handedCheck())
+        }
+    }
+
+    /// The default show path reaches the scheduler through DI, which is process-global: restored after the body.
+    private func withScheduler(_ scheduler: InappScheduleManagerProtocol, _ body: () throws -> Void) rethrows {
+        let savedBuilder = MBInject.buildTestContainer
+        let savedMode = MBInject.mode
+        defer {
+            MBInject.buildTestContainer = savedBuilder
+            MBInject.mode = savedMode
+        }
+        MBInject.buildTestContainer = {
+            let container = MBContainer()
+            container.register(InappScheduleManagerProtocol.self) { scheduler }
+            return container
+        }
+        MBInject.mode = .test
+
+        try body()
     }
 
     private static func formData(id: String) -> InAppFormData {
@@ -167,7 +230,7 @@ struct InappRequestServiceTests {
         })
 
         let deliveredOnMainThread: Bool = await withCheckedContinuation { continuation in
-            service.showInapp(id: "story-1", params: [:]) { _ in
+            service.showInapp(id: "story-1", params: [:], proceedIf: { true }) { _ in
                 continuation.resume(returning: Thread.isMainThread)
             }
         }
@@ -250,5 +313,19 @@ private extension Result where Success == Void, Failure == BridgeErrorCode {
     var refusal: BridgeErrorCode? {
         if case .failure(let refusal) = self { return refusal }
         return nil
+    }
+}
+
+private final class SchedulerSpy: InappScheduleManagerProtocol {
+    weak var delegate: InAppMessagesDelegate?
+    private(set) var askerChecks: [() -> Bool] = []
+
+    func scheduleInApp(_ inAppFormData: InAppFormData, processingDuration: TimeInterval) {}
+
+    func showInAppNow(_ inAppFormData: InAppFormData,
+                      processingDuration: TimeInterval,
+                      proceedIf askerIsAlive: @escaping () -> Bool,
+                      completion: @escaping (Result<Void, InappShowNowError>) -> Void) {
+        askerChecks.append(askerIsAlive)
     }
 }

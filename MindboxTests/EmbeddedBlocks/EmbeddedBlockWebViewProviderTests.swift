@@ -1186,6 +1186,56 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.inappService.shown.first?.params == params)
     }
 
+    enum BlockExit: CaseIterable {
+        case leftTheScreen
+        case released
+        case reloaded
+        case collapsed
+        case failed
+    }
+
+    @Test("A show the block asked for may start only while that block is still shown", arguments: BlockExit.allCases)
+    func showMayStartOnlyWhileTheAskingBlockIsShown(exit: BlockExit) throws {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.send(.showInApp, ["inappId": .string("story-id")])
+        let askerIsAlive = try #require(bed.inappService.askerChecks.first)
+        #expect(askerIsAlive())
+
+        switch exit {
+        case .leftTheScreen:
+            bed.provider.stop()
+        case .released:
+            bed.provider.teardown()
+        case .reloaded:
+            bed.provider.reload()
+        case .collapsed:
+            bed.page?.reportRendered(0)
+        case .failed:
+            bed.page?.failLoad()
+        }
+
+        #expect(!askerIsAlive())
+    }
+
+    @Test("A show the block asked for does not start once that block is gone")
+    func showDoesNotStartOnceTheAskingBlockIsGone() throws {
+        var inappService: InappRequestServiceMock?
+        weak var released: EmbeddedBlockWebViewProvider?
+
+        autoreleasepool {
+            let bed = EmbeddedBlockTestBed()
+            bed.provider.start()
+            bed.page?.send(.showInApp, ["inappId": .string("story-id")])
+            inappService = bed.inappService
+            released = bed.provider
+        }
+
+        try #require(released == nil)
+        let askerIsAlive = try #require(inappService?.askerChecks.first)
+        #expect(!askerIsAlive())
+    }
+
     @Test("A stopped block's request is refused at the presence gate, before the block hears it")
     func stoppedBlockIsRefusedAtThePresenceGate() {
         let bed = EmbeddedBlockTestBed()
