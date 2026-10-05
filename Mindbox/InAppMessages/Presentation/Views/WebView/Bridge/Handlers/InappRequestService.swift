@@ -1,5 +1,5 @@
 //
-//  EmbeddedBlockInappService.swift
+//  InappRequestService.swift
 //  Mindbox
 //
 //  Created by Sergei Semko on 8/13/26.
@@ -10,23 +10,23 @@ import Foundation
 import QuartzCore
 import MindboxLogger
 
-protocol EmbeddedBlockInappServing: AnyObject {
+protocol InappRequestServing: AnyObject {
 
     /// Whether a config is in hand — what a never-answered block reports it was waiting on.
     var hasConfig: Bool { get }
 
-    /// Which of `ids` the page of in-app `blockInappId` may draw, targeting checked and fetched like a place
+    /// Which of `ids` the page of in-app `askerInappId` may draw, targeting checked and fetched like a place
     /// resolve; vouches for every targeted id as it answers. The answer mirrors the question — order and duplicates kept.
     /// Answers on the main thread.
-    func showableInappIds(among ids: [String], askedBy blockInappId: String, completion: @escaping ([String]) -> Void)
+    func showableInappIds(among ids: [String], askedBy askerInappId: String, completion: @escaping ([String]) -> Void)
 
     /// Deliberately unchecked: the page decided when it drew the in-app. Answers once, on the main thread.
     func showInapp(id: String, params: [String: JSONValue], completion: @escaping (Result<Void, BridgeErrorCode>) -> Void)
 }
 
-final class EmbeddedBlockInappService: EmbeddedBlockInappServing {
+final class InappRequestService: InappRequestServing {
 
-    private let ask: (_ ids: [String], _ blockInappId: String, _ completion: @escaping ([String]) -> Void) -> Void
+    private let ask: (_ ids: [String], _ askerInappId: String, _ completion: @escaping ([String]) -> Void) -> Void
     private let fetchInappToShow: (_ id: String, _ params: [String: JSONValue], _ completion: @escaping (InAppFormData?) -> Void) -> Void
     private let showNow: (InAppFormData, _ processingDuration: TimeInterval, _ completion: @escaping (Result<Void, InAppPresentationError>) -> Void) -> Void
     private let configIsKnown: () -> Bool
@@ -34,7 +34,7 @@ final class EmbeddedBlockInappService: EmbeddedBlockInappServing {
 
     var hasConfig: Bool { configIsKnown() }
 
-    init(ask: ((_ ids: [String], _ blockInappId: String, _ completion: @escaping ([String]) -> Void) -> Void)? = nil,
+    init(ask: ((_ ids: [String], _ askerInappId: String, _ completion: @escaping ([String]) -> Void) -> Void)? = nil,
          fetchInappToShow: ((_ id: String, _ params: [String: JSONValue], _ completion: @escaping (InAppFormData?) -> Void) -> Void)? = nil,
          showNow: ((InAppFormData, _ processingDuration: TimeInterval, _ completion: @escaping (Result<Void, InAppPresentationError>) -> Void) -> Void)? = nil,
          hasConfig: (() -> Bool)? = nil,
@@ -43,8 +43,8 @@ final class EmbeddedBlockInappService: EmbeddedBlockInappServing {
         self.configIsKnown = hasConfig ?? {
             DI.injectOrFail(InAppConfigurationManagerProtocol.self).hasConfig
         }
-        self.ask = ask ?? { ids, blockInappId, completion in
-            DI.injectOrFail(InAppConfigurationManagerProtocol.self).getShowableInappIds(ids, askedBy: blockInappId, completion)
+        self.ask = ask ?? { ids, askerInappId, completion in
+            DI.injectOrFail(InAppConfigurationManagerProtocol.self).getShowableInappIds(ids, askedBy: askerInappId, completion)
         }
         self.fetchInappToShow = fetchInappToShow ?? { id, params, completion in
             DI.injectOrFail(InAppConfigurationManagerProtocol.self).getInAppToShowById(id, params: params, completion)
@@ -74,13 +74,13 @@ final class EmbeddedBlockInappService: EmbeddedBlockInappServing {
         }
     }
 
-    func showableInappIds(among ids: [String], askedBy blockInappId: String, completion: @escaping ([String]) -> Void) {
+    func showableInappIds(among ids: [String], askedBy askerInappId: String, completion: @escaping ([String]) -> Void) {
         guard !ids.isEmpty else {
             completion([])
             return
         }
 
-        ask(ids, blockInappId, Self.onTheMainThread(completion))
+        ask(ids, askerInappId, Self.onTheMainThread(completion))
     }
 
     private static func onTheMainThread<Answer>(_ deliver: @escaping (Answer) -> Void) -> (Answer) -> Void {

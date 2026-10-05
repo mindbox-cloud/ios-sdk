@@ -1,5 +1,5 @@
 //
-//  EmbeddedBlockInappServiceTests.swift
+//  InappRequestServiceTests.swift
 //  MindboxTests
 //
 //  Created by Sergei Semko on 8/13/26.
@@ -10,9 +10,9 @@ import Foundation
 import Testing
 @_spi(Internal) @testable import Mindbox
 
-@Suite("Embedded block in-app service", .tags(.embeddedBlocks))
+@Suite("In-app request service", .tags(.webView))
 @MainActor
-struct EmbeddedBlockInappServiceTests {
+struct InappRequestServiceTests {
 
     @Test("The selection's answer is passed through")
     func selectionAnswerIsPassedThrough() {
@@ -49,7 +49,7 @@ struct EmbeddedBlockInappServiceTests {
     @Test("Whether a config is in hand is asked of the configuration every time")
     func hasConfigIsAskedOfTheConfiguration() {
         var known = false
-        let service = EmbeddedBlockInappService(hasConfig: { known })
+        let service = InappRequestService(hasConfig: { known })
 
         #expect(!service.hasConfig)
 
@@ -62,7 +62,7 @@ struct EmbeddedBlockInappServiceTests {
     func tapHandsTheFetchedInappToTheScheduler() {
         var fetched: [(id: String, params: [String: JSONValue])] = []
         var shown: [String] = []
-        let service = EmbeddedBlockInappService(
+        let service = InappRequestService(
             fetchInappToShow: { id, params, completion in
                 fetched.append((id, params))
                 completion(Self.formData(id: id))
@@ -81,7 +81,7 @@ struct EmbeddedBlockInappServiceTests {
     func tapProcessingTimeRunsFromTheTap() {
         var ticks: [TimeInterval] = [10, 10.25]
         var durations: [TimeInterval] = []
-        let service = EmbeddedBlockInappService(
+        let service = InappRequestService(
             fetchInappToShow: { id, _, completion in completion(Self.formData(id: id)) },
             showNow: { _, processingDuration, _ in durations.append(processingDuration) },
             now: { ticks.removeFirst() }
@@ -96,7 +96,7 @@ struct EmbeddedBlockInappServiceTests {
     func tapResolvingToNothingAnswersUnknownInapp() {
         var shownCount = 0
         var outcomes: [Result<Void, BridgeErrorCode>] = []
-        let service = EmbeddedBlockInappService(
+        let service = InappRequestService(
             fetchInappToShow: { _, _, completion in completion(nil) },
             showNow: { _, _, _ in shownCount += 1 }
         )
@@ -111,7 +111,7 @@ struct EmbeddedBlockInappServiceTests {
     @Test("A show that opened answers success")
     func openedShowAnswersSuccess() {
         var outcomes: [Result<Void, BridgeErrorCode>] = []
-        let service = EmbeddedBlockInappService(
+        let service = InappRequestService(
             fetchInappToShow: { id, _, completion in completion(Self.formData(id: id)) },
             showNow: { _, _, completion in completion(.success(())) }
         )
@@ -124,7 +124,7 @@ struct EmbeddedBlockInappServiceTests {
     @Test("A show that failed on the way to the screen answers show_failed")
     func failedShowAnswersShowFailed() {
         var outcomes: [Result<Void, BridgeErrorCode>] = []
-        let service = EmbeddedBlockInappService(
+        let service = InappRequestService(
             fetchInappToShow: { id, _, completion in completion(Self.formData(id: id)) },
             showNow: { _, _, completion in completion(.failure(.failedToLoadWindow)) }
         )
@@ -147,7 +147,7 @@ struct EmbeddedBlockInappServiceTests {
 
     @Test("An answer from a background thread is delivered on the main thread")
     func backgroundAnswerIsDeliveredOnTheMainThread() async {
-        let service = EmbeddedBlockInappService(ask: { _, _, completion in
+        let service = InappRequestService(ask: { _, _, completion in
             DispatchQueue.global().async { completion(["story-1"]) }
         })
 
@@ -162,7 +162,7 @@ struct EmbeddedBlockInappServiceTests {
 
     @Test("A tap answered from a background thread reaches the page on the main thread")
     func backgroundTapAnswerIsDeliveredOnTheMainThread() async {
-        let service = EmbeddedBlockInappService(fetchInappToShow: { _, _, completion in
+        let service = InappRequestService(fetchInappToShow: { _, _, completion in
             DispatchQueue.global().async { completion(nil) }
         })
 
@@ -175,8 +175,8 @@ struct EmbeddedBlockInappServiceTests {
         #expect(deliveredOnMainThread)
     }
 
-    @Test("The block's in-app travels with the question")
-    func blockInappTravelsWithTheQuestion() {
+    @Test("The asking in-app travels with the question")
+    func askingInappTravelsWithTheQuestion() {
         let bed = ServiceBed(allowed: ["story-1"])
 
         bed.ask(["story-1"], askedBy: "block-1")
@@ -192,7 +192,7 @@ private final class ServiceBed {
     private(set) var askedIds: [[String]] = []
     private(set) var askedBy: [String] = []
 
-    private let service: EmbeddedBlockInappService
+    private let service: InappRequestService
     private let allowed: [String]
     private let isDeferred: Bool
 
@@ -205,16 +205,16 @@ private final class ServiceBed {
         var asked: (([String], String) -> Void)?
         var ask: ((@escaping ([String]) -> Void) -> Void)?
 
-        service = EmbeddedBlockInappService(
-            ask: { ids, blockInappId, completion in
-                asked?(ids, blockInappId)
+        service = InappRequestService(
+            ask: { ids, askerInappId, completion in
+                asked?(ids, askerInappId)
                 ask?(completion)
             }
         )
 
-        asked = { [weak self] ids, blockInappId in
+        asked = { [weak self] ids, askerInappId in
             self?.askedIds.append(ids)
-            self?.askedBy.append(blockInappId)
+            self?.askedBy.append(askerInappId)
         }
         ask = { [weak self] completion in
             guard let self else { return }
@@ -227,8 +227,8 @@ private final class ServiceBed {
         }
     }
 
-    func ask(_ ids: [String], askedBy blockInappId: String = "block") {
-        service.showableInappIds(among: ids, askedBy: blockInappId) { [weak self] allowed in
+    func ask(_ ids: [String], askedBy askerInappId: String = "block") {
+        service.showableInappIds(among: ids, askedBy: askerInappId) { [weak self] allowed in
             self?.answers.append(allowed)
         }
     }

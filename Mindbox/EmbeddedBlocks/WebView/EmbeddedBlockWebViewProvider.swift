@@ -33,7 +33,7 @@ final class EmbeddedBlockWebViewProvider {
 
     private let placeSystemName: String
     private let registry: EmbeddedBlockPlaceRegistering
-    private let inappService: EmbeddedBlockInappServing
+    private let inappService: InappRequestServing
     private let makePage: (EmbeddedBlockWebContent) -> EmbeddedBlockPageHosting
 
     private let accounting: InappShowAccounting
@@ -83,7 +83,7 @@ final class EmbeddedBlockWebViewProvider {
 
     init(placeSystemName: String,
          registry: EmbeddedBlockPlaceRegistering,
-         inappService: EmbeddedBlockInappServing,
+         inappService: InappRequestServing,
          makePage: @escaping (EmbeddedBlockWebContent) -> EmbeddedBlockPageHosting,
          accounting: InappShowAccounting,
          reportFailure: @escaping EmbeddedBlockFailureReporter.Report,

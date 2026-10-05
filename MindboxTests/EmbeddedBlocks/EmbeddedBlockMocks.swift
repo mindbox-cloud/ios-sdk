@@ -416,7 +416,7 @@ final class EmbeddedBlockResolverMock: EmbeddedBlockResolving {
     }
 }
 
-final class EmbeddedBlockInappServiceMock: EmbeddedBlockInappServing {
+final class InappRequestServiceMock: InappRequestServing {
 
     var hasConfig = false
 
@@ -442,9 +442,9 @@ final class EmbeddedBlockInappServiceMock: EmbeddedBlockInappServing {
         completions.forEach { $0(outcome) }
     }
 
-    func showableInappIds(among ids: [String], askedBy blockInappId: String, completion: @escaping ([String]) -> Void) {
+    func showableInappIds(among ids: [String], askedBy askerInappId: String, completion: @escaping ([String]) -> Void) {
         askedIds.append(ids)
-        askedBy.append(blockInappId)
+        askedBy.append(askerInappId)
 
         if isDeferred {
             pending.append(completion)
@@ -600,7 +600,7 @@ final class EmbeddedBlockContentProviderFactoryMock: EmbeddedBlockContentProvide
 final class EmbeddedBlockTestBed {
 
     let resolver: EmbeddedBlockResolverMock
-    let inappService: EmbeddedBlockInappServiceMock
+    let inappService: InappRequestServiceMock
     let pageFactory: EmbeddedBlockPageFactoryMock
     let provider: EmbeddedBlockWebViewProvider
     let accounting: InappShowAccountingMock
@@ -623,7 +623,7 @@ final class EmbeddedBlockTestBed {
 
         let clock = TestClock()
         let resolver = EmbeddedBlockResolverMock(resolution: resolution)
-        let inappService = EmbeddedBlockInappServiceMock()
+        let inappService = InappRequestServiceMock()
         let pageFactory = EmbeddedBlockPageFactoryMock()
         let embeddedPlaces = EmbeddedPlacesStub()
         let center = NotificationCenter()
