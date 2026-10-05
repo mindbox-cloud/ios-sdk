@@ -114,7 +114,7 @@ private extension InappShowNowError {
         switch self {
         case .requesterGone:
             return .notVisible
-        case .presentationFailed:
+        case .appInBackground, .presentationFailed:
             return .showFailed
         }
     }

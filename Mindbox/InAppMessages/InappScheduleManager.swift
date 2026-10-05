@@ -26,6 +26,7 @@ protocol InappScheduleManagerProtocol {
     /// defect. Only `Inapp.Show` goes out: targeting was sent when the selection offered the in-app.
     /// `processingDuration` is the caller's time since the tap; it counts into `timeToDisplay` like the overlay pass's.
     /// `requesterIsActive` is asked on the main queue right before the in-app on screen is closed for this one.
+    /// In the background it shows nothing and answers `appInBackground`: not a failure, no `Inapp.ShowFailure`.
     /// `completion` answers once: the window is on screen, or the error that kept it off.
     func showInAppNow(_ inAppFormData: InAppFormData,
                       processingDuration: TimeInterval,
@@ -35,6 +36,7 @@ protocol InappScheduleManagerProtocol {
 
 enum InappShowNowError: Error {
     case requesterGone
+    case appInBackground
     case presentationFailed(InAppPresentationError)
 }
 
@@ -106,6 +108,11 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
             guard requesterIsActive() else {
                 Logger.common(message: "[InappScheduleManager] Not showing \(inapp.inAppId): whoever asked for it is gone")
                 completion(.failure(.requesterGone))
+                return
+            }
+            guard !self.isInBackground() else {
+                Logger.common(message: "[InappScheduleManager] Not showing \(inapp.inAppId): the app is in the background")
+                completion(.failure(.appInBackground))
                 return
             }
 
