@@ -745,16 +745,13 @@ struct InappScheduleManagerTests {
         }
     }
 
-    @Test("Two shows on request in one main turn: the first is answered with an error and the second shows", .tags(.inAppSchedule))
+    @Test("Two shows on request in one main turn: the first is answered with an error and reported closed to the host, the second shows",
+          .tags(.inAppSchedule))
     @MainActor
     func showInAppNow_twoInOneTurn_answersTheFirstAndShowsTheSecond() async {
         let display = PresentationDisplaySpy()
-        let manager = InappScheduleManager(
-            presentationManager: InAppPresentationManager(displayUseCase: display),
-            budget: budget,
-            accountant: InappShowAccountant(tracker: InAppMessagesTrackerSpyMock(), budget: budget),
-            failureManager: failureManagerMock
-        )
+        let delegate = DelegateSpy()
+        let manager = makeManagerOnRealPresentation(display, delegate: delegate)
         var firstOutcomes: [Result<Void, InAppPresentationError>] = []
         var secondOutcomes: [Result<Void, InAppPresentationError>] = []
 
@@ -772,6 +769,7 @@ struct InappScheduleManagerTests {
         if case .failure = firstOutcomes.first {} else {
             Issue.record("Expected the first request to be answered with an error, got \(String(describing: firstOutcomes.first))")
         }
+        #expect(delegate.dismissedIds == ["first"])
 
         display.receivedOnPresented?()
 
