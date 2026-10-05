@@ -238,8 +238,7 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
         Coordinator(appearance: $appearance,
                     onLoad: onLoad,
                     onEmpty: onEmpty,
-                    onFail: onFail,
-                    animatesReveal: animatesReveal)
+                    onFail: onFail)
     }
 
     func makeUIView(context: Context) -> MindboxEmbeddedBlockView {
@@ -250,11 +249,20 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
                                                  animatesReveal: animatesReveal)
         let coordinator = context.coordinator
         blockView.delegate = coordinator
-        blockView.setAppearanceObserver { appearance in
-            coordinator.update(appearance)
-        }
+        Self.observe(blockView, with: coordinator)
         syncStandIns(in: blockView)
         return blockView
+    }
+
+    /// Hands the container's looks to the coordinator, each with the container's own verdict on
+    /// whether it is the animated reveal. The verdict is `isRevealAnimated` at the moment the
+    /// observer runs — the container sets it right before it calls and the next look overwrites
+    /// it — so it is read here, synchronously, and not on the coordinator's deferred turn.
+    static func observe(_ blockView: MindboxEmbeddedBlockView, with coordinator: Coordinator) {
+        // The container holds the observer; holding the container back would be a cycle.
+        blockView.setAppearanceObserver { [weak blockView] appearance in
+            coordinator.update(appearance, animated: blockView?.isRevealAnimated ?? false)
+        }
     }
 
     func updateUIView(_ uiView: MindboxEmbeddedBlockView, context: Context) {
@@ -305,17 +313,10 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
         var onEmpty: (() -> Void)?
         var onFail: ((MindboxEmbeddedBlockFailReason) -> Void)?
 
-        /// The wrapper owns the block's frame, so the growth of a block that waited hidden is its
-        /// animation to run; the container fades the content in on its own.
-        let animatesReveal: Bool
-
         private var isDetached = false
 
         /// `DispatchQueue.main` outside tests.
         private let schedule: (@escaping () -> Void) -> Void
-
-        /// The accessibility setting outside tests: with it on, the content lands at once.
-        private let isReduceMotionEnabled: () -> Bool
 
         /// `withAnimation` with the SDK's reveal outside tests.
         private let animate: (@escaping () -> Void) -> Void
@@ -324,32 +325,35 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
              onLoad: (() -> Void)?,
              onEmpty: (() -> Void)?,
              onFail: ((MindboxEmbeddedBlockFailReason) -> Void)?,
-             animatesReveal: Bool = true,
              schedule: @escaping (@escaping () -> Void) -> Void = { work in DispatchQueue.main.async { work() } },
-             isReduceMotionEnabled: @escaping () -> Bool = { UIAccessibility.isReduceMotionEnabled },
              animate: @escaping (@escaping () -> Void) -> Void = { changes in
-                 withAnimation(.easeInOut(duration: Constants.EmbeddedBlock.revealAnimationDuration)) { changes() }
+                 withAnimation(.easeInOut(duration: MindboxEmbeddedBlockView.revealAnimationDuration)) { changes() }
              }) {
             self.appearance = appearance
             self.onLoad = onLoad
             self.onEmpty = onEmpty
             self.onFail = onFail
-            self.animatesReveal = animatesReveal
             self.schedule = schedule
-            self.isReduceMotionEnabled = isReduceMotionEnabled
             self.animate = animate
         }
 
-        func update(_ newAppearance: MindboxEmbeddedBlockAppearance) {
+        /// Writes the look the container reported. The wrapper owns the block's frame, so the growth
+        /// of a block that waited hidden — and the swap of its own placeholder for the content — is
+        /// its animation to run, for as long as the container's fade; the container fades the
+        /// content in on its own.
+        ///
+        /// Whether the change is that reveal is `animated`, the container's own verdict with every
+        /// gate applied — `animatesReveal`, a window to animate in, Reduce Motion, and the rule that
+        /// only the arrival of content is a reveal. Nothing is re-decided here: the container is the
+        /// one owner of that decision for every wrapper, SwiftUI, Compose and Flutter alike.
+        func update(_ newAppearance: MindboxEmbeddedBlockAppearance, animated: Bool) {
             schedule { [weak self] in
                 guard let self, !self.isDetached,
                       self.appearance.wrappedValue != newAppearance else { return }
 
                 let write = { self.appearance.wrappedValue = newAppearance }
 
-                // Only the arrival of content is a reveal; a collapse or an error screen lands at once,
-                // and so does the content for a user who asked the system to reduce motion.
-                if newAppearance == .content, self.animatesReveal, !self.isReduceMotionEnabled() {
+                if animated {
                     self.animate(write)
                 } else {
                     write()

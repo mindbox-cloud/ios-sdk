@@ -212,16 +212,6 @@ struct MindboxEmbeddedBlockTests {
         }
     }
 
-    @Test("The coordinator is made with the block's animatesReveal, not the default",
-          arguments: [true, false])
-    func coordinatorGetsTheBlocksAnimatesReveal(animatesReveal: Bool) {
-        guard #available(iOS 13.0, *) else { return }
-
-        let coordinator = makeRepresentable(animatesReveal: animatesReveal).makeCoordinator()
-
-        #expect(coordinator.animatesReveal == animatesReveal)
-    }
-
     /// What the value was given has to reach the container SwiftUI builds — through the body, the
     /// representable and `makeUIView` — not stop at the coordinator.
     @Test("The container SwiftUI builds is made with the block's strategy and animatesReveal")
@@ -353,13 +343,12 @@ struct MindboxEmbeddedBlockTests {
 
     @available(iOS 13.0, *)
     private func makeRepresentable(hasPlaceholder: Bool = false,
-                                   hasErrorView: Bool = false,
-                                   animatesReveal: Bool = true) -> EmbeddedBlockRepresentable {
+                                   hasErrorView: Bool = false) -> EmbeddedBlockRepresentable {
         return EmbeddedBlockRepresentable(placeSystemName: "stories",
                                           height: 104,
                                           timeout: nil,
                                           loadingStrategy: .placeholder,
-                                          animatesReveal: animatesReveal,
+                                          animatesReveal: true,
                                           appearance: .constant(.placeholder),
                                           onLoad: nil,
                                           onEmpty: nil,
