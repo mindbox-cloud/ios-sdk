@@ -503,7 +503,8 @@ struct InappScheduleManagerTests {
             presentationManager: presentationManagerMock,
             budget: budget,
             accountant: InappShowAccountant(tracker: tracker, budget: budget),
-            failureManager: failureManagerMock
+            failureManager: failureManagerMock,
+            isInBackground: { false }
         )
     }
 
@@ -725,6 +726,27 @@ struct InappScheduleManagerTests {
         }
         #expect(failureManagerMock.addFailureCallCount == 0)
         #expect(failureManagerMock.sendFailuresCallCount == 0)
+        #expect(failureManagerMock.sentFailures.isEmpty)
+    }
+
+    @Test("A late error from a show replaced on request reports no failure", .tags(.inAppSchedule))
+    @MainActor
+    func showInAppNow_lateErrorFromTheReplacedShow_reportsNoFailure() async throws {
+        let display = PresentationDisplaySpy()
+        let delegate = DelegateSpy()
+        let manager = makeManagerOnRealPresentation(display, delegate: delegate)
+        manager.showInAppNow(createInAppFormData(id: "first", isPriority: false, delayTime: nil), processingDuration: 0, proceedIf: { true }) { _ in }
+        await awaitMainQueue()
+        let firstError = try #require(display.receivedOnError)
+
+        manager.showInAppNow(createInAppFormData(id: "second", isPriority: false, delayTime: nil), processingDuration: 0, proceedIf: { true }) { _ in }
+        await awaitMainQueue(turns: 2)
+        firstError(.webviewLoadFailed("late"))
+        await awaitMainQueue()
+
+        #expect(failureManagerMock.sentFailures.isEmpty)
+        #expect(display.onScreen == "second")
+        await closeWhatIsOnScreen(display)
     }
 
     @Test("A show on request that closes a loading show answers that show's request with an error", .tags(.inAppSchedule))
@@ -827,6 +849,39 @@ struct InappScheduleManagerTests {
         await closeWhatIsOnScreen(display)
     }
 
+    @Test("A show on request in the background leaves the in-app on screen, reports no failure and answers appInBackground",
+          .tags(.inAppSchedule))
+    @MainActor
+    func showInAppNow_inTheBackground_leavesTheScreenAloneAndReportsNothing() async {
+        let display = PresentationDisplaySpy()
+        let delegate = DelegateSpy()
+        var isInBackground = false
+        let manager = makeManagerOnRealPresentation(display, delegate: delegate, isInBackground: { isInBackground })
+        manager.showInAppNow(createInAppFormData(id: "current", isPriority: false, delayTime: nil), processingDuration: 0, proceedIf: { true }) { _ in }
+        await awaitMainQueue()
+        display.receivedOnPresented?()
+        isInBackground = true
+        display.closesWhilePresenting = true
+        var outcomes: [Result<Void, InappShowNowError>] = []
+
+        manager.showInAppNow(createInAppFormData(id: "next", isPriority: false, delayTime: nil), processingDuration: 0, proceedIf: { true }) {
+            outcomes.append($0)
+        }
+        await awaitMainQueue()
+
+        #expect(display.onScreen == "current")
+        #expect(display.presentCount == 1)
+        #expect(delegate.dismissedIds.isEmpty)
+        #expect(failureManagerMock.sentFailures.isEmpty)
+        #expect(outcomes.count == 1)
+        if case .failure(.appInBackground) = outcomes.first {} else {
+            Issue.record("Expected appInBackground, got \(String(describing: outcomes.first))")
+        }
+        isInBackground = false
+        display.closesWhilePresenting = false
+        await closeWhatIsOnScreen(display)
+    }
+
     @MainActor
     private func closeWhatIsOnScreen(_ display: PresentationDisplaySpy) async {
         display.receivedOnClose?()
@@ -834,13 +889,15 @@ struct InappScheduleManagerTests {
     }
 
     @MainActor
-    private func makeManagerOnRealPresentation(_ display: PresentationDisplaySpy, delegate: InAppMessagesDelegate) -> InappScheduleManager {
+    private func makeManagerOnRealPresentation(_ display: PresentationDisplaySpy,
+                                               delegate: InAppMessagesDelegate,
+                                               isInBackground: @escaping () -> Bool = { false }) -> InappScheduleManager {
         let manager = InappScheduleManager(
             presentationManager: InAppPresentationManager(displayUseCase: display),
             budget: budget,
             accountant: InappShowAccountant(tracker: InAppMessagesTrackerSpyMock(), budget: budget),
             failureManager: failureManagerMock,
-            isInBackground: { false }
+            isInBackground: isInBackground
         )
         manager.delegate = delegate
         return manager
