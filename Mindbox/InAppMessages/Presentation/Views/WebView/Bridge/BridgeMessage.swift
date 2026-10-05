@@ -590,6 +590,9 @@ public struct BridgeMessage: Codable {
         /// `params` is forwarded untouched and merged flat into the shown in-app's start payload, where an
         /// incoming key overwrites.
         ///
+        /// An overlay's page is closed by the show it asked for and hears no answer; one closed before the show
+        /// starts opens nothing. A block off screen by then hears `not_visible`.
+        ///
         /// - Payload:
         ///   ```json
         ///   { "inappId": "<string>", "params": { } }
