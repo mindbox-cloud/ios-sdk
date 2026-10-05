@@ -589,8 +589,8 @@ struct MindboxWebBridgeAnswerTests {
     func overlayShowMayStartOnlyWhileItsPageIsOpen(exit: OverlayExit) throws {
         let bed = AnswerBed(.overlay, handlers: [ShowInAppActionHandler(), LifecycleActionHandler()])
         try bed.post(BridgeMessage.request(.showInApp, payload: .object(["inappId": .string("story-2")])))
-        let askerIsAlive = try #require(bed.inappRequests.askerChecks.first)
-        #expect(askerIsAlive())
+        let requesterIsActive = try #require(bed.inappRequests.requesterChecks.first)
+        #expect(requesterIsActive())
 
         switch exit {
         case .closedByItsPage:
@@ -601,7 +601,7 @@ struct MindboxWebBridgeAnswerTests {
         let sentBeforeTheAnswer = bed.sentEnvelopes().count
         bed.inappRequests.finishShow(.success(()))
 
-        #expect(!askerIsAlive())
+        #expect(!requesterIsActive())
         #expect(bed.sentEnvelopes().count == sentBeforeTheAnswer)
     }
 
@@ -624,8 +624,8 @@ struct MindboxWebBridgeAnswerTests {
         }
 
         try #require(released == nil)
-        let askerIsAlive = try #require(inappRequests.askerChecks.first)
-        #expect(!askerIsAlive())
+        let requesterIsActive = try #require(inappRequests.requesterChecks.first)
+        #expect(!requesterIsActive())
     }
 
     private static func answerlessHandlers() -> [WebBridgeActionHandler] {

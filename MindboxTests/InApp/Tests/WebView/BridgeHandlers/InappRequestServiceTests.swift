@@ -134,12 +134,12 @@ struct InappRequestServiceTests {
         #expect(outcomes.first?.refusal == .showFailed)
     }
 
-    @Test("A show whose asker was gone by the time it would start answers not_visible")
-    func showWithTheAskerGoneAnswersNotVisible() {
+    @Test("A show whose requester was gone by the time it would start answers not_visible")
+    func showWithTheRequesterGoneAnswersNotVisible() {
         var outcomes: [Result<Void, BridgeErrorCode>] = []
         let service = InappRequestService(
             fetchInappToShow: { id, _, completion in completion(Self.formData(id: id)) },
-            showNow: { _, _, _, completion in completion(.failure(.askerLeft)) }
+            showNow: { _, _, _, completion in completion(.failure(.requesterGone)) }
         )
 
         service.showInapp(id: "story-1", params: [:], proceedIf: { true }) { outcomes.append($0) }
@@ -147,34 +147,34 @@ struct InappRequestServiceTests {
         #expect(outcomes.first?.refusal == .notVisible)
     }
 
-    @Test("The asker's own check reaches the scheduler, asked when the scheduler asks it")
-    func askerCheckReachesTheScheduler() {
+    @Test("The requester's own check reaches the scheduler, asked when the scheduler asks it")
+    func requesterCheckReachesTheScheduler() {
         var handedChecks: [() -> Bool] = []
         let service = InappRequestService(
             fetchInappToShow: { id, _, completion in completion(Self.formData(id: id)) },
-            showNow: { _, _, askerIsAlive, _ in handedChecks.append(askerIsAlive) }
+            showNow: { _, _, requesterIsActive, _ in handedChecks.append(requesterIsActive) }
         )
-        var isAskerAlive = true
+        var isRequesterActive = true
 
-        service.showInapp(id: "story-1", params: [:], proceedIf: { isAskerAlive }) { _ in }
+        service.showInapp(id: "story-1", params: [:], proceedIf: { isRequesterActive }) { _ in }
 
         #expect(handedChecks.map { $0() } == [true])
-        isAskerAlive = false
+        isRequesterActive = false
         #expect(handedChecks.map { $0() } == [false])
     }
 
-    @Test("A tap shown through the scheduler from the container hands it the asker's own check")
-    func containerSchedulerGetsTheAskersCheck() throws {
+    @Test("A tap shown through the scheduler from the container hands it the requester's own check")
+    func containerSchedulerGetsTheRequestersCheck() throws {
         let scheduler = SchedulerSpy()
         try withScheduler(scheduler) {
             let service = InappRequestService(fetchInappToShow: { id, _, completion in completion(Self.formData(id: id)) })
-            var isAskerAlive = true
+            var isRequesterActive = true
 
-            service.showInapp(id: "story-1", params: [:], proceedIf: { isAskerAlive }) { _ in }
+            service.showInapp(id: "story-1", params: [:], proceedIf: { isRequesterActive }) { _ in }
 
-            let handedCheck = try #require(scheduler.askerChecks.first)
+            let handedCheck = try #require(scheduler.requesterChecks.first)
             #expect(handedCheck())
-            isAskerAlive = false
+            isRequesterActive = false
             #expect(!handedCheck())
         }
     }
@@ -269,15 +269,15 @@ private final class ServiceBed {
         var ask: ((@escaping ([String]) -> Void) -> Void)?
 
         service = InappRequestService(
-            ask: { ids, askerInappId, completion in
-                asked?(ids, askerInappId)
+            ask: { ids, requesterInappId, completion in
+                asked?(ids, requesterInappId)
                 ask?(completion)
             }
         )
 
-        asked = { [weak self] ids, askerInappId in
+        asked = { [weak self] ids, requesterInappId in
             self?.askedIds.append(ids)
-            self?.askedBy.append(askerInappId)
+            self?.askedBy.append(requesterInappId)
         }
         ask = { [weak self] completion in
             guard let self else { return }
@@ -290,8 +290,8 @@ private final class ServiceBed {
         }
     }
 
-    func ask(_ ids: [String], askedBy askerInappId: String = "block") {
-        service.showableInappIds(among: ids, askedBy: askerInappId) { [weak self] allowed in
+    func ask(_ ids: [String], askedBy requesterInappId: String = "block") {
+        service.showableInappIds(among: ids, askedBy: requesterInappId) { [weak self] allowed in
             self?.answers.append(allowed)
         }
     }
@@ -318,14 +318,14 @@ private extension Result where Success == Void, Failure == BridgeErrorCode {
 
 private final class SchedulerSpy: InappScheduleManagerProtocol {
     weak var delegate: InAppMessagesDelegate?
-    private(set) var askerChecks: [() -> Bool] = []
+    private(set) var requesterChecks: [() -> Bool] = []
 
     func scheduleInApp(_ inAppFormData: InAppFormData, processingDuration: TimeInterval) {}
 
     func showInAppNow(_ inAppFormData: InAppFormData,
                       processingDuration: TimeInterval,
-                      proceedIf askerIsAlive: @escaping () -> Bool,
+                      proceedIf requesterIsActive: @escaping () -> Bool,
                       completion: @escaping (Result<Void, InappShowNowError>) -> Void) {
-        askerChecks.append(askerIsAlive)
+        requesterChecks.append(requesterIsActive)
     }
 }

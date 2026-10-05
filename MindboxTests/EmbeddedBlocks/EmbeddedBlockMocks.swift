@@ -427,17 +427,17 @@ final class InappRequestServiceMock: InappRequestServing {
     private(set) var askedIds: [[String]] = []
     private(set) var askedBy: [String] = []
     private(set) var shown: [(id: String, params: [String: JSONValue])] = []
-    private(set) var askerChecks: [() -> Bool] = []
+    private(set) var requesterChecks: [() -> Bool] = []
 
     private var pending: [([String]) -> Void] = []
     private var showCompletions: [(Result<Void, BridgeErrorCode>) -> Void] = []
 
     func showInapp(id: String,
                    params: [String: JSONValue],
-                   proceedIf askerIsAlive: @escaping () -> Bool,
+                   proceedIf requesterIsActive: @escaping () -> Bool,
                    completion: @escaping (Result<Void, BridgeErrorCode>) -> Void) {
         shown.append((id, params))
-        askerChecks.append(askerIsAlive)
+        requesterChecks.append(requesterIsActive)
         showCompletions.append(completion)
     }
 
@@ -447,9 +447,9 @@ final class InappRequestServiceMock: InappRequestServing {
         completions.forEach { $0(outcome) }
     }
 
-    func showableInappIds(among ids: [String], askedBy askerInappId: String, completion: @escaping ([String]) -> Void) {
+    func showableInappIds(among ids: [String], askedBy requesterInappId: String, completion: @escaping ([String]) -> Void) {
         askedIds.append(ids)
-        askedBy.append(askerInappId)
+        askedBy.append(requesterInappId)
 
         if isDeferred {
             pending.append(completion)

@@ -15,15 +15,15 @@ protocol InappRequestServing: AnyObject {
     /// Whether a config is in hand — what a never-answered block reports it was waiting on.
     var hasConfig: Bool { get }
 
-    /// Which of `ids` the page of in-app `askerInappId` may draw, targeting checked and fetched like a place
+    /// Which of `ids` the page of in-app `requesterInappId` may draw, targeting checked and fetched like a place
     /// resolve; vouches for every targeted id as it answers. The answer mirrors the question — order and duplicates kept.
     /// Answers on the main thread.
-    func showableInappIds(among ids: [String], askedBy askerInappId: String, completion: @escaping ([String]) -> Void)
+    func showableInappIds(among ids: [String], askedBy requesterInappId: String, completion: @escaping ([String]) -> Void)
 
     /// Deliberately unchecked: the page decided when it drew the in-app. Answers once, on the main thread.
     func showInapp(id: String,
                    params: [String: JSONValue],
-                   proceedIf askerIsAlive: @escaping () -> Bool,
+                   proceedIf requesterIsActive: @escaping () -> Bool,
                    completion: @escaping (Result<Void, BridgeErrorCode>) -> Void)
 }
 
@@ -31,10 +31,10 @@ final class InappRequestService: InappRequestServing {
 
     typealias ShowNow = (InAppFormData,
                          _ processingDuration: TimeInterval,
-                         _ askerIsAlive: @escaping () -> Bool,
+                         _ requesterIsActive: @escaping () -> Bool,
                          _ completion: @escaping (Result<Void, InappShowNowError>) -> Void) -> Void
 
-    private let ask: (_ ids: [String], _ askerInappId: String, _ completion: @escaping ([String]) -> Void) -> Void
+    private let ask: (_ ids: [String], _ requesterInappId: String, _ completion: @escaping ([String]) -> Void) -> Void
     private let fetchInappToShow: (_ id: String, _ params: [String: JSONValue], _ completion: @escaping (InAppFormData?) -> Void) -> Void
     private let showNow: ShowNow
     private let configIsKnown: () -> Bool
@@ -42,7 +42,7 @@ final class InappRequestService: InappRequestServing {
 
     var hasConfig: Bool { configIsKnown() }
 
-    init(ask: ((_ ids: [String], _ askerInappId: String, _ completion: @escaping ([String]) -> Void) -> Void)? = nil,
+    init(ask: ((_ ids: [String], _ requesterInappId: String, _ completion: @escaping ([String]) -> Void) -> Void)? = nil,
          fetchInappToShow: ((_ id: String, _ params: [String: JSONValue], _ completion: @escaping (InAppFormData?) -> Void) -> Void)? = nil,
          showNow: ShowNow? = nil,
          hasConfig: (() -> Bool)? = nil,
@@ -51,23 +51,23 @@ final class InappRequestService: InappRequestServing {
         self.configIsKnown = hasConfig ?? {
             DI.injectOrFail(InAppConfigurationManagerProtocol.self).hasConfig
         }
-        self.ask = ask ?? { ids, askerInappId, completion in
-            DI.injectOrFail(InAppConfigurationManagerProtocol.self).getShowableInappIds(ids, askedBy: askerInappId, completion)
+        self.ask = ask ?? { ids, requesterInappId, completion in
+            DI.injectOrFail(InAppConfigurationManagerProtocol.self).getShowableInappIds(ids, askedBy: requesterInappId, completion)
         }
         self.fetchInappToShow = fetchInappToShow ?? { id, params, completion in
             DI.injectOrFail(InAppConfigurationManagerProtocol.self).getInAppToShowById(id, params: params, completion)
         }
-        self.showNow = showNow ?? { formData, processingDuration, askerIsAlive, completion in
+        self.showNow = showNow ?? { formData, processingDuration, requesterIsActive, completion in
             DI.injectOrFail(InappScheduleManagerProtocol.self).showInAppNow(formData,
                                                                             processingDuration: processingDuration,
-                                                                            proceedIf: askerIsAlive,
+                                                                            proceedIf: requesterIsActive,
                                                                             completion: completion)
         }
     }
 
     func showInapp(id: String,
                    params: [String: JSONValue],
-                   proceedIf askerIsAlive: @escaping () -> Bool,
+                   proceedIf requesterIsActive: @escaping () -> Bool,
                    completion: @escaping (Result<Void, BridgeErrorCode>) -> Void) {
         // The tap is the trigger: the fetch and the form build count into timeToDisplay, on the overlay pass's clock.
         let tappedAt = now()
@@ -82,19 +82,19 @@ final class InappRequestService: InappRequestServing {
                 return
             }
 
-            showNow(formData, processingDuration, askerIsAlive) { outcome in
+            showNow(formData, processingDuration, requesterIsActive) { outcome in
                 answer(outcome.mapError(\.bridgeErrorCode))
             }
         }
     }
 
-    func showableInappIds(among ids: [String], askedBy askerInappId: String, completion: @escaping ([String]) -> Void) {
+    func showableInappIds(among ids: [String], askedBy requesterInappId: String, completion: @escaping ([String]) -> Void) {
         guard !ids.isEmpty else {
             completion([])
             return
         }
 
-        ask(ids, askerInappId, Self.onTheMainThread(completion))
+        ask(ids, requesterInappId, Self.onTheMainThread(completion))
     }
 
     private static func onTheMainThread<Answer>(_ deliver: @escaping (Answer) -> Void) -> (Answer) -> Void {
@@ -112,7 +112,7 @@ final class InappRequestService: InappRequestServing {
 private extension InappShowNowError {
     var bridgeErrorCode: BridgeErrorCode {
         switch self {
-        case .askerLeft:
+        case .requesterGone:
             return .notVisible
         case .presentationFailed:
             return .showFailed

@@ -1199,8 +1199,8 @@ struct EmbeddedBlockWebViewProviderTests {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
         bed.page?.send(.showInApp, ["inappId": .string("story-id")])
-        let askerIsAlive = try #require(bed.inappService.askerChecks.first)
-        #expect(askerIsAlive())
+        let requesterIsActive = try #require(bed.inappService.requesterChecks.first)
+        #expect(requesterIsActive())
 
         switch exit {
         case .leftTheScreen:
@@ -1215,7 +1215,7 @@ struct EmbeddedBlockWebViewProviderTests {
             bed.page?.failLoad()
         }
 
-        #expect(!askerIsAlive())
+        #expect(!requesterIsActive())
     }
 
     @Test("A show the block asked for does not start once that block is gone")
@@ -1232,8 +1232,8 @@ struct EmbeddedBlockWebViewProviderTests {
         }
 
         try #require(released == nil)
-        let askerIsAlive = try #require(inappService?.askerChecks.first)
-        #expect(!askerIsAlive())
+        let requesterIsActive = try #require(inappService?.requesterChecks.first)
+        #expect(!requesterIsActive())
     }
 
     @Test("A stopped block's request is refused at the presence gate, before the block hears it")

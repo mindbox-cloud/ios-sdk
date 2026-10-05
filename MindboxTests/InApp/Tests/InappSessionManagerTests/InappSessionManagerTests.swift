@@ -175,7 +175,7 @@ final class InappSessionManagerTests: XCTestCase {
         SessionTemporaryStorage.shared.$ledger.mutate {
             $0.vouchedInappIds = ["1"]
             $0.placeTargetedInappId = ["place": "1"]
-            $0.vouchedBlockOffers = [BlockOffer(blockInappId: "block", inappId: "1")]
+            $0.vouchedPageOffers = [PageOffer(requesterInappId: "block", inappId: "1")]
             $0.placesReportedUnanswered = ["place"]
             $0.servedPlaceDelays = [ServedPlaceDelay(place: "place", inappId: "1")]
             $0.placeShownInappId = ["place": "1"]

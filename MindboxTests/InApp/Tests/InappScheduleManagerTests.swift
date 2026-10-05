@@ -796,23 +796,23 @@ struct InappScheduleManagerTests {
         await closeWhatIsOnScreen(display)
     }
 
-    @Test("A show on request whose asker is gone by the main-queue step leaves the in-app on screen and answers askerLeft",
+    @Test("A show on request whose requester is gone by the main-queue step leaves the in-app on screen and answers requesterGone",
           .tags(.inAppSchedule))
     @MainActor
-    func showInAppNow_askerGoneByTheMainStep_leavesTheScreenAlone() async {
+    func showInAppNow_requesterGoneByTheMainStep_leavesTheScreenAlone() async {
         let display = PresentationDisplaySpy()
         let delegate = DelegateSpy()
         let manager = makeManagerOnRealPresentation(display, delegate: delegate)
         manager.showInAppNow(createInAppFormData(id: "current", isPriority: false, delayTime: nil), processingDuration: 0, proceedIf: { true }) { _ in }
         await awaitMainQueue()
         display.receivedOnPresented?()
-        var isAskerAlive = true
+        var isRequesterActive = true
         var outcomes: [Result<Void, InappShowNowError>] = []
 
-        manager.showInAppNow(createInAppFormData(id: "next", isPriority: false, delayTime: nil), processingDuration: 0, proceedIf: { isAskerAlive }) {
+        manager.showInAppNow(createInAppFormData(id: "next", isPriority: false, delayTime: nil), processingDuration: 0, proceedIf: { isRequesterActive }) {
             outcomes.append($0)
         }
-        isAskerAlive = false
+        isRequesterActive = false
         await awaitMainQueue()
 
         #expect(display.onScreen == "current")
@@ -821,8 +821,8 @@ struct InappScheduleManagerTests {
         #expect(delegate.dismissedIds.isEmpty)
         #expect(failureManagerMock.sentFailures.isEmpty)
         #expect(outcomes.count == 1)
-        if case .failure(.askerLeft) = outcomes.first {} else {
-            Issue.record("Expected askerLeft, got \(String(describing: outcomes.first))")
+        if case .failure(.requesterGone) = outcomes.first {} else {
+            Issue.record("Expected requesterGone, got \(String(describing: outcomes.first))")
         }
         await closeWhatIsOnScreen(display)
     }

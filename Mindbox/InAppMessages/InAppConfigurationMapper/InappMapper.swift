@@ -25,7 +25,7 @@ protocol InappMapperProtocol {
                       _ candidates: ConfigCandidates,
                       _ completion: @escaping (InAppTransitionData?) -> Void)
     func getShowableInappIds(_ ids: [String],
-                             askedBy blockInappId: String,
+                             askedBy requesterInappId: String,
                              _ candidates: ConfigCandidates,
                              _ completion: @escaping ([String]) -> Void)
     func getInAppToShowById(_ id: String,
@@ -101,16 +101,16 @@ class InappMapper: InappMapperProtocol {
     /// Vouches as it answers, not on delivery — the overlay's rule. An id whose targeting still lacks data
     /// after the fetch is cut: fail closed, in sync with Android.
     func getShowableInappIds(_ ids: [String],
-                             askedBy blockInappId: String,
+                             askedBy requesterInappId: String,
                              _ candidates: ConfigCandidates,
                              _ completion: @escaping ([String]) -> Void) {
-        runPass("a page of in-app \(blockInappId) asking about \(ids.count) in-app(s)", event: nil) { finish in
+        runPass("a page of in-app \(requesterInappId) asking about \(ids.count) in-app(s)", event: nil) { finish in
             self.evaluate(self.pageQuery(ids, candidates), event: nil) { verdict in
                 self.evaluate(self.pageTargetingQuery(ids, candidates), event: nil) { offered in
                     // A page's question selects nothing; false only flushes a buffer this pass
                     // keeps empty (collectsFailures: false).
                     finish(false)
-                    self.vouchOffers(offered, by: blockInappId)
+                    self.vouchOffers(offered, by: requesterInappId)
                     completion(verdict.map(\.inAppId))
                 }
             }
@@ -454,9 +454,9 @@ class InappMapper: InappMapperProtocol {
     }
 
     /// Once per session per block and in-app: the same in-app offered by another block is a new offer.
-    private func vouchOffers(_ offered: [InAppTransitionData], by blockInappId: String) {
+    private func vouchOffers(_ offered: [InAppTransitionData], by requesterInappId: String) {
         for inapp in offered {
-            let offer = BlockOffer(blockInappId: blockInappId, inappId: inapp.inAppId)
+            let offer = PageOffer(requesterInappId: requesterInappId, inappId: inapp.inAppId)
             guard SessionTemporaryStorage.shared.$ledger.mutate({ $0.vouchOffer(offer) }) else { continue }
 
             dataFacade.trackTargeting(id: inapp.inAppId, tags: inapp.tags)

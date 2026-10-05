@@ -55,9 +55,9 @@ struct InappSessionLedgerTests {
     func offersAreOncePerBlockAndInapp() {
         var ledger = InappSessionLedger()
 
-        let offered = ledger.vouchOffer(BlockOffer(blockInappId: "block-1", inappId: "inapp-1"))
-        let repeated = ledger.vouchOffer(BlockOffer(blockInappId: "block-1", inappId: "inapp-1"))
-        let otherBlock = ledger.vouchOffer(BlockOffer(blockInappId: "block-2", inappId: "inapp-1"))
+        let offered = ledger.vouchOffer(PageOffer(requesterInappId: "block-1", inappId: "inapp-1"))
+        let repeated = ledger.vouchOffer(PageOffer(requesterInappId: "block-1", inappId: "inapp-1"))
+        let otherBlock = ledger.vouchOffer(PageOffer(requesterInappId: "block-2", inappId: "inapp-1"))
 
         #expect(offered)
         #expect(!repeated)
