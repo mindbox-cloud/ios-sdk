@@ -134,6 +134,19 @@ struct InappRequestServiceTests {
         #expect(outcomes.first?.refusal == .showFailed)
     }
 
+    @Test("A show refused because the app is in the background answers show_failed")
+    func showRefusedInTheBackgroundAnswersShowFailed() {
+        var outcomes: [Result<Void, BridgeErrorCode>] = []
+        let service = InappRequestService(
+            fetchInappToShow: { id, _, completion in completion(Self.formData(id: id)) },
+            showNow: { _, _, _, completion in completion(.failure(.appInBackground)) }
+        )
+
+        service.showInapp(id: "story-1", params: [:], proceedIf: { true }) { outcomes.append($0) }
+
+        #expect(outcomes.first?.refusal == .showFailed)
+    }
+
     @Test("A show whose requester was gone by the time it would start answers not_visible")
     func showWithTheRequesterGoneAnswersNotVisible() {
         var outcomes: [Result<Void, BridgeErrorCode>] = []
