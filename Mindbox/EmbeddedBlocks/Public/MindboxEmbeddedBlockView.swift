@@ -106,10 +106,7 @@ public final class MindboxEmbeddedBlockView: UIView {
     ///
     /// The current value arrives right away on subscribing: a wrapper that comes after the outcome
     /// cannot miss what the block already decided. A wrapper that lays the block out also animates
-    /// its height itself: the container animates only the content's fade for it. Whether the change
-    /// deserves an animation is `isRevealAnimated` at the moment the observer runs — the view is the
-    /// one owner of that decision, gates included, so a wrapper animating its own frame never
-    /// disagrees with it.
+    /// its height itself: the container animates only the content's fade for it.
     @_spi(Internal)
     public func setAppearanceObserver(_ observer: ((MindboxEmbeddedBlockAppearance) -> Void)?) {
         appearanceObserver = observer
@@ -117,16 +114,12 @@ public final class MindboxEmbeddedBlockView: UIView {
         observer?(shownAppearance)
     }
 
-    /// Whether the appearance the observer is being told about is the SDK's reveal — read inside
-    /// the observer. `true` only for the arrival of content with every gate open: `animatesReveal`,
-    /// a window to animate in, Reduce Motion off. A collapse, an error screen, content shown again
-    /// on a return, and the current value handed out on subscribing are all `false`. In sync with
-    /// Android's `isRevealAnimated`.
+    /// Whether the look the observer is being told about is the animated reveal. Valid only
+    /// inside the observer: the next look overwrites it.
     @_spi(Internal)
     public private(set) var isRevealAnimated = false
 
-    /// How long the SDK's reveal takes, for a wrapper that animates the growth of its own frame
-    /// alongside the fade the container runs. In sync with Android's `REVEAL_ANIMATION_DURATION_MS`.
+    /// How long the reveal takes, for a wrapper that animates its own frame.
     @_spi(Internal)
     public static let revealAnimationDuration: TimeInterval = Constants.EmbeddedBlock.revealAnimationDuration
 

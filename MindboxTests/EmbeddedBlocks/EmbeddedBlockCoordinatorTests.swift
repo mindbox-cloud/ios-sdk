@@ -98,10 +98,6 @@ struct EmbeddedBlockCoordinatorTests {
         #expect(heard == ["load", "empty", "fail:networkError"])
     }
 
-    /// The wrapper owns the block's frame: the growth of a block that waited hidden — and the swap of
-    /// its own placeholder for the content — is its animation to run. Whether a change is that reveal
-    /// is the container's verdict, carried in `animated`: the coordinator runs the animation when told
-    /// to and re-decides nothing.
     @Test("A look the container calls the reveal is written under the animation")
     func revealIsWrittenUnderTheAnimation() {
         guard #available(iOS 13.0, *) else { return }
@@ -128,9 +124,6 @@ struct EmbeddedBlockCoordinatorTests {
         #expect(animatedWrites == 1)
     }
 
-    /// The gates — `animatesReveal`, Reduce Motion, a window to animate in, "only the arrival of
-    /// content is a reveal" — are all the container's: whatever it does not call the reveal lands at
-    /// once, the content included, and the coordinator adds no gate of its own.
     @Test("A look the container does not call the reveal lands at once, content included",
           arguments: [MindboxEmbeddedBlockAppearance.content, .placeholder, .collapsed, .error])
     func otherLooksLandAtOnce(newAppearance: MindboxEmbeddedBlockAppearance) {
@@ -158,9 +151,6 @@ struct EmbeddedBlockCoordinatorTests {
         #expect(animatedWrites == 0)
     }
 
-    /// The verdict is valid only while the observer runs — the container sets it right before it
-    /// calls and the next look overwrites it — so the observer the representable installs has to read
-    /// it on the spot and hand it over with the look, not leave it for the deferred turn.
     @Test("The observer the representable installs hands over the container's verdict with each look")
     @MainActor
     func installedObserverHandsOverTheContainersVerdict() {
@@ -197,7 +187,6 @@ struct EmbeddedBlockCoordinatorTests {
         bed.page?.reportRendered(1)
         scheduled.forEach { $0() }
 
-        // The look handed out on subscribing is never the reveal; the arrival of content is.
         #expect(written.first.map { $0.0 == .collapsed && !$0.1 } == true)
         #expect(written.last.map { $0.0 == .content && $0.1 } == true)
     }

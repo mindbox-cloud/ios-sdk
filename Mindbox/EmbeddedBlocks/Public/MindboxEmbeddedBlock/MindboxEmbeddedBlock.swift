@@ -254,12 +254,9 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
         return blockView
     }
 
-    /// Hands the container's looks to the coordinator, each with the container's own verdict on
-    /// whether it is the animated reveal. The verdict is `isRevealAnimated` at the moment the
-    /// observer runs — the container sets it right before it calls and the next look overwrites
-    /// it — so it is read here, synchronously, and not on the coordinator's deferred turn.
+    /// Passes each look on with `isRevealAnimated`, read while the observer runs.
     static func observe(_ blockView: MindboxEmbeddedBlockView, with coordinator: Coordinator) {
-        // The container holds the observer; holding the container back would be a cycle.
+        // The container holds the observer, so it is captured weakly.
         blockView.setAppearanceObserver { [weak blockView] appearance in
             coordinator.update(appearance, animated: blockView?.isRevealAnimated ?? false)
         }
@@ -337,15 +334,7 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
             self.animate = animate
         }
 
-        /// Writes the look the container reported. The wrapper owns the block's frame, so the growth
-        /// of a block that waited hidden — and the swap of its own placeholder for the content — is
-        /// its animation to run, for as long as the container's fade; the container fades the
-        /// content in on its own.
-        ///
-        /// Whether the change is that reveal is `animated`, the container's own verdict with every
-        /// gate applied — `animatesReveal`, a window to animate in, Reduce Motion, and the rule that
-        /// only the arrival of content is a reveal. Nothing is re-decided here: the container is the
-        /// one owner of that decision for every wrapper, SwiftUI, Compose and Flutter alike.
+        /// Writes the look, under the reveal animation when the view says `animated`.
         func update(_ newAppearance: MindboxEmbeddedBlockAppearance, animated: Bool) {
             schedule { [weak self] in
                 guard let self, !self.isDetached,

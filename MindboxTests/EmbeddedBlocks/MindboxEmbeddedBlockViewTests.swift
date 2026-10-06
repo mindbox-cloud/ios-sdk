@@ -1747,8 +1747,23 @@ struct MindboxEmbeddedBlockViewTests {
 
         block.page?.reportRendered(1)
 
-        // The value handed out on subscribing is never a reveal; the content's arrival is.
         #expect(reveals.first.map { $0.0 == .collapsed && !$0.1 } == true)
+        #expect(reveals.last.map { $0.0 == .content && $0.1 } == true)
+        #expect(reveals.dropLast().allSatisfy { !$0.1 })
+    }
+
+    @Test("A wrapper is told the content replacing the placeholder is animated")
+    func wrapperIsToldContentReplacingThePlaceholderIsAnimated() {
+        let block = BlockFixture(loadingStrategy: .placeholder)
+        var reveals: [(MindboxEmbeddedBlockAppearance, Bool)] = []
+        block.view.setAppearanceObserver { [unowned view = block.view] appearance in
+            reveals.append((appearance, view.isRevealAnimated))
+        }
+        block.attachToWindow()
+
+        block.page?.reportRendered(1)
+
+        #expect(reveals.contains { $0.0 == .placeholder })
         #expect(reveals.last.map { $0.0 == .content && $0.1 } == true)
         #expect(reveals.dropLast().allSatisfy { !$0.1 })
     }
