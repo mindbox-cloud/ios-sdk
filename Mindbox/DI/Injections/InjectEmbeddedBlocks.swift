@@ -20,8 +20,8 @@ extension MBContainer {
                                        budget: DI.injectOrFail(InappShowBudgeting.self))
         }
 
-        register(EmbeddedBlockInappServing.self) {
-            EmbeddedBlockInappService()
+        register(InappRequestServing.self) {
+            InappRequestService()
         }
 
         // One memory per container: blocks of one place read and write the same record.
@@ -31,7 +31,7 @@ extension MBContainer {
 
         register(EmbeddedBlockContentProviderMaking.self) {
             EmbeddedBlockContentProviderFactory(registry: DI.injectOrFail(EmbeddedBlockPlaceRegistering.self),
-                                                inappService: DI.injectOrFail(EmbeddedBlockInappServing.self),
+                                                inappService: DI.injectOrFail(InappRequestServing.self),
                                                 failureManager: DI.injectOrFail(InappShowFailureManagerProtocol.self),
                                                 accounting: DI.injectOrFail(InappShowAccounting.self))
         }

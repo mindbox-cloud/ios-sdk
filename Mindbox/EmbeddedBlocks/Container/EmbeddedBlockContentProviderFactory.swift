@@ -20,12 +20,12 @@ protocol EmbeddedBlockContentProviderMaking {
 final class EmbeddedBlockContentProviderFactory: EmbeddedBlockContentProviderMaking {
 
     private let registry: EmbeddedBlockPlaceRegistering
-    private let inappService: EmbeddedBlockInappServing
+    private let inappService: InappRequestServing
     private let failureManager: InappShowFailureManagerProtocol
     private let accounting: InappShowAccounting
 
     init(registry: EmbeddedBlockPlaceRegistering,
-         inappService: EmbeddedBlockInappServing,
+         inappService: InappRequestServing,
          failureManager: InappShowFailureManagerProtocol,
          accounting: InappShowAccounting) {
         self.registry = registry

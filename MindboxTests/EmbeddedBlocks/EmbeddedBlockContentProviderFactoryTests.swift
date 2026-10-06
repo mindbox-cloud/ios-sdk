@@ -32,7 +32,7 @@ struct EmbeddedBlockContentProviderFactoryTests {
                                                   notificationCenter: NotificationCenter(),
                                                   fetchEmbeddedPlaces: { $0(nil) })
         let factory = EmbeddedBlockContentProviderFactory(registry: registry,
-                                                          inappService: EmbeddedBlockInappServiceMock(),
+                                                          inappService: InappRequestServiceMock(),
                                                           failureManager: InappShowFailureManagerMock(),
                                                           accounting: InappShowAccountingMock())
 
@@ -72,7 +72,7 @@ struct EmbeddedBlockContentProviderFactoryTests {
                       (hasConfig: true, phase: .resolvePending)])
     func unansweredWaitNamesThePlaceAndThePhase(hasConfig: Bool, phase: EmbeddedBlockShowFailure.Phase) {
         let manager = InappShowFailureManagerMock()
-        let inappService = EmbeddedBlockInappServiceMock()
+        let inappService = InappRequestServiceMock()
         inappService.hasConfig = hasConfig
         let registry = EmbeddedBlockPlaceRegistry(resolver: EmbeddedBlockResolverMock(resolution: .empty),
                                                   budget: InappShowBudgetMock(),
@@ -107,7 +107,7 @@ struct EmbeddedBlockContentProviderFactoryTests {
                                                   notificationCenter: NotificationCenter(),
                                                   fetchEmbeddedPlaces: { $0(nil) })
         return EmbeddedBlockContentProviderFactory(registry: registry,
-                                                   inappService: EmbeddedBlockInappServiceMock(),
+                                                   inappService: InappRequestServiceMock(),
                                                    failureManager: InappShowFailureManagerMock(),
                                                    accounting: InappShowAccountingMock())
     }

@@ -44,7 +44,7 @@ protocol InAppConfigurationManagerProtocol: AnyObject {
     func selectInappForPlace(_ place: String,
                              trigger: ApplicationEvent?,
                              _ completion: @escaping (EmbeddedPlaceSelection, _ processingDuration: TimeInterval) -> Void)
-    func getShowableInappIds(_ ids: [String], askedBy blockInappId: String, _ completion: @escaping ([String]) -> Void)
+    func getShowableInappIds(_ ids: [String], askedBy requesterInappId: String, _ completion: @escaping ([String]) -> Void)
     func getInAppToShowById(_ id: String, params: [String: JSONValue], _ completion: @escaping (InAppFormData?) -> Void)
     func getEmbeddedPlaces(_ completion: @escaping ([String: Set<String>]?) -> Void)
     func resetInappManager()
@@ -157,7 +157,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         }
     }
 
-    func getShowableInappIds(_ ids: [String], askedBy blockInappId: String, _ completion: @escaping ([String]) -> Void) {
+    func getShowableInappIds(_ ids: [String], askedBy requesterInappId: String, _ completion: @escaping ([String]) -> Void) {
         let requestedAt = now()
         awaitConfig("a page asking about \(ids.count) in-app(s)", givingUpAfter: configWaitBudget) { [weak self] candidates in
             guard let self = self, let inappMapper = self.inappMapper, let candidates = candidates else {
@@ -165,10 +165,10 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
                 return
             }
 
-            inappMapper.getShowableInappIds(ids, askedBy: blockInappId, candidates) { [now] allowed in
+            inappMapper.getShowableInappIds(ids, askedBy: requesterInappId, candidates) { [now] allowed in
                 let elapsed = String(format: "%.2f", now() - requestedAt)
-                Logger.common(message: "[EmbeddedBlock] Answered the page's question about \(ids.count) in-app(s) in \(elapsed)s: \(allowed.count) allowed",
-                              category: .embeddedBlocks)
+                Logger.common(message: "[InAppConfigurationManager] Answered the question of the page of in-app \(requesterInappId) about \(ids.count) in-app(s) in \(elapsed)s: \(allowed.count) allowed",
+                              category: .inAppMessages)
                 completion(allowed)
             }
         }

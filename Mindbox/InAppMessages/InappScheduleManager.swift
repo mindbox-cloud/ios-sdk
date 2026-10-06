@@ -25,10 +25,17 @@ protocol InappScheduleManagerProtocol {
     /// Past the queue and every limit — a direct call is invited, and a tap that does nothing is a
     /// defect. Only `Inapp.Show` goes out: targeting was sent when the selection offered the in-app.
     /// `processingDuration` is the caller's time since the tap; it counts into `timeToDisplay` like the overlay pass's.
+    /// `requesterIsActive` is asked on the main queue right before the in-app on screen is closed for this one.
     /// `completion` answers once: the window is on screen, or the error that kept it off.
     func showInAppNow(_ inAppFormData: InAppFormData,
                       processingDuration: TimeInterval,
-                      completion: @escaping (Result<Void, InAppPresentationError>) -> Void)
+                      proceedIf requesterIsActive: @escaping () -> Bool,
+                      completion: @escaping (Result<Void, InappShowNowError>) -> Void)
+}
+
+enum InappShowNowError: Error {
+    case requesterGone
+    case presentationFailed(InAppPresentationError)
 }
 
 final class InappScheduleManager: InappScheduleManagerProtocol {
@@ -93,9 +100,18 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
 
     func showInAppNow(_ inapp: InAppFormData,
                       processingDuration: TimeInterval,
-                      completion: @escaping (Result<Void, InAppPresentationError>) -> Void) {
+                      proceedIf requesterIsActive: @escaping () -> Bool,
+                      completion: @escaping (Result<Void, InappShowNowError>) -> Void) {
         DispatchQueue.main.async {
-            self.presentRequestedInapp(inapp, processingDuration: processingDuration, outcome: completion)
+            guard requesterIsActive() else {
+                Logger.common(message: "[InappScheduleManager] Not showing \(inapp.inAppId): whoever asked for it is gone")
+                completion(.failure(.requesterGone))
+                return
+            }
+
+            self.presentRequestedInapp(inapp, processingDuration: processingDuration) { outcome in
+                completion(outcome.mapError(InappShowNowError.presentationFailed))
+            }
         }
     }
 }

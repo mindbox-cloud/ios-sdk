@@ -83,16 +83,16 @@ struct EmbeddedBlockResolveTests {
     }
 
     private func showable(_ ids: [String],
-                          askedBy blockInappId: String = Constants.blockId,
+                          askedBy requesterInappId: String = Constants.blockId,
                           candidates: ConfigCandidates? = nil) async -> [String] {
-        await showableInOrder(ids, askedBy: blockInappId, candidates: candidates).sorted()
+        await showableInOrder(ids, askedBy: requesterInappId, candidates: candidates).sorted()
     }
 
     private func showableInOrder(_ ids: [String],
-                                 askedBy blockInappId: String = Constants.blockId,
+                                 askedBy requesterInappId: String = Constants.blockId,
                                  candidates: ConfigCandidates? = nil) async -> [String] {
         await withCheckedContinuation { continuation in
-            mapper.getShowableInappIds(ids, askedBy: blockInappId, candidates ?? self.candidates) { continuation.resume(returning: $0) }
+            mapper.getShowableInappIds(ids, askedBy: requesterInappId, candidates ?? self.candidates) { continuation.resume(returning: $0) }
         }
     }
 

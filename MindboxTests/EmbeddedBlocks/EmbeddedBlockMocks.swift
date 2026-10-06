@@ -416,7 +416,7 @@ final class EmbeddedBlockResolverMock: EmbeddedBlockResolving {
     }
 }
 
-final class EmbeddedBlockInappServiceMock: EmbeddedBlockInappServing {
+final class InappRequestServiceMock: InappRequestServing {
 
     var hasConfig = false
 
@@ -427,12 +427,17 @@ final class EmbeddedBlockInappServiceMock: EmbeddedBlockInappServing {
     private(set) var askedIds: [[String]] = []
     private(set) var askedBy: [String] = []
     private(set) var shown: [(id: String, params: [String: JSONValue])] = []
+    private(set) var requesterChecks: [() -> Bool] = []
 
     private var pending: [([String]) -> Void] = []
     private var showCompletions: [(Result<Void, BridgeErrorCode>) -> Void] = []
 
-    func showInapp(id: String, params: [String: JSONValue], completion: @escaping (Result<Void, BridgeErrorCode>) -> Void) {
+    func showInapp(id: String,
+                   params: [String: JSONValue],
+                   proceedIf requesterIsActive: @escaping () -> Bool,
+                   completion: @escaping (Result<Void, BridgeErrorCode>) -> Void) {
         shown.append((id, params))
+        requesterChecks.append(requesterIsActive)
         showCompletions.append(completion)
     }
 
@@ -442,9 +447,9 @@ final class EmbeddedBlockInappServiceMock: EmbeddedBlockInappServing {
         completions.forEach { $0(outcome) }
     }
 
-    func showableInappIds(among ids: [String], askedBy blockInappId: String, completion: @escaping ([String]) -> Void) {
+    func showableInappIds(among ids: [String], askedBy requesterInappId: String, completion: @escaping ([String]) -> Void) {
         askedIds.append(ids)
-        askedBy.append(blockInappId)
+        askedBy.append(requesterInappId)
 
         if isDeferred {
             pending.append(completion)
@@ -600,7 +605,7 @@ final class EmbeddedBlockContentProviderFactoryMock: EmbeddedBlockContentProvide
 final class EmbeddedBlockTestBed {
 
     let resolver: EmbeddedBlockResolverMock
-    let inappService: EmbeddedBlockInappServiceMock
+    let inappService: InappRequestServiceMock
     let pageFactory: EmbeddedBlockPageFactoryMock
     let provider: EmbeddedBlockWebViewProvider
     let accounting: InappShowAccountingMock
@@ -623,7 +628,7 @@ final class EmbeddedBlockTestBed {
 
         let clock = TestClock()
         let resolver = EmbeddedBlockResolverMock(resolution: resolution)
-        let inappService = EmbeddedBlockInappServiceMock()
+        let inappService = InappRequestServiceMock()
         let pageFactory = EmbeddedBlockPageFactoryMock()
         let embeddedPlaces = EmbeddedPlacesStub()
         let center = NotificationCenter()

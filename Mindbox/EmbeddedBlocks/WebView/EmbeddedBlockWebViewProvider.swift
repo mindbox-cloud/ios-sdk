@@ -33,7 +33,7 @@ final class EmbeddedBlockWebViewProvider {
 
     private let placeSystemName: String
     private let registry: EmbeddedBlockPlaceRegistering
-    private let inappService: EmbeddedBlockInappServing
+    private let inappService: InappRequestServing
     private let makePage: (EmbeddedBlockWebContent) -> EmbeddedBlockPageHosting
 
     private let accounting: InappShowAccounting
@@ -83,7 +83,7 @@ final class EmbeddedBlockWebViewProvider {
 
     init(placeSystemName: String,
          registry: EmbeddedBlockPlaceRegistering,
-         inappService: EmbeddedBlockInappServing,
+         inappService: InappRequestServing,
          makePage: @escaping (EmbeddedBlockWebContent) -> EmbeddedBlockPageHosting,
          accounting: InappShowAccounting,
          reportFailure: @escaping EmbeddedBlockFailureReporter.Report,
@@ -337,8 +337,8 @@ final class EmbeddedBlockWebViewProvider {
         page.onShowableQuestion = { [weak self] ids, completion in
             self?.answerShowableQuestion(ids, completion: completion)
         }
-        page.onShowInAppRequest = { [weak self] inappId, params, completion in
-            self?.showInapp(id: inappId, params: params, completion: completion)
+        page.onShowInAppRequest = { [weak self, weak page] inappId, params, completion in
+            self?.showInapp(id: inappId, params: params, askedFrom: page, completion: completion)
         }
         page.onDataPushConfirmed = { [weak self] in
             self?.acknowledgeDataPush()
@@ -480,8 +480,8 @@ final class EmbeddedBlockWebViewProvider {
 
     /// A page whose block has collapsed or failed is still alive and can still ask — but no user
     /// touch stands behind it, and the in-app would appear over the app out of nowhere.
-    private func showInapp(id inappId: String, params: [String: JSONValue], completion: @escaping (Result<Void, BridgeErrorCode>) -> Void) {
-        guard isStarted, isAttemptAlive else {
+    private func showInapp(id inappId: String, params: [String: JSONValue], askedFrom page: EmbeddedBlockPageHosting?, completion: @escaping (Result<Void, BridgeErrorCode>) -> Void) {
+        guard isShowing(page) else {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': refused a show request from a block that is not shown",
                           category: .embeddedBlocks)
             completion(.failure(.notVisible))
@@ -491,8 +491,10 @@ final class EmbeddedBlockWebViewProvider {
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': showing in-app \(inappId) with \(params.count) param(s)",
                       category: .embeddedBlocks)
 
-        inappService.showInapp(id: inappId, params: params, completion: completion)
+        inappService.showInapp(id: inappId, params: params, proceedIf: { [weak self, weak page] in self?.isShowing(page) ?? false }, completion: completion)
     }
+
+    private func isShowing(_ page: EmbeddedBlockPageHosting?) -> Bool { isStarted && isAttemptAlive && page != nil && self.page === page }
 
     /// A question shows nothing, so it is answered for as long as the block is running — including
     /// while it is still loading, which is exactly when a page asks.

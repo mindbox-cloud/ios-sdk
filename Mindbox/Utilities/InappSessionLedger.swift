@@ -8,10 +8,10 @@
 
 import Foundation
 
-/// One in-app a block's page was allowed to draw — what `Inapp.Targeting` for a page's question is
-/// deduplicated by: once per session, per block and in-app.
-struct BlockOffer: Hashable {
-    let blockInappId: String
+/// One in-app a page was allowed to draw — what `Inapp.Targeting` for a page's question is
+/// deduplicated by: once per session, per requesting in-app and in-app.
+struct PageOffer: Hashable {
+    let requesterInappId: String
     let inappId: String
 }
 
@@ -39,7 +39,7 @@ struct InappSessionLedger: Equatable {
     /// so it goes out again when the place changes what it shows and then changes back.
     var placeTargetedInappId: [String: String] = [:]
 
-    var vouchedBlockOffers: Set<BlockOffer> = []
+    var vouchedPageOffers: Set<PageOffer> = []
 
     /// Places whose block already reported that the SDK never answered — once per place per session.
     var placesReportedUnanswered: Set<String> = []
@@ -69,8 +69,8 @@ extension InappSessionLedger {
         vouchedInappIds.insert(inappId).inserted
     }
 
-    mutating func vouchOffer(_ offer: BlockOffer) -> Bool {
-        vouchedBlockOffers.insert(offer).inserted
+    mutating func vouchOffer(_ offer: PageOffer) -> Bool {
+        vouchedPageOffers.insert(offer).inserted
     }
 
     /// True when the place shows something other than what it showed last.

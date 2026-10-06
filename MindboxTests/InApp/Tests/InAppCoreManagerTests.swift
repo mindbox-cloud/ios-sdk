@@ -29,7 +29,7 @@ struct InAppCoreManagerTests {
         func getInAppById(_ id: String, _ completion: @escaping (InAppTransitionData?) -> Void) {
             completion(nil)
         }
-        func getShowableInappIds(_ ids: [String], askedBy blockInappId: String, _ completion: @escaping ([String]) -> Void) {
+        func getShowableInappIds(_ ids: [String], askedBy requesterInappId: String, _ completion: @escaping ([String]) -> Void) {
             completion([])
         }
         func getInAppToShowById(_ id: String, params: [String: JSONValue], _ completion: @escaping (InAppFormData?) -> Void) {
@@ -47,7 +47,8 @@ struct InAppCoreManagerTests {
         func scheduleInApp(_ inAppFormData: InAppFormData, processingDuration: TimeInterval) {}
         func showInAppNow(_ inAppFormData: InAppFormData,
                           processingDuration: TimeInterval,
-                          completion: @escaping (Result<Void, InAppPresentationError>) -> Void) {}
+                          proceedIf requesterIsActive: @escaping () -> Bool,
+                          completion: @escaping (Result<Void, InappShowNowError>) -> Void) {}
     }
 
     private let queue = DispatchQueue(label: "test.core-manager.events")
