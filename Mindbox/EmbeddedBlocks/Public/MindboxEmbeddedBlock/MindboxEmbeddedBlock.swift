@@ -238,8 +238,7 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
         Coordinator(appearance: $appearance,
                     onLoad: onLoad,
                     onEmpty: onEmpty,
-                    onFail: onFail,
-                    animatesReveal: animatesReveal)
+                    onFail: onFail)
     }
 
     func makeUIView(context: Context) -> MindboxEmbeddedBlockView {
@@ -250,11 +249,17 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
                                                  animatesReveal: animatesReveal)
         let coordinator = context.coordinator
         blockView.delegate = coordinator
-        blockView.setAppearanceObserver { appearance in
-            coordinator.update(appearance)
-        }
+        Self.observe(blockView, with: coordinator)
         syncStandIns(in: blockView)
         return blockView
+    }
+
+    /// Passes each look on with `isRevealAnimated`, read while the observer runs.
+    static func observe(_ blockView: MindboxEmbeddedBlockView, with coordinator: Coordinator) {
+        // The container holds the observer, so it is captured weakly.
+        blockView.setAppearanceObserver { [weak blockView] appearance in
+            coordinator.update(appearance, animated: blockView?.isRevealAnimated ?? false)
+        }
     }
 
     func updateUIView(_ uiView: MindboxEmbeddedBlockView, context: Context) {
@@ -305,17 +310,10 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
         var onEmpty: (() -> Void)?
         var onFail: ((MindboxEmbeddedBlockFailReason) -> Void)?
 
-        /// The wrapper owns the block's frame, so the growth of a block that waited hidden is its
-        /// animation to run; the container fades the content in on its own.
-        let animatesReveal: Bool
-
         private var isDetached = false
 
         /// `DispatchQueue.main` outside tests.
         private let schedule: (@escaping () -> Void) -> Void
-
-        /// The accessibility setting outside tests: with it on, the content lands at once.
-        private let isReduceMotionEnabled: () -> Bool
 
         /// `withAnimation` with the SDK's reveal outside tests.
         private let animate: (@escaping () -> Void) -> Void
@@ -324,32 +322,27 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
              onLoad: (() -> Void)?,
              onEmpty: (() -> Void)?,
              onFail: ((MindboxEmbeddedBlockFailReason) -> Void)?,
-             animatesReveal: Bool = true,
              schedule: @escaping (@escaping () -> Void) -> Void = { work in DispatchQueue.main.async { work() } },
-             isReduceMotionEnabled: @escaping () -> Bool = { UIAccessibility.isReduceMotionEnabled },
              animate: @escaping (@escaping () -> Void) -> Void = { changes in
-                 withAnimation(.easeInOut(duration: Constants.EmbeddedBlock.revealAnimationDuration)) { changes() }
+                 withAnimation(.easeInOut(duration: MindboxEmbeddedBlockView.revealAnimationDuration)) { changes() }
              }) {
             self.appearance = appearance
             self.onLoad = onLoad
             self.onEmpty = onEmpty
             self.onFail = onFail
-            self.animatesReveal = animatesReveal
             self.schedule = schedule
-            self.isReduceMotionEnabled = isReduceMotionEnabled
             self.animate = animate
         }
 
-        func update(_ newAppearance: MindboxEmbeddedBlockAppearance) {
+        /// Writes the look, under the reveal animation when the view says `animated`.
+        func update(_ newAppearance: MindboxEmbeddedBlockAppearance, animated: Bool) {
             schedule { [weak self] in
                 guard let self, !self.isDetached,
                       self.appearance.wrappedValue != newAppearance else { return }
 
                 let write = { self.appearance.wrappedValue = newAppearance }
 
-                // Only the arrival of content is a reveal; a collapse or an error screen lands at once,
-                // and so does the content for a user who asked the system to reduce motion.
-                if newAppearance == .content, self.animatesReveal, !self.isReduceMotionEnabled() {
+                if animated {
                     self.animate(write)
                 } else {
                     write()

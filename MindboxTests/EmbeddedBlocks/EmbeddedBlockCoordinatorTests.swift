@@ -38,7 +38,7 @@ struct EmbeddedBlockCoordinatorTests {
             schedule: { scheduled.append($0) }
         )
 
-        coordinator.update(.content)
+        coordinator.update(.content, animated: false)
 
         #expect(written.isEmpty)
 
@@ -64,7 +64,7 @@ struct EmbeddedBlockCoordinatorTests {
             schedule: { scheduled.append($0) }
         )
 
-        coordinator.update(.content)
+        coordinator.update(.content, animated: false)
         coordinator.detach()
 
         scheduled.forEach { $0() }
@@ -98,10 +98,8 @@ struct EmbeddedBlockCoordinatorTests {
         #expect(heard == ["load", "empty", "fail:networkError"])
     }
 
-    /// The wrapper owns the block's frame: the growth of a block that waited hidden — and the swap of
-    /// its own placeholder for the content — is its animation to run, on the reveal and only there.
-    @Test("Content is written under the reveal animation")
-    func contentIsWrittenUnderTheAnimation() {
+    @Test("A look the container calls the reveal is written under the animation")
+    func revealIsWrittenUnderTheAnimation() {
         guard #available(iOS 13.0, *) else { return }
 
         var written = [MindboxEmbeddedBlockAppearance?]()
@@ -112,7 +110,6 @@ struct EmbeddedBlockCoordinatorTests {
             onLoad: nil,
             onEmpty: nil,
             onFail: nil,
-            animatesReveal: true,
             schedule: { scheduled.append($0) },
             animate: { changes in
                 animatedWrites += 1
@@ -120,54 +117,26 @@ struct EmbeddedBlockCoordinatorTests {
             }
         )
 
-        coordinator.update(.content)
+        coordinator.update(.content, animated: true)
         scheduled.forEach { $0() }
 
         #expect(written == [.content])
         #expect(animatedWrites == 1)
     }
 
-    @Test("With Reduce Motion on the content lands at once")
-    func contentLandsAtOnceUnderReduceMotion() {
+    @Test("A look the container does not call the reveal lands at once, content included",
+          arguments: [MindboxEmbeddedBlockAppearance.content, .placeholder, .collapsed, .error])
+    func otherLooksLandAtOnce(newAppearance: MindboxEmbeddedBlockAppearance) {
         guard #available(iOS 13.0, *) else { return }
 
         var written = [MindboxEmbeddedBlockAppearance?]()
         var scheduled = [() -> Void]()
         var animatedWrites = 0
         let coordinator = EmbeddedBlockRepresentable.Coordinator(
-            appearance: Binding(get: { .collapsed }, set: { written.append($0) }),
+            appearance: Binding(get: { nil }, set: { written.append($0) }),
             onLoad: nil,
             onEmpty: nil,
             onFail: nil,
-            animatesReveal: true,
-            schedule: { scheduled.append($0) },
-            isReduceMotionEnabled: { true },
-            animate: { changes in
-                animatedWrites += 1
-                changes()
-            }
-        )
-
-        coordinator.update(.content)
-        scheduled.forEach { $0() }
-
-        #expect(written == [.content])
-        #expect(animatedWrites == 0)
-    }
-
-    @Test("A collapse and an error screen land at once", arguments: [MindboxEmbeddedBlockAppearance.collapsed, .error])
-    func collapseAndErrorAreNotAnimated(newAppearance: MindboxEmbeddedBlockAppearance) {
-        guard #available(iOS 13.0, *) else { return }
-
-        var written = [MindboxEmbeddedBlockAppearance?]()
-        var scheduled = [() -> Void]()
-        var animatedWrites = 0
-        let coordinator = EmbeddedBlockRepresentable.Coordinator(
-            appearance: Binding(get: { .placeholder }, set: { written.append($0) }),
-            onLoad: nil,
-            onEmpty: nil,
-            onFail: nil,
-            animatesReveal: true,
             schedule: { scheduled.append($0) },
             animate: { changes in
                 animatedWrites += 1
@@ -175,37 +144,50 @@ struct EmbeddedBlockCoordinatorTests {
             }
         )
 
-        coordinator.update(newAppearance)
+        coordinator.update(newAppearance, animated: false)
         scheduled.forEach { $0() }
 
         #expect(written == [newAppearance])
         #expect(animatedWrites == 0)
     }
 
-    @Test("With the animation turned off the content lands at once too")
-    func contentLandsAtOnceWithTheAnimationOff() {
+    @Test("The observer the representable installs hands over the container's verdict with each look")
+    @MainActor
+    func installedObserverHandsOverTheContainersVerdict() {
         guard #available(iOS 13.0, *) else { return }
 
-        var written = [MindboxEmbeddedBlockAppearance?]()
+        var current: MindboxEmbeddedBlockAppearance?
+        var written = [(MindboxEmbeddedBlockAppearance?, Bool)]()
         var scheduled = [() -> Void]()
-        var animatedWrites = 0
+        var isAnimating = false
         let coordinator = EmbeddedBlockRepresentable.Coordinator(
-            appearance: Binding(get: { .collapsed }, set: { written.append($0) }),
+            appearance: Binding(get: { current }, set: { current = $0; written.append(($0, isAnimating)) }),
             onLoad: nil,
             onEmpty: nil,
             onFail: nil,
-            animatesReveal: false,
             schedule: { scheduled.append($0) },
             animate: { changes in
-                animatedWrites += 1
+                isAnimating = true
                 changes()
+                isAnimating = false
             }
         )
+        let bed = EmbeddedBlockTestBed()
+        let reveal = EmbeddedBlockRevealAnimationSpy()
+        let view = MindboxEmbeddedBlockView(placeSystemName: "block-id",
+                                            height: 104,
+                                            contentProvider: bed.provider,
+                                            placeMemory: EmbeddedBlockPlaceMemoryMock(),
+                                            loadingStrategy: .hidden,
+                                            revealAnimation: reveal.animation)
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 320, height: 480))
 
-        coordinator.update(.content)
+        EmbeddedBlockRepresentable.observe(view, with: coordinator)
+        window.addSubview(view)
+        bed.page?.reportRendered(1)
         scheduled.forEach { $0() }
 
-        #expect(written == [.content])
-        #expect(animatedWrites == 0)
+        #expect(written.first.map { $0.0 == .collapsed && !$0.1 } == true)
+        #expect(written.last.map { $0.0 == .content && $0.1 } == true)
     }
 }

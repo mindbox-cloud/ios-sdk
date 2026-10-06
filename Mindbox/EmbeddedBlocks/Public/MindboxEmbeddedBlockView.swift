@@ -110,8 +110,18 @@ public final class MindboxEmbeddedBlockView: UIView {
     @_spi(Internal)
     public func setAppearanceObserver(_ observer: ((MindboxEmbeddedBlockAppearance) -> Void)?) {
         appearanceObserver = observer
+        isRevealAnimated = false
         observer?(shownAppearance)
     }
+
+    /// Whether the look the observer is being told about is the animated reveal. Valid only
+    /// inside the observer: the next look overwrites it.
+    @_spi(Internal)
+    public private(set) var isRevealAnimated = false
+
+    /// How long the reveal takes, for a wrapper that animates its own frame.
+    @_spi(Internal)
+    public static let revealAnimationDuration: TimeInterval = Constants.EmbeddedBlock.revealAnimationDuration
 
     /// Tells the block whether the host still shows it — a second source for the same input as
     /// window visibility: the content runs while `window != nil && isHostVisible`.
@@ -531,6 +541,7 @@ public final class MindboxEmbeddedBlockView: UIView {
             invalidateIntrinsicContentSize()
         }
 
+        isRevealAnimated = animated
         appearanceObserver?(shownAppearance)
         scheduleDelivery()
     }
