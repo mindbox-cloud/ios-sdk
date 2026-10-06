@@ -644,6 +644,7 @@ public class Mindbox: NSObject {
 
     @objc
     private func eraseSessionStorage() {
+        NotificationCenter.default.post(name: .shouldDiscardInapps, object: nil)
         sessionTemporaryStorage?.erase()
     }
 }

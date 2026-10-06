@@ -17,8 +17,12 @@ protocol PresentationDisplayUseCaseProtocol: AnyObject {
         onClose: @escaping () -> Void,
         onError: @escaping (InAppPresentationError) -> Void
     )
-    func dismissInAppUIModel(onClose: @escaping () -> Void)
+    func dismissInAppUIModel()
     func onPresented(id: String, _ completion: @escaping () -> Void)
+}
+
+protocol InAppShowEnding: AnyObject {
+    func endShow()
 }
 
 final class PresentationDisplayUseCase: PresentationDisplayUseCaseProtocol {
@@ -52,10 +56,8 @@ final class PresentationDisplayUseCase: PresentationDisplayUseCaseProtocol {
     ) {
 
         let dependencies = dependenciesResolver(model.content)
-        presentationStrategy = dependencies.strategy
-        factory = dependencies.factory
 
-        guard let presentationStrategy = presentationStrategy else {
+        guard let presentationStrategy = dependencies.strategy else {
             onError(.failed("[PresentationDisplayUseCase] Presentation strategy is not configured."))
             return
         }
@@ -66,7 +68,7 @@ final class PresentationDisplayUseCase: PresentationDisplayUseCaseProtocol {
             return
         }
 
-        guard let factory = self.factory else {
+        guard let factory = dependencies.factory else {
             Logger.common(message: "[PresentationDisplayUseCase] Factory does not exists.", level: .error, category: .general)
             onError(.failed("[PresentationDisplayUseCase] Factory does not exist."))
             return
@@ -108,25 +110,22 @@ final class PresentationDisplayUseCase: PresentationDisplayUseCaseProtocol {
             return
         }
 
+        self.presentationStrategy = presentationStrategy
+        self.factory = factory
         presentedVC = viewController
     }
 
-    func dismissInAppUIModel(onClose: @escaping () -> Void) {
+    func dismissInAppUIModel() {
         guard let presentedVC = presentedVC else {
             return
         }
-        
+
+        (presentedVC as? InAppShowEnding)?.endShow()
         presentationStrategy?.dismiss(viewController: presentedVC)
         self.presentedVC = nil
         self.model = nil
         self.presentationStrategy = nil
         self.factory = nil
-        
-        if let webVC = presentedVC as? WebViewController, webVC.isTimeoutClose {
-            return
-        }
-        
-        onClose()
     }
 
     func onPresented(id: String, _ completion: @escaping () -> Void) {

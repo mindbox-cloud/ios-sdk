@@ -95,13 +95,7 @@ final class InappScheduleManager: InappScheduleManagerProtocol {
                       processingDuration: TimeInterval,
                       completion: @escaping (Result<Void, InAppPresentationError>) -> Void) {
         DispatchQueue.main.async {
-            // Dismissal completes the closed show on the next main-queue turn; presenting is deferred
-            // behind it so the lock is released before the new show takes it.
-            self.presentationManager.dismissActiveInApp()
-
-            DispatchQueue.main.async {
-                self.presentRequestedInapp(inapp, processingDuration: processingDuration, outcome: completion)
-            }
+            self.presentRequestedInapp(inapp, processingDuration: processingDuration, outcome: completion)
         }
     }
 }
@@ -122,9 +116,9 @@ internal extension InappScheduleManager {
         }
     }
 
-    /// On the main queue, with the shows that flip `isPresentingInAppMessage`: the check and the take are one turn.
+    /// On the main queue.
     private func presentIfScreenIsFree(_ winner: ScheduledInapp) {
-        guard !SessionTemporaryStorage.shared.isPresentingInAppMessage else {
+        guard !presentationManager.isPresenting else {
             Logger.common(message: "[InappScheduleManager] Another in-app is already being shown, skipping \(winner.inapp.inAppId)",
                           level: .debug, category: .inAppMessages)
             giveBackSlot(of: winner)
@@ -143,7 +137,7 @@ internal extension InappScheduleManager {
     /// On the main queue. The moment came in the background: the slot is taken now and the show waits for the
     /// foreground, in sync with Android.
     func holdEligibleInapp(_ presentationTime: TimeInterval) {
-        let isScreenTaken = SessionTemporaryStorage.shared.isPresentingInAppMessage
+        let isScreenTaken = presentationManager.isPresenting
         queue.async {
             guard var winner = self.takeWinner(at: presentationTime) else { return }
 
@@ -230,13 +224,12 @@ internal extension InappScheduleManager {
         )
     }
 
-    /// On the main queue: the screen lock is taken here and released by the callbacks, all on main.
+    /// On the main queue.
     private func present(_ inapp: InAppFormData,
                          holdsSlot: Bool,
                          onPresented: @escaping () -> Void,
                          onDismissed: @escaping () -> Void,
                          onFailed: @escaping (InAppPresentationError) -> Void) {
-        SessionTemporaryStorage.shared.isPresentingInAppMessage = true
         SessionTemporaryStorage.shared.lastInappClickedID = nil
         var didHandleOnError = false
         var didPresent = false
@@ -258,7 +251,6 @@ internal extension InappScheduleManager {
                 )
             },
             onPresentationCompleted: { [delegate] wasDiscarded in
-                SessionTemporaryStorage.shared.isPresentingInAppMessage = false
                 if !wasDiscarded {
                     delegate?.inAppMessageDismissed(id: inapp.inAppId)
                 }
@@ -280,7 +272,6 @@ internal extension InappScheduleManager {
                 }
                 didHandleOnError = true
 
-                SessionTemporaryStorage.shared.isPresentingInAppMessage = false
                 if holdsSlot {
                     self.budget.release(.overlay(inapp.inAppId))
                 }

@@ -42,7 +42,6 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
     private let onError: (InAppPresentationError) -> Void
     private let onTapAction: InAppMessageTapAction
     private let windowProvider: () -> UIWindow?
-    var isTimeoutClose = false
     private var hasClosed = false
     private var hasOnPresentedBeenCalled = false
 
@@ -157,13 +156,6 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         becomeFirstResponder()
-    }
-
-    override func viewWillDisappear(_ animated: Bool) {
-        // Every dismissal path (close action, dim-tap, timeout) goes through here while
-        // the page is still alive — the last moment the learned-hosts capture can run.
-        transparentWebView?.captureObservedResourceHosts()
-        super.viewWillDisappear(animated)
     }
 
     override func motionEnded(_ motion: UIEvent.EventSubtype, with event: UIEvent?) {
@@ -324,13 +316,19 @@ private extension WebViewController {
 
     func close(reporting error: InAppPresentationError?) {
         guard !hasClosed else { return }
-        hasClosed = true
-        transparentWebView?.endBridgeSession()
+        endShow()
         if let error {
-            isTimeoutClose = true
             onError(error)
         }
         Logger.common(message: "[WebView] WebViewVC closeWebView", category: .webViewInAppMessages)
         onCloseInApp()
+    }
+}
+
+extension WebViewController: InAppShowEnding {
+    func endShow() {
+        guard !hasClosed else { return }
+        hasClosed = true
+        transparentWebView?.endShow()
     }
 }

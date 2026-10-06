@@ -22,8 +22,7 @@ final class TransparentViewJSBridgeTests {
     private let showController = ShowControllerSpy()
     private var closes = 0
     private var failures: [InAppPresentationError] = []
-    private weak var controllerUnderTest: WebViewController?
-    private var timeoutFlagsSeenAtClose: [Bool?] = []
+    private var showEvents: [String] = []
     private var windowLookups = 0
     private var presentations = 0
     /// Registry entries are weak, so the view a test built is held here as well: a local could
@@ -284,16 +283,16 @@ final class TransparentViewJSBridgeTests {
         case timeout
     }
 
-    @Test("A load failure or a timeout that closes the popup reports once, closes once, and marks the close as failed before it closes",
+    @Test("A load failure or a timeout that closes the popup reports once, closes once, and reports the error before the close",
           .tags(.webView), arguments: Failure.allCases)
-    func failureThatClosesThePopupIsReportedOnceAndMarkedBeforeTheClose(failure: Failure) throws {
+    func failureThatClosesThePopupIsReportedOnceAndBeforeTheClose(failure: Failure) throws {
         let show = try makeShow()
 
         report(failure, on: show.controller)
 
         #expect(failures.count == 1)
         #expect(closes == 1)
-        #expect(timeoutFlagsSeenAtClose == [true])
+        #expect(showEvents == ["error", "close"])
     }
 
     @Test("A load failure or a timeout after the popup closed reports no failure", .tags(.webView), arguments: Failure.allCases)
@@ -319,6 +318,35 @@ final class TransparentViewJSBridgeTests {
 
         #expect(windowLookups == 0)
         #expect(presentations == 0)
+    }
+
+    @Test("A popup the SDK ended before its deferred reveal is never shown, reports no close and no longer serves its page",
+          .tags(.webView))
+    func popupEndedBySDKBeforeTheRevealIsNeverShown() async throws {
+        let show = try makeShow(window: UIWindow())
+
+        show.controller.onInit()
+        (show.controller as InAppShowEnding).endShow()
+        await withCheckedContinuation { continuation in
+            DispatchQueue.main.async { continuation.resume() }
+        }
+        send(.click, payload: "{}", to: show.page)
+
+        #expect(windowLookups == 0)
+        #expect(presentations == 0)
+        #expect(closes == 0)
+        #expect(failures.isEmpty)
+        #expect(facade.sentMessages.isEmpty)
+    }
+
+    @Test("A page that ends reads its hosts before it lets its WebView go, once", .tags(.webView))
+    func endingPageReadsItsHostsBeforeItLetsTheWebViewGo() throws {
+        let show = try makeShow()
+
+        (show.controller as InAppShowEnding).endShow()
+        show.controller.onClose()
+
+        #expect(facade.calls == ["evaluateJavaScript", "endShow"])
     }
 
     @Test("A hide the page asks for reaches the window while the popup is open, and none once it closed right after",
@@ -360,10 +388,11 @@ final class TransparentViewJSBridgeTests {
         if state == .closed {
             show.controller.closeTapWebViewVC()
         }
+        let evaluationsBeforeTheNavigation = facade.evaluateJavaScriptCalls
 
         show.page.webBridge(MindboxWebBridge(webView: WKWebView()), didFinishNavigation: URL(string: "https://inapp.local/index.html"))
 
-        #expect(facade.evaluateJavaScriptCalls == expectedChecks)
+        #expect(facade.evaluateJavaScriptCalls - evaluationsBeforeTheNavigation == expectedChecks)
     }
 
     @Test("A script HTTP error is retried bypassing the cache while the popup is open, and not after the page closed it",
@@ -449,18 +478,19 @@ final class TransparentViewJSBridgeTests {
                                            onPresented: { [weak self] in self?.presentations += 1 },
                                            onTapAction: { _, _ in },
                                            onCloseInApp: { [weak self] in
-                                               guard let self else { return }
-                                               self.closes += 1
-                                               self.timeoutFlagsSeenAtClose.append(self.controllerUnderTest?.isTimeoutClose)
+                                               self?.closes += 1
+                                               self?.showEvents.append("close")
                                            },
-                                           onError: { [weak self] in self?.failures.append($0) },
+                                           onError: { [weak self] in
+                                               self?.failures.append($0)
+                                               self?.showEvents.append("error")
+                                           },
                                            windowProvider: { [weak self] in
                                                self?.windowLookups += 1
                                                return window
                                            },
                                            operation: nil,
                                            tags: nil)
-        controllerUnderTest = controller
         controller.loadViewIfNeeded()
         let page = try #require(controller.view.subviews.compactMap { $0 as? TransparentView }.first)
         page.facade = facade
@@ -513,16 +543,19 @@ private final class WebViewFacadeSpy: InappWebViewFacadeProtocol {
     private(set) var sentMessages: [BridgeMessage] = []
     private(set) var evaluateJavaScriptCalls = 0
     private(set) var cacheBypassRetries = 0
+    private(set) var calls: [String] = []
     var sentRequests: [BridgeMessage] { sentMessages.filter { $0.type == .request } }
 
     func makeView() -> UIView { UIView() }
     func loadHTML(baseUrl: String, contentUrl: String, onFailure: @escaping () -> Void) {}
     func applyViewSettings(scrollViewDelegate: UIScrollViewDelegate?) {}
     func cleanWebView() {}
+    func endShow() { calls.append("endShow") }
     func makeStartPayload(_ completion: @escaping (JSONValue) -> Void) { completion(.string("{}")) }
     func sendToJS(_ message: BridgeMessage) { sentMessages.append(message) }
     func evaluateJavaScript(_ script: String, completion: @escaping (Result<Any?, Error>) -> Void) {
         evaluateJavaScriptCalls += 1
+        calls.append("evaluateJavaScript")
         completion(.success(false))
     }
     func setBridgeMessageDelegate(_ delegate: WebBridgeMessageDelegate?) {}

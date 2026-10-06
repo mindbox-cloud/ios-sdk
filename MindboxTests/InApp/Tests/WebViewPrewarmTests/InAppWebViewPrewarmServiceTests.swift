@@ -9,7 +9,7 @@
 import Foundation
 import Testing
 import WebKit
-@testable import Mindbox
+@_spi(Internal) @testable import Mindbox
 
 @MainActor
 @Suite("InApp WebView prewarm service guards", .tags(.webView))
@@ -19,6 +19,7 @@ struct InAppWebViewPrewarmServiceTests {
         private(set) var loadedHTMLCount = 0
         private(set) var loadedBaseURLs: [URL?] = []
         private(set) var stopLoadingCount = 0
+        private(set) var evaluatedScriptCount = 0
         var stubbedIsLoading = false
 
         override var isLoading: Bool { stubbedIsLoading }
@@ -31,6 +32,11 @@ struct InAppWebViewPrewarmServiceTests {
 
         override func stopLoading() {
             stopLoadingCount += 1
+        }
+
+        override func evaluateJavaScript(_ javaScriptString: String,
+                                         completionHandler: (@MainActor (Any?, (any Error)?) -> Void)? = nil) {
+            evaluatedScriptCount += 1
         }
     }
 
@@ -276,6 +282,128 @@ struct InAppWebViewPrewarmServiceTests {
         suite.service.parkWarmWebView()
         await suite.drainMainQueue()
         #expect(suite.service.borrowWarmWebView() === suite.spy)
+    }
+
+    @Test("A page that ends hands its warm instance back in the same turn, and the next page borrows it at once")
+    func endedPageHandsTheWarmInstanceToTheNextPageInTheSameTurn() async throws {
+        let suite = try await Self.prewarmed()
+        let first = suite.makePage()
+        #expect(first.makeView() === suite.spy)
+
+        first.endShow()
+        let second = suite.makePage()
+
+        #expect(second.makeView() === suite.spy)
+    }
+
+    @Test("A late cleanup from an ended page leaves the instance the next page took alone")
+    func lateCleanupFromAnEndedPageLeavesTheNextPagesInstanceAlone() async throws {
+        let suite = try await Self.prewarmed()
+        let first = suite.makePage()
+        first.endShow()
+        _ = suite.makePage()
+        let stopsByTheNextPage = suite.spy.stopLoadingCount
+
+        first.cleanWebView()
+        await suite.drainMainQueue()
+
+        #expect(suite.spy.stopLoadingCount == stopsByTheNextPage)
+    }
+
+    @Test("An ended page runs no script on the instance it gave back")
+    func endedPageRunsNoScript() async throws {
+        let suite = try await Self.prewarmed()
+        let first = suite.makePage()
+        first.endShow()
+        var failed = false
+
+        first.evaluateJavaScript("1") { result in
+            if case .failure = result { failed = true }
+        }
+
+        #expect(failed)
+    }
+
+    @Test("A script asked on main reaches the page in the same turn, before the page can end and give its instance away")
+    func scriptAskedOnMainReachesThePageInTheSameTurn() async throws {
+        let suite = try await Self.prewarmed()
+        let page = suite.makePage()
+
+        page.evaluateJavaScript("1") { _ in }
+        page.endShow()
+
+        #expect(suite.spy.evaluatedScriptCount == 1)
+    }
+
+    @Test("An ended page sends its page no message through the instance it gave back")
+    func endedPageSendsNoMessage() async throws {
+        let suite = try await Self.prewarmed()
+        let first = suite.makePage()
+        first.endShow()
+
+        first.sendToJS(BridgeMessage(type: .request, action: .localStateChanged, payload: .object([:])))
+
+        #expect(suite.spy.evaluatedScriptCount == 0)
+    }
+
+    @Test("A late park from a show that already gave its instance back loads no second blank page")
+    func lateParkAfterAReturnLoadsNothing() async throws {
+        let suite = try await Self.prewarmed()
+        let borrowed = try #require(suite.service.borrowWarmWebView())
+        suite.service.returnWarmWebView(borrowed)
+        let loadsAfterTheReturn = suite.spy.loadedHTMLCount
+
+        suite.service.parkWarmWebView()
+        await suite.drainMainQueue()
+
+        #expect(suite.spy.loadedHTMLCount == loadsAfterTheReturn)
+    }
+
+    @Test("A late park from a show that gave its instance back leaves it alone once a newer show holds it")
+    func lateParkLeavesTheNewerShowsInstanceAlone() async throws {
+        let suite = try await Self.prewarmed()
+        let borrowed = try #require(suite.service.borrowWarmWebView())
+        suite.service.returnWarmWebView(borrowed)
+        let reborrowed = try #require(suite.service.borrowWarmWebView())
+        let newerPage = UIView()
+        newerPage.addSubview(reborrowed)
+        let loadsByTheNewerShow = suite.spy.loadedHTMLCount
+
+        suite.service.parkWarmWebView()
+        await suite.drainMainQueue()
+
+        #expect(suite.spy.loadedHTMLCount == loadsByTheNewerShow)
+        #expect(suite.service.borrowWarmWebView() == nil)
+        withExtendedLifetime(newerPage) {}
+    }
+
+    @Test("Only the instance lent out can be returned")
+    func onlyTheLentInstanceCanBeReturned() async throws {
+        let suite = try await Self.prewarmed()
+        suite.service.returnWarmWebView(suite.spy)
+        #expect(suite.spy.loadedHTMLCount == 2)
+
+        _ = suite.service.borrowWarmWebView()
+        suite.service.returnWarmWebView(WKWebView())
+
+        #expect(suite.service.borrowWarmWebView() == nil)
+    }
+
+    private static func prewarmed() async throws -> Self {
+        let suite = try Self.init(cachedConfig: loadPrewarmTestConfig("InAppWebviewValid"))
+        suite.service.prewarmProcess()
+        try await suite.waitUntil(suite.spy.loadedHTMLCount == 2)
+        return suite
+    }
+
+    private func makePage() -> MindboxWebViewFacade {
+        MindboxWebViewFacade(params: nil,
+                             operation: nil,
+                             userAgent: SDKUserAgent.build(),
+                             inAppId: "inapp-1",
+                             prewarmService: service,
+                             log: { _ in },
+                             logError: { _ in })
     }
 
     @Test("Observed hosts are persisted under the configuration endpoint")

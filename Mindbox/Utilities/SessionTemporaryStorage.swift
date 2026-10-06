@@ -21,7 +21,6 @@ final class SessionTemporaryStorage {
     @Locked var viewCategoryOperation: String?
     @Locked var geoRequestResult: Result<InAppGeoResponse?, MindboxError>?
     @Locked var segmentationRequestResult: Result<[SegmentationCheckResponse.CustomerSegmentation]?, MindboxError>?
-    @Locked var isPresentingInAppMessage = false
     @Locked var pushPermissionStatus: UNAuthorizationStatus = .denied
     @Locked var showBudget = InappShowBudgetState()
     @Locked var isInstalledFromPersistenceStorageBeforeInitSDK: Bool = false
@@ -62,7 +61,6 @@ final class SessionTemporaryStorage {
         viewCategoryOperation = nil
         geoRequestResult = nil
         segmentationRequestResult = nil
-        isPresentingInAppMessage = false
         showBudget = InappShowBudgetState()
         isUserVisitSaved = false
         lastInappClickedID = nil

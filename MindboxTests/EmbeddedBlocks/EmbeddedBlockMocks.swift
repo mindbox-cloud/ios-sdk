@@ -319,6 +319,8 @@ final class SharedWebLayerMock: InappWebViewFacadeProtocol {
 
     func cleanWebView() {}
 
+    func endShow() {}
+
     private(set) var startPayloadRequests = 0
 
     func makeStartPayload(_ completion: @escaping (JSONValue) -> Void) {

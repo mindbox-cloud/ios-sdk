@@ -170,7 +170,6 @@ final class InappSessionManagerTests: XCTestCase {
         SessionTemporaryStorage.shared.viewProductOperation = "Test2"
         SessionTemporaryStorage.shared.geoRequestResult = .success(nil)
         SessionTemporaryStorage.shared.segmentationRequestResult = .success(nil)
-        SessionTemporaryStorage.shared.isPresentingInAppMessage = true
         SessionTemporaryStorage.shared.sessionShownInApps = ["1"]
         SessionTemporaryStorage.shared.inAppSettings = Settings.InAppSettings(maxInappsPerSession: 1, maxInappsPerDay: 2, minIntervalBetweenShows: "00:00:00")
         SessionTemporaryStorage.shared.$ledger.mutate {
@@ -197,7 +196,6 @@ final class InappSessionManagerTests: XCTestCase {
         XCTAssertEqual(SessionTemporaryStorage.shared.viewProductOperation, nil)
         XCTAssertNil(SessionTemporaryStorage.shared.geoRequestResult)
         XCTAssertNil(SessionTemporaryStorage.shared.segmentationRequestResult)
-        XCTAssertEqual(SessionTemporaryStorage.shared.isPresentingInAppMessage, false)
         XCTAssertEqual(SessionTemporaryStorage.shared.sessionShownInApps, [])
         XCTAssertNil(SessionTemporaryStorage.shared.inAppSettings)
         XCTAssertEqual(SessionTemporaryStorage.shared.ledger, InappSessionLedger())
