@@ -447,6 +447,7 @@
 		A1B2C3D4E5F60718293A4B01 /* MindboxOperationsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B02 /* MindboxOperationsTests.swift */; };
 		A1B2C3D4E5F60718293A4B03 /* OperationNameValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B04 /* OperationNameValidatorTests.swift */; };
 		A1B2C3D4E5F60718293A4B05 /* PollUntil.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B06 /* PollUntil.swift */; };
+		884B109135EBB02FCDDAD72D /* UIKitWarmUpObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92F52B905B3C6367C4B1129D /* UIKitWarmUpObserver.swift */; };
 		A1B2C3D4E5F6A7B8C9D0E1F2 /* MotionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F3 /* MotionService.swift */; };
 		A1B940B7298104ED00B0F994 /* UnknownTargetingsModel.json in Resources */ = {isa = PBXBuildFile; fileRef = A1B940B6298104ED00B0F994 /* UnknownTargetingsModel.json */; };
 		A1D017E72976CBE100CD9F99 /* TargetingModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1D017E62976CBE100CD9F99 /* TargetingModel.swift */; };
@@ -1199,6 +1200,7 @@
 		A1B2C3D4E5F60718293A4B02 /* MindboxOperationsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindboxOperationsTests.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F60718293A4B04 /* OperationNameValidatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OperationNameValidatorTests.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F60718293A4B06 /* PollUntil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PollUntil.swift; sourceTree = "<group>"; };
+		92F52B905B3C6367C4B1129D /* UIKitWarmUpObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIKitWarmUpObserver.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F6A7B8C9D0E1F3 /* MotionService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MotionService.swift; sourceTree = "<group>"; };
 		A1B940B6298104ED00B0F994 /* UnknownTargetingsModel.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = UnknownTargetingsModel.json; sourceTree = "<group>"; };
 		A1D017E62976CBE100CD9F99 /* TargetingModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TargetingModel.swift; sourceTree = "<group>"; };
@@ -2393,6 +2395,7 @@
 				848A89582620C3AE00EDFB6D /* APNSTokenGenerator.swift */,
 				47D0BC2B2E093F8A00182DB2 /* ClockAndMockClock.swift */,
 				A1B2C3D4E5F60718293A4B06 /* PollUntil.swift */,
+				92F52B905B3C6367C4B1129D /* UIKitWarmUpObserver.swift */,
 			);
 			path = Helpers;
 			sourceTree = "<group>";
@@ -4835,6 +4838,7 @@
 				A1B2C3D4E5F60718293A4B01 /* MindboxOperationsTests.swift in Sources */,
 				A1B2C3D4E5F60718293A4B03 /* OperationNameValidatorTests.swift in Sources */,
 				A1B2C3D4E5F60718293A4B05 /* PollUntil.swift in Sources */,
+				884B109135EBB02FCDDAD72D /* UIKitWarmUpObserver.swift in Sources */,
 				F39116EE2AA53EE400852298 /* VariantImageUrlExtractorServiceTests.swift in Sources */,
 				A154E334299E110E00F8F074 /* EventRepositoryMock.swift in Sources */,
 				F3CD20262F600A800065392A /* MBConfigurationTests.swift in Sources */,
