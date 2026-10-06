@@ -16,8 +16,8 @@ import MindboxLogger
 /// rather than behind a check of which surface we are on.
 protocol WebBridgeHost: AnyObject {
 
-    /// The in-app id for a popup, the block id for an embedded block. Goes into the logs, and
-    /// into the start payload as `inAppId`.
+    /// The id of the in-app this page shows, a popup's or an embedded block's. Goes into the logs, and
+    /// into the start payload as `inappId`.
     var contentId: String { get }
 
     /// Where this host journals. Each surface keeps its own trail, so a handler shared by all
