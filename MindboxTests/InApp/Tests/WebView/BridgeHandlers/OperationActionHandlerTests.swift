@@ -338,6 +338,18 @@ struct OperationActionHandlerTests {
         #expect(config.askedIds.isEmpty)
     }
 
+    @Test("An empty in-app id is refused even from a window whose own id is empty", .tags(.inAppTags))
+    func emptyInappIdIsRefusedForAnEmptyWindowId() throws {
+        let sut = makeSUT()
+        sut.host.contentId = ""
+
+        sut.handler.handle(request(.asyncOperation, inappId: .string("")), host: sut.host)
+
+        let response = try #require(sut.host.sent.first)
+        #expect(response.payload == .object(["error": .string("invalid_payload")]))
+        #expect(sut.database.created.isEmpty)
+    }
+
     @Test("With the tags toggle off no tags are added, yet a named in-app is still looked up", .tags(.inAppTags))
     func toggleOffStillLooksUp() throws {
         applyTagsToggle(enabled: false)
