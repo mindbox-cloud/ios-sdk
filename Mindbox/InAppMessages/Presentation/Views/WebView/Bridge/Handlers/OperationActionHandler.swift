@@ -196,7 +196,7 @@ enum OperationTagsResolver {
         switch inappId {
         case .none, .null:
             return .tags(host.tags)
-        case .string(let id) where id == host.contentId:
+        case .string(let id) where !id.isEmpty && id == host.contentId:
             return .tags(host.tags)
         case .string(let id) where !id.isEmpty:
             guard let inapp = lookup(id) else {
