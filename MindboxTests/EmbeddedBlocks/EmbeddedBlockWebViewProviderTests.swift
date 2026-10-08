@@ -1646,6 +1646,62 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(show.timeToDisplay == 2.75)
     }
 
+    @Test("Time the block spent off screen before the render is not in its timeToDisplay")
+    func showExcludesTheTimeOffScreenBeforeTheRender() throws {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.processingDuration = 2
+
+        bed.provider.start()
+        bed.clock.advance(0.75)
+        bed.provider.stop()
+        bed.clock.advance(45)
+        bed.provider.start()
+        bed.clock.advance(0.25)
+        bed.page?.reportRendered(1)
+
+        let show = try #require(bed.accounting.shows.first)
+        #expect(show.timeToDisplay == 3)
+    }
+
+    @Test("Every pass of the block across the screen is excluded, not only the first")
+    func showExcludesEveryAbsenceBeforeTheRender() throws {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.processingDuration = 2
+
+        bed.provider.start()
+        bed.clock.advance(0.5)
+        bed.provider.stop()
+        bed.clock.advance(10)
+        bed.provider.start()
+        bed.clock.advance(0.5)
+        bed.provider.stop()
+        bed.clock.advance(30)
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+
+        let show = try #require(bed.accounting.shows.first)
+        #expect(show.timeToDisplay == 3)
+    }
+
+    @Test("A page rebuilt after a return measures from its own build, with no absence behind it")
+    func rebuiltPageMeasuresFromItsOwnBuild() throws {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.processingDuration = 2
+
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.provider.stop()
+        bed.clock.advance(30)
+        bed.provider.start()
+        bed.resolver.resolution = .content(.other)
+        bed.resolver.processingDuration = 1
+        bed.announceNewConfig()
+        bed.clock.advance(0.5)
+        bed.page?.reportRendered(1)
+
+        #expect(bed.accounting.shows.map(\.timeToDisplay) == [2, 1.5])
+    }
+
     @Test("Failed block tries again when it comes back")
     func failedBlockTriesAgainOnReturn() {
         let bed = EmbeddedBlockTestBed()
