@@ -768,14 +768,15 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(memory.askedPlaces == ["stories"])
     }
 
-    @Test("Only the surrounding whitespace goes, the name itself is kept as it is",
+    @Test("The surrounding whitespace and the letter case go, the name itself is kept",
           arguments: [("stories", "stories"),
                       (" stories ", "stories"),
                       ("\tstories\n", "stories"),
                       ("my place", "my place"),
-                      ("Stories", "Stories"),
+                      ("Stories", "stories"),
+                      ("Stories-List-Container", "stories-list-container"),
                       ("   ", "")])
-    func placeNameNormalizationKeepsTheName(given: String, expected: String) {
+    func placeNameNormalizationTrimsAndLowercases(given: String, expected: String) {
         #expect(MindboxEmbeddedBlockView.normalizedPlaceSystemName(given) == expected)
     }
 

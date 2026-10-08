@@ -72,8 +72,9 @@ public struct MindboxEmbeddedBlock: View {
     private(set) var errorBuilder: (() -> AnyView)?
 
     /// - Parameters:
-    ///   - placeSystemName: The system name of the place from the admin panel. Whitespace around
-    ///     it is ignored; the name itself is matched as it is, case included.
+    ///   - placeSystemName: The system name of the place from the admin panel. Matched with the
+    ///     surrounding whitespace trimmed and the letter case ignored, the way an operation system
+    ///     name is: `Main-Screen-Top` and `main-screen-top` are the same place.
     ///   - height: The height the block occupies when shown — and while loading, unless it waits
     ///     hidden by its `loadingStrategy`. A new value resizes the block in place, without
     ///     reloading its content.
@@ -107,7 +108,7 @@ public struct MindboxEmbeddedBlock: View {
                 onEmpty: (() -> Void)? = nil,
                 onFail: ((MindboxEmbeddedBlockFailReason) -> Void)? = nil) {
         // Normalized here too, so `.id(placeSystemName)` keeps one SwiftUI identity per place
-        // however the name was padded.
+        // however the name was padded or cased.
         self.placeSystemName = MindboxEmbeddedBlockView.normalizedPlaceSystemName(placeSystemName)
         self.height = height
         self.timeout = timeout

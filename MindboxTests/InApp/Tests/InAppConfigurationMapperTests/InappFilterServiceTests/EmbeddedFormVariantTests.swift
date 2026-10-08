@@ -68,10 +68,28 @@ struct EmbeddedFormVariantTests {
         #expect(self.place(of: variants.first) == "stories-list-container")
     }
 
-    @Test("Place name case is preserved")
-    func keepsPlaceNameCase() throws {
-        let variants = try filter(embeddedVariant(place: "Stories-List-Container"))
-        #expect(place(of: variants.first) == "Stories-List-Container")
+    @Test("Place name is lowercased, like an operation system name", arguments: [
+        "Stories-List-Container",
+        "STORIES-LIST-CONTAINER",
+        "  Stories-List-Container  "
+    ])
+    func lowercasesPlaceName(place: String) throws {
+        let variants = try filter(embeddedVariant(place: place))
+        #expect(self.place(of: variants.first) == "stories-list-container")
+    }
+
+    @Test("The model itself keeps its place in the canonical form, however it was built", arguments: [
+        ("stories-list-container", "stories-list-container"),
+        ("Stories-List-Container", "stories-list-container"),
+        (" stories-list-container ", "stories-list-container"),
+        ("\tStories-List-Container\n", "stories-list-container")
+    ])
+    func modelCanonicalizesItsPlace(given: String, expected: String) throws {
+        let content = try #require(try filter(embeddedVariant(place: "any")).first.flatMap { variant -> InappFormVariantContent? in
+            guard case .embedded(let embedded) = variant else { return nil }
+            return embedded.content
+        })
+        #expect(EmbeddedFormVariant(content: content, placeSystemName: given).placeSystemName == expected)
     }
 
     @Test("A variant that cannot address a block is dropped", arguments: [

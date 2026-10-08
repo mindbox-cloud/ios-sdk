@@ -204,9 +204,9 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             for inapp in config.inapps?.elements ?? [] {
                 let inappPlaces = (inapp.form.variants ?? []).compactMap { variant -> String? in
                     guard case .embedded(let embedded) = variant else { return nil }
-                    // Must trim the way the selection trims, or the gate would close on a place
-                    // the resolve behind it would serve.
-                    let place = embedded.placeSystemName?.trimmingCharacters(in: .whitespacesAndNewlines)
+                    // Must key the name the way the selection keys it, or the gate would close on a
+                    // place the resolve behind it would serve.
+                    let place = embedded.placeSystemName.map(EmbeddedFormVariant.placeKey)
                     return place?.isEmpty == false ? place : nil
                 }
 

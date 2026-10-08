@@ -239,8 +239,9 @@ public final class MindboxEmbeddedBlockView: UIView {
     // MARK: - Life cycle
 
     /// - Parameters:
-    ///   - placeSystemName: The place system name from the admin panel. Whitespace around it is
-    ///     ignored; the name itself is matched as it is, case included.
+    ///   - placeSystemName: The place system name from the admin panel. Matched with the
+    ///     surrounding whitespace trimmed and the letter case ignored, the way an operation system
+    ///     name is: `Main-Screen-Top` and `main-screen-top` are the same place.
     ///   - height: The height the block occupies when shown — and while loading, unless it waits
     ///     hidden by its `loadingStrategy`. Reserving it is the host's job and there is no default:
     ///     a height of 0 or less leaves the block invisible whatever its content turns out to be,
@@ -270,10 +271,10 @@ public final class MindboxEmbeddedBlockView: UIView {
                   animatesReveal: animatesReveal)
     }
 
-    /// Padding is not part of a name: a name pasted from the admin panel with a stray space still
-    /// finds its place, in sync with Android.
+    /// Padding and letter case are not part of a name: a name pasted from the admin panel with a
+    /// stray space or typed in another case still finds its place, in sync with Android.
     static func normalizedPlaceSystemName(_ given: String) -> String {
-        given.trimmingCharacters(in: .whitespacesAndNewlines)
+        EmbeddedFormVariant.placeKey(given)
     }
 
     /// Blocks are not created from storyboards: the place system name and the height are required
