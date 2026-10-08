@@ -12,7 +12,8 @@ import MindboxLogger
 /// A drop-in container for a Mindbox embedded block.
 ///
 /// Created with the `placeSystemName` of the place from the admin panel and the `height` the block
-/// should occupy.
+/// should occupy — from code through `init(placeSystemName:height:)`, or from a storyboard or xib
+/// with the same values given in the Attributes Inspector; see `MindboxEmbeddedBlockView+InterfaceBuilder`.
 /// Put it anywhere in the app and constrain its position and width only — the height is applied
 /// by the container itself through `intrinsicContentSize`: the one given at creation while the
 /// content is shown, and 0 when there is nothing to show (a failure or an empty block), so the
@@ -43,16 +44,27 @@ public final class MindboxEmbeddedBlockView: UIView {
 
     /// The system name of the place from the admin panel, given at creation and stripped of the
     /// whitespace around it. Decides what content the SDK puts inside.
-    public let placeSystemName: String
+    ///
+    /// Settable for Interface Builder only: a value given once the block is built — from code, or
+    /// to a block created from code — is ignored and reported.
+    @IBInspectable public var placeSystemName: String {
+        get { setup.placeSystemName }
+        set { updateSetup("placeSystemName") { $0.placeSystemName = Self.normalizedPlaceSystemName(newValue) } }
+    }
 
     /// What the block shows until the SDK answers, given at creation.
     /// See `MindboxEmbeddedBlockLoadingStrategy`.
-    public let loadingStrategy: MindboxEmbeddedBlockLoadingStrategy
+    public var loadingStrategy: MindboxEmbeddedBlockLoadingStrategy { setup.loadingStrategy }
 
     /// Whether the SDK animates the reveal of the content, given at creation. `false` swaps the layers
     /// and applies the height at once — for a host that animates the block's container itself. The
     /// system's Reduce Motion setting turns the animation off as well.
-    public let animatesReveal: Bool
+    ///
+    /// Settable for Interface Builder only, like `placeSystemName`.
+    @IBInspectable public var animatesReveal: Bool {
+        get { setup.animatesReveal }
+        set { updateSetup("animatesReveal") { $0.animatesReveal = newValue } }
+    }
 
     /// Receives the block events. Assigning a delegate after the content already resolved still
     /// delivers that outcome, so subscribing late cannot lose it.
@@ -182,13 +194,23 @@ public final class MindboxEmbeddedBlockView: UIView {
 
     // MARK: - State
 
-    private let contentProvider: EmbeddedBlockWebViewProvider
+    /// What the block was given at creation: by the initializer, or by Interface Builder between
+    /// `init(coder:)` and `awakeFromNib`.
+    var setup = EmbeddedBlockSetup()
 
-    private let placeMemory: EmbeddedBlockPlaceRemembering
+    /// Whether the block has its dependencies and runs: right after the initializer for a block
+    /// from code, after `awakeFromNib` for one from a nib. The setup is frozen from then on.
+    private(set) var isBuilt = false
 
-    private let revealAnimation: EmbeddedBlockRevealAnimation
+    // The dependencies are nil only between `init(coder:)` and `awakeFromNib`, when nothing
+    // touches them: a nib-loaded block has no window and no delegate yet.
+    private var contentProvider: EmbeddedBlockWebViewProvider!
 
-    var preferredHeight: CGFloat {
+    private var placeMemory: EmbeddedBlockPlaceRemembering!
+
+    private var revealAnimation: EmbeddedBlockRevealAnimation!
+
+    var preferredHeight: CGFloat = 0 {
         didSet {
             guard preferredHeight != oldValue else { return }
 
@@ -196,7 +218,7 @@ public final class MindboxEmbeddedBlockView: UIView {
         }
     }
 
-    private let waitBudget: EmbeddedBlockWaitBudget
+    private var waitBudget: EmbeddedBlockWaitBudget!
 
     private lazy var layers = EmbeddedBlockLayerHost(container: self, animation: revealAnimation)
 
@@ -212,9 +234,9 @@ public final class MindboxEmbeddedBlockView: UIView {
     /// Space once ceded to the host is not taken back: a retry does not reopen the container for
     /// its placeholder — only shown content expands it back, or an explicit reload. A block that
     /// starts hidden has ceded its space from birth.
-    private var hasSettled: Bool
+    private var hasSettled = true
 
-    private var shownAppearance: MindboxEmbeddedBlockAppearance
+    private var shownAppearance: MindboxEmbeddedBlockAppearance = .collapsed
 
     private var appearanceObserver: ((MindboxEmbeddedBlockAppearance) -> Void)?
 
@@ -276,11 +298,10 @@ public final class MindboxEmbeddedBlockView: UIView {
         given.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    /// Blocks are not created from storyboards: the place system name and the height are required
-    /// and have no sensible defaults.
-    @available(*, unavailable, message: "Use init(placeSystemName:height:) instead")
+    /// A block from a storyboard or xib. Interface Builder applies the inspectables next, and the
+    /// block builds itself in `awakeFromNib` — see `MindboxEmbeddedBlockView+InterfaceBuilder`.
     public required init?(coder: NSCoder) {
-        return nil
+        super.init(coder: coder)
     }
 
     init(placeSystemName: String,
@@ -292,14 +313,29 @@ public final class MindboxEmbeddedBlockView: UIView {
          animatesReveal: Bool = true,
          revealAnimation: EmbeddedBlockRevealAnimation = EmbeddedBlockRevealAnimation(),
          makeWaitBudget: ((_ placeSystemName: String, _ duration: @escaping () -> TimeInterval) -> EmbeddedBlockWaitBudget)? = nil) {
-        self.placeSystemName = placeSystemName
+        self.setup = EmbeddedBlockSetup(placeSystemName: placeSystemName,
+                                        loadingStrategy: loadingStrategy,
+                                        timeout: timeout,
+                                        animatesReveal: animatesReveal)
         self.preferredHeight = height
+        super.init(frame: .zero)
+        build(contentProvider: contentProvider,
+              placeMemory: placeMemory,
+              revealAnimation: revealAnimation,
+              makeWaitBudget: makeWaitBudget)
+    }
+
+    /// The one place a block gets its dependencies: right away from the initializer, in
+    /// `awakeFromNib` for a block from a nib. See `MindboxEmbeddedBlockView+InterfaceBuilder`.
+    func build(contentProvider: EmbeddedBlockWebViewProvider,
+               placeMemory: EmbeddedBlockPlaceRemembering,
+               revealAnimation: EmbeddedBlockRevealAnimation,
+               makeWaitBudget: ((_ placeSystemName: String, _ duration: @escaping () -> TimeInterval) -> EmbeddedBlockWaitBudget)?) {
+        isBuilt = true
         self.contentProvider = contentProvider
         self.placeMemory = placeMemory
-        self.loadingStrategy = loadingStrategy
-        self.animatesReveal = animatesReveal
         self.revealAnimation = revealAnimation
-        let answerTimeout = Self.sanitizedTimeout(timeout, placeSystemName: placeSystemName)
+        let answerTimeout = Self.sanitizedTimeout(setup.timeout, placeSystemName: placeSystemName)
         let duration: () -> TimeInterval = { [weak contentProvider] in
             contentProvider?.isAwaitingAnswer == false
                 ? TimeInterval(Constants.EmbeddedBlock.readyTimeoutSeconds)
@@ -314,27 +350,10 @@ public final class MindboxEmbeddedBlockView: UIView {
                                              hasShownContentBefore: placeMemory.hasShownContent(at: placeSystemName))
         self.shownAppearance = initial
         self.hasSettled = initial == .collapsed
-        super.init(frame: .zero)
         warnIfPlaceIsMissing()
         warnIfHeightReservesNothing()
         logInitialLook()
         setUpContainer()
-    }
-
-    /// A non-positive timeout would collapse every block before the config had a chance, so it is
-    /// reported and replaced with the default rather than obeyed.
-    static func sanitizedTimeout(_ timeout: TimeInterval?, placeSystemName: String) -> TimeInterval {
-        guard let timeout else {
-            return TimeInterval(Constants.EmbeddedBlock.answerTimeoutSeconds)
-        }
-
-        guard timeout > 0 else {
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' was given timeout \(timeout): it must be positive, using the default \(Constants.EmbeddedBlock.answerTimeoutSeconds) s",
-                          level: .error, category: .embeddedBlocks)
-            return TimeInterval(Constants.EmbeddedBlock.answerTimeoutSeconds)
-        }
-
-        return timeout
     }
 
     /// The strategy plus the place's memory, and nothing else: `placeholder` and `hidden` do not
@@ -377,8 +396,9 @@ public final class MindboxEmbeddedBlockView: UIView {
     }
 
     deinit {
-        waitBudget.pause()
-        contentProvider.teardown()
+        // A nib-loaded block let go before `awakeFromNib` has nothing to stop.
+        waitBudget?.pause()
+        contentProvider?.teardown()
     }
 
     private func setUpContainer() {
