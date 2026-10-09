@@ -39,6 +39,12 @@ import MindboxLogger
 /// main thread is over. A move within one pass, as a navigation transition makes with the screen it
 /// leaves, is not leaving. The host app observes the outcome through `delegate` and nothing
 /// else: the block is shown, the place is empty, or the block failed with a reason.
+///
+/// Shown content is not taken away under the user's eyes. When the place or the page has nothing to
+/// show any more, the block keeps what it shows until the user leaves it — going to the background
+/// is not leaving — and collapses then, out of the window: the delegate hears the empty or failed
+/// outcome at that moment. Only when the place answers an operation the app sends with nothing to
+/// show does the block collapse at once.
 public final class MindboxEmbeddedBlockView: UIView {
 
     // MARK: - Host API
@@ -386,6 +392,10 @@ public final class MindboxEmbeddedBlockView: UIView {
 
     deinit {
         waitBudget.pause()
+        // Let go within the pass of main it left the window in, the block is never stopped: its place still forgets.
+        if let held = contentProvider.heldCollapse {
+            updatePlaceMemory(for: held)
+        }
         contentProvider.teardown()
     }
 

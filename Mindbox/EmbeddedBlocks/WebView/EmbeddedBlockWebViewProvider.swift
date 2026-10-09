@@ -13,10 +13,9 @@ import MindboxLogger
 /// Embedded block content — a web page found by the block id.
 ///
 /// An instance belongs to one container: `start()` and `stop()` mirror its visibility, in cycles, and a `start()` after a
-/// return waits for that return's session check. After `stop()` the container hears nothing until the next `start()`, which
-/// it relies on when it collapses an expired block. A collapse held while the user looked drops the page at `stop()` and lands
-/// on the next `start()` — before the first frame, without waiting for a session check — unless its session has ended by then:
-/// the new session's answer, asked while the block was off screen, lands instead, or the block begins anew.
+/// return waits for that return's session check. A collapse held while the user looked lands in `stop()`, in sync with
+/// Android: the page is dropped and the container hears the state while the block is out of the window. Apart from that,
+/// after `stop()` the container hears nothing until the next `start()`, which it relies on when it collapses an expired block.
 final class EmbeddedBlockWebViewProvider {
 
     /// Reports every state change on the main thread. Set by the container.
@@ -41,6 +40,9 @@ final class EmbeddedBlockWebViewProvider {
     private(set) var isAwaitingDelayedContent = false
 
     var isAwaitingKeptContent: Bool { page == nil && registry.keepsContent(for: placeSystemName) }
+
+    /// What the block collapses to once the user leaves; `nil` while nothing is held.
+    var heldCollapse: EmbeddedBlockState? { deferred.held?.state }
 
     private let placeSystemName: String
     private let registry: EmbeddedBlockPlaceRegistering
@@ -162,6 +164,10 @@ final class EmbeddedBlockWebViewProvider {
         deferred.isStartAwaitingSessionCheck = false
         guard isStarted else { return }
 
+        // Before the block counts as stopped: `settle` tells the container only about a started block.
+        if let held = deferred.takeHeld() {
+            land(held)
+        }
         isStarted = false
         isPaused = true
         // The outcome is deliberately not reset: otherwise every pass of the block across the screen
@@ -169,12 +175,18 @@ final class EmbeddedBlockWebViewProvider {
         dataPushWait.suspend()
         // The page stays alive off screen, so it has to be told that nobody is looking.
         page?.isUserPresent = false
+    }
 
-        if deferred.parkHeld() {
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the user left a block its place no longer shows — dropping its page, the collapse waits for the return",
-                          category: .embeddedBlocks)
+    /// Going to the background is not leaving: only `stop()` lands what the block held.
+    private func land(_ held: EmbeddedBlockDeferredAnswers.HeldCollapse) {
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the user left a block that no longer shows anything — collapsing it", category: .embeddedBlocks)
+        guard case .placeAnswer(let answer) = held else {
             dropPage()
+            settle(.empty)
+            return
         }
+
+        collapse(by: answer, isReported: true)
     }
 
     func abandonAttempt() {
@@ -244,24 +256,24 @@ final class EmbeddedBlockWebViewProvider {
             return
         }
 
-        deferred.lift()
+        deferred.liftPlaceAnswer()
 
         guard case .content(let fresh) = answer.resolution else {
-            collapse(by: answer, isParked: isParked)
+            collapse(by: answer, isReported: isParked)
             return
         }
 
         applyContent(fresh, of: answer)
     }
 
-    /// Told to the container at once, even while the start waits for the return's session check.
-    private func collapse(by answer: EmbeddedBlockPlaceAnswer, isParked: Bool) {
+    /// Told to the container at once, even while the start waits for the return's session check or the user has just left.
+    private func collapse(by answer: EmbeddedBlockPlaceAnswer, isReported: Bool) {
         dropPage()
         guard let collapse = answer.resolution.collapse, outcome != collapse.state else { return }
 
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': \(collapse.reason)",
                       level: collapse.state.isFailed ? .error : .debug, category: .embeddedBlocks)
-        if !isParked { failures.report(failureOf: answer) }
+        if !isReported { failures.report(failureOf: answer) }
         outcome = collapse.state
         if outcome.isFailed { registry.blockAttemptEnded(placeSystemName) }
         onStateChange?(outcome)
@@ -311,7 +323,7 @@ final class EmbeddedBlockWebViewProvider {
             return
         }
 
-        guard isStarted, isReady, !deferred.isHolding, appPresence.isPresent else {
+        guard isStarted, isReady, !deferred.isHoldingPlaceAnswer, appPresence.isPresent else {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': new data for a page that has not drawn yet, that the user cannot see or that its place no longer shows — telling it once it can",
                           category: .embeddedBlocks)
             return
@@ -386,8 +398,8 @@ final class EmbeddedBlockWebViewProvider {
     // MARK: - The data push's confirmation
 
     /// An error answer to the push confirms nothing: like silence, it leaves the page to be rebuilt
-    /// when the ack budget runs out — unless its place no longer shows it: then the page only waits for
-    /// the user to leave, and content that lifts the hold hands it the data again.
+    /// when the ack budget runs out — unless the block holds a collapse, in sync with Android: then the page
+    /// only waits for the user to leave, and is handed the data again at its next chance.
     private func armDataPushAck() {
         dataPushWait.arm { [weak self] in
             guard let self, let content = self.content, let pageShow = self.pageShow else { return }
@@ -442,6 +454,7 @@ final class EmbeddedBlockWebViewProvider {
     }
 
     private func fail(_ reason: InAppShowFailureReason, _ details: String) {
+        deferred.lift()
         settle(.failed(MindboxEmbeddedBlockFailReason(reason)))
 
         guard let content = content else { return }
@@ -492,12 +505,20 @@ final class EmbeddedBlockWebViewProvider {
         }
 
         guard renderedCount > 0 else {
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': page rendered nothing", category: .embeddedBlocks)
-            settle(.empty)
+            guard isStarted, isReady else {
+                Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': page rendered nothing", category: .embeddedBlocks)
+                settle(.empty)
+                return
+            }
+
+            // Not emptied under the user's eyes: like a place that answers nothing, it holds.
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': page rendered nothing while its content is on screen — keeping it until the user leaves", category: .embeddedBlocks)
+            deferred.holdEmptyPage()
             return
         }
 
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': page rendered \(renderedCount) item(s)", category: .embeddedBlocks)
+        deferred.liftEmptyPage()
         didReportShownContent = true
         pageShow?.pageRendered()
         settle(.ready)

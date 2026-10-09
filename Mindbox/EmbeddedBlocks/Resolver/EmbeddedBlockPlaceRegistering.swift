@@ -23,23 +23,35 @@ struct EmbeddedBlockPlaceAnswer {
     /// applies at once, even under the user's eyes.
     let isOperationTriggered: Bool
 
-    /// A new session asked while no block showed the place: its slot and its show's clock wait for a block back on screen.
+    /// A new session's answer no block showed the place for, when asked or when it landed: its slot and its show's
+    /// clock wait for a block back on screen.
     let isAskedOffScreen: Bool
 
+    /// The new session's re-ask: landing while no block shows the place, it waits for one like an answer asked off
+    /// screen, in sync with Android.
+    let isNewSessionAsk: Bool
+
     func with(_ resolution: EmbeddedBlockResolution) -> EmbeddedBlockPlaceAnswer {
-        copy(resolution: resolution, processingDuration: processingDuration)
+        copy(resolution: resolution)
     }
 
     func shownFromNow() -> EmbeddedBlockPlaceAnswer {
-        copy(resolution: resolution, processingDuration: 0)
+        copy(processingDuration: 0)
     }
 
-    private func copy(resolution: EmbeddedBlockResolution, processingDuration: TimeInterval) -> EmbeddedBlockPlaceAnswer {
-        EmbeddedBlockPlaceAnswer(resolution: resolution,
-                                 processingDuration: processingDuration,
+    func landedOffScreen() -> EmbeddedBlockPlaceAnswer {
+        copy(isAskedOffScreen: true)
+    }
+
+    private func copy(resolution: EmbeddedBlockResolution? = nil,
+                      processingDuration: TimeInterval? = nil,
+                      isAskedOffScreen: Bool? = nil) -> EmbeddedBlockPlaceAnswer {
+        EmbeddedBlockPlaceAnswer(resolution: resolution ?? self.resolution,
+                                 processingDuration: processingDuration ?? self.processingDuration,
                                  sessionEpoch: sessionEpoch,
                                  isOperationTriggered: isOperationTriggered,
-                                 isAskedOffScreen: isAskedOffScreen)
+                                 isAskedOffScreen: isAskedOffScreen ?? self.isAskedOffScreen,
+                                 isNewSessionAsk: isNewSessionAsk)
     }
 }
 

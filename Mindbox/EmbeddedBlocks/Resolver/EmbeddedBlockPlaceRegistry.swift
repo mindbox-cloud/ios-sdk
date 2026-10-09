@@ -217,7 +217,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         prune(place)
         let isOffScreen = !hasActiveBlocks(place)
 
-        guard !isOffScreen || cause.reachesOffScreen && holdsAnAttempt(at: place) else {
+        guard !isOffScreen || cause.isNewSessionAsk && holdsAnAttempt(at: place) else {
             Logger.common(message: "[EmbeddedBlock] Place '\(place)': \(cause.logDescription), but no block is on screen — nowhere to draw, the next start() re-asks",
                           category: .embeddedBlocks)
             return
@@ -262,7 +262,8 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
                                                  processingDuration: isAskedOffScreen ? self.sinceTheReturn(to: place, atMost: processed) : processed,
                                                  sessionEpoch: sessionEpoch,
                                                  isOperationTriggered: !cause.includesNonOperation && !appearedMidResolve,
-                                                 isAskedOffScreen: isAskedOffScreen),
+                                                 isAskedOffScreen: isAskedOffScreen,
+                                                 isNewSessionAsk: cause.isNewSessionAsk),
                         at: place)
 
             if let queued = self.queuedInvalidations.removeValue(forKey: place) {
@@ -358,10 +359,10 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         case true?:
             deliver(answer, at: place)
             releaseSlotIfUnclaimed(place)
-        case false? where answer.isAskedOffScreen && !hasActiveBlocks(place):
+        case false? where (answer.isAskedOffScreen || answer.isNewSessionAsk) && !hasActiveBlocks(place):
             Logger.common(message: "[EmbeddedBlock] Place '\(place)': in-app \(content.inAppId) answered while no block shows the place — its slot waits for a block back on screen",
                           category: .embeddedBlocks)
-            deliver(answer, at: place)
+            deliver(answer.landedOffScreen(), at: place)
         case false?:
             reserveSlot(for: content, of: answer, at: place)
         }

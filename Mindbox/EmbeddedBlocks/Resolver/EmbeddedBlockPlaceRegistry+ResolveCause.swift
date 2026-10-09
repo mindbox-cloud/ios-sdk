@@ -49,7 +49,7 @@ extension EmbeddedBlockPlaceRegistry {
             return queued.newSessionAskedAt
         }
 
-        var reachesOffScreen: Bool {
+        var isNewSessionAsk: Bool {
             if case .newSession = self {
                 return true
             }
