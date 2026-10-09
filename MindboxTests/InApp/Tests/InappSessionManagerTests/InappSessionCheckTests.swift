@@ -10,7 +10,7 @@ import Foundation
 import QuartzCore
 import Testing
 import class MindboxLogger.Locked
-@testable import Mindbox
+@_spi(Internal) @testable import Mindbox
 
 @Suite("In-app session check", .tags(.trackVisit))
 struct InappSessionCheckTests {
@@ -64,6 +64,10 @@ struct InappSessionCheckTests {
                 NotificationCenter.default.removeObserver(observer)
             }
         }
+    }
+
+    private enum PayloadError: Error {
+        case notAString
     }
 
     private let coreManager = CoreManagerSpy()
@@ -199,5 +203,36 @@ struct InappSessionCheckTests {
         #expect(tracker.trackViewCallCount == 0)
         #expect(SessionTemporaryStorage.shared.ledger.placeShownInappId.isEmpty)
         #expect(SessionTemporaryStorage.shared.ledger.isSessionEnding == false)
+    }
+
+    @Test("A visit that starts a new session is still the page's track-visit source after the reset")
+    func visitThatStartsASessionOutlivesItsReset() async throws {
+        manager.lastTrackVisitTimestamp = Date().addingTimeInterval(-2400)
+        SessionTemporaryStorage.shared.lastTrackVisit = nil
+        let sessionEpoch = SessionTemporaryStorage.shared.ledger.sessionEpoch
+        let link = NSUserActivity(activityType: NSUserActivityTypeBrowsingWeb)
+        link.webpageURL = URL(string: "https://test-site.s.mindbox.ru/new-session")
+        let trackVisitManager = TrackVisitManager(databaseRepository: DI.injectOrFail(DatabaseRepositoryProtocol.self),
+                                                  inappSessionManager: manager)
+
+        try trackVisitManager.track(.universalLink(link))
+        let payload = try await startPayload()
+
+        #expect(SessionTemporaryStorage.shared.ledger.sessionEpoch == sessionEpoch + 1)
+        #expect(payload["trackVisitSource"] == .string(TrackVisitSource.link.rawValue))
+        #expect(payload["trackVisitRequestUrl"] == .string("https://test-site.s.mindbox.ru/new-session"))
+    }
+
+    private func startPayload() async throws -> [String: JSONValue] {
+        let builder = WebViewStartPayloadBuilder(contentId: "block", operation: nil, customParams: nil, insetsSource: nil, logError: { _ in })
+        let payload = await withCheckedContinuation { continuation in
+            builder.build { continuation.resume(returning: $0) }
+        }
+
+        guard case .string(let json) = payload else {
+            throw PayloadError.notAString
+        }
+
+        return try JSONDecoder().decode([String: JSONValue].self, from: Data(json.utf8))
     }
 }

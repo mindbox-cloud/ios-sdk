@@ -23,6 +23,7 @@ struct TrackVisitManagerTests {
         let sessionSpy = SpyInappSessionManager()
         let sut = TrackVisitManager(databaseRepository: dbSpy, inappSessionManager: sessionSpy)
         SessionTemporaryStorage.shared.erase()
+        SessionTemporaryStorage.shared.lastTrackVisit = nil
         return (sut, dbSpy, sessionSpy)
     }
 

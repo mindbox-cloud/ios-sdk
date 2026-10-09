@@ -170,7 +170,7 @@ struct MindboxOperationsTests {
     // as the (private) flag, so it stands in for it.
     @Test("track(.universalLink) applies its effects before returning (stays synchronous)")
     func trackAppliesEffectsSynchronously() {
-        SessionTemporaryStorage.shared.erase()
+        SessionTemporaryStorage.shared.lastTrackVisit = nil
         let activity = NSUserActivity(activityType: NSUserActivityTypeBrowsingWeb)
         activity.webpageURL = URL(string: "https://test-site.s.mindbox.ru")
 
