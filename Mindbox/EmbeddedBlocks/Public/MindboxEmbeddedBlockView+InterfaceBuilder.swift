@@ -24,20 +24,23 @@ struct EmbeddedBlockSetup {
 
 /// A block created from a storyboard or xib.
 ///
-/// Set the class of a view to `MindboxEmbeddedBlockView` and fill the inspectables in the Attributes
-/// Inspector: `placeSystemName` and `height` are required and mean what the initializer's parameters
-/// mean; `loadingStrategyName`, `timeout` and `animatesReveal` are optional. Constrain the position
-/// and the width only, the way a block from code is laid out — the height is the block's own, through
-/// `intrinsicContentSize`, and collapses to 0 when there is nothing to show. The `delegate` is
-/// assigned from code: outlets cannot hold it.
+/// In the Identity Inspector set the class to `MindboxEmbeddedBlockView` and the module to `Mindbox`:
+/// without the module UIKit reports "Unknown class MindboxEmbeddedBlockView in Interface Builder
+/// file" and silently puts a plain `UIView` in its place. In the Attributes Inspector fill the
+/// inspectables: `placeSystemName` and `height` are required and mean what the initializer's
+/// parameters mean; `loadingStrategyName`, `timeoutSeconds` and `animatesReveal` are optional.
+/// Constrain the position and the width only, the way a block from code is laid out — the height
+/// is the block's own, through `intrinsicContentSize`, and collapses to 0 when there is nothing to
+/// show. The `delegate` is assigned from code: outlets cannot hold it.
 ///
 /// The values are applied between `init(coder:)` and `awakeFromNib`, where the block builds itself
-/// from them; from then on they are read-only, like for a block from code.
+/// from them; from then on they are read-only, like for a block from code: the setters are not
+/// public, and a key-value write after the build is ignored and reported.
 extension MindboxEmbeddedBlockView {
 
     /// The height the block occupies when shown — the initializer's `height`. Required: left at 0,
     /// the block reserves no space and stays invisible whatever loads.
-    @IBInspectable public var height: CGFloat {
+    @IBInspectable public private(set) var height: CGFloat {
         get { preferredHeight }
         set {
             guard !isBuilt else {
@@ -53,7 +56,7 @@ extension MindboxEmbeddedBlockView {
 
     /// The initializer's `loadingStrategy` by name: `automatic`, `placeholder` or `hidden`, in any
     /// letter case. Empty means `automatic`; any other name is reported and means `automatic` too.
-    @IBInspectable public var loadingStrategyName: String {
+    @IBInspectable public private(set) var loadingStrategyName: String {
         get { String(describing: loadingStrategy) }
         set {
             updateSetup("loadingStrategyName") { setup in
@@ -62,22 +65,22 @@ extension MindboxEmbeddedBlockView {
         }
     }
 
-    /// The initializer's `timeout`, in seconds. Left at 0 — the inspector's default — it means
-    /// the SDK default of 30.
-    @IBInspectable public var timeout: Double {
+    /// The initializer's `timeout`, in seconds — not milliseconds like the Android attribute. Left
+    /// at 0 — the inspector's default — it means the SDK default of 30.
+    @IBInspectable public private(set) var timeoutSeconds: Double {
         get { setup.timeout ?? 0 }
-        set { updateSetup("timeout") { $0.timeout = Self.timeout(fromInspectable: newValue) } }
+        set { updateSetup("timeoutSeconds") { $0.timeout = Self.timeout(fromInspectableSeconds: newValue) } }
     }
 
     override public func awakeFromNib() {
         super.awakeFromNib()
 
-        buildFromInterfaceBuilderIfNeeded()
+        buildIfNeeded()
     }
 
-    /// Builds a nib-loaded block from the setup Interface Builder applied. Once: a block from code is
+    /// Builds a decoded block from the setup Interface Builder applied. Once: a block from code is
     /// built by its initializer and never passes here.
-    private func buildFromInterfaceBuilderIfNeeded() {
+    func buildIfNeeded() {
         guard !isBuilt else { return }
 
         let place = setup.placeSystemName
@@ -101,7 +104,7 @@ extension MindboxEmbeddedBlockView {
     }
 
     /// The inspector cannot express "no value": 0 — and anything below it — stands for the default.
-    static func timeout(fromInspectable value: Double) -> TimeInterval? {
+    static func timeout(fromInspectableSeconds value: Double) -> TimeInterval? {
         value > 0 ? value : nil
     }
 

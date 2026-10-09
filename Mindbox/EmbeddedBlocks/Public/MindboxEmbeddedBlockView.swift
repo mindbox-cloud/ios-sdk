@@ -45,9 +45,9 @@ public final class MindboxEmbeddedBlockView: UIView {
     /// The system name of the place from the admin panel, given at creation and stripped of the
     /// whitespace around it. Decides what content the SDK puts inside.
     ///
-    /// Settable for Interface Builder only: a value given once the block is built — from code, or
-    /// to a block created from code — is ignored and reported.
-    @IBInspectable public var placeSystemName: String {
+    /// Written by Interface Builder only, before the block is built; read-only for the host, like
+    /// on Android. A key-value write once the block is built is ignored and reported.
+    @IBInspectable public private(set) var placeSystemName: String {
         get { setup.placeSystemName }
         set { updateSetup("placeSystemName") { $0.placeSystemName = Self.normalizedPlaceSystemName(newValue) } }
     }
@@ -60,8 +60,8 @@ public final class MindboxEmbeddedBlockView: UIView {
     /// and applies the height at once — for a host that animates the block's container itself. The
     /// system's Reduce Motion setting turns the animation off as well.
     ///
-    /// Settable for Interface Builder only, like `placeSystemName`.
-    @IBInspectable public var animatesReveal: Bool {
+    /// Written by Interface Builder only, like `placeSystemName`.
+    @IBInspectable public private(set) var animatesReveal: Bool {
         get { setup.animatesReveal }
         set { updateSetup("animatesReveal") { $0.animatesReveal = newValue } }
     }
@@ -202,8 +202,9 @@ public final class MindboxEmbeddedBlockView: UIView {
     /// from code, after `awakeFromNib` for one from a nib. The setup is frozen from then on.
     private(set) var isBuilt = false
 
-    // The dependencies are nil only between `init(coder:)` and `awakeFromNib`, when nothing
-    // touches them: a nib-loaded block has no window and no delegate yet.
+    // The dependencies are nil only between `init(coder:)` and the build — `awakeFromNib`, or the
+    // window for a view decoded outside a nib — when nothing touches them: an unbuilt block has no
+    // window and no delegate yet.
     private var contentProvider: EmbeddedBlockWebViewProvider!
 
     private var placeMemory: EmbeddedBlockPlaceRemembering!
@@ -458,6 +459,9 @@ public final class MindboxEmbeddedBlockView: UIView {
     override public func didMoveToWindow() {
         super.didMoveToWindow()
 
+        // A view decoded outside a nib — an archive clone, say — never got `awakeFromNib`: the
+        // window is the last moment to build it before the content is asked to start.
+        buildIfNeeded()
         updateContentActivity(reason: window == nil ? "left the window" : "entered the window")
     }
 

@@ -63,9 +63,9 @@ struct MindboxEmbeddedBlockViewNibTests {
     func strategyNameIsParsed(name: String, strategy: MindboxEmbeddedBlockLoadingStrategy) throws {
         let nib = NibFixture()
         let view = try nib.makeUnbuiltBlock()
-        view.placeSystemName = "stories"
-        view.height = 120
-        view.loadingStrategyName = name
+        view.setValue("stories", forKey: "placeSystemName")
+        view.setValue(120, forKey: "height")
+        view.setValue(name, forKey: "loadingStrategyName")
 
         view.awakeFromNib()
 
@@ -75,24 +75,37 @@ struct MindboxEmbeddedBlockViewNibTests {
     @Test("A timeout left at zero in Interface Builder means the SDK default",
           arguments: [(0.0, nil), (-1.0, nil), (5.0, 5.0)] as [(Double, TimeInterval?)])
     func zeroTimeoutMeansDefault(inspectable: Double, timeout: TimeInterval?) {
-        #expect(MindboxEmbeddedBlockView.timeout(fromInspectable: inspectable) == timeout)
+        #expect(MindboxEmbeddedBlockView.timeout(fromInspectableSeconds: inspectable) == timeout)
+    }
+
+    @Test("The timeout inspectable reads back in seconds, the unit of the initializer's timeout")
+    func timeoutInspectableIsInSeconds() throws {
+        let nib = NibFixture()
+
+        let view = try nib.loadConfiguredBlock()
+
+        #expect(view.timeoutSeconds == 5)
     }
 
     // MARK: - After the block is built
 
+    /// The setters are not public, so a write after the build can come only the way Interface
+    /// Builder writes: through key-value coding.
     @Test("Inspectables given after the block is built are ignored")
     func inspectablesAfterBuildAreIgnored() throws {
         let nib = NibFixture()
         let view = try nib.loadConfiguredBlock()
 
-        view.placeSystemName = "other"
-        view.height = 200
-        view.loadingStrategyName = "hidden"
-        view.animatesReveal = true
+        view.setValue("other", forKey: "placeSystemName")
+        view.setValue(200, forKey: "height")
+        view.setValue("hidden", forKey: "loadingStrategyName")
+        view.setValue(1, forKey: "timeoutSeconds")
+        view.setValue(true, forKey: "animatesReveal")
 
         #expect(view.placeSystemName == "Stories")
         #expect(view.intrinsicContentSize.height == 96)
         #expect(view.loadingStrategy == .placeholder)
+        #expect(view.timeoutSeconds == 5)
         #expect(view.animatesReveal == false)
     }
 
@@ -101,8 +114,8 @@ struct MindboxEmbeddedBlockViewNibTests {
         let nib = NibFixture()
         let view = MindboxEmbeddedBlockView(placeSystemName: "block-id", height: 120, loadingStrategy: .placeholder)
 
-        view.placeSystemName = "other"
-        view.height = 200
+        view.setValue("other", forKey: "placeSystemName")
+        view.setValue(200, forKey: "height")
 
         #expect(view.placeSystemName == "block-id")
         #expect(view.intrinsicContentSize.height == 120)
@@ -125,6 +138,24 @@ struct MindboxEmbeddedBlockViewNibTests {
 
         #expect(delegate.events == [.loaded])
         #expect(view.intrinsicContentSize.height == 96)
+    }
+
+    /// A view decoded outside a nib — an archive clone, say — never gets `awakeFromNib`. It must
+    /// not crash on its dependencies; the window is the latest moment to build it.
+    @Test("A decoded block that never got awakeFromNib builds itself on entering a window")
+    func unbuiltBlockBuildsOnEnteringWindow() throws {
+        let nib = NibFixture()
+        let view = try nib.makeUnbuiltBlock()
+        view.setValue("stories", forKey: "placeSystemName")
+        view.setValue(120, forKey: "height")
+        view.setValue("placeholder", forKey: "loadingStrategyName")
+
+        nib.window.addSubview(view)
+
+        #expect(nib.factory.requestedPlaces == ["stories"])
+        #expect(view.intrinsicContentSize.height == 120)
+        // Content started: the place was resolved and its page made.
+        #expect(nib.page(for: "stories") != nil)
     }
 
     // MARK: - Helpers

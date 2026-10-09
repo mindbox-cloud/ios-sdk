@@ -19,7 +19,7 @@
                     <real key="value" value="96"/>
                 </userDefinedRuntimeAttribute>
                 <userDefinedRuntimeAttribute type="string" keyPath="loadingStrategyName" value="Placeholder"/>
-                <userDefinedRuntimeAttribute type="number" keyPath="timeout">
+                <userDefinedRuntimeAttribute type="number" keyPath="timeoutSeconds">
                     <real key="value" value="5"/>
                 </userDefinedRuntimeAttribute>
                 <userDefinedRuntimeAttribute type="boolean" keyPath="animatesReveal" value="NO"/>
