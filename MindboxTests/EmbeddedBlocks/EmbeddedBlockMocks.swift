@@ -809,6 +809,13 @@ final class EmbeddedBlockTestBed: EmbeddedBlockSessionRig {
         announceNewConfig()
     }
 
+    /// A session check found the session expired: the reset asks the places, answered in the new session.
+    func renewSession() {
+        expireSession()
+        resolver.sessionEpoch = currentSessionEpoch
+        finishSessionCheck(startsNewSession: true)
+    }
+
     func enterBackground() {
         presenceBed.enterBackground()
     }
@@ -830,7 +837,8 @@ final class EmbeddedBlockTestBed: EmbeddedBlockSessionRig {
         EmbeddedBlockPlaceAnswer(resolution: resolution,
                                  processingDuration: 0,
                                  sessionEpoch: resolver.sessionEpoch,
-                                 isOperationTriggered: isOperationTriggered)
+                                 isOperationTriggered: isOperationTriggered,
+                                 isAskedOffScreen: false)
     }
 
     func deliverSamePageWithNewData(_ marker: String = "fresh") {

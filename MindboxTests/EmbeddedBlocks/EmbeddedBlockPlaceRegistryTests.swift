@@ -31,6 +31,10 @@ struct EmbeddedBlockPlaceRegistryTests {
         func contentIsDelayed() {
             delayedCount += 1
         }
+
+        func contentIsKept() {}
+
+        func keptContentIsReleased() {}
     }
 
     private final class Rig: EmbeddedBlockSessionRig {
@@ -413,6 +417,7 @@ struct EmbeddedBlockPlaceRegistryTests {
         let shown = BlockFake()
         let away = BlockFake()
         away.isActive = false
+        away.holdsAnAttempt = false
         rig.registry.register(shown, place: "stories")
         rig.registry.register(away, place: "promo")
 
@@ -500,6 +505,189 @@ struct EmbeddedBlockPlaceRegistryTests {
         rig.resolver.flush()
 
         #expect(block.processingDurations == [3.5])
+    }
+
+    // MARK: - A new session off screen
+
+    @Test("A new session also asks a place whose blocks are all off screen while one still holds an attempt, and hands it the content without taking a slot")
+    func newSessionAsksAnOffScreenPlaceWithAnAttempt() {
+        let rig = Rig()
+        let away = BlockFake()
+        away.isActive = false
+        let idle = BlockFake()
+        idle.isActive = false
+        idle.holdsAnAttempt = false
+        rig.registry.register(away, place: "stories")
+        rig.registry.register(idle, place: "promo")
+
+        rig.expireSession()
+        rig.resolver.sessionEpoch = rig.currentSessionEpoch
+        rig.presence.finishSessionCheck(startsNewSession: true)
+
+        #expect(rig.resolver.resolvedPlaces == ["stories"])
+        #expect(away.applied == [.content(.stub)])
+        #expect(away.answers.map(\.isAskedOffScreen) == [true])
+        #expect(rig.budget.reservations.isEmpty)
+    }
+
+    @Test("A new session's winner with delayTime that runs out while no block shows the place reaches its blocks without taking a slot")
+    func delayedWinnerAskedOffScreenTakesNoSlot() {
+        let rig = Rig()
+        rig.resolver.resolution = .content(.delayed("00:00:05"))
+        let away = BlockFake()
+        away.isActive = false
+        rig.registry.register(away, place: "stories")
+        rig.expireSession()
+        rig.resolver.sessionEpoch = rig.currentSessionEpoch
+        rig.presence.finishSessionCheck(startsNewSession: true)
+        #expect(away.answers.isEmpty)
+
+        rig.delayScheduler.fireAll()
+
+        #expect(away.applied == [.content(.delayed("00:00:05"))])
+        #expect(rig.budget.reservations.isEmpty)
+    }
+
+    @Test("A new session landing while a pass flies for a place its block has left asks that place once the pass lands, off screen")
+    func newSessionBehindAPassReachesAPlaceItsBlockLeft() {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+        block.isActive = false
+
+        rig.expireSession()
+        rig.presence.finishSessionCheck(startsNewSession: true)
+        rig.resolver.flush()
+        #expect(rig.resolver.resolveCount == 2)
+
+        rig.resolver.sessionEpoch = rig.currentSessionEpoch
+        rig.resolver.flush()
+
+        #expect(block.answers.map(\.isAskedOffScreen) == [true])
+        #expect(rig.budget.reservations.isEmpty)
+    }
+
+    @Test("A new session's ask queued behind a pass while its block was off screen is timed from the block's return when it comes back before the ask runs, even with a config's pass queued after the return",
+          arguments: [false, true])
+    func newSessionQueuedOffScreenIsTimedFromTheReturn(configQueuedAfterTheReturn: Bool) {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+        block.isActive = false
+        rig.expireSession()
+        rig.presence.finishSessionCheck(startsNewSession: true)
+        rig.presence.clock.advance(30)
+
+        block.isActive = true
+        rig.registry.blockAppeared("stories")
+        if configQueuedAfterTheReturn {
+            rig.announceNewConfig(sessionEpoch: rig.currentSessionEpoch)
+        }
+        rig.resolver.flush()
+        rig.resolver.sessionEpoch = rig.currentSessionEpoch
+        rig.presence.clock.advance(0.5)
+        rig.resolver.processingDuration = 0.5
+        rig.resolver.flush()
+
+        #expect(block.processingDurations == [0.5])
+    }
+
+    @Test("A config's pass queued behind one in flight does not ask a place its block has left by the time it runs")
+    func queuedConfigPassStaysOnScreen() {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+        rig.announceNewConfig()
+
+        block.isActive = false
+        rig.resolver.flush()
+
+        #expect(rig.resolver.resolveCount == 1)
+    }
+
+    @Test("A new session's ask that a block comes back to before it lands is timed from that return and takes its slot on screen")
+    func offScreenAskLandingAfterTheReturnIsTimedFromIt() {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        let block = BlockFake()
+        block.isActive = false
+        rig.registry.register(block, place: "stories")
+        rig.expireSession()
+        rig.resolver.sessionEpoch = rig.currentSessionEpoch
+        rig.presence.finishSessionCheck(startsNewSession: true)
+        rig.presence.clock.advance(30)
+
+        block.isActive = true
+        rig.registry.blockAppeared("stories")
+        rig.presence.clock.advance(0.5)
+        rig.resolver.processingDuration = 30.5
+        rig.resolver.flush()
+
+        #expect(block.processingDurations == [0.5])
+        #expect(rig.budget.reservedOwners == [.place("stories")])
+    }
+
+    @Test("Content asked off screen takes the place's slot when a block brings it on screen, and its show is timed from then")
+    func contentAskedOffScreenTakesItsSlotOnScreen() throws {
+        let rig = Rig()
+        let away = BlockFake()
+        away.isActive = false
+        rig.registry.register(away, place: "stories")
+        rig.resolver.processingDuration = 4
+        rig.expireSession()
+        rig.resolver.sessionEpoch = rig.currentSessionEpoch
+        rig.presence.finishSessionCheck(startsNewSession: true)
+        let parked = try #require(away.answers.last)
+
+        let brought = rig.registry.bringOnScreen(parked, at: "stories")
+
+        #expect(brought?.resolution == .content(.stub))
+        #expect(brought?.processingDuration == 0)
+        #expect(rig.budget.reservedOwners == [.place("stories")])
+    }
+
+    @Test("Content asked off screen is brought on screen as empty when the show budgets are spent by then, and not at all once its session has ended",
+          arguments: [false, true])
+    func contentAskedOffScreenThatCannotBeShown(isSessionOver: Bool) throws {
+        let rig = Rig()
+        let away = BlockFake()
+        away.isActive = false
+        rig.registry.register(away, place: "stories")
+        rig.expireSession()
+        rig.resolver.sessionEpoch = rig.currentSessionEpoch
+        rig.presence.finishSessionCheck(startsNewSession: true)
+        let parked = try #require(away.answers.last)
+
+        if isSessionOver {
+            rig.expireSession()
+        } else {
+            rig.budget.refusedInAppIds = [EmbeddedBlockWebContent.stub.inAppId]
+        }
+        let brought = rig.registry.bringOnScreen(parked, at: "stories")
+
+        let expected: EmbeddedBlockResolution? = isSessionOver ? nil : .empty
+        #expect(brought?.resolution == expected)
+    }
+
+    @Test("An answer asked while a block showed the place is brought on screen as it is, touching no slot")
+    func answerAskedOnScreenIsBroughtBackAsItIs() {
+        let rig = Rig()
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.resolver.processingDuration = 2
+        rig.registry.blockAppeared("stories")
+        let reservations = rig.budget.reservations.count
+
+        let brought = rig.registry.bringOnScreen(block.answers[0], at: "stories")
+
+        #expect(brought?.processingDuration == 2)
+        #expect(rig.budget.reservations.count == reservations)
     }
 
     // MARK: - The return's session check
