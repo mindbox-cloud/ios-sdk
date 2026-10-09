@@ -35,7 +35,9 @@ import MindboxLogger
 ///
 /// What exactly lives inside is decided by the SDK from the `placeSystemName`, not by the host. The
 /// block flow belongs to the SDK too: the container starts its content when it enters a window
-/// and stops it when it leaves. The host app observes the outcome through `delegate` and nothing
+/// and stops it once it has left — once it is still out of a window when the current pass of the
+/// main thread is over. A move within one pass, as a navigation transition makes with the screen it
+/// leaves, is not leaving. The host app observes the outcome through `delegate` and nothing
 /// else: the block is shown, the place is empty, or the block failed with a reason.
 public final class MindboxEmbeddedBlockView: UIView {
 
@@ -131,9 +133,10 @@ public final class MindboxEmbeddedBlockView: UIView {
     /// spending its budget — on a screen nobody is looking at, and could collapse before the user
     /// ever got there. `true` by default, so a wrapper that says nothing behaves as before.
     ///
-    /// The semantics are exactly those of leaving and entering a window: a pause, not a reset. A
-    /// block hidden mid-load keeps the page it has and the remainder of its budget; shown again, it
-    /// counts that remainder down instead of starting the budget anew.
+    /// The semantics are those of leaving and entering a window — a pause, not a reset — except that
+    /// hiding takes effect at once rather than after the current pass of main. A block hidden mid-load
+    /// keeps the page it has and the remainder of its budget; shown again, it counts that remainder
+    /// down instead of starting the budget anew.
     @_spi(Internal)
     public func setHostVisible(_ isHostVisible: Bool) {
         guard self.isHostVisible != isHostVisible else { return }
@@ -187,6 +190,9 @@ public final class MindboxEmbeddedBlockView: UIView {
     private let placeMemory: EmbeddedBlockPlaceRemembering
 
     private let revealAnimation: EmbeddedBlockRevealAnimation
+
+    /// Runs the work on main once the current pass is over, never in place.
+    private let afterMainPass: (@escaping () -> Void) -> Void
 
     var preferredHeight: CGFloat {
         didSet {
@@ -291,8 +297,10 @@ public final class MindboxEmbeddedBlockView: UIView {
          timeout: TimeInterval? = nil,
          animatesReveal: Bool = true,
          revealAnimation: EmbeddedBlockRevealAnimation = EmbeddedBlockRevealAnimation(),
-         makeWaitBudget: ((_ placeSystemName: String, _ duration: @escaping () -> TimeInterval) -> EmbeddedBlockWaitBudget)? = nil) {
+         makeWaitBudget: ((_ placeSystemName: String, _ duration: @escaping () -> TimeInterval) -> EmbeddedBlockWaitBudget)? = nil,
+         afterMainPass: @escaping (@escaping () -> Void) -> Void = { DispatchQueue.main.async(execute: $0) }) {
         self.placeSystemName = placeSystemName
+        self.afterMainPass = afterMainPass
         self.preferredHeight = height
         self.contentProvider = contentProvider
         self.placeMemory = placeMemory
@@ -415,7 +423,7 @@ public final class MindboxEmbeddedBlockView: UIView {
 
         waitBudget.isNeeded = { [weak self] in
             guard let self else { return false }
-            return self.isEffectivelyVisible && self.state == .loading && !self.contentProvider.isAwaitingDelayedContent
+            return self.isContentRunning && self.state == .loading && !self.contentProvider.isAwaitingDelayedContent
                 && !self.contentProvider.isStartPending && !self.contentProvider.isAwaitingKeptContent
         }
         waitBudget.onExpire = { [weak self] in
@@ -449,7 +457,16 @@ public final class MindboxEmbeddedBlockView: UIView {
     override public func didMoveToWindow() {
         super.didMoveToWindow()
 
-        updateContentActivity(reason: window == nil ? "left the window" : "entered the window")
+        guard window == nil else {
+            updateContentActivity(reason: "entered the window")
+            return
+        }
+
+        // A transition re-parents the screen it leaves out of the window and back within one pass of main;
+        // only a block still out once that pass is over has left.
+        afterMainPass { [weak self] in
+            self?.updateContentActivity(reason: "left the window")
+        }
     }
 
     private func updateContentActivity(reason: String) {
@@ -476,7 +493,7 @@ public final class MindboxEmbeddedBlockView: UIView {
     /// Internal and without a public wrapper: automatic reloads — on failure, on returning to the
     /// app — will be built on this method.
     func reload() {
-        guard isEffectivelyVisible else {
+        guard isContentRunning else {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' reload skipped: the block is not on screen",
                           category: .embeddedBlocks)
             return
