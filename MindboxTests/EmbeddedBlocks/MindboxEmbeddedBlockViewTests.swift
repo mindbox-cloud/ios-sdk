@@ -753,6 +753,76 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(delegate.events == [.loaded, .empty])
     }
 
+    @Test("A block moved out of the window and back within one pass of main, as a navigation transition moves the screen it leaves, has not left: its held collapse stays held")
+    func blockMovedWithinOnePassHasNotLeft() async throws {
+        let block = BlockFixture()
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.attachToWindow()
+        block.page?.reportRendered(1)
+        let content = try #require(block.page?.view)
+        block.bed.resolver.resolution = .empty
+        block.bed.announceNewConfig()
+        await mainQueueTurn()
+
+        block.view.removeFromSuperview()
+        block.attachToWindow()
+        block.mainPass.fireAll()
+        await mainQueueTurn()
+
+        #expect(content.superview === block.view)
+        #expect(block.page?.isUserPresent == true)
+        #expect(block.view.intrinsicContentSize.height == 120)
+        #expect(delegate.events == [.loaded])
+    }
+
+    @Test("A block that left the window stops its content once the pass of main it left in is over")
+    func leavingTheWindowStopsAfterThePass() async {
+        let block = OwnBudgetBlockFixture(timeout: 30)
+        block.attachToWindow()
+
+        block.view.removeFromSuperview()
+        #expect(block.bed.page?.isUserPresent == true)
+
+        await mainQueueTurn()
+        #expect(block.bed.page?.isUserPresent == false)
+    }
+
+    @Test("An answer landing while the block is moved within one pass of main arms the wait budget for its page")
+    func answerDuringAMoveWithinOnePassArmsTheBudget() async {
+        let block = BlockFixture()
+        block.bed.resolver.isDeferred = true
+        block.attachToWindow()
+        await mainQueueTurn()
+
+        block.view.removeFromSuperview()
+        block.bed.resolver.flush()
+        await mainQueueTurn()
+        block.attachToWindow()
+        block.mainPass.fireAll()
+
+        #expect(block.waitBudgetBed.budget.isRunning)
+    }
+
+    @Test("Released or hidden by the host while it waits out the pass it left the window in, a block stops at once")
+    func releaseOrHostHidingDuringThePassStopsAtOnce() {
+        let released = BlockFixture()
+        released.attachToWindow()
+        released.view.removeFromSuperview()
+
+        released.view.release()
+
+        #expect(released.page?.cancelCount == 1)
+
+        let hidden = BlockFixture()
+        hidden.attachToWindow()
+        hidden.view.removeFromSuperview()
+
+        hidden.view.setHostVisible(false)
+
+        #expect(hidden.page?.isUserPresent == false)
+    }
+
     @Test("A shown block a new session refuses while the user is on another screen is collapsed in the pass that brings the user back, with no slot taken and no show")
     func blockRefusedOffScreenIsCollapsedOnReturn() async throws {
         let block = BlockFixture()
@@ -2195,6 +2265,9 @@ private final class BlockFixture {
     /// The SDK's reveal animation, run on the spot and counted.
     let reveal: EmbeddedBlockRevealAnimationSpy
 
+    /// The pass of main a block waits out before it counts leaving the window: it ends on the test's command.
+    let mainPass: TestScheduler
+
     let view: MindboxEmbeddedBlockView
 
     private let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 320, height: 480))
@@ -2211,7 +2284,9 @@ private final class BlockFixture {
         let bed = EmbeddedBlockTestBed(resolution: resolution)
         let waitBudgetBed = EmbeddedBlockWaitBudgetBed()
         let reveal = EmbeddedBlockRevealAnimationSpy()
+        let mainPass = TestScheduler()
         self.bed = bed
+        self.mainPass = mainPass
         self.waitBudgetBed = waitBudgetBed
         self.memory = memory
         self.reveal = reveal
@@ -2222,7 +2297,8 @@ private final class BlockFixture {
                                              loadingStrategy: loadingStrategy,
                                              animatesReveal: animatesReveal,
                                              revealAnimation: reveal.animation,
-                                             makeWaitBudget: { _, _ in waitBudgetBed.budget })
+                                             makeWaitBudget: { _, _ in waitBudgetBed.budget },
+                                             afterMainPass: { mainPass.schedule(0, DispatchWorkItem(block: $0)) })
     }
 
     func attachToWindow() {
@@ -2262,8 +2338,10 @@ private final class BlockFixture {
         stack.layoutIfNeeded()
     }
 
+    /// Out of the window for good: the pass of main it left in is over.
     func removeFromWindow() {
         view.removeFromSuperview()
+        mainPass.fireAll()
     }
 
     /// Declares that the waiting budget has run out.
