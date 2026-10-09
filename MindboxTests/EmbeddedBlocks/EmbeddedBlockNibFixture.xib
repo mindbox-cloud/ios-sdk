@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="23094" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
+    <device id="retina6_12" orientation="portrait" appearance="light"/>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="22685"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <!-- A block with every inspectable filled in, the way a host sets them in the Attributes Inspector. -->
+        <view contentMode="scaleToFill" id="blk-configured" userLabel="Configured block" customClass="MindboxEmbeddedBlockView" customModule="Mindbox">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="96"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+            <!-- View attributes a host sets in the Attributes Inspector: they are the host's, not the SDK's. -->
+            <color key="backgroundColor" red="1" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <userDefinedRuntimeAttributes>
+                <userDefinedRuntimeAttribute type="string" keyPath="placeSystemName" value=" Stories "/>
+                <userDefinedRuntimeAttribute type="number" keyPath="height">
+                    <real key="value" value="96"/>
+                </userDefinedRuntimeAttribute>
+                <userDefinedRuntimeAttribute type="string" keyPath="loadingStrategyName" value="Placeholder"/>
+                <userDefinedRuntimeAttribute type="number" keyPath="timeoutSeconds">
+                    <real key="value" value="5"/>
+                </userDefinedRuntimeAttribute>
+                <userDefinedRuntimeAttribute type="boolean" keyPath="animatesReveal" value="NO"/>
+            </userDefinedRuntimeAttributes>
+        </view>
+        <!-- A block with the place name only: everything else at its default. -->
+        <view contentMode="scaleToFill" id="blk-defaults" userLabel="Default block" customClass="MindboxEmbeddedBlockView" customModule="Mindbox">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="120"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+            <userDefinedRuntimeAttributes>
+                <userDefinedRuntimeAttribute type="string" keyPath="placeSystemName" value="promo"/>
+                <userDefinedRuntimeAttribute type="number" keyPath="height">
+                    <real key="value" value="120"/>
+                </userDefinedRuntimeAttribute>
+            </userDefinedRuntimeAttributes>
+        </view>
+    </objects>
+</document>
