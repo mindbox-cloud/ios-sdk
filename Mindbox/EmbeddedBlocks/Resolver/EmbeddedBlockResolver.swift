@@ -48,13 +48,14 @@ protocol EmbeddedBlockResolving: AnyObject {
     /// - Parameters:
     ///   - trigger: The operation that caused this resolve, if any. Targeting runs in its context —
     ///     that is what lets an operation-targeted in-app reach the place.
-    ///   - completion: The answer and how long it took from this call, the wait for a config included.
+    ///   - completion: The answer, how long it took from this call, the wait for a config included, and
+    ///     the session whose config it was computed from.
     func resolve(_ place: String,
                  trigger: ApplicationEvent?,
-                 completion: @escaping (EmbeddedBlockResolution, _ processingDuration: TimeInterval) -> Void)
+                 completion: @escaping (EmbeddedBlockResolution, _ processingDuration: TimeInterval, _ sessionEpoch: Int) -> Void)
 }
 
-typealias EmbeddedBlockContentLoading = (String, ApplicationEvent?, @escaping (EmbeddedBlockResolution, TimeInterval) -> Void) -> Void
+typealias EmbeddedBlockContentLoading = (String, ApplicationEvent?, @escaping (EmbeddedBlockResolution, TimeInterval, Int) -> Void) -> Void
 
 final class EmbeddedBlockResolver: EmbeddedBlockResolving {
 
@@ -68,37 +69,33 @@ final class EmbeddedBlockResolver: EmbeddedBlockResolving {
     /// "nothing to show" would outlive the reason for it and leave the block empty until a restart.
     func resolve(_ place: String,
                  trigger: ApplicationEvent?,
-                 completion: @escaping (EmbeddedBlockResolution, _ processingDuration: TimeInterval) -> Void) {
-        load(place, trigger) { resolution, processingDuration in
-            self.deliverOnMain(resolution, processingDuration, completion)
+                 completion: @escaping (EmbeddedBlockResolution, _ processingDuration: TimeInterval, _ sessionEpoch: Int) -> Void) {
+        load(place, trigger) { resolution, processingDuration, sessionEpoch in
+            self.deliverOnMain { completion(resolution, processingDuration, sessionEpoch) }
         }
     }
 
-    private func deliverOnMain(_ resolution: EmbeddedBlockResolution,
-                               _ processingDuration: TimeInterval,
-                               _ completion: @escaping (EmbeddedBlockResolution, TimeInterval) -> Void) {
+    private func deliverOnMain(_ delivery: @escaping () -> Void) {
         guard Thread.isMainThread else {
-            DispatchQueue.main.async {
-                completion(resolution, processingDuration)
-            }
+            DispatchQueue.main.async(execute: delivery)
             return
         }
 
-        completion(resolution, processingDuration)
+        delivery()
     }
 
     static func loadFromConfig(_ place: String,
                                trigger: ApplicationEvent?,
-                               completion: @escaping (EmbeddedBlockResolution, TimeInterval) -> Void) {
+                               completion: @escaping (EmbeddedBlockResolution, TimeInterval, Int) -> Void) {
         guard let configurationManager = DI.inject(InAppConfigurationManagerProtocol.self) else {
             Logger.common(message: "[EmbeddedBlock] No configuration manager, place '\(place)' resolves as empty",
                           level: .error, category: .embeddedBlocks)
-            completion(.empty, 0)
+            completion(.empty, 0, SessionTemporaryStorage.shared.ledger.sessionEpoch)
             return
         }
 
-        configurationManager.selectInappForPlace(place, trigger: trigger) { selection, processingDuration in
-            completion(resolution(from: selection, place: place), processingDuration)
+        configurationManager.selectInappForPlace(place, trigger: trigger) { selection, processingDuration, sessionEpoch in
+            completion(resolution(from: selection, place: place), processingDuration, sessionEpoch)
         }
     }
 

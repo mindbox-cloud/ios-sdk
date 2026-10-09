@@ -56,15 +56,18 @@ final class SessionTemporaryStorage {
     }
 
     func erase() {
+        let sessionEpoch = $ledger.mutate { ledger -> Int in
+            ledger = InappSessionLedger(sessionEpoch: ledger.sessionEpoch + 1)
+            return ledger.sessionEpoch
+        }
         observedCustomOperations = []
         viewProductOperation = nil
         viewCategoryOperation = nil
         geoRequestResult = nil
         segmentationRequestResult = nil
-        showBudget = InappShowBudgetState()
+        showBudget = InappShowBudgetState(sessionEpoch: sessionEpoch)
         isUserVisitSaved = false
         lastInappClickedID = nil
-        ledger = InappSessionLedger()
         lastTrackVisit = nil
         inAppSettings = nil
         configSessionExpirationTime = nil

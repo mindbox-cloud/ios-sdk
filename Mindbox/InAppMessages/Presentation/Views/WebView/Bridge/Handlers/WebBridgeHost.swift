@@ -131,9 +131,9 @@ protocol WebBridgeContentHosting: AnyObject {
 
 protocol WebBridgeInappRequestHosting: AnyObject {
 
-    /// Which of `ids` are showable. Answered asynchronously and possibly never: a host that
+    /// Which of `ids` are showable, or why the SDK cannot say. Answered asynchronously and possibly never: a host that
     /// stopped listening drops the question, and what a missing answer means is the page's call.
-    func bridgeDidAskShowableInapps(_ ids: [String], completion: @escaping ([String]) -> Void)
+    func bridgeDidAskShowableInapps(_ ids: [String], completion: @escaping (Result<[String], BridgeErrorCode>) -> Void)
 
     /// `params` travel into the start payload untouched. Answered once the outcome is known, possibly never.
     func bridgeDidRequestShowInApp(id: String,

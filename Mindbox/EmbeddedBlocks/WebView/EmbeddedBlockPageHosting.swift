@@ -26,9 +26,9 @@ protocol EmbeddedBlockPageHosting: AnyObject {
     /// nobody can vouch for. Delivered on the main thread.
     var onUnreadableContentReport: (() -> Void)? { get set }
 
-    /// The page asks which of these ids are showable. The answer goes back through `completion`
-    /// — from wherever the selection finishes. Delivered on the main thread.
-    var onShowableQuestion: (([String], @escaping ([String]) -> Void) -> Void)? { get set }
+    /// The page asks which of these ids are showable. The answer, or the refusal to give one, goes back
+    /// through `completion` — from wherever the selection finishes. Delivered on the main thread.
+    var onShowableQuestion: (([String], @escaping (Result<[String], BridgeErrorCode>) -> Void) -> Void)? { get set }
 
     /// The page asks to show an in-app by id; `params` travel into its start payload untouched.
     /// Delivered on the main thread.

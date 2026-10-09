@@ -28,20 +28,43 @@ enum InappShowReservationOutcome: Equatable {
 }
 
 struct InappShowBudgetState: Equatable {
+    /// The ledger's session, set with it at the reset: a place's call is checked against it in the budget's own hold.
+    var sessionEpoch = 0
     var shownInSession: [String] = []
     var reservations: [InappShowBudgetOwner: InappShowReservation] = [:]
 }
 
+/// A call made `inSession` belongs to that session: when the budget has moved on to a later one, it touches
+/// nothing of the session the budget counts now.
 protocol InappShowBudgeting: AnyObject {
 
-    func reserve(_ owner: InappShowBudgetOwner, inAppId: String, isPriority: Bool, frequency: InappFrequency?) -> InappShowReservationOutcome
+    /// `nil` when the call's session has ended.
+    func reserve(_ owner: InappShowBudgetOwner, inAppId: String, isPriority: Bool, frequency: InappFrequency?, inSession sessionEpoch: Int?) -> InappShowReservationOutcome?
 
-    func commit(_ owner: InappShowBudgetOwner, inAppId: String, frequency: InappFrequency?)
+    /// The show is written to the device's frequency history whatever the session; the session's own counts
+    /// only while it is the budget's.
+    func commit(_ owner: InappShowBudgetOwner, inAppId: String, frequency: InappFrequency?, inSession sessionEpoch: Int?)
 
-    func release(_ owner: InappShowBudgetOwner)
+    func release(_ owner: InappShowBudgetOwner, inSession sessionEpoch: Int?)
 
     /// The moment `minIntervalBetweenShows` counts from — written when the frequency counts shows.
     func recordCooldown(frequency: InappFrequency?)
+}
+
+/// An overlay's calls belong to whatever session the budget counts.
+extension InappShowBudgeting {
+
+    func reserve(_ owner: InappShowBudgetOwner, inAppId: String, isPriority: Bool, frequency: InappFrequency?) -> InappShowReservationOutcome {
+        reserve(owner, inAppId: inAppId, isPriority: isPriority, frequency: frequency, inSession: nil) ?? .refused
+    }
+
+    func commit(_ owner: InappShowBudgetOwner, inAppId: String, frequency: InappFrequency?) {
+        commit(owner, inAppId: inAppId, frequency: frequency, inSession: nil)
+    }
+
+    func release(_ owner: InappShowBudgetOwner) {
+        release(owner, inSession: nil)
+    }
 }
 
 /// Every budget read and write goes through one `$showBudget.mutate`: the check and the slot it
@@ -60,8 +83,10 @@ final class InappShowBudget: InappShowBudgeting {
         self.now = now
     }
 
-    func reserve(_ owner: InappShowBudgetOwner, inAppId: String, isPriority: Bool, frequency: InappFrequency?) -> InappShowReservationOutcome {
+    func reserve(_ owner: InappShowBudgetOwner, inAppId: String, isPriority: Bool, frequency: InappFrequency?, inSession sessionEpoch: Int?) -> InappShowReservationOutcome? {
         SessionTemporaryStorage.shared.$showBudget.mutate { state in
+            guard state.counts(sessionEpoch) else { return nil }
+
             if state.reservations[owner]?.inAppId == inAppId {
                 return .notNeeded
             }
@@ -87,9 +112,13 @@ final class InappShowBudget: InappShowBudgeting {
         }
     }
 
-    func commit(_ owner: InappShowBudgetOwner, inAppId: String, frequency: InappFrequency?) {
+    func commit(_ owner: InappShowBudgetOwner, inAppId: String, frequency: InappFrequency?, inSession sessionEpoch: Int?) {
         SessionTemporaryStorage.shared.$showBudget.mutate { state in
-            if let held = state.reservations[owner], held.inAppId != inAppId {
+            let isOfThisSession = state.counts(sessionEpoch)
+            if !isOfThisSession {
+                Logger.common(message: "[ShowBudget] The show of \(inAppId) belongs to a session that has ended — only the frequency history records it",
+                              level: .debug, category: .inAppMessages)
+            } else if let held = state.reservations[owner], held.inAppId != inAppId {
                 Logger.common(message: "[ShowBudget] \(owner) now holds a slot for in-app \(held.inAppId), the show of \(inAppId) leaves it in place",
                               level: .debug, category: .inAppMessages)
             } else {
@@ -98,14 +127,18 @@ final class InappShowBudget: InappShowBudgeting {
 
             guard InappFrequency.countsShows(frequency) else { return }
 
-            state.shownInSession.append(inAppId)
+            if isOfThisSession {
+                state.shownInSession.append(inAppId)
+            }
             trackingService.trackInAppShown(id: inAppId)
             trackingService.saveInappStateChange()
         }
     }
 
-    func release(_ owner: InappShowBudgetOwner) {
+    func release(_ owner: InappShowBudgetOwner, inSession sessionEpoch: Int?) {
         SessionTemporaryStorage.shared.$showBudget.mutate { state in
+            guard state.counts(sessionEpoch) else { return }
+
             state.reservations.removeValue(forKey: owner)
         }
     }
@@ -187,5 +220,12 @@ final class InappShowBudget: InappShowBudgeting {
         return dates.values.reduce(0) { count, dates in
             count + dates.filter { calendar.isDate($0, inSameDayAs: today) }.count
         }
+    }
+}
+
+private extension InappShowBudgetState {
+
+    func counts(_ sessionEpoch: Int?) -> Bool {
+        sessionEpoch.map { $0 == self.sessionEpoch } ?? true
     }
 }

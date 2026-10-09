@@ -260,7 +260,7 @@ extension TransparentView: WebBridgeLifecycleHosting {
 
 extension TransparentView: WebBridgeInappRequestHosting {
 
-    func bridgeDidAskShowableInapps(_ ids: [String], completion: @escaping ([String]) -> Void) {
+    func bridgeDidAskShowableInapps(_ ids: [String], completion: @escaping (Result<[String], BridgeErrorCode>) -> Void) {
         inappRequests.showableInappIds(among: ids, askedBy: inAppId, completion: completion)
     }
 

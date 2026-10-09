@@ -17,8 +17,8 @@ protocol InappRequestServing: AnyObject {
 
     /// Which of `ids` the page of in-app `requesterInappId` may draw, targeting checked and fetched like a place
     /// resolve; vouches for every targeted id as it answers. The answer mirrors the question — order and duplicates kept.
-    /// Answers on the main thread.
-    func showableInappIds(among ids: [String], askedBy requesterInappId: String, completion: @escaping ([String]) -> Void)
+    /// With no config to answer from, the question is refused with `internalError`. Answers on the main thread.
+    func showableInappIds(among ids: [String], askedBy requesterInappId: String, completion: @escaping (Result<[String], BridgeErrorCode>) -> Void)
 
     /// Deliberately unchecked: the page decided when it drew the in-app. Answers once, on the main thread.
     func showInapp(id: String,
@@ -34,7 +34,7 @@ final class InappRequestService: InappRequestServing {
                          _ requesterIsActive: @escaping () -> Bool,
                          _ completion: @escaping (Result<Void, InappShowNowError>) -> Void) -> Void
 
-    private let ask: (_ ids: [String], _ requesterInappId: String, _ completion: @escaping ([String]) -> Void) -> Void
+    private let ask: (_ ids: [String], _ requesterInappId: String, _ completion: @escaping ([String]?) -> Void) -> Void
     private let fetchInappToShow: (_ id: String, _ params: [String: JSONValue], _ completion: @escaping (InAppFormData?) -> Void) -> Void
     private let showNow: ShowNow
     private let configIsKnown: () -> Bool
@@ -42,7 +42,7 @@ final class InappRequestService: InappRequestServing {
 
     var hasConfig: Bool { configIsKnown() }
 
-    init(ask: ((_ ids: [String], _ requesterInappId: String, _ completion: @escaping ([String]) -> Void) -> Void)? = nil,
+    init(ask: ((_ ids: [String], _ requesterInappId: String, _ completion: @escaping ([String]?) -> Void) -> Void)? = nil,
          fetchInappToShow: ((_ id: String, _ params: [String: JSONValue], _ completion: @escaping (InAppFormData?) -> Void) -> Void)? = nil,
          showNow: ShowNow? = nil,
          hasConfig: (() -> Bool)? = nil,
@@ -88,13 +88,23 @@ final class InappRequestService: InappRequestServing {
         }
     }
 
-    func showableInappIds(among ids: [String], askedBy requesterInappId: String, completion: @escaping ([String]) -> Void) {
+    func showableInappIds(among ids: [String], askedBy requesterInappId: String, completion: @escaping (Result<[String], BridgeErrorCode>) -> Void) {
         guard !ids.isEmpty else {
-            completion([])
+            completion(.success([]))
             return
         }
 
-        ask(ids, requesterInappId, Self.onTheMainThread(completion))
+        let answer = Self.onTheMainThread(completion)
+        ask(ids, requesterInappId) { allowed in
+            guard let allowed else {
+                Logger.common(message: "[InappRequestService] No config to answer the page of in-app \(requesterInappId) from — refusing its question",
+                              level: .error, category: .inAppMessages)
+                answer(.failure(.internalError))
+                return
+            }
+
+            answer(.success(allowed))
+        }
     }
 
     private static func onTheMainThread<Answer>(_ deliver: @escaping (Answer) -> Void) -> (Answer) -> Void {

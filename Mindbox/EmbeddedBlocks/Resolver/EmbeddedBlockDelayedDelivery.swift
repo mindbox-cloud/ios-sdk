@@ -6,16 +6,22 @@
 //  Copyright © 2026 Mindbox. All rights reserved.
 //
 
-import UIKit
+import Foundation
 
-/// Holds a place's answer for its `delayTime`, like the schedule queue holds an overlay: one answer per
-/// place, the newest replaces the waiting one, nothing is delivered in the background. Main thread only.
-final class EmbeddedBlockDelayedDelivery<Answer> {
+/// What a held answer waits out its delay for: one in-app, in one session.
+struct EmbeddedBlockDelayedWinner: Equatable {
+    let inappId: String
+    let sessionEpoch: Int
+}
+
+/// Holds a place's answer for its `delayTime`, like the schedule queue holds an overlay: the newest replaces the waiting one,
+/// and what runs out while the user is not present is delivered once they are. Main thread only.
+final class EmbeddedBlockDelayedDelivery<Answer>: EmbeddedBlockAppPresenceSubscribing {
 
     typealias Delivery = (Answer) -> Void
 
     private struct Waiting {
-        let inappId: String
+        let winner: EmbeddedBlockDelayedWinner
         var answer: Answer
         let deliver: Delivery
         var state: State
@@ -29,30 +35,19 @@ final class EmbeddedBlockDelayedDelivery<Answer> {
     private var waiting: [String: Waiting] = [:]
 
     private let schedule: EmbeddedBlockWaitScheduling
-    private let isInBackground: () -> Bool
-    private let notificationCenter: NotificationCenter
-    private var observer: NSObjectProtocol?
+    private let presence: EmbeddedBlockAppPresence
 
-    init(isInBackground: @escaping () -> Bool = { UIApplication.shared.applicationState == .background },
-         notificationCenter: NotificationCenter = .default,
+    init(presence: EmbeddedBlockAppPresence = .shared,
          schedule: @escaping EmbeddedBlockWaitScheduling = { delay, work in
              DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
          }) {
-        self.isInBackground = isInBackground
-        self.notificationCenter = notificationCenter
+        self.presence = presence
         self.schedule = schedule
 
-        observer = notificationCenter.addObserver(forName: UIApplication.willEnterForegroundNotification,
-                                                  object: nil,
-                                                  queue: .main) { [weak self] _ in
-            self?.deliverDue()
-        }
+        presence.subscribe(self)
     }
 
     deinit {
-        if let observer {
-            notificationCenter.removeObserver(observer)
-        }
         for entry in waiting.values {
             if case .ticking(let timer) = entry.state {
                 timer.cancel()
@@ -60,28 +55,32 @@ final class EmbeddedBlockDelayedDelivery<Answer> {
         }
     }
 
-    func isWaiting(place: String, for inappId: String) -> Bool {
-        waiting[place]?.inappId == inappId
+    func userDidBecomePresent() {
+        deliverDue()
     }
 
-    func schedule(place: String, inappId: String, answer: Answer, after delay: TimeInterval, _ deliver: @escaping Delivery) {
+    func isWaiting(place: String, for winner: EmbeddedBlockDelayedWinner) -> Bool {
+        waiting[place]?.winner == winner
+    }
+
+    func schedule(place: String, winner: EmbeddedBlockDelayedWinner, answer: Answer, after delay: TimeInterval, _ deliver: @escaping Delivery) {
         cancel(place: place)
 
         let timer = DispatchWorkItem { [weak self] in
-            guard let self, self.waiting[place]?.inappId == inappId else { return }
+            guard let self, self.isWaiting(place: place, for: winner) else { return }
 
-            if self.isInBackground() {
-                self.waiting[place]?.state = .due
-            } else {
+            if self.presence.isPresent {
                 self.deliver(place)
+            } else {
+                self.waiting[place]?.state = .due
             }
         }
 
-        waiting[place] = Waiting(inappId: inappId, answer: answer, deliver: deliver, state: .ticking(timer))
+        waiting[place] = Waiting(winner: winner, answer: answer, deliver: deliver, state: .ticking(timer))
         schedule(delay, timer)
     }
 
-    /// The newest answer for the in-app already waiting at the place; its delay keeps running.
+    /// The newest answer of the same session for the in-app already waiting at the place; its delay keeps running.
     func refresh(place: String, answer: Answer) {
         waiting[place]?.answer = answer
     }

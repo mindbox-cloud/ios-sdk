@@ -9,8 +9,8 @@
 import Foundation
 import MindboxLogger
 
-/// An unreadable question is refused rather than answered with an empty list: the page can
-/// retry a refusal, while an empty answer it would take for the truth.
+/// An unreadable question, or one the SDK has no config to answer, is refused rather than answered with
+/// an empty list: the page can retry a refusal, while an empty answer it would take for the truth.
 final class FilterShowableInappsActionHandler: WebBridgeActionHandler {
 
     let actions: Set<BridgeMessage.Action> = [.filterShowableInapps]
@@ -37,8 +37,13 @@ final class FilterShowableInappsActionHandler: WebBridgeActionHandler {
                           category: host.logCategory)
         }
 
-        inappHost.bridgeDidAskShowableInapps(ids) { [weak host] allowed in
-            host?.respond(to: message, payload: .object(["inappIds": .array(allowed.map { .string($0) })]))
+        inappHost.bridgeDidAskShowableInapps(ids) { [weak host] answer in
+            switch answer {
+            case .success(let allowed):
+                host?.respond(to: message, payload: .object(["inappIds": .array(allowed.map { .string($0) })]))
+            case .failure(let code):
+                host?.respondError(code, detail: "the SDK cannot answer it", to: message)
+            }
         }
     }
 }

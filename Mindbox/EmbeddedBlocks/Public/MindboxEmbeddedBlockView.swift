@@ -403,9 +403,15 @@ public final class MindboxEmbeddedBlockView: UIView {
             self?.waitBudget.reset()
         }
 
+        // A start held back by the return's session check spends no budget until it really begins.
+        contentProvider.onStarted = { [weak self] in
+            self?.waitBudget.armIfNeeded()
+        }
+
         waitBudget.isNeeded = { [weak self] in
             guard let self else { return false }
             return self.isEffectivelyVisible && self.state == .loading && !self.contentProvider.isAwaitingDelayedContent
+                && !self.contentProvider.isStartPending
         }
         waitBudget.onExpire = { [weak self] in
             self?.handleTimeout()

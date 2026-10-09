@@ -28,9 +28,21 @@ struct ReportedFailure: Hashable {
     let reason: String
 }
 
+/// How a block's show stands against what the session already accounted.
+enum BlockShowRecord: Equatable {
+    case new
+    case repeated
+    /// Of a session that has ended or is ending: it accounts nothing in the current one.
+    case stale
+}
+
 /// What this session already told the funnel and served to places, kept so nothing is repeated.
 /// Reset as one with the session.
 struct InappSessionLedger: Equatable {
+
+    /// Which session this is: grows by one with every reset, so an answer computed before a reset
+    /// can be told from one computed after it.
+    var sessionEpoch = 0
 
     /// In-apps vouched for once per session — the losers at a place.
     var vouchedInappIds: Set<String> = []
@@ -50,6 +62,16 @@ struct InappSessionLedger: Equatable {
     var placeShownInappId: [String: String] = [:]
 
     var reportedFailures: Set<ReportedFailure> = []
+
+    /// Set by the session check that found this session expired, in the hold that read the last visit; the reset
+    /// that follows replaces the ledger and with it the mark.
+    var isSessionEnding = false
+
+    /// What an answer, a show or a report computed in `sessionEpoch` is judged by: that session is over, or is
+    /// being ended by a session check that has decided so.
+    func hasEnded(_ sessionEpoch: Int) -> Bool {
+        sessionEpoch < self.sessionEpoch || isSessionEnding
+    }
 }
 
 // Ask-and-record in one step, each meant to run inside a single `$ledger.mutate`: callers live on
@@ -73,12 +95,13 @@ extension InappSessionLedger {
         vouchedPageOffers.insert(offer).inserted
     }
 
-    /// True when the place shows something other than what it showed last.
-    mutating func recordShow(_ inappId: String, at place: String) -> Bool {
-        guard placeShownInappId[place] != inappId else { return false }
+    /// `new` when the place shows something other than what it showed last in this session.
+    mutating func recordShow(_ inappId: String, at place: String, sessionEpoch: Int) -> BlockShowRecord {
+        guard sessionEpoch == self.sessionEpoch, !hasEnded(sessionEpoch) else { return .stale }
+        guard placeShownInappId[place] != inappId else { return .repeated }
 
         placeShownInappId[place] = inappId
-        return true
+        return .new
     }
 
     mutating func recordUnanswered(_ place: String) -> Bool {

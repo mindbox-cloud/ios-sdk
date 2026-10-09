@@ -37,9 +37,20 @@ final class EmbeddedBlockFailureReporter {
             return
         }
 
-        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': reporting \(failure.reason.rawValue) for in-app \(failure.inAppId)",
-                      level: .error, category: .embeddedBlocks)
-        report(failure.inAppId, failure.tags, failure.reason, failure.details)
+        send(failure)
+    }
+
+    /// What an answer without content tells the analytics when it arrives, held or parked, as on Android: only
+    /// the state it moves the block to waits, and a teardown before that loses nothing.
+    func report(failureOf answer: EmbeddedBlockPlaceAnswer) {
+        switch answer.resolution {
+        case .failure(let failure):
+            send(failure)
+        case .configUnavailable:
+            reportUnansweredWaitOnce(answer.processingDuration, inSession: answer.sessionEpoch)
+        case .content, .empty, .targetingUnavailable:
+            break
+        }
     }
 
     func flushHeld() {
@@ -56,8 +67,29 @@ final class EmbeddedBlockFailureReporter {
         held = nil
     }
 
-    func reportUnansweredWaitOnce(_ waited: TimeInterval) {
-        guard SessionTemporaryStorage.shared.$ledger.mutate({ $0.recordUnanswered(placeSystemName) }) else {
+    private func send(_ failure: EmbeddedBlockResolutionFailure) {
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': reporting \(failure.reason.rawValue) for in-app \(failure.inAppId)",
+                      level: .error, category: .embeddedBlocks)
+        report(failure.inAppId, failure.tags, failure.reason, failure.details)
+    }
+
+    /// `sessionEpoch`: the session of the answer that says so — one of a session that has ended reports nothing.
+    func reportUnansweredWaitOnce(_ waited: TimeInterval, inSession sessionEpoch: Int? = nil) {
+        let isFirst = SessionTemporaryStorage.shared.$ledger.mutate { ledger -> Bool? in
+            if let sessionEpoch, ledger.hasEnded(sessionEpoch) {
+                return nil
+            }
+
+            return ledger.recordUnanswered(placeSystemName)
+        }
+
+        guard let isFirst else {
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': no config to answer with in a session that has ended — not reported",
+                          category: .embeddedBlocks)
+            return
+        }
+
+        guard isFirst else {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the SDK stayed silent again this session — already reported",
                           category: .embeddedBlocks)
             return
