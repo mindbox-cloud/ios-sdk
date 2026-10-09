@@ -107,8 +107,7 @@ public struct MindboxEmbeddedBlock: View {
                 onLoad: (() -> Void)? = nil,
                 onEmpty: (() -> Void)? = nil,
                 onFail: ((MindboxEmbeddedBlockFailReason) -> Void)? = nil) {
-        // Normalized here too, so `.id(placeSystemName)` keeps one SwiftUI identity per place
-        // however the name was padded or cased.
+        // Normalized here too, so the view below gets the name the way the UIKit init would.
         self.placeSystemName = MindboxEmbeddedBlockView.normalizedPlaceSystemName(placeSystemName)
         self.height = height
         self.timeout = timeout
@@ -152,7 +151,9 @@ public struct MindboxEmbeddedBlock: View {
                           onFail: onFail,
                           placeholder: placeholderBuilder,
                           errorContent: errorBuilder)
-            .id(placeSystemName)
+            // One SwiftUI identity per place, however the name was padded or cased: `Stories` and
+            // `stories` are the same place to the SDK, so they are the same block here.
+            .id(MindboxEmbeddedBlockView.placeKey(placeSystemName))
     }
 }
 

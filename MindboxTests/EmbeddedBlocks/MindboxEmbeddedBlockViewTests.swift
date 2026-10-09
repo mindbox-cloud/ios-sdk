@@ -768,15 +768,43 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(memory.askedPlaces == ["stories"])
     }
 
-    @Test("The surrounding whitespace and the letter case go, the name itself is kept",
+    // The host reads back what it wrote, in sync with Android's public `placeSystemName`; the SDK
+    // is asked by the case-folded key, so `Main-Screen-Top` and `main-screen-top` are one place.
+    @Test("The host's spelling stays public, the SDK is asked by the case-folded key")
+    func hostSpellingStaysPublicAndTheKeyGoesInside() {
+        let bed = EmbeddedBlockTestBed()
+        let factory = EmbeddedBlockContentProviderFactoryMock(provider: bed.provider)
+        let memory = EmbeddedBlockPlaceMemoryMock()
+        let savedBuilder = MBInject.buildTestContainer
+        let savedMode = MBInject.mode
+        defer {
+            MBInject.buildTestContainer = savedBuilder
+            MBInject.mode = savedMode
+        }
+        MBInject.buildTestContainer = {
+            let container = MBContainer()
+            container.register(EmbeddedBlockContentProviderMaking.self) { factory }
+            container.register(EmbeddedBlockPlaceRemembering.self) { memory }
+            return container
+        }
+        MBInject.mode = .test
+
+        let view = MindboxEmbeddedBlockView(placeSystemName: " Main-Screen-Top ", height: 120, loadingStrategy: .placeholder)
+
+        #expect(view.placeSystemName == "Main-Screen-Top")
+        #expect(factory.requestedPlaces == ["main-screen-top"])
+        #expect(memory.askedPlaces == ["main-screen-top"])
+    }
+
+    @Test("Only the surrounding whitespace goes, the name itself is kept as it is",
           arguments: [("stories", "stories"),
                       (" stories ", "stories"),
                       ("\tstories\n", "stories"),
                       ("my place", "my place"),
-                      ("Stories", "stories"),
-                      ("Stories-List-Container", "stories-list-container"),
+                      ("Stories", "Stories"),
+                      ("Stories-List-Container", "Stories-List-Container"),
                       ("   ", "")])
-    func placeNameNormalizationTrimsAndLowercases(given: String, expected: String) {
+    func placeNameNormalizationKeepsTheName(given: String, expected: String) {
         #expect(MindboxEmbeddedBlockView.normalizedPlaceSystemName(given) == expected)
     }
 
