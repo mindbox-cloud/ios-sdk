@@ -68,17 +68,48 @@ struct InappSessionLedgerTests {
     func showsAreRecordedPerPlaceChange() {
         var ledger = InappSessionLedger()
 
-        let shown = ledger.recordShow("inapp-1", at: "place")
-        let held = ledger.recordShow("inapp-1", at: "place")
-        let changed = ledger.recordShow("inapp-2", at: "place")
-        let returned = ledger.recordShow("inapp-1", at: "place")
-        let otherPlace = ledger.recordShow("inapp-1", at: "other-place")
+        let shown = ledger.recordShow("inapp-1", at: "place", sessionEpoch: 0)
+        let held = ledger.recordShow("inapp-1", at: "place", sessionEpoch: 0)
+        let changed = ledger.recordShow("inapp-2", at: "place", sessionEpoch: 0)
+        let returned = ledger.recordShow("inapp-1", at: "place", sessionEpoch: 0)
+        let otherPlace = ledger.recordShow("inapp-1", at: "other-place", sessionEpoch: 0)
 
-        #expect(shown)
-        #expect(!held)
-        #expect(changed)
-        #expect(returned)
-        #expect(otherPlace)
+        #expect(shown == .new)
+        #expect(held == .repeated)
+        #expect(changed == .new)
+        #expect(returned == .new)
+        #expect(otherPlace == .new)
+    }
+
+    @Test("A show computed in an earlier session is refused and records nothing")
+    func showOfAnEarlierSessionIsStale() {
+        var ledger = InappSessionLedger(sessionEpoch: 3)
+
+        let stale = ledger.recordShow("inapp-1", at: "place", sessionEpoch: 2)
+        let current = ledger.recordShow("inapp-1", at: "place", sessionEpoch: 3)
+
+        #expect(stale == .stale)
+        #expect(current == .new)
+    }
+
+    @Test("A show of the session a check is ending is refused and records nothing")
+    func showOfAnEndingSessionIsStale() {
+        var ledger = InappSessionLedger(sessionEpoch: 3)
+        ledger.isSessionEnding = true
+
+        let ending = ledger.recordShow("inapp-1", at: "place", sessionEpoch: 3)
+
+        #expect(ending == .stale)
+        #expect(ledger.placeShownInappId.isEmpty)
+    }
+
+    @Test("A session has ended once a later one began, and is ending while a check ends it", arguments: [false, true])
+    func sessionEndsWithTheResetOrTheCheckEndingIt(isEnding: Bool) {
+        var ledger = InappSessionLedger(sessionEpoch: 3)
+        ledger.isSessionEnding = isEnding
+
+        #expect(ledger.hasEnded(2))
+        #expect(ledger.hasEnded(3) == isEnding)
     }
 
     @Test("A silent place is reported once per session")

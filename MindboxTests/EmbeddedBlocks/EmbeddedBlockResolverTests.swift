@@ -20,9 +20,9 @@ struct EmbeddedBlockResolverTests {
         let resolver = EmbeddedBlockResolver(load: loader.load)
         var answers: [EmbeddedBlockResolution] = []
 
-        resolver.resolve("promo") { resolution, _ in answers.append(resolution) }
-        resolver.resolve("promo") { resolution, _ in answers.append(resolution) }
-        resolver.resolve("stories") { resolution, _ in answers.append(resolution) }
+        resolver.resolve("promo") { resolution, _, _ in answers.append(resolution) }
+        resolver.resolve("promo") { resolution, _, _ in answers.append(resolution) }
+        resolver.resolve("stories") { resolution, _, _ in answers.append(resolution) }
 
         #expect(loader.requestedIds == ["promo", "promo", "stories"])
 
@@ -36,11 +36,11 @@ struct EmbeddedBlockResolverTests {
         let loader = ContentLoaderSpy()
         let resolver = EmbeddedBlockResolver(load: loader.load)
 
-        resolver.resolve("promo") { _, _ in }
+        resolver.resolve("promo") { _, _, _ in }
         loader.answer(.empty)
 
         var second: EmbeddedBlockResolution?
-        resolver.resolve("promo") { resolution, _ in second = resolution }
+        resolver.resolve("promo") { resolution, _, _ in second = resolution }
         loader.answer(.content(.stub))
 
         #expect(loader.requestedIds == ["promo", "promo"])
@@ -53,8 +53,8 @@ struct EmbeddedBlockResolverTests {
         let resolver = EmbeddedBlockResolver(load: loader.load)
         let event = ApplicationEvent(name: "custom.operation", model: nil)
 
-        resolver.resolve("promo", trigger: event) { _, _ in }
-        resolver.resolve("promo") { _, _ in }
+        resolver.resolve("promo", trigger: event) { _, _, _ in }
+        resolver.resolve("promo") { _, _, _ in }
 
         #expect(loader.requestedTriggers.count == 2)
         #expect(loader.requestedTriggers[0] === event)
@@ -64,11 +64,11 @@ struct EmbeddedBlockResolverTests {
     @Test("An answer from a background thread is delivered on the main thread")
     func backgroundAnswerIsDeliveredOnTheMainThread() async {
         let resolver = EmbeddedBlockResolver(load: { _, _, completion in
-            DispatchQueue.global().async { completion(.content(.stub), 0) }
+            DispatchQueue.global().async { completion(.content(.stub), 0, 0) }
         })
 
         let deliveredOnMainThread: Bool = await withCheckedContinuation { continuation in
-            resolver.resolve("promo") { _, _ in
+            resolver.resolve("promo") { _, _, _ in
                 continuation.resume(returning: Thread.isMainThread)
             }
         }
@@ -78,10 +78,10 @@ struct EmbeddedBlockResolverTests {
 
     @Test("An answer from the main thread is delivered without a hop")
     func mainThreadAnswerIsDeliveredSynchronously() {
-        let resolver = EmbeddedBlockResolver(load: { _, _, completion in completion(.empty, 0) })
+        let resolver = EmbeddedBlockResolver(load: { _, _, completion in completion(.empty, 0, 0) })
         var answer: EmbeddedBlockResolution?
 
-        resolver.resolve("promo") { resolution, _ in answer = resolution }
+        resolver.resolve("promo") { resolution, _, _ in answer = resolution }
 
         #expect(answer == .empty)
     }
@@ -214,9 +214,9 @@ private final class ContentLoaderSpy {
     private(set) var requestedIds: [String] = []
     private(set) var requestedTriggers: [ApplicationEvent?] = []
 
-    private var completions: [(EmbeddedBlockResolution, TimeInterval) -> Void] = []
+    private var completions: [(EmbeddedBlockResolution, TimeInterval, Int) -> Void] = []
 
-    func load(_ id: String, trigger: ApplicationEvent?, completion: @escaping (EmbeddedBlockResolution, TimeInterval) -> Void) {
+    func load(_ id: String, trigger: ApplicationEvent?, completion: @escaping (EmbeddedBlockResolution, TimeInterval, Int) -> Void) {
         requestedIds.append(id)
         requestedTriggers.append(trigger)
         completions.append(completion)
@@ -225,6 +225,6 @@ private final class ContentLoaderSpy {
     func answer(_ resolution: EmbeddedBlockResolution) {
         let pending = completions
         completions = []
-        pending.forEach { $0(resolution, 0) }
+        pending.forEach { $0(resolution, 0, 0) }
     }
 }

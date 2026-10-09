@@ -20,7 +20,7 @@ struct InappRequestServiceTests {
 
         bed.ask(["story-1", "story-2", "story-3"])
 
-        #expect(bed.answers == [["story-1", "story-3"]])
+        #expect(bed.answers == [.success(["story-1", "story-3"])])
         #expect(bed.askedIds == [["story-1", "story-2", "story-3"]])
     }
 
@@ -30,8 +30,17 @@ struct InappRequestServiceTests {
 
         bed.ask([])
 
-        #expect(bed.answers == [[]])
+        #expect(bed.answers == [.success([])])
         #expect(bed.askedIds.isEmpty)
+    }
+
+    @Test("A question the selection has no config to answer is refused, not answered with nothing")
+    func questionWithoutAConfigIsRefused() {
+        let bed = ServiceBed(allowed: nil)
+
+        bed.ask(["story-1"])
+
+        #expect(bed.answers == [.failure(.internalError)])
     }
 
     @Test("A slow selection still answers when it comes back")
@@ -43,7 +52,7 @@ struct InappRequestServiceTests {
 
         bed.flushSelection()
 
-        #expect(bed.answers == [["story-1"]])
+        #expect(bed.answers == [.success(["story-1"])])
     }
 
     @Test("Whether a config is in hand is asked of the configuration every time")
@@ -264,22 +273,23 @@ struct InappRequestServiceTests {
 @MainActor
 private final class ServiceBed {
 
-    private(set) var answers: [[String]] = []
+    private(set) var answers: [Result<[String], BridgeErrorCode>] = []
     private(set) var askedIds: [[String]] = []
     private(set) var askedBy: [String] = []
 
     private let service: InappRequestService
-    private let allowed: [String]
+    /// `nil`: the selection had no config to answer from.
+    private let allowed: [String]?
     private let isDeferred: Bool
 
-    private var pending: [([String]) -> Void] = []
+    private var pending: [([String]?) -> Void] = []
 
-    init(allowed: [String] = [], isDeferred: Bool = false) {
+    init(allowed: [String]? = [], isDeferred: Bool = false) {
         self.allowed = allowed
         self.isDeferred = isDeferred
 
         var asked: (([String], String) -> Void)?
-        var ask: ((@escaping ([String]) -> Void) -> Void)?
+        var ask: ((@escaping ([String]?) -> Void) -> Void)?
 
         service = InappRequestService(
             ask: { ids, requesterInappId, completion in
@@ -304,8 +314,8 @@ private final class ServiceBed {
     }
 
     func ask(_ ids: [String], askedBy requesterInappId: String = "block") {
-        service.showableInappIds(among: ids, askedBy: requesterInappId) { [weak self] allowed in
-            self?.answers.append(allowed)
+        service.showableInappIds(among: ids, askedBy: requesterInappId) { [weak self] answer in
+            self?.answers.append(answer)
         }
     }
 

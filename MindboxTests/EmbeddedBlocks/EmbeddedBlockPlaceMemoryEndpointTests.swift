@@ -29,6 +29,7 @@ struct EmbeddedBlockPlaceMemoryEndpointTests {
         controllerQueue = coreController.controllerQueue
         let databaseRepository = DI.injectOrFail(DatabaseRepositoryProtocol.self)
         try? databaseRepository.erase()
+        EmbeddedBlockAppPresence.shared.reset()
     }
 
     @Test("A new endpoint forgets every remembered place")

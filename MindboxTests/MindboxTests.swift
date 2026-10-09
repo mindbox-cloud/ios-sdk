@@ -32,6 +32,7 @@ class MindboxTests: XCTestCase {
         databaseRepository = DI.injectOrFail(DatabaseRepositoryProtocol.self)
         try! databaseRepository.erase()
         Mindbox.shared.assembly()
+        EmbeddedBlockAppPresence.shared.reset()
         Mindbox.shared.coreController?.controllerQueue = self.controllerQueue
         // Put setup code here. This method is called before the invocation of each test method in the class.
     }

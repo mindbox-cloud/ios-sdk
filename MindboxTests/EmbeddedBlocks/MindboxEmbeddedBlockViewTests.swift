@@ -239,7 +239,7 @@ struct MindboxEmbeddedBlockViewTests {
         block.page?.reportRendered(1)
         let content = try #require(block.page?.view)
         block.bed.resolver.resolution = .empty
-        block.bed.announceNewConfig()
+        _ = block.bed.announceOperation()
 
         #expect(content.superview == nil)
     }
@@ -496,7 +496,7 @@ struct MindboxEmbeddedBlockViewTests {
 
         block.page?.reportRendered(1)
         block.bed.resolver.resolution = .empty
-        block.bed.announceNewConfig()
+        _ = block.bed.announceOperation()
 
         #expect(appearance.values == [.placeholder, .content, .collapsed])
     }
@@ -724,6 +724,33 @@ struct MindboxEmbeddedBlockViewTests {
 
         #expect(block.view.intrinsicContentSize.height == 0)
         #expect(block.view.subviews.isEmpty)
+    }
+
+    @Test("A block its place no longer shows keeps its content on screen and is collapsed in the same pass that brings it back")
+    func heldCollapseLandsOnReturn() async throws {
+        let block = BlockFixture()
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.attachToWindow()
+        block.page?.reportRendered(1)
+        let content = try #require(block.page?.view)
+
+        block.bed.resolver.resolution = .empty
+        block.bed.announceNewConfig()
+        await mainQueueTurn()
+
+        #expect(content.superview === block.view)
+        #expect(block.view.intrinsicContentSize.height == 120)
+        #expect(delegate.events == [.loaded])
+
+        block.removeFromWindow()
+        block.attachToWindow()
+
+        #expect(content.superview == nil)
+        #expect(block.view.intrinsicContentSize.height == 0)
+
+        await mainQueueTurn()
+        #expect(delegate.events == [.loaded, .empty])
     }
 
     // MARK: - Timeout
@@ -971,6 +998,27 @@ struct MindboxEmbeddedBlockViewTests {
 
         #expect(withPage.scheduler.lastDelay == 7)
         #expect(withPage.view.intrinsicContentSize.height == 120)
+    }
+
+    @Test("A block that enters the window before the return's session check ends spends no wait budget until its content starts")
+    func blockInsideTheReturnWaitsWithoutItsBudget() async {
+        let block = BlockFixture()
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.bed.resolver.isDeferred = true
+        block.bed.enterBackground()
+        block.bed.returnToApp()
+
+        block.attachToWindow()
+        block.expireTimeout()
+        await mainQueueTurn()
+        #expect(delegate.events.isEmpty)
+        #expect(block.bed.failureReporter.unansweredWaits.isEmpty)
+
+        block.bed.finishSessionCheck()
+
+        #expect(block.bed.resolver.resolveCount == 1)
+        #expect(block.waitBudgetBed.scheduler.lastDelay == block.waitBudgetBed.duration)
     }
 
     @Test("Returning from the background does not arm a timeout outside a window")

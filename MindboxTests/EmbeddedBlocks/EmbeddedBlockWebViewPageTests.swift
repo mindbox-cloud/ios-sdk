@@ -338,7 +338,7 @@ private final class PageBed {
     private(set) var showRequests: [(id: String, params: [String: JSONValue])] = []
     private(set) var ackCount = 0
 
-    private var pageCompletions: [([String]) -> Void] = []
+    private var pageCompletions: [(Result<[String], BridgeErrorCode>) -> Void] = []
     private var showCompletions: [(Result<Void, BridgeErrorCode>) -> Void] = []
 
     private lazy var bridge = MindboxWebBridge(webView: facade.webView)
@@ -389,7 +389,7 @@ private final class PageBed {
     }
 
     func answerPage(_ allowed: [String]) {
-        pageCompletions.forEach { $0(allowed) }
+        pageCompletions.forEach { $0(.success(allowed)) }
         pageCompletions = []
     }
 

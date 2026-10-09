@@ -64,7 +64,12 @@ final class InappShowAccountingMock: InappShowAccounting {
 
     private(set) var places: [String] = []
 
+    private(set) var sessionEpochs: [Int] = []
+
     var shownIds: [String] { shows.map(\.inAppId) }
+
+    /// Set: every block show goes on to it as well — the real ledger decides what goes out.
+    var accountant: InappShowAccounting?
 
     func recordShow(_ show: InappShow) {
         shows.append(show)
@@ -74,9 +79,11 @@ final class InappShowAccountingMock: InappShowAccounting {
         cooldowns.append(frequency)
     }
 
-    func recordBlockShow(_ show: InappShow, at place: String) {
+    func recordBlockShow(_ show: InappShow, at place: String, sessionEpoch: Int) {
         places.append(place)
         shows.append(show)
+        sessionEpochs.append(sessionEpoch)
+        accountant?.recordBlockShow(show, at: place, sessionEpoch: sessionEpoch)
     }
 }
 
@@ -97,6 +104,17 @@ final class InappShowBudgetMock: InappShowBudgeting {
 
     var refusedInAppIds: Set<String> = []
 
+    /// `true` — every reservation is answered as one of a session the budget no longer counts.
+    var isOfAnEndedSession = false
+
+    /// The session each reserve, commit and release was made in, in call order.
+    private(set) var callSessions: [Int?] = []
+
+    /// Run inside `reserve`, `commit` and `release`, before the call is recorded.
+    var onReserve: (() -> Void)?
+    var onCommit: (() -> Void)?
+    var onRelease: (() -> Void)?
+
     private(set) var reservations: [Reservation] = []
     private(set) var commits: [Commit] = []
     private(set) var releases: [InappShowBudgetOwner] = []
@@ -105,16 +123,24 @@ final class InappShowBudgetMock: InappShowBudgeting {
 
     var reservedOwners: [InappShowBudgetOwner] { reservations.map(\.owner) }
 
-    func reserve(_ owner: InappShowBudgetOwner, inAppId: String, isPriority: Bool, frequency: InappFrequency?) -> InappShowReservationOutcome {
+    func reserve(_ owner: InappShowBudgetOwner, inAppId: String, isPriority: Bool, frequency: InappFrequency?, inSession sessionEpoch: Int?) -> InappShowReservationOutcome? {
+        onReserve?()
+        callSessions.append(sessionEpoch)
+        guard !isOfAnEndedSession else { return nil }
+
         reservations.append(Reservation(owner: owner, inAppId: inAppId, isPriority: isPriority, frequency: frequency))
         return refusedInAppIds.contains(inAppId) ? .refused : .granted
     }
 
-    func commit(_ owner: InappShowBudgetOwner, inAppId: String, frequency: InappFrequency?) {
+    func commit(_ owner: InappShowBudgetOwner, inAppId: String, frequency: InappFrequency?, inSession sessionEpoch: Int?) {
+        onCommit?()
+        callSessions.append(sessionEpoch)
         commits.append(Commit(owner: owner, inAppId: inAppId, frequency: frequency))
     }
 
-    func release(_ owner: InappShowBudgetOwner) {
+    func release(_ owner: InappShowBudgetOwner, inSession sessionEpoch: Int?) {
+        onRelease?()
+        callSessions.append(sessionEpoch)
         releases.append(owner)
         releasedOnMainThread.append(Thread.isMainThread)
     }
@@ -161,7 +187,7 @@ final class EmbeddedBlockPageMock: EmbeddedBlockPageHosting {
 
     var onUnreadableContentReport: (() -> Void)?
 
-    var onShowableQuestion: (([String], @escaping ([String]) -> Void) -> Void)?
+    var onShowableQuestion: (([String], @escaping (Result<[String], BridgeErrorCode>) -> Void) -> Void)?
 
     var onShowInAppRequest: ((String, [String: JSONValue], @escaping (Result<Void, BridgeErrorCode>) -> Void) -> Void)?
 
@@ -275,7 +301,7 @@ private final class EmbeddedBlockPageMockHost: WebBridgeHost, WebBridgeContentHo
         page.onUnreadableContentReport?()
     }
 
-    func bridgeDidAskShowableInapps(_ ids: [String], completion: @escaping ([String]) -> Void) {
+    func bridgeDidAskShowableInapps(_ ids: [String], completion: @escaping (Result<[String], BridgeErrorCode>) -> Void) {
         page.onShowableQuestion?(ids, completion)
     }
 
@@ -380,6 +406,9 @@ final class EmbeddedBlockResolverMock: EmbeddedBlockResolving {
 
     var processingDuration: TimeInterval = 0
 
+    /// The session every answer is stamped with; starts at the shared ledger's, as a real answer would.
+    var sessionEpoch = SessionTemporaryStorage.shared.ledger.sessionEpoch
+
     /// `true` — the answer does not arrive until the test calls `flush()`: this is how a resolve
     /// that lands after the block was stopped or reloaded is checked.
     var isDeferred = false
@@ -390,7 +419,7 @@ final class EmbeddedBlockResolverMock: EmbeddedBlockResolving {
 
     var resolveCount: Int { resolvedPlaces.count }
 
-    private var pending: [(EmbeddedBlockResolution, TimeInterval) -> Void] = []
+    private var pending: [(EmbeddedBlockResolution, TimeInterval, Int) -> Void] = []
 
     init(resolution: EmbeddedBlockResolution = .content(.stub)) {
         self.resolution = resolution
@@ -398,21 +427,22 @@ final class EmbeddedBlockResolverMock: EmbeddedBlockResolving {
 
     func resolve(_ place: String,
                  trigger: ApplicationEvent?,
-                 completion: @escaping (EmbeddedBlockResolution, TimeInterval) -> Void) {
+                 completion: @escaping (EmbeddedBlockResolution, TimeInterval, Int) -> Void) {
         resolvedPlaces.append(place)
         triggers.append(trigger)
 
         if isDeferred {
             pending.append(completion)
         } else {
-            completion(resolution, processingDuration)
+            completion(resolution, processingDuration, sessionEpoch)
         }
     }
 
+    /// Answers what is in flight with the resolver's current answer and session.
     func flush() {
         let completions = pending
         pending = []
-        completions.forEach { $0(resolution, processingDuration) }
+        completions.forEach { $0(resolution, processingDuration, sessionEpoch) }
     }
 }
 
@@ -429,7 +459,7 @@ final class InappRequestServiceMock: InappRequestServing {
     private(set) var shown: [(id: String, params: [String: JSONValue])] = []
     private(set) var requesterChecks: [() -> Bool] = []
 
-    private var pending: [([String]) -> Void] = []
+    private var pending: [(Result<[String], BridgeErrorCode>) -> Void] = []
     private var showCompletions: [(Result<Void, BridgeErrorCode>) -> Void] = []
 
     func showInapp(id: String,
@@ -447,21 +477,21 @@ final class InappRequestServiceMock: InappRequestServing {
         completions.forEach { $0(outcome) }
     }
 
-    func showableInappIds(among ids: [String], askedBy requesterInappId: String, completion: @escaping ([String]) -> Void) {
+    func showableInappIds(among ids: [String], askedBy requesterInappId: String, completion: @escaping (Result<[String], BridgeErrorCode>) -> Void) {
         askedIds.append(ids)
         askedBy.append(requesterInappId)
 
         if isDeferred {
             pending.append(completion)
         } else {
-            completion(allowed)
+            completion(.success(allowed))
         }
     }
 
     func flush() {
         let completions = pending
         pending = []
-        completions.forEach { $0(allowed) }
+        completions.forEach { $0(.success(allowed)) }
     }
 }
 
@@ -546,6 +576,55 @@ final class EmbeddedBlockWaitBudgetBed {
     }
 }
 
+/// The process-wide presence built for one rig: its own notification center, app state and monotonic clock,
+/// so a rig's background, return and session check reach only it.
+final class AppPresenceBed {
+
+    var applicationState: UIApplication.State = .active
+
+    var isSDKInitialized = true
+
+    let clock: TestClock
+
+    let center: NotificationCenter
+
+    private(set) var presence: EmbeddedBlockAppPresence!
+
+    init(center: NotificationCenter = NotificationCenter(), clock: TestClock = TestClock()) {
+        self.center = center
+        self.clock = clock
+        presence = EmbeddedBlockAppPresence(applicationState: { [weak self] in self?.applicationState ?? .active },
+                                            isSDKInitialized: { [weak self] in self?.isSDKInitialized ?? true },
+                                            now: { clock.now },
+                                            notificationCenter: center)
+    }
+
+    /// A block stays started, as UIKit leaves it.
+    func enterBackground() {
+        applicationState = .background
+        center.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
+    }
+
+    /// The session check this return starts has not ended yet.
+    func returnToApp() {
+        center.post(name: UIApplication.willEnterForegroundNotification, object: nil)
+        becomeActive()
+    }
+
+    func becomeActive() {
+        applicationState = .active
+        center.post(name: UIApplication.didBecomeActiveNotification, object: nil)
+    }
+
+    /// A check that decided at `startedAt`, now by default; the reset of an expired session comes before it.
+    func finishSessionCheck(startedAt: TimeInterval? = nil, startsNewSession: Bool = false) {
+        center.post(name: .inappSessionChecked,
+                    object: nil,
+                    userInfo: [Constants.Notification.sessionCheckStartedAt: startedAt ?? clock.now,
+                               Constants.Notification.startsNewSession: startsNewSession])
+    }
+}
+
 final class EmbeddedPlacesStub {
     /// `nil` — no config seen (gate open); a place maps to the operations its in-apps listen to, an empty set wakes nothing.
     var places: [String: Set<String>]?
@@ -602,7 +681,40 @@ final class EmbeddedBlockContentProviderFactoryMock: EmbeddedBlockContentProvide
     }
 }
 
-final class EmbeddedBlockTestBed {
+/// A rig with its own notification center and resolver that crosses real sessions: what the bed and the
+/// registry's rig share.
+protocol EmbeddedBlockSessionRig: AnyObject {
+
+    var center: NotificationCenter { get }
+
+    var resolver: EmbeddedBlockResolverMock { get }
+}
+
+extension EmbeddedBlockSessionRig {
+
+    var currentSessionEpoch: Int { SessionTemporaryStorage.shared.ledger.sessionEpoch }
+
+    /// The real reset: the ledger moves on, while the resolver keeps answering in the previous session.
+    func expireSession() {
+        SessionTemporaryStorage.shared.erase()
+    }
+
+    /// A config download concluded in `sessionEpoch`, the session the resolver answers in by default.
+    func announceNewConfig(sessionEpoch: Int? = nil) {
+        center.post(name: .mobileConfigDownloadConcluded,
+                    object: nil,
+                    userInfo: [Constants.Notification.sessionEpoch: sessionEpoch ?? resolver.sessionEpoch])
+    }
+
+    @discardableResult
+    func announceOperation(_ name: String = "custom.operation") -> ApplicationEvent {
+        let event = ApplicationEvent(name: name, model: nil)
+        center.post(name: .inAppOperationOccurred, object: event)
+        return event
+    }
+}
+
+final class EmbeddedBlockTestBed: EmbeddedBlockSessionRig {
 
     let resolver: EmbeddedBlockResolverMock
     let inappService: InappRequestServiceMock
@@ -616,10 +728,21 @@ final class EmbeddedBlockTestBed {
     /// One per bed: a new config must reach only this provider.
     let center: NotificationCenter
 
-    /// One clock for both seams: the page's rendering time (the block's part of `timeToDisplay`) and the ack wait.
+    /// One clock for every seam: the page's rendering time (the block's part of `timeToDisplay`), the ack
+    /// wait and the presence's return.
     let clock: TestClock
 
+    /// The bed's process-wide presence: every provider of the bed reads the same return.
+    let presenceBed: AppPresenceBed
+
+    var applicationState: UIApplication.State {
+        get { presenceBed.applicationState }
+        set { presenceBed.applicationState = newValue }
+    }
+
     var page: EmbeddedBlockPageMock? { pageFactory.page }
+
+    private let providerAt: (String) -> EmbeddedBlockWebViewProvider
 
     init(placeSystemName: String = "block-id",
          resolution: EmbeddedBlockResolution = .content(.stub)) {
@@ -635,10 +758,27 @@ final class EmbeddedBlockTestBed {
         let accounting = InappShowAccountingMock()
         let failureReporter = EmbeddedBlockFailureReporterMock()
         let ackScheduler = EmbeddedBlockAckSchedulerMock()
+        let presenceBed = AppPresenceBed(center: center, clock: clock)
         let registry = EmbeddedBlockPlaceRegistry(resolver: resolver,
                                                   budget: budget,
                                                   notificationCenter: center,
-                                                  fetchEmbeddedPlaces: { embeddedPlaces.fetch($0) })
+                                                  fetchEmbeddedPlaces: { embeddedPlaces.fetch($0) },
+                                                  presence: presenceBed.presence,
+                                                  delayedDelivery: EmbeddedBlockDelayedDelivery(presence: presenceBed.presence),
+                                                  now: { clock.now })
+        let providerAt = { (place: String) in
+            EmbeddedBlockWebViewProvider(placeSystemName: place,
+                                         registry: registry,
+                                         inappService: inappService,
+                                         makePage: { pageFactory.make($0) },
+                                         accounting: accounting,
+                                         reportFailure: { failureReporter.report($0, $1, $2, $3) },
+                                         reportUnansweredWait: { failureReporter.reportUnansweredWait($0) },
+                                         scheduleAckTimeout: { ackScheduler.schedule($0, $1) },
+                                         makeStopwatch: { ForegroundStopwatch(notificationCenter: center, now: { clock.now }) },
+                                         now: { clock.now },
+                                         appPresence: presenceBed.presence)
+        }
 
         self.clock = clock
         self.accounting = accounting
@@ -648,20 +788,49 @@ final class EmbeddedBlockTestBed {
         self.resolver = resolver
         self.inappService = inappService
         self.pageFactory = pageFactory
-        self.provider = EmbeddedBlockWebViewProvider(placeSystemName: placeSystemName,
-                                                     registry: registry,
-                                                     inappService: inappService,
-                                                     makePage: { pageFactory.make($0) },
-                                                     accounting: accounting,
-                                                     reportFailure: { failureReporter.report($0, $1, $2, $3) },
-                                                     reportUnansweredWait: { failureReporter.reportUnansweredWait($0) },
-                                                     scheduleAckTimeout: { ackScheduler.schedule($0, $1) },
-                                                     makeStopwatch: { ForegroundStopwatch(notificationCenter: center, now: { clock.now }) },
-                                                     now: { clock.now })
+        self.presenceBed = presenceBed
+        self.providerAt = providerAt
+        self.provider = providerAt(placeSystemName)
     }
 
-    func announceNewConfig() {
-        center.post(name: .mobileConfigDownloaded, object: nil)
+    /// Another block of the bed, created now — what a screen built after a return gets.
+    func makeProvider(placeSystemName: String) -> EmbeddedBlockWebViewProvider {
+        providerAt(placeSystemName)
+    }
+
+    /// The session expired and its config download concluded: every answer from here on is the next session's.
+    func announceNewSession() {
+        expireSession()
+        concludeNewSessionDownload()
+    }
+
+    func concludeNewSessionDownload() {
+        resolver.sessionEpoch = currentSessionEpoch
+        announceNewConfig()
+    }
+
+    func enterBackground() {
+        presenceBed.enterBackground()
+    }
+
+    func returnToApp() {
+        presenceBed.returnToApp()
+    }
+
+    func becomeActive() {
+        presenceBed.becomeActive()
+    }
+
+    func finishSessionCheck(startedAt: TimeInterval? = nil, startsNewSession: Bool = false) {
+        presenceBed.finishSessionCheck(startedAt: startedAt, startsNewSession: startsNewSession)
+    }
+
+    /// An answer as the registry hands it over, in the session the resolver answers in.
+    func answer(_ resolution: EmbeddedBlockResolution, isOperationTriggered: Bool = false) -> EmbeddedBlockPlaceAnswer {
+        EmbeddedBlockPlaceAnswer(resolution: resolution,
+                                 processingDuration: 0,
+                                 sessionEpoch: resolver.sessionEpoch,
+                                 isOperationTriggered: isOperationTriggered)
     }
 
     func deliverSamePageWithNewData(_ marker: String = "fresh") {
@@ -675,11 +844,6 @@ final class EmbeddedBlockTestBed {
         announceNewConfig()
     }
 
-    func announceOperation(_ name: String = "custom.operation") -> ApplicationEvent {
-        let event = ApplicationEvent(name: name, model: nil)
-        center.post(name: .inAppOperationOccurred, object: event)
-        return event
-    }
 }
 
 /// The place's memory across launches, kept in memory: a fixture built over the same mock is the
@@ -823,7 +987,7 @@ final class EmbeddedBlockViewDelegateMock: MindboxEmbeddedBlockViewDelegate {
 
 extension EmbeddedBlockResolving {
 
-    func resolve(_ place: String, completion: @escaping (EmbeddedBlockResolution, TimeInterval) -> Void) {
+    func resolve(_ place: String, completion: @escaping (EmbeddedBlockResolution, TimeInterval, Int) -> Void) {
         resolve(place, trigger: nil, completion: completion)
     }
 }

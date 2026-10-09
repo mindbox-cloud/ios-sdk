@@ -13,6 +13,11 @@ import Testing
 @MainActor
 struct EmbeddedBlockContentProviderFactoryTests {
 
+    // The real factory hands its providers the process-wide presence.
+    init() {
+        EmbeddedBlockAppPresence.shared.reset()
+    }
+
     @Test("Every call makes its own provider")
     func eachCallMakesItsOwnProvider() {
         let place = "factory-independent-blocks"

@@ -24,6 +24,8 @@ final class InappSessionManagerTests: XCTestCase {
         targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
         SessionTemporaryStorage.shared.expiredConfigSession = ""
         SessionTemporaryStorage.shared.isInitializationCalled = true
+        // Every check is announced on the default center, where the process-wide presence listens.
+        EmbeddedBlockAppPresence.shared.reset()
     }
 
     override func tearDown() {
@@ -189,6 +191,7 @@ final class InappSessionManagerTests: XCTestCase {
         targetingChecker.event = .init(name: "Test", model: nil)
         
         XCTAssertNil(persistenceStorage.lastInappStateChangeDate)
+        let sessionEpoch = SessionTemporaryStorage.shared.ledger.sessionEpoch
 
         manager.checkInappSession()
         
@@ -198,7 +201,7 @@ final class InappSessionManagerTests: XCTestCase {
         XCTAssertNil(SessionTemporaryStorage.shared.segmentationRequestResult)
         XCTAssertEqual(SessionTemporaryStorage.shared.sessionShownInApps, [])
         XCTAssertNil(SessionTemporaryStorage.shared.inAppSettings)
-        XCTAssertEqual(SessionTemporaryStorage.shared.ledger, InappSessionLedger())
+        XCTAssertEqual(SessionTemporaryStorage.shared.ledger, InappSessionLedger(sessionEpoch: sessionEpoch + 1))
         
         targetingChecker.context.isNeedGeoRequest = false
         targetingChecker.checkedSegmentations = nil

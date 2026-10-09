@@ -23,13 +23,13 @@ struct InAppCoreManagerTests {
         }
         func selectInappForPlace(_ place: String,
                                  trigger: ApplicationEvent?,
-                                 _ completion: @escaping (EmbeddedPlaceSelection, TimeInterval) -> Void) {
-            completion(.decided(nil), 0)
+                                 _ completion: @escaping (EmbeddedPlaceSelection, TimeInterval, Int) -> Void) {
+            completion(.decided(nil), 0, 0)
         }
         func getInAppById(_ id: String, _ completion: @escaping (InAppTransitionData?) -> Void) {
             completion(nil)
         }
-        func getShowableInappIds(_ ids: [String], askedBy requesterInappId: String, _ completion: @escaping ([String]) -> Void) {
+        func getShowableInappIds(_ ids: [String], askedBy requesterInappId: String, _ completion: @escaping ([String]?) -> Void) {
             completion([])
         }
         func getInAppToShowById(_ id: String, params: [String: JSONValue], _ completion: @escaping (InAppFormData?) -> Void) {

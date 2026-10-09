@@ -52,6 +52,20 @@ struct FilterShowableInappsActionHandlerTests {
         #expect(host.sent.first?.payload == .object(["inappIds": .array([.string("id-1")])]))
     }
 
+    @Test("A question the SDK cannot answer is refused with its reason, not answered with nothing")
+    func unanswerableQuestionIsRefused() throws {
+        let host = InappRequestHostSpy()
+        host.refusal = .internalError
+        let message = BridgeMessage.request(.filterShowableInapps, payload: .object(["inappIds": .array([.string("id-1")])]))
+
+        FilterShowableInappsActionHandler().handle(message, host: host)
+
+        let response = try #require(host.sent.first)
+        #expect(response.type == .error)
+        #expect(response.id == message.id)
+        #expect(response.payload == .object(["error": .string("internal_error")]))
+    }
+
     @Test("An empty question is asked and answered, not refused")
     func emptyRequestIsAnswered() {
         let host = InappRequestHostSpy()
@@ -243,21 +257,26 @@ private final class InappRequestHostSpy: HostSpy, WebBridgeInappRequestHosting {
 
     var allowed: [String] = []
 
+    /// Set: the service refuses the question instead of answering `allowed`.
+    var refusal: BridgeErrorCode?
+
     var isDeferred = false
 
     private(set) var askedIds: [[String]] = []
     private(set) var shown: [(id: String, params: [String: JSONValue])] = []
 
-    private var pending: [([String]) -> Void] = []
+    private var pending: [(Result<[String], BridgeErrorCode>) -> Void] = []
     private var showCompletions: [(Result<Void, BridgeErrorCode>) -> Void] = []
 
-    func bridgeDidAskShowableInapps(_ ids: [String], completion: @escaping ([String]) -> Void) {
+    private var answer: Result<[String], BridgeErrorCode> { refusal.map { .failure($0) } ?? .success(allowed) }
+
+    func bridgeDidAskShowableInapps(_ ids: [String], completion: @escaping (Result<[String], BridgeErrorCode>) -> Void) {
         askedIds.append(ids)
 
         if isDeferred {
             pending.append(completion)
         } else {
-            completion(allowed)
+            completion(answer)
         }
     }
 
@@ -277,6 +296,6 @@ private final class InappRequestHostSpy: HostSpy, WebBridgeInappRequestHosting {
     func flush() {
         let completions = pending
         pending = []
-        completions.forEach { $0(allowed) }
+        completions.forEach { $0(answer) }
     }
 }

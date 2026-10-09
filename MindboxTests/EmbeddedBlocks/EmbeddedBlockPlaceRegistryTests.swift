@@ -18,13 +18,14 @@ struct EmbeddedBlockPlaceRegistryTests {
     private final class BlockFake: EmbeddedBlockPlaceHandling {
         var isActive = true
         var holdsAnAttempt = true
-        private(set) var applied: [EmbeddedBlockResolution] = []
-        private(set) var processingDurations: [TimeInterval] = []
+        private(set) var answers: [EmbeddedBlockPlaceAnswer] = []
         private(set) var delayedCount = 0
 
-        func apply(_ resolution: EmbeddedBlockResolution, processingDuration: TimeInterval) {
-            applied.append(resolution)
-            processingDurations.append(processingDuration)
+        var applied: [EmbeddedBlockResolution] { answers.map(\.resolution) }
+        var processingDurations: [TimeInterval] { answers.map(\.processingDuration) }
+
+        func apply(_ answer: EmbeddedBlockPlaceAnswer) {
+            answers.append(answer)
         }
 
         func contentIsDelayed() {
@@ -32,14 +33,14 @@ struct EmbeddedBlockPlaceRegistryTests {
         }
     }
 
-    private final class Rig {
+    private final class Rig: EmbeddedBlockSessionRig {
         let resolver: EmbeddedBlockResolverMock
         let center: NotificationCenter
         let embeddedPlaces: EmbeddedPlacesStub
         let delayScheduler: TestScheduler
         let budget = InappShowBudgetMock()
+        let presence: AppPresenceBed
         let registry: EmbeddedBlockPlaceRegistry
-        var isInBackground = false
 
         init() {
             // Served delays and shown slots live on the shared session singleton — reset, or rigs would see each other's.
@@ -52,34 +53,20 @@ struct EmbeddedBlockPlaceRegistryTests {
             let center = NotificationCenter()
             let embeddedPlaces = EmbeddedPlacesStub()
             let delayScheduler = TestScheduler()
+            let presence = AppPresenceBed(center: center)
             self.resolver = resolver
             self.center = center
             self.embeddedPlaces = embeddedPlaces
             self.delayScheduler = delayScheduler
-            var background = { false }
+            self.presence = presence
             registry = EmbeddedBlockPlaceRegistry(resolver: resolver,
                                                   budget: budget,
                                                   notificationCenter: center,
                                                   fetchEmbeddedPlaces: { embeddedPlaces.fetch($0) },
-                                                  delayedDelivery: EmbeddedBlockDelayedDelivery(isInBackground: { background() },
-                                                                                                notificationCenter: center,
-                                                                                                schedule: { delayScheduler.schedule($0, $1) }))
-            background = { [weak self] in self?.isInBackground ?? false }
-        }
-
-        func enterForeground() {
-            center.post(name: UIApplication.willEnterForegroundNotification, object: nil)
-        }
-
-        func announceNewConfig() {
-            center.post(name: .mobileConfigDownloaded, object: nil)
-        }
-
-        @discardableResult
-        func announceOperation(_ name: String = "custom.operation") -> ApplicationEvent {
-            let event = ApplicationEvent(name: name, model: nil)
-            center.post(name: .inAppOperationOccurred, object: event)
-            return event
+                                                  presence: presence.presence,
+                                                  delayedDelivery: EmbeddedBlockDelayedDelivery(presence: presence.presence,
+                                                                                                schedule: { delayScheduler.schedule($0, $1) }),
+                                                  now: { presence.clock.now })
         }
     }
 
@@ -191,6 +178,48 @@ struct EmbeddedBlockPlaceRegistryTests {
             let carried = rig.resolver.triggers.last ?? nil
             #expect(carried === event)
         }
+    }
+
+    @Test("A queued pass that also re-checks a new config is a config pass, whatever operation it carries, in either order")
+    func queuedPassWithANewConfigIsNotAnOperationPass() {
+        for operationFirst in [true, false] {
+            let rig = Rig()
+            rig.resolver.isDeferred = true
+            let block = BlockFake()
+            rig.registry.register(block, place: "stories")
+            rig.registry.blockAppeared("stories")
+
+            var event: ApplicationEvent?
+            if operationFirst {
+                event = rig.announceOperation()
+                rig.announceNewConfig()
+            } else {
+                rig.announceNewConfig()
+                event = rig.announceOperation()
+            }
+            rig.resolver.flush()
+            rig.resolver.flush()
+
+            let carried = rig.resolver.triggers.last ?? nil
+            #expect(carried === event)
+            #expect(block.answers.map(\.isOperationTriggered) == [false, false])
+        }
+    }
+
+    @Test("A block that comes back while an operation's pass flies is answered as on its own return, not as by the operation")
+    func appearanceAbsorbedByAnOperationPassIsNotAnOperationAnswer() {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        rig.resolver.resolution = .empty
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.announceOperation()
+
+        rig.registry.blockAppeared("stories")
+        rig.resolver.flush()
+
+        #expect(rig.resolver.resolveCount == 1)
+        #expect(block.answers.map(\.isOperationTriggered) == [false])
     }
 
     @Test("A pull mid-resolve is answered by the flying pass, not queued")
@@ -362,6 +391,327 @@ struct EmbeddedBlockPlaceRegistryTests {
         #expect(sleeping.applied == [.content(.stub)])
     }
 
+    @Test("A download's end announced off the main thread is heard without making that thread wait for main")
+    func conclusionOffMainDoesNotWaitForMain() {
+        let rig = Rig()
+        let center = rig.center
+        let sessionEpoch = rig.currentSessionEpoch
+        let posted = DispatchSemaphore(value: 0)
+
+        DispatchQueue.global().async {
+            center.post(name: .mobileConfigDownloadConcluded, object: nil, userInfo: [Constants.Notification.sessionEpoch: sessionEpoch])
+            posted.signal()
+        }
+
+        #expect(posted.wait(timeout: .now() + 2) == .success)
+    }
+
+    @Test("A new session asks every place a block shows at once, before its config arrives, and the config's pass queues behind")
+    func newSessionAsksTheShownPlacesAtOnce() {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        let shown = BlockFake()
+        let away = BlockFake()
+        away.isActive = false
+        rig.registry.register(shown, place: "stories")
+        rig.registry.register(away, place: "promo")
+
+        rig.expireSession()
+        rig.presence.finishSessionCheck(startsNewSession: true)
+        #expect(rig.resolver.resolvedPlaces == ["stories"])
+        #expect(rig.resolver.triggers.compactMap { $0 }.isEmpty)
+
+        rig.announceNewConfig(sessionEpoch: rig.currentSessionEpoch)
+        #expect(rig.resolver.resolveCount == 1)
+
+        rig.resolver.sessionEpoch = rig.currentSessionEpoch
+        rig.resolver.flush()
+
+        #expect(shown.answers.map(\.sessionEpoch) == [rig.currentSessionEpoch])
+        #expect(shown.answers.map(\.isOperationTriggered) == [false])
+        #expect(rig.resolver.resolveCount == 2)
+    }
+
+    @Test("A session check that started no new session asks no place")
+    func sessionCheckWithinTheSessionAsksNothing() {
+        let rig = Rig()
+        rig.registry.register(BlockFake(), place: "stories")
+
+        rig.presence.finishSessionCheck(startsNewSession: false)
+
+        #expect(rig.resolver.resolveCount == 0)
+    }
+
+    @Test("A new session landing while a pass flies asks again once that pass lands, instead of letting it answer")
+    func newSessionDuringAPassAsksAfterIt() {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+
+        rig.expireSession()
+        rig.presence.finishSessionCheck(startsNewSession: true)
+        rig.resolver.flush()
+
+        #expect(rig.resolver.resolveCount == 2)
+        #expect(block.answers.isEmpty)
+    }
+
+    @Test("A block that came back while an earlier session's pass flew is asked for again once that pass is dropped")
+    func answerOlderThanTheConcludedDownloadIsAskedAgain() {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+
+        block.isActive = false
+        rig.expireSession()
+        rig.announceNewConfig(sessionEpoch: rig.currentSessionEpoch)
+        block.isActive = true
+        rig.registry.blockAppeared("stories")
+        rig.resolver.flush()
+        #expect(rig.resolver.resolveCount == 2)
+        #expect(block.answers.isEmpty)
+
+        rig.resolver.sessionEpoch = rig.currentSessionEpoch
+        rig.resolver.flush()
+
+        #expect(rig.resolver.resolveCount == 2)
+        #expect(block.answers.map(\.sessionEpoch) == [rig.currentSessionEpoch])
+    }
+
+    @Test("A new session landing while a pass flies times the place's show from the reset, not from the pass that waited behind it")
+    func newSessionBehindAPassIsTimedFromTheReset() {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+
+        rig.expireSession()
+        rig.presence.finishSessionCheck(startsNewSession: true)
+        rig.presence.clock.advance(3)
+        rig.resolver.flush()
+
+        rig.resolver.sessionEpoch = rig.currentSessionEpoch
+        rig.resolver.processingDuration = 0.5
+        rig.resolver.flush()
+
+        #expect(block.processingDurations == [3.5])
+    }
+
+    // MARK: - The return's session check
+
+    @Test("Content answered between a return and the end of its session check reaches no block and takes no slot; once the check has ended the session, it is dropped and the session is asked anew")
+    func contentInsideTheReturnOfAnEndedSessionIsDropped() {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+        rig.presence.enterBackground()
+        rig.presence.returnToApp()
+
+        rig.resolver.flush()
+        #expect(block.answers.isEmpty)
+        #expect(rig.budget.reservations.isEmpty)
+
+        rig.expireSession()
+        rig.presence.finishSessionCheck(startsNewSession: true)
+
+        #expect(block.answers.isEmpty)
+        #expect(rig.budget.reservations.isEmpty)
+        #expect(rig.resolver.resolveCount == 2)
+    }
+
+    @Test("Content answered between a return and the end of a session check that kept the session is handed over once the check ends")
+    func contentInsideTheReturnOfAKeptSessionArrivesAfterTheCheck() {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+        rig.presence.enterBackground()
+        rig.presence.returnToApp()
+        rig.resolver.flush()
+
+        rig.presence.finishSessionCheck()
+
+        #expect(block.applied == [.content(.stub)])
+        #expect(rig.budget.reservedOwners == [.place("stories")])
+    }
+
+    @Test("Of the content answered between a return and the end of its session check, only the newest reaches the block")
+    func onlyTheNewestContentInsideTheReturnArrives() {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+        rig.presence.enterBackground()
+        rig.presence.returnToApp()
+        rig.resolver.flush()
+
+        rig.resolver.resolution = .content(.other)
+        rig.registry.blockAppeared("stories")
+        rig.resolver.flush()
+        rig.presence.finishSessionCheck()
+
+        #expect(block.applied == [.content(.other)])
+    }
+
+    @Test("An answer of nothing between a return and the end of its session check goes out at once, and the content kept before it never follows")
+    func nothingInsideTheReturnOvertakesTheKeptContent() {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+        rig.presence.enterBackground()
+        rig.presence.returnToApp()
+        rig.resolver.flush()
+
+        rig.resolver.resolution = .empty
+        rig.registry.blockAppeared("stories")
+        rig.resolver.flush()
+        #expect(block.applied == [.empty])
+
+        rig.presence.finishSessionCheck()
+
+        #expect(block.applied == [.empty])
+    }
+
+    @Test("An answer of nothing from a session that has ended does not undo the content kept for the end of the return's session check")
+    func staleNothingInsideTheReturnKeepsTheKeptContent() {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+        rig.presence.enterBackground()
+        rig.presence.returnToApp()
+        rig.resolver.flush()
+
+        rig.resolver.resolution = .empty
+        rig.resolver.sessionEpoch = rig.currentSessionEpoch - 1
+        rig.registry.blockAppeared("stories")
+        rig.resolver.flush()
+        rig.presence.finishSessionCheck()
+
+        #expect(block.applied == [.content(.stub)])
+    }
+
+    @Test("Content for a place no block shows is handed over at once between a return and the end of its session check, for the block to park")
+    func contentForAPlaceOffScreenInsideTheReturnIsHandedOver() {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+        rig.presence.enterBackground()
+        rig.presence.returnToApp()
+        block.isActive = false
+
+        rig.resolver.flush()
+
+        #expect(block.applied == [.content(.stub)])
+    }
+
+    @Test("An answer of the session a check is ending reaches no block and touches no slot", arguments: SlotAnswer.allCases)
+    func answerOfAnEndingSessionIsDropped(_ answer: SlotAnswer) {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        rig.resolver.resolution = answer.resolution
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+        SessionTemporaryStorage.shared.$ledger.mutate { $0.isSessionEnding = true }
+        defer { SessionTemporaryStorage.shared.$ledger.mutate { $0.isSessionEnding = false } }
+
+        rig.resolver.flush()
+
+        #expect(block.answers.isEmpty)
+        #expect(rig.budget.callSessions.isEmpty)
+    }
+
+    enum SlotAnswer: CaseIterable {
+        case empty
+        case content
+
+        var resolution: EmbeddedBlockResolution { self == .empty ? .empty : .content(.stub) }
+    }
+
+    @Test("An answer of an earlier session reaches no block and touches no slot", arguments: SlotAnswer.allCases)
+    func answerOfAnEarlierSessionIsDropped(_ answer: SlotAnswer) {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        rig.resolver.resolution = answer.resolution
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+
+        rig.expireSession()
+        rig.resolver.flush()
+
+        #expect(block.answers.isEmpty)
+        #expect(rig.budget.reservations.isEmpty)
+        #expect(rig.budget.releases.isEmpty)
+    }
+
+    @Test("An answer takes or gives back its place's slot in the session it was computed in", arguments: SlotAnswer.allCases)
+    func slotIsTakenInTheAnswersSession(_ answer: SlotAnswer) {
+        let rig = Rig()
+        rig.resolver.resolution = answer.resolution
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+
+        rig.registry.blockAppeared("stories")
+
+        #expect(rig.budget.callSessions == [rig.currentSessionEpoch])
+        #expect(block.answers.count == 1)
+    }
+
+    @Test("Content whose session ends before its slot is taken reaches no block, rather than emptying the place")
+    func contentOfASessionEndedBeforeItsSlotIsDropped() {
+        let rig = Rig()
+        rig.budget.isOfAnEndedSession = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+
+        rig.registry.blockAppeared("stories")
+
+        #expect(block.answers.isEmpty)
+    }
+
+    @Test("An answer from the config the last download left is not asked for again")
+    func answerOfTheConcludedDownloadIsFinal() {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+
+        rig.announceNewConfig()
+        rig.resolver.flush()
+
+        #expect(rig.resolver.resolveCount == 1)
+        #expect(block.applied == [.content(.stub)])
+    }
+
+    @Test("An answer tells its blocks whether an operation asked for it")
+    func answerCarriesItsCause() {
+        let rig = Rig()
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+
+        rig.announceNewConfig()
+        rig.announceOperation()
+        rig.registry.blockAppeared("stories")
+
+        #expect(block.answers.map(\.isOperationTriggered) == [false, true, false])
+    }
+
     /// A limitation, not an oversight: neither platform remembers past operations — pinned so the day it changes is a decision.
     @Test("An operation that happened off screen is not replayed on return")
     func operationOffScreenIsNotReplayed() {
@@ -449,14 +799,50 @@ struct EmbeddedBlockPlaceRegistryTests {
         #expect(block.applied == [.content(.delayed(params: ["fresh": .bool(true)]))])
     }
 
-    @Test("The same winner resolved again after its delay ran out in the background is delivered on return, not delayed again")
+    @Test("A winner a new session picks again waits its whole delay again, as at cold start")
+    func delayedWinnerArrivesWithItsNewestSession() {
+        let rig = Rig()
+        rig.resolver.resolution = .content(.delayed("00:00:05"))
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+
+        rig.expireSession()
+        rig.resolver.sessionEpoch = rig.currentSessionEpoch
+        rig.announceNewConfig()
+
+        #expect(rig.delayScheduler.armCount == 2)
+        #expect(rig.delayScheduler.lastDelay == 5)
+
+        rig.delayScheduler.fireAll()
+
+        #expect(block.answers.map(\.sessionEpoch) == [rig.currentSessionEpoch])
+    }
+
+    @Test("A delay of an earlier session that runs out delivers nothing and marks nothing")
+    func delayOfAnEarlierSessionDeliversNothing() {
+        let rig = Rig()
+        rig.resolver.resolution = .content(.delayed())
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+
+        rig.expireSession()
+        rig.delayScheduler.fireAll()
+
+        #expect(block.applied.isEmpty)
+        #expect(rig.budget.reservations.isEmpty)
+        #expect(SessionTemporaryStorage.shared.ledger.servedPlaceDelays.isEmpty)
+    }
+
+    @Test("The same winner resolved again after its delay ran out in the background is delivered once the user is back and the return's session check is over, not delayed again")
     func sameWinnerAfterBackgroundExpiryIsNotDelayedAgain() {
         let rig = Rig()
         rig.resolver.resolution = .content(.delayed())
         let block = BlockFake()
         rig.registry.register(block, place: "stories")
         rig.registry.blockAppeared("stories")
-        rig.isInBackground = true
+        rig.presence.enterBackground()
         rig.delayScheduler.fireAll()
 
         rig.announceNewConfig()
@@ -464,10 +850,38 @@ struct EmbeddedBlockPlaceRegistryTests {
         #expect(rig.delayScheduler.armCount == 1)
         #expect(block.applied.isEmpty)
 
-        rig.isInBackground = false
-        rig.enterForeground()
+        rig.presence.returnToApp()
+        #expect(block.applied.isEmpty)
+
+        rig.presence.finishSessionCheck()
 
         #expect(block.applied == [.content(.delayed())])
+    }
+
+    @Test("A delay that ran out in the background of a session that ended meanwhile delivers nothing on return, and the new session waits the whole delay")
+    func delayDueFromAnExpiredSessionIsNotDeliveredOnReturn() {
+        let rig = Rig()
+        rig.resolver.resolution = .content(.delayed("00:00:05"))
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+        rig.presence.enterBackground()
+        rig.delayScheduler.fireAll()
+
+        rig.presence.returnToApp()
+        rig.expireSession()
+        rig.presence.finishSessionCheck(startsNewSession: true)
+
+        #expect(block.applied.isEmpty)
+        #expect(rig.budget.reservations.isEmpty)
+        #expect(SessionTemporaryStorage.shared.ledger.servedPlaceDelays.isEmpty)
+
+        rig.resolver.sessionEpoch = rig.currentSessionEpoch
+        rig.announceNewConfig()
+
+        #expect(rig.delayScheduler.armCount == 2)
+        #expect(rig.delayScheduler.lastDelay == 5)
+        #expect(block.applied.isEmpty)
     }
 
     @Test("A block appearing while the place waits out its delay is told content is coming")

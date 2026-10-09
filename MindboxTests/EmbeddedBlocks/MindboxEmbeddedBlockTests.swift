@@ -22,6 +22,11 @@ import SwiftUI
 @MainActor
 struct MindboxEmbeddedBlockTests {
 
+    // A block built through the SDK's own factory reads the process-wide presence.
+    init() {
+        EmbeddedBlockAppPresence.shared.reset()
+    }
+
     // MARK: - Modifiers
 
     /// The modifier contract rests on value semantics: a modifier must return a new block, not

@@ -178,6 +178,17 @@ struct TrackVisitManagerTests {
         #expect(sessionSpy.checkInappSessionCallCount == countAfterLink + 1)
     }
 
+    @Test("A visit whose write fails still runs the session check, and the failure still reaches the caller")
+    func failedWriteStillChecksTheSession() {
+        let (sut, dbSpy, sessionSpy) = makeSUT()
+        dbSpy.failsToCreate = true
+
+        #expect(throws: SpyDatabaseRepository.WriteFailed.self) {
+            try sut.trackDirect()
+        }
+        #expect(sessionSpy.checkInappSessionCallCount == 1)
+    }
+
     // MARK: - Normal foreground without push/link
 
     @Test("trackDirect sends event when no push or link preceded it")
@@ -207,7 +218,11 @@ struct TrackVisitManagerTests {
 // MARK: - Test doubles
 
 private final class SpyDatabaseRepository: DatabaseRepositoryProtocol {
+    struct WriteFailed: Error {}
+
     var createdEvents: [Event] = []
+
+    var failsToCreate = false
 
     var limit: Int { 100 }
     var lifeLimitDate: Date? { nil }
@@ -215,6 +230,8 @@ private final class SpyDatabaseRepository: DatabaseRepositoryProtocol {
     var onObjectsDidChange: (() -> Void)?
 
     func create(event: Event) throws {
+        guard !failsToCreate else { throw WriteFailed() }
+
         createdEvents.append(event)
     }
 
