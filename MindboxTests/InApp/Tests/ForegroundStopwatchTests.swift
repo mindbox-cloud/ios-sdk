@@ -86,4 +86,78 @@ struct ForegroundStopwatchTests {
 
         #expect(stopwatch.elapsed == 1.25)
     }
+
+    // MARK: - Suspension
+
+    @Test("Suspended time is excluded: the stopwatch counts only between resume and suspend")
+    func elapsed_excludesSuspendedTime() throws {
+        let stopwatch = makeStopwatch()
+
+        clock.advance(0.25)
+        stopwatch.suspend()
+        clock.advance(40)
+        stopwatch.resume()
+        clock.advance(0.5)
+
+        #expect(stopwatch.elapsed == 0.75)
+        stopwatch.stop()
+    }
+
+    @Test("Elapsed while suspended does not count the suspension so far")
+    func elapsed_duringSuspension_excludesCurrentSuspension() throws {
+        let stopwatch = makeStopwatch()
+
+        clock.advance(0.25)
+        stopwatch.suspend()
+        clock.advance(40)
+
+        #expect(stopwatch.elapsed == 0.25)
+        stopwatch.stop()
+    }
+
+    @Test("A background inside a suspension is not subtracted twice")
+    func elapsed_backgroundInsideSuspension_countedOnce() throws {
+        let stopwatch = makeStopwatch()
+
+        clock.advance(0.25)
+        stopwatch.suspend()
+        clock.advance(1)
+        enterBackground(for: 2)
+        clock.advance(1)
+        stopwatch.resume()
+        clock.advance(0.5)
+
+        #expect(stopwatch.elapsed == 0.75)
+        stopwatch.stop()
+    }
+
+    @Test("A suspension that starts in the background and ends after it is excluded in full")
+    func elapsed_suspensionOverlappingBackground_excludedInFull() throws {
+        let stopwatch = makeStopwatch()
+
+        clock.advance(0.25)
+        nc.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
+        clock.advance(1)
+        stopwatch.suspend()
+        clock.advance(1)
+        nc.post(name: UIApplication.willEnterForegroundNotification, object: nil)
+        clock.advance(3)
+        stopwatch.resume()
+        clock.advance(0.5)
+
+        #expect(stopwatch.elapsed == 0.75)
+        stopwatch.stop()
+    }
+
+    @Test("Resume on a running stopwatch changes nothing")
+    func resume_whileRunning_isANoOp() throws {
+        let stopwatch = makeStopwatch()
+
+        clock.advance(0.25)
+        stopwatch.resume()
+        clock.advance(0.25)
+
+        #expect(stopwatch.elapsed == 0.5)
+        stopwatch.stop()
+    }
 }
