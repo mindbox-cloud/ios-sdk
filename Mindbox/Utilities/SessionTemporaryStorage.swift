@@ -36,7 +36,7 @@ final class SessionTemporaryStorage {
 
     @Locked var ledger = InappSessionLedger()
 
-    /// Last track-visit data (source and requestUrl only)
+    /// Outlives `erase()`: the visit that starts a session is written before the check that resets it (in sync with Android).
     @Locked var lastTrackVisit: (source: TrackVisitSource?, requestUrl: String?)?
 
     @Locked var expiredConfigSession: String?
@@ -68,7 +68,6 @@ final class SessionTemporaryStorage {
         showBudget = InappShowBudgetState(sessionEpoch: sessionEpoch)
         isUserVisitSaved = false
         lastInappClickedID = nil
-        lastTrackVisit = nil
         inAppSettings = nil
         configSessionExpirationTime = nil
         Logger.common(message: "[SessionTemporaryStorage] Erased.")
