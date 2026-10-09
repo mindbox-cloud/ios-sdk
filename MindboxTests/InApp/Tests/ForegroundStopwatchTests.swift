@@ -20,8 +20,8 @@ struct ForegroundStopwatchTests {
     private let nc = NotificationCenter()
     private let clock = TestClock()
 
-    private func makeStopwatch() -> ForegroundStopwatch {
-        ForegroundStopwatch(notificationCenter: nc, now: { clock.now })
+    private func makeStopwatch(inBackground: Bool = false) -> ForegroundStopwatch {
+        ForegroundStopwatch(notificationCenter: nc, now: { clock.now }, isInBackground: { inBackground })
     }
 
     private func enterBackground(for seconds: TimeInterval) {
@@ -143,6 +143,50 @@ struct ForegroundStopwatchTests {
         nc.post(name: UIApplication.willEnterForegroundNotification, object: nil)
         clock.advance(3)
         stopwatch.resume()
+        clock.advance(0.5)
+
+        #expect(stopwatch.elapsed == 0.75)
+        stopwatch.stop()
+    }
+
+    @Test("A stopwatch created in the background starts counting at the foreground")
+    func elapsed_createdInBackground_countsFromTheForeground() throws {
+        let stopwatch = makeStopwatch(inBackground: true)
+
+        clock.advance(5)
+        nc.post(name: UIApplication.willEnterForegroundNotification, object: nil)
+        clock.advance(0.25)
+
+        #expect(stopwatch.elapsed == 0.25)
+        stopwatch.stop()
+    }
+
+    @Test("A second suspend changes nothing: one resume reopens the count")
+    func suspend_twice_oneResumeReopensTheCount() throws {
+        let stopwatch = makeStopwatch()
+
+        clock.advance(0.25)
+        stopwatch.suspend()
+        stopwatch.suspend()
+        clock.advance(10)
+        stopwatch.resume()
+        clock.advance(0.5)
+
+        #expect(stopwatch.elapsed == 0.75)
+        stopwatch.stop()
+    }
+
+    @Test("A resume in the background waits for the foreground")
+    func resume_inBackground_waitsForTheForeground() throws {
+        let stopwatch = makeStopwatch()
+
+        clock.advance(0.25)
+        nc.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
+        stopwatch.suspend()
+        clock.advance(1)
+        stopwatch.resume()
+        clock.advance(2)
+        nc.post(name: UIApplication.willEnterForegroundNotification, object: nil)
         clock.advance(0.5)
 
         #expect(stopwatch.elapsed == 0.75)

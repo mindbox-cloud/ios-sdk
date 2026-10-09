@@ -30,10 +30,14 @@ final class ForegroundStopwatch {
     private let notificationCenter: NotificationCenter
 
     init(notificationCenter: NotificationCenter = .default,
-         now: @escaping () -> CFTimeInterval = { CACurrentMediaTime() }) {
+         now: @escaping () -> CFTimeInterval = { CACurrentMediaTime() },
+         isInBackground: () -> Bool = { UIApplication.shared.applicationState == .background }) {
         self.notificationCenter = notificationCenter
         self.now = now
-        self.runningSince = now()
+        // Born in the background — an answer that landed while the app was away — the count waits
+        // for the foreground; the notifications only report changes, not the state at birth.
+        self.isInBackground = isInBackground()
+        self.runningSince = self.isInBackground ? nil : now()
 
         bgObserver = notificationCenter.addObserver(
             forName: UIApplication.didEnterBackgroundNotification,
@@ -73,7 +77,8 @@ final class ForegroundStopwatch {
         settle()
     }
 
-    /// Stops the stopwatch and removes notification observers.
+    /// Removes the notification observers once the reading is taken. The count itself is not
+    /// frozen — `suspend()` is for that — so read `elapsed` before calling this.
     func stop() {
         if let bgObserver { notificationCenter.removeObserver(bgObserver) }
         if let fgObserver { notificationCenter.removeObserver(fgObserver) }
