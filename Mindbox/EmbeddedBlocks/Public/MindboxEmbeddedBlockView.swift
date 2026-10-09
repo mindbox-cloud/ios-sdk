@@ -174,7 +174,8 @@ public final class MindboxEmbeddedBlockView: UIView {
         delegate = nil
         appearanceObserver = nil
         updateContentActivity(reason: "was released by the host wrapper")
-        contentProvider.teardown()
+        // A decoded block that was never built has no content to tear down.
+        contentProvider?.teardown()
     }
 
     /// The look a block of this place starts with, for wrappers that size the block before the
@@ -320,6 +321,10 @@ public final class MindboxEmbeddedBlockView: UIView {
                                         animatesReveal: animatesReveal)
         self.preferredHeight = height
         super.init(frame: .zero)
+        // The look of a block from code is the SDK's: transparent, so the host's background shows
+        // through the page, and clipping. A block from a nib keeps what Interface Builder gave it.
+        clipsToBounds = true
+        backgroundColor = .clear
         build(contentProvider: contentProvider,
               placeMemory: placeMemory,
               revealAnimation: revealAnimation,
@@ -403,9 +408,6 @@ public final class MindboxEmbeddedBlockView: UIView {
     }
 
     private func setUpContainer() {
-        clipsToBounds = true
-        backgroundColor = .clear
-
         contentProvider.onStateChange = { [weak self] state in
             self?.state = state
         }
@@ -460,8 +462,11 @@ public final class MindboxEmbeddedBlockView: UIView {
         super.didMoveToWindow()
 
         // A view decoded outside a nib — an archive clone, say — never got `awakeFromNib`: the
-        // window is the last moment to build it before the content is asked to start.
-        buildIfNeeded()
+        // window is the last moment to build it before the content is asked to start. A released
+        // block is not built: nothing will ever show it.
+        if !isReleased {
+            buildIfNeeded()
+        }
         updateContentActivity(reason: window == nil ? "left the window" : "entered the window")
     }
 

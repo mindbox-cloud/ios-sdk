@@ -33,6 +33,11 @@ struct EmbeddedBlockSetup {
 /// is the block's own, through `intrinsicContentSize`, and collapses to 0 when there is nothing to
 /// show. The `delegate` is assigned from code: outlets cannot hold it.
 ///
+/// The view attributes are the host's, as on any view from a nib: the block keeps the background
+/// colour and the clipping given in the Attributes Inspector, where a block from code starts
+/// transparent and clipping. The page inside is transparent, so a background left at the inspector's
+/// default hides the host's background behind the block — set it to Clear Color to let it through.
+///
 /// The values are applied between `init(coder:)` and `awakeFromNib`, where the block builds itself
 /// from them; from then on they are read-only, like for a block from code: the setters are not
 /// public, and a key-value write after the build is ignored and reported.

@@ -13,6 +13,8 @@
         <view contentMode="scaleToFill" id="blk-configured" userLabel="Configured block" customClass="MindboxEmbeddedBlockView" customModule="Mindbox">
             <rect key="frame" x="0.0" y="0.0" width="320" height="96"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+            <!-- View attributes a host sets in the Attributes Inspector: they are the host's, not the SDK's. -->
+            <color key="backgroundColor" red="1" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
             <userDefinedRuntimeAttributes>
                 <userDefinedRuntimeAttribute type="string" keyPath="placeSystemName" value=" Stories "/>
                 <userDefinedRuntimeAttribute type="number" keyPath="height">

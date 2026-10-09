@@ -87,6 +87,30 @@ struct MindboxEmbeddedBlockViewNibTests {
         #expect(view.timeoutSeconds == 5)
     }
 
+    // MARK: - View attributes
+
+    /// The background and the clipping belong to the host, like on any view: a block from a nib keeps
+    /// what the Attributes Inspector gave it, and only a block from code starts clear and clipping.
+    @Test("A block from a nib keeps the background colour and the clipping set in Interface Builder")
+    func nibBlockKeepsItsViewAttributes() throws {
+        let nib = NibFixture()
+
+        let view = try nib.loadConfiguredBlock()
+
+        #expect(view.backgroundColor == UIColor(red: 1, green: 0, blue: 0, alpha: 1))
+        #expect(view.clipsToBounds == false)
+    }
+
+    @Test("A block from code starts transparent and clipping, as before")
+    func codeBlockStartsClearAndClipping() {
+        _ = NibFixture()
+
+        let view = MindboxEmbeddedBlockView(placeSystemName: "block-id", height: 120)
+
+        #expect(view.backgroundColor == .clear)
+        #expect(view.clipsToBounds == true)
+    }
+
     // MARK: - After the block is built
 
     /// The setters are not public, so a write after the build can come only the way Interface
@@ -156,6 +180,23 @@ struct MindboxEmbeddedBlockViewNibTests {
         #expect(view.intrinsicContentSize.height == 120)
         // Content started: the place was resolved and its page made.
         #expect(nib.page(for: "stories") != nil)
+    }
+
+    /// A wrapper may let go of a decoded block that never reached a window: `release()` has nothing
+    /// to stop and must not touch the dependencies the build never made.
+    @Test("Releasing a decoded block that was never built neither crashes nor builds it later")
+    func releasingUnbuiltBlockIsSafe() throws {
+        let nib = NibFixture()
+        let view = try nib.makeUnbuiltBlock()
+        view.setValue("stories", forKey: "placeSystemName")
+        view.setValue(120, forKey: "height")
+
+        view.release()
+        nib.window.addSubview(view)
+
+        // Released for good: the window does not build a block nobody will show.
+        #expect(nib.factory.requestedPlaces.isEmpty)
+        #expect(view.intrinsicContentSize.height == 0)
     }
 
     // MARK: - Helpers
