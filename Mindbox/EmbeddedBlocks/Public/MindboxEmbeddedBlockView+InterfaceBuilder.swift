@@ -9,19 +9,6 @@
 import UIKit
 import MindboxLogger
 
-/// What a block is given at creation, whichever way it is created.
-struct EmbeddedBlockSetup {
-
-    var placeSystemName = ""
-
-    var loadingStrategy: MindboxEmbeddedBlockLoadingStrategy = .automatic
-
-    /// `nil` is the SDK default.
-    var timeout: TimeInterval?
-
-    var animatesReveal = true
-}
-
 /// A block created from a storyboard or xib.
 ///
 /// In the Identity Inspector set the class to `MindboxEmbeddedBlockView` and the module to `Mindbox`:
@@ -47,16 +34,7 @@ extension MindboxEmbeddedBlockView {
     /// the block reserves no space and stays invisible whatever loads.
     @IBInspectable public private(set) var height: CGFloat {
         get { preferredHeight }
-        set {
-            guard !isBuilt else {
-                Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' was given `height` after it was built: ignored. Set it at creation or in Interface Builder.",
-                              level: .error,
-                              category: .embeddedBlocks)
-                return
-            }
-
-            preferredHeight = newValue
-        }
+        set { applyInspectable("height") { preferredHeight = newValue } }
     }
 
     /// The initializer's `loadingStrategy` by name: `automatic`, `placeholder` or `hidden`, in any
@@ -64,17 +42,19 @@ extension MindboxEmbeddedBlockView {
     @IBInspectable public private(set) var loadingStrategyName: String {
         get { String(describing: loadingStrategy) }
         set {
-            updateSetup("loadingStrategyName") { setup in
-                setup.loadingStrategy = Self.loadingStrategy(named: newValue, placeSystemName: setup.placeSystemName)
+            applyInspectable("loadingStrategyName") {
+                let strategy = Self.loadingStrategy(named: newValue)
+                setup.loadingStrategy = strategy ?? .automatic
+                setup.unknownLoadingStrategyName = strategy == nil ? newValue : nil
             }
         }
     }
 
     /// The initializer's `timeout`, in seconds — not milliseconds like the Android attribute. Left
-    /// at 0 — the inspector's default — it means the SDK default of 30.
+    /// at 0 — the inspector's default — it means the SDK default of 30, and that is what reads back.
     @IBInspectable public private(set) var timeoutSeconds: Double {
-        get { setup.timeout ?? 0 }
-        set { updateSetup("timeoutSeconds") { $0.timeout = Self.timeout(fromInspectableSeconds: newValue) } }
+        get { setup.timeout }
+        set { applyInspectable("timeoutSeconds") { setup.timeout = Self.timeout(fromInspectableSeconds: newValue) } }
     }
 
     override public func awakeFromNib() {
@@ -97,7 +77,7 @@ extension MindboxEmbeddedBlockView {
 
     /// Setup given once the block is built is not obeyed: the dependencies were made for the
     /// values at hand, and a block that changes its place or look mid-life is not a feature.
-    func updateSetup(_ name: String, _ change: (inout EmbeddedBlockSetup) -> Void) {
+    func applyInspectable(_ name: String, _ change: () -> Void) {
         guard !isBuilt else {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' was given `\(name)` after it was built: ignored. Set it at creation or in Interface Builder.",
                           level: .error,
@@ -105,45 +85,6 @@ extension MindboxEmbeddedBlockView {
             return
         }
 
-        change(&setup)
-    }
-
-    /// The inspector cannot express "no value": 0 — and anything below it — stands for the default.
-    static func timeout(fromInspectableSeconds value: Double) -> TimeInterval? {
-        value > 0 ? value : nil
-    }
-
-    // MARK: - Setup sanitizing
-
-    /// A non-positive timeout would collapse every block before the config had a chance, so it is
-    /// reported and replaced with the default rather than obeyed.
-    static func sanitizedTimeout(_ timeout: TimeInterval?, placeSystemName: String) -> TimeInterval {
-        guard let timeout else {
-            return TimeInterval(Constants.EmbeddedBlock.answerTimeoutSeconds)
-        }
-
-        guard timeout > 0 else {
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' was given timeout \(timeout): it must be positive, using the default \(Constants.EmbeddedBlock.answerTimeoutSeconds) s",
-                          level: .error, category: .embeddedBlocks)
-            return TimeInterval(Constants.EmbeddedBlock.answerTimeoutSeconds)
-        }
-
-        return timeout
-    }
-
-    static func loadingStrategy(named name: String, placeSystemName: String) -> MindboxEmbeddedBlockLoadingStrategy {
-        switch name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
-        case "", "automatic":
-            return .automatic
-        case "placeholder":
-            return .placeholder
-        case "hidden":
-            return .hidden
-        default:
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' was given loading strategy '\(name)': unknown, using automatic. The names are automatic, placeholder and hidden.",
-                          level: .error,
-                          category: .embeddedBlocks)
-            return .automatic
-        }
+        change()
     }
 }

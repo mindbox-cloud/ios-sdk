@@ -72,10 +72,61 @@ struct MindboxEmbeddedBlockViewNibTests {
         #expect(view.loadingStrategy == strategy)
     }
 
+    @Test("An unknown strategy name parses to nothing, the known ones in any letter case",
+          arguments: [("automatic", MindboxEmbeddedBlockLoadingStrategy?.some(.automatic)),
+                      ("", .some(.automatic)),
+                      (" Placeholder ", .some(.placeholder)),
+                      ("HIDDEN", .some(.hidden)),
+                      ("lazy", nil)])
+    func strategyNameParsesPurely(name: String, strategy: MindboxEmbeddedBlockLoadingStrategy?) {
+        #expect(MindboxEmbeddedBlockView.loadingStrategy(named: name) == strategy)
+    }
+
+    /// Interface Builder applies the attributes in the order the xib lists them: a strategy given
+    /// before the place must land the same way.
+    @Test("A strategy applied before the place name still takes effect")
+    func strategyBeforePlaceStillApplies() throws {
+        let nib = NibFixture()
+        let view = try nib.makeUnbuiltBlock()
+        view.setValue("hidden", forKey: "loadingStrategyName")
+        view.setValue("stories", forKey: "placeSystemName")
+        view.setValue(120, forKey: "height")
+
+        view.awakeFromNib()
+
+        #expect(view.loadingStrategy == .hidden)
+        #expect(view.placeSystemName == "stories")
+    }
+
     @Test("A timeout left at zero in Interface Builder means the SDK default",
-          arguments: [(0.0, nil), (-1.0, nil), (5.0, 5.0)] as [(Double, TimeInterval?)])
-    func zeroTimeoutMeansDefault(inspectable: Double, timeout: TimeInterval?) {
+          arguments: [(0.0, TimeInterval(Constants.EmbeddedBlock.answerTimeoutSeconds)),
+                      (-1.0, TimeInterval(Constants.EmbeddedBlock.answerTimeoutSeconds)),
+                      (5.0, 5.0)])
+    func zeroTimeoutMeansDefault(inspectable: Double, timeout: TimeInterval) {
         #expect(MindboxEmbeddedBlockView.timeout(fromInspectableSeconds: inspectable) == timeout)
+    }
+
+    /// What the host reads back is the timeout the block runs with, never the raw value it was
+    /// given: a broken one was replaced by the default at creation.
+    @Test("timeoutSeconds reads back the timeout in effect, whichever way the block was created",
+          arguments: [(nil, TimeInterval(Constants.EmbeddedBlock.answerTimeoutSeconds)),
+                      (-5.0, TimeInterval(Constants.EmbeddedBlock.answerTimeoutSeconds)),
+                      (12.0, 12.0)] as [(TimeInterval?, TimeInterval)])
+    func timeoutSecondsIsTheEffectiveTimeout(given: TimeInterval?, effective: TimeInterval) {
+        _ = NibFixture()
+
+        let view = MindboxEmbeddedBlockView(placeSystemName: "block-id", height: 120, timeout: given)
+
+        #expect(view.timeoutSeconds == effective)
+    }
+
+    @Test("A nib block that left the timeout alone reads back the SDK default")
+    func nibDefaultBlockReadsDefaultTimeout() throws {
+        let nib = NibFixture()
+
+        let view = try nib.loadDefaultBlock()
+
+        #expect(view.timeoutSeconds == TimeInterval(Constants.EmbeddedBlock.answerTimeoutSeconds))
     }
 
     @Test("The timeout inspectable reads back in seconds, the unit of the initializer's timeout")

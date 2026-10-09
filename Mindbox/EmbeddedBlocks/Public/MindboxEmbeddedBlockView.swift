@@ -49,7 +49,7 @@ public final class MindboxEmbeddedBlockView: UIView {
     /// on Android. A key-value write once the block is built is ignored and reported.
     @IBInspectable public private(set) var placeSystemName: String {
         get { setup.placeSystemName }
-        set { updateSetup("placeSystemName") { $0.placeSystemName = Self.normalizedPlaceSystemName(newValue) } }
+        set { applyInspectable("placeSystemName") { setup.placeSystemName = Self.normalizedPlaceSystemName(newValue) } }
     }
 
     /// What the block shows until the SDK answers, given at creation.
@@ -63,7 +63,7 @@ public final class MindboxEmbeddedBlockView: UIView {
     /// Written by Interface Builder only, like `placeSystemName`.
     @IBInspectable public private(set) var animatesReveal: Bool {
         get { setup.animatesReveal }
-        set { updateSetup("animatesReveal") { $0.animatesReveal = newValue } }
+        set { applyInspectable("animatesReveal") { setup.animatesReveal = newValue } }
     }
 
     /// Receives the block events. Assigning a delegate after the content already resolved still
@@ -175,7 +175,7 @@ public final class MindboxEmbeddedBlockView: UIView {
         appearanceObserver = nil
         updateContentActivity(reason: "was released by the host wrapper")
         // A decoded block that was never built has no content to tear down.
-        contentProvider?.teardown()
+        runtime?.contentProvider.teardown()
     }
 
     /// The look a block of this place starts with, for wrappers that size the block before the
@@ -199,18 +199,22 @@ public final class MindboxEmbeddedBlockView: UIView {
     /// `init(coder:)` and `awakeFromNib`.
     var setup = EmbeddedBlockSetup()
 
+    /// Everything a built block runs on. One optional for the whole set: a block has all of it or
+    /// none of it, and "none" — between `init(coder:)` and the build in `awakeFromNib` or the
+    /// window — is checked in one place per entry point instead of being a crash in each.
+    private struct Runtime {
+        let contentProvider: EmbeddedBlockWebViewProvider
+        let placeMemory: EmbeddedBlockPlaceRemembering
+        let revealAnimation: EmbeddedBlockRevealAnimation
+        let waitBudget: EmbeddedBlockWaitBudget
+        let layers: EmbeddedBlockLayerHost
+    }
+
+    private var runtime: Runtime?
+
     /// Whether the block has its dependencies and runs: right after the initializer for a block
     /// from code, after `awakeFromNib` for one from a nib. The setup is frozen from then on.
-    private(set) var isBuilt = false
-
-    // The dependencies are nil only between `init(coder:)` and the build — `awakeFromNib`, or the
-    // window for a view decoded outside a nib — when nothing touches them: an unbuilt block has no
-    // window and no delegate yet.
-    private var contentProvider: EmbeddedBlockWebViewProvider!
-
-    private var placeMemory: EmbeddedBlockPlaceRemembering!
-
-    private var revealAnimation: EmbeddedBlockRevealAnimation!
+    var isBuilt: Bool { runtime != nil }
 
     var preferredHeight: CGFloat = 0 {
         didSet {
@@ -219,10 +223,6 @@ public final class MindboxEmbeddedBlockView: UIView {
             invalidateIntrinsicContentSize()
         }
     }
-
-    private var waitBudget: EmbeddedBlockWaitBudget!
-
-    private lazy var layers = EmbeddedBlockLayerHost(container: self, animation: revealAnimation)
 
     private lazy var defaultPlaceholder = EmbeddedBlockShimmerView()
 
@@ -317,7 +317,7 @@ public final class MindboxEmbeddedBlockView: UIView {
          makeWaitBudget: ((_ placeSystemName: String, _ duration: @escaping () -> TimeInterval) -> EmbeddedBlockWaitBudget)? = nil) {
         self.setup = EmbeddedBlockSetup(placeSystemName: placeSystemName,
                                         loadingStrategy: loadingStrategy,
-                                        timeout: timeout,
+                                        timeout: Self.sanitizedTimeout(timeout, placeSystemName: placeSystemName),
                                         animatesReveal: animatesReveal)
         self.preferredHeight = height
         super.init(frame: .zero)
@@ -332,23 +332,27 @@ public final class MindboxEmbeddedBlockView: UIView {
     }
 
     /// The one place a block gets its dependencies: right away from the initializer, in
-    /// `awakeFromNib` for a block from a nib. See `MindboxEmbeddedBlockView+InterfaceBuilder`.
+    /// `awakeFromNib` for a block from a nib. Once — a second call changes nothing.
+    /// See `MindboxEmbeddedBlockView+InterfaceBuilder`.
     func build(contentProvider: EmbeddedBlockWebViewProvider,
                placeMemory: EmbeddedBlockPlaceRemembering,
                revealAnimation: EmbeddedBlockRevealAnimation,
                makeWaitBudget: ((_ placeSystemName: String, _ duration: @escaping () -> TimeInterval) -> EmbeddedBlockWaitBudget)?) {
-        isBuilt = true
-        self.contentProvider = contentProvider
-        self.placeMemory = placeMemory
-        self.revealAnimation = revealAnimation
-        let answerTimeout = Self.sanitizedTimeout(setup.timeout, placeSystemName: placeSystemName)
+        guard runtime == nil else { return }
+
+        let answerTimeout = setup.timeout
         let duration: () -> TimeInterval = { [weak contentProvider] in
             contentProvider?.isAwaitingAnswer == false
                 ? TimeInterval(Constants.EmbeddedBlock.readyTimeoutSeconds)
                 : answerTimeout
         }
-        self.waitBudget = makeWaitBudget?(placeSystemName, duration)
-            ?? EmbeddedBlockWaitBudget(placeSystemName: placeSystemName, duration: duration)
+        let runtime = Runtime(contentProvider: contentProvider,
+                              placeMemory: placeMemory,
+                              revealAnimation: revealAnimation,
+                              waitBudget: makeWaitBudget?(placeSystemName, duration)
+                                  ?? EmbeddedBlockWaitBudget(placeSystemName: placeSystemName, duration: duration),
+                              layers: EmbeddedBlockLayerHost(container: self, animation: revealAnimation))
+        self.runtime = runtime
 
         // Decided synchronously, before the first layout pass: a wrapper reads the same answer
         // through `initialAppearance(placeSystemName:loadingStrategy:)`.
@@ -356,10 +360,9 @@ public final class MindboxEmbeddedBlockView: UIView {
                                              hasShownContentBefore: placeMemory.hasShownContent(at: placeSystemName))
         self.shownAppearance = initial
         self.hasSettled = initial == .collapsed
-        warnIfPlaceIsMissing()
-        warnIfHeightReservesNothing()
+        warnAboutSetup()
         logInitialLook()
-        setUpContainer()
+        setUpContainer(runtime)
     }
 
     /// The strategy plus the place's memory, and nothing else: `placeholder` and `hidden` do not
@@ -376,25 +379,6 @@ public final class MindboxEmbeddedBlockView: UIView {
         }
     }
 
-    /// An empty name addresses no place, and the name is never normalized: whatever the host
-    /// passed is what the config is asked for.
-    private func warnIfPlaceIsMissing() {
-        guard placeSystemName.isEmpty else { return }
-
-        Logger.common(message: "[EmbeddedBlock] A block was created without a place system name: it has nothing to resolve and stays invisible.",
-                      level: .error,
-                      category: .embeddedBlocks)
-    }
-
-    /// Zero height is not a collapse: the block runs its whole cycle, it is simply never visible.
-    private func warnIfHeightReservesNothing() {
-        guard preferredHeight <= 0 else { return }
-
-        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' was created with height \(preferredHeight): it reserves no space and stays invisible whatever loads. Pass the height it should occupy.",
-                      level: .error,
-                      category: .embeddedBlocks)
-    }
-
     private func logInitialLook() {
         let look = shownAppearance == .collapsed ? "hidden, taking no space" : "a placeholder"
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' starts with \(look) (strategy \(loadingStrategy))",
@@ -403,38 +387,39 @@ public final class MindboxEmbeddedBlockView: UIView {
 
     deinit {
         // A nib-loaded block let go before `awakeFromNib` has nothing to stop.
-        waitBudget?.pause()
-        contentProvider?.teardown()
+        runtime?.waitBudget.pause()
+        runtime?.contentProvider.teardown()
     }
 
-    private func setUpContainer() {
+    private func setUpContainer(_ runtime: Runtime) {
+        let contentProvider = runtime.contentProvider
+        let waitBudget = runtime.waitBudget
+
         contentProvider.onStateChange = { [weak self] state in
             self?.state = state
         }
 
         // The wait changes its nature once content arrives: the budget starts over with the page's
         // own — shorter — patience.
-        contentProvider.onContentArrived = { [weak self] in
-            guard let self else { return }
-
-            self.waitBudget.reset()
-            self.waitBudget.armIfNeeded()
+        contentProvider.onContentArrived = {
+            waitBudget.reset()
+            waitBudget.armIfNeeded()
         }
 
         // Known content on its way is not silence: the budget stands down until the page starts loading.
-        contentProvider.onContentDelayed = { [weak self] in
-            self?.waitBudget.reset()
+        contentProvider.onContentDelayed = {
+            waitBudget.reset()
         }
 
-        waitBudget.isNeeded = { [weak self] in
-            guard let self else { return false }
-            return self.isEffectivelyVisible && self.state == .loading && !self.contentProvider.isAwaitingDelayedContent
+        waitBudget.isNeeded = { [weak self, weak contentProvider] in
+            guard let self, let contentProvider else { return false }
+            return self.isEffectivelyVisible && self.state == .loading && !contentProvider.isAwaitingDelayedContent
         }
         waitBudget.onExpire = { [weak self] in
             self?.handleTimeout()
         }
 
-        layers.show(view(for: shownAppearance))
+        runtime.layers.show(view(for: shownAppearance))
     }
 
     // MARK: - Layout
@@ -471,6 +456,8 @@ public final class MindboxEmbeddedBlockView: UIView {
     }
 
     private func updateContentActivity(reason: String) {
+        guard let runtime else { return }
+
         let shouldRun = isEffectivelyVisible
 
         guard shouldRun != isContentRunning else { return }
@@ -480,40 +467,40 @@ public final class MindboxEmbeddedBlockView: UIView {
         if shouldRun {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' \(reason), starting content",
                           category: .embeddedBlocks)
-            contentProvider.start()
-            waitBudget.armIfNeeded()
+            runtime.contentProvider.start()
+            runtime.waitBudget.armIfNeeded()
         } else {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' \(reason), stopping content",
                           category: .embeddedBlocks)
             // A pause, not a reset: leaving the window does not cancel an attempt already started.
-            waitBudget.pause()
-            contentProvider.stop()
+            runtime.waitBudget.pause()
+            runtime.contentProvider.stop()
         }
     }
 
     /// Internal and without a public wrapper: automatic reloads — on failure, on returning to the
     /// app — will be built on this method.
     func reload() {
-        guard isEffectivelyVisible else {
+        guard let runtime, isEffectivelyVisible else {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' reload skipped: the block is not on screen",
                           category: .embeddedBlocks)
             return
         }
 
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' reload requested", category: .embeddedBlocks)
-        waitBudget.reset()
+        runtime.waitBudget.reset()
         // A new attempt means a new outcome: the host must hear it even if it matches the previous one.
         deliveredEvent = nil
         // A reload starts the cycle over from the block's first look: the strategy decides again —
         // the place's memory as it is now included — whether the block waits in a placeholder or hidden.
-        resetToInitialLook()
-        contentProvider.reload()
-        waitBudget.armIfNeeded()
+        resetToInitialLook(runtime)
+        runtime.contentProvider.reload()
+        runtime.waitBudget.armIfNeeded()
     }
 
-    private func resetToInitialLook() {
+    private func resetToInitialLook(_ runtime: Runtime) {
         let initial = Self.initialAppearance(for: loadingStrategy,
-                                             hasShownContentBefore: placeMemory.hasShownContent(at: placeSystemName))
+                                             hasShownContentBefore: runtime.placeMemory.hasShownContent(at: placeSystemName))
         shownAppearance = initial
         hasSettled = initial == .collapsed
     }
@@ -523,10 +510,12 @@ public final class MindboxEmbeddedBlockView: UIView {
     /// through `onStateChange`, reason attached; the provider also abandons the attempt so it cannot
     /// resurrect content the container has given up on.
     private func handleTimeout() {
-        if contentProvider.isAwaitingAnswer {
-            contentProvider.failUnanswered(waited: waitBudget.consumed)
+        guard let runtime else { return }
+
+        if runtime.contentProvider.isAwaitingAnswer {
+            runtime.contentProvider.failUnanswered(waited: runtime.waitBudget.consumed)
         } else {
-            contentProvider.failSilentPage()
+            runtime.contentProvider.failSilentPage()
         }
     }
 
@@ -537,10 +526,12 @@ public final class MindboxEmbeddedBlockView: UIView {
     private func updateTimeout(from previous: EmbeddedBlockState) {
         guard state != .loading || previous != .loading else { return }
 
-        waitBudget.reset()
+        runtime?.waitBudget.reset()
     }
 
     private func apply(_ state: EmbeddedBlockState) {
+        guard let runtime else { return }
+
         let previous = shownAppearance
         shownAppearance = appearance(for: state)
         updatePlaceMemory(for: state)
@@ -556,7 +547,7 @@ public final class MindboxEmbeddedBlockView: UIView {
         let reveals = shownAppearance == .content && previous != .content
         let animated = reveals && shouldAnimateReveal
 
-        layers.show(view(for: shownAppearance), animated: animated)
+        runtime.layers.show(view(for: shownAppearance), animated: animated)
 
         // The height is animated by whoever owns it: the container through its intrinsic size, a
         // wrapper laying the block out itself through its own frame.
@@ -565,7 +556,7 @@ public final class MindboxEmbeddedBlockView: UIView {
             // of the block is animated.
             window?.layoutIfNeeded()
             invalidateIntrinsicContentSize()
-            animateGrowth()
+            animateGrowth(runtime.revealAnimation)
         } else {
             invalidateIntrinsicContentSize()
         }
@@ -576,7 +567,9 @@ public final class MindboxEmbeddedBlockView: UIView {
     }
 
     private var shouldAnimateReveal: Bool {
-        animatesReveal && window != nil && !revealAnimation.isReduceMotionEnabled()
+        guard let runtime else { return false }
+
+        return animatesReveal && window != nil && !runtime.revealAnimation.isReduceMotionEnabled()
     }
 
     /// The new intrinsic size is already pending; laying it out inside the animation makes the host
@@ -584,7 +577,7 @@ public final class MindboxEmbeddedBlockView: UIView {
     /// superview: the growth moves everything below the block, and a superview laid out on its own
     /// leaves its ancestors to jump after the animation. A list host remeasures its row on its own
     /// terms, in `mindboxEmbeddedBlockViewDidLoad`.
-    private func animateGrowth() {
+    private func animateGrowth(_ revealAnimation: EmbeddedBlockRevealAnimation) {
         revealAnimation.run(revealAnimation.duration, { [weak self] in
             self?.window?.layoutIfNeeded()
         }, {})
@@ -595,9 +588,9 @@ public final class MindboxEmbeddedBlockView: UIView {
     private func updatePlaceMemory(for state: EmbeddedBlockState) {
         switch state {
         case .ready:
-            placeMemory.rememberShownContent(at: placeSystemName)
+            runtime?.placeMemory.rememberShownContent(at: placeSystemName)
         case .empty:
-            placeMemory.forgetPlace(placeSystemName)
+            runtime?.placeMemory.forgetPlace(placeSystemName)
         case .loading, .failed:
             break
         }
@@ -632,7 +625,7 @@ public final class MindboxEmbeddedBlockView: UIView {
     private func view(for appearance: MindboxEmbeddedBlockAppearance) -> UIView? {
         switch appearance {
         case .placeholder: return placeholderView ?? defaultPlaceholder
-        case .content: return contentProvider.contentView
+        case .content: return runtime?.contentProvider.contentView
         case .error: return errorView
         case .collapsed: return nil
         }
@@ -640,7 +633,7 @@ public final class MindboxEmbeddedBlockView: UIView {
 
     private func refreshPlaceholder() {
         guard shownAppearance == .placeholder else { return }
-        layers.show(view(for: .placeholder))
+        runtime?.layers.show(view(for: .placeholder))
     }
 
     private func refreshErrorView() {
