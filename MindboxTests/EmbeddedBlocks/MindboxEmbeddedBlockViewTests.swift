@@ -726,9 +726,10 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.view.subviews.isEmpty)
     }
 
-    @Test("A block its place no longer shows keeps its content on screen and is collapsed in the same pass that brings it back")
-    func heldCollapseLandsOnReturn() async throws {
-        let block = BlockFixture()
+    @Test("A block its place no longer shows keeps its content on screen and collapses as the user leaves: the host hears it out of the window, the place is forgotten, and the block stays collapsed on return and on the next launch")
+    func heldCollapseLandsAsTheUserLeaves() async throws {
+        let memory = EmbeddedBlockPlaceMemoryMock()
+        let block = BlockFixture(loadingStrategy: .automatic, memory: memory)
         let delegate = EmbeddedBlockViewDelegateMock()
         block.view.delegate = delegate
         block.attachToWindow()
@@ -744,13 +745,72 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(delegate.events == [.loaded])
 
         block.removeFromWindow()
-        block.attachToWindow()
+        await mainQueueTurn()
 
         #expect(content.superview == nil)
         #expect(block.view.intrinsicContentSize.height == 0)
-
-        await mainQueueTurn()
         #expect(delegate.events == [.loaded, .empty])
+        #expect(memory.shownPlaces.isEmpty)
+
+        block.attachToWindow()
+        #expect(block.view.intrinsicContentSize.height == 0)
+        #expect(BlockFixture(loadingStrategy: .automatic, memory: memory).view.intrinsicContentSize.height == 0)
+    }
+
+    @Test("A shown block whose page draws nothing for the new session keeps its content on screen and collapses as the user leaves")
+    func pageThatDrawsNothingCollapsesTheBlockAsTheUserLeaves() async throws {
+        let memory = EmbeddedBlockPlaceMemoryMock()
+        let block = BlockFixture(memory: memory)
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.attachToWindow()
+        block.page?.reportRendered(1)
+        let content = try #require(block.page?.view)
+        block.bed.announceNewSession()
+
+        block.page?.reportRendered(0)
+        await mainQueueTurn()
+
+        #expect(content.superview === block.view)
+        #expect(block.view.intrinsicContentSize.height == 120)
+        #expect(delegate.events == [.loaded])
+        #expect(memory.shownPlaces == ["block-id"])
+
+        block.removeFromWindow()
+        await mainQueueTurn()
+
+        #expect(content.superview == nil)
+        #expect(block.view.intrinsicContentSize.height == 0)
+        #expect(delegate.events == [.loaded, .empty])
+        #expect(memory.shownPlaces.isEmpty)
+    }
+
+    @Test("A block let go within the pass of main it left the window in still forgets the place it held a collapse for")
+    func blockLetGoBeforeItStopsForgetsItsHeldCollapse() {
+        let memory = EmbeddedBlockPlaceMemoryMock()
+        let bed = EmbeddedBlockTestBed()
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 320, height: 480))
+        weak var released: MindboxEmbeddedBlockView?
+        autoreleasepool {
+            let view = MindboxEmbeddedBlockView(placeSystemName: "block-id",
+                                                height: 120,
+                                                contentProvider: bed.provider,
+                                                placeMemory: memory,
+                                                loadingStrategy: .placeholder,
+                                                animatesReveal: false,
+                                                afterMainPass: { _ in })
+            released = view
+            window.addSubview(view)
+            bed.page?.reportRendered(1)
+            bed.resolver.resolution = .empty
+            bed.announceNewConfig()
+            #expect(memory.shownPlaces == ["block-id"])
+
+            view.removeFromSuperview()
+        }
+
+        #expect(released == nil)
+        #expect(memory.shownPlaces.isEmpty)
     }
 
     @Test("A block moved out of the window and back within one pass of main, as a navigation transition moves the screen it leaves, has not left: its held collapse stays held")

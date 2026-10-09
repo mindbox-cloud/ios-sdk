@@ -1055,7 +1055,7 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.accounting.shownIds == [EmbeddedBlockWebContent.stub.inAppId])
     }
 
-    @Test("A data push lets the page report itself again")
+    @Test("A data push lets the page report itself again: its report of nothing collapses the block once the user leaves")
     func dataPushReopensTheReport() {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
@@ -1065,6 +1065,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.onStateChange = { states.append($0) }
 
         bed.page?.reportRendered(0)
+        bed.provider.stop()
 
         #expect(states == [.empty])
     }
@@ -1718,6 +1719,14 @@ struct EmbeddedBlockWebViewProviderTests {
         var reportedFailures: [InAppShowFailureReason] { self == .brokenWinner ? [.unknownError] : [] }
 
         var unansweredWaitReports: Int { self == .configUnavailable ? 1 : 0 }
+
+        var collapsedState: EmbeddedBlockState {
+            switch self {
+            case .empty: return .empty
+            case .brokenWinner: return .failed(.internalError)
+            case .configUnavailable, .targetingUnavailable: return .failed(.networkError)
+            }
+        }
     }
 
     @Test("A shown block keeps its content while the user looks, whatever its place answers instead, and reports a failure at once",
@@ -1769,59 +1778,82 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.onStateChange = { states.append($0) }
 
         bed.provider.stop()
-        bed.provider.start()
 
-        #expect(states.first == .failed(MindboxEmbeddedBlockFailReason(.unknownError)))
+        #expect(states == [.failed(.internalError)])
         #expect(bed.failureReporter.reasons == [.unknownError])
     }
 
-    @Test("A held collapse drops the page when the user leaves and is applied first thing on the return")
-    func heldCollapseIsAppliedOnReturn() {
+    @Test("A held collapse lands as the user leaves, whatever its place answered instead: the page is dropped, the container hears it off screen, and the return asks the place anew",
+          arguments: NothingToShow.allCases)
+    func heldCollapseLandsAsTheUserLeaves(_ answer: NothingToShow) {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
         bed.page?.reportRendered(1)
-        bed.resolver.resolution = .empty
+        bed.resolver.resolution = answer.resolution
         bed.announceNewConfig()
-        let resolvesBefore = bed.resolver.resolveCount
-
-        bed.provider.stop()
-        #expect(bed.page?.isClosed == true)
-
         var states: [EmbeddedBlockState] = []
         bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.stop()
+
+        #expect(states == [answer.collapsedState])
+        #expect(bed.page?.isClosed == true)
+        #expect(bed.provider.contentView == nil)
+
+        let resolvesBefore = bed.resolver.resolveCount
         bed.provider.start()
 
-        #expect(states == [.empty])
-        #expect(bed.provider.contentView == nil)
+        #expect(states == [answer.collapsedState, .loading, answer.collapsedState])
+        #expect(bed.pageFactory.pages.count == 1)
         #expect(bed.resolver.resolveCount == resolvesBefore + 1)
     }
 
-    @Test("A held collapse whose block a screen covered while the app was away, or right after the return, lands when the user comes back to the block",
+    @Test("A held collapse whose block a screen covered while the app was away, or right after the return, lands as the screen covers it",
           arguments: [true, false])
-    func heldCollapseLandsWhenTheUserComesBackFromAnotherScreen(coveredWhileAway: Bool) {
+    func heldCollapseLandsWhenAScreenCoversTheBlock(coveredWhileAway: Bool) {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
         bed.page?.reportRendered(1)
         bed.resolver.resolution = .empty
         bed.announceNewConfig()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
 
         bed.enterBackground()
         if coveredWhileAway {
             bed.provider.stop()
+            #expect(states == [.empty])
         }
         bed.returnToApp()
         bed.finishSessionCheck()
         if !coveredWhileAway {
+            #expect(states.isEmpty)
             bed.provider.stop()
         }
-        #expect(bed.page?.isClosed == true)
-
-        var states: [EmbeddedBlockState] = []
-        bed.provider.onStateChange = { states.append($0) }
-        bed.provider.start()
 
         #expect(states == [.empty])
-        #expect(bed.provider.contentView == nil)
+        #expect(bed.page?.isClosed == true)
+    }
+
+    @Test("A held collapse whose session ended while the app was away still lands as the user leaves, the new session's ask still in flight")
+    func heldCollapseOfAnEndedSessionLandsAsTheUserLeaves() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.resolver.resolution = .empty
+        bed.announceNewConfig()
+        bed.resolver.isDeferred = true
+        bed.enterBackground()
+        bed.expireSession()
+        bed.returnToApp()
+        bed.finishSessionCheck(startsNewSession: true)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.stop()
+
+        #expect(states == [.empty])
+        #expect(bed.page?.isClosed == true)
     }
 
     @Test("An answer of nothing that arrived off screen collapses a block that showed content on return, never held")
@@ -1866,25 +1898,6 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(states == [.ready])
         #expect(bed.pageFactory.pages.count == 1)
         #expect(bed.page?.isClosed == false)
-        #expect(bed.resolver.resolveCount == resolvesBefore + 1)
-    }
-
-    @Test("A held collapse of a session that ended while the user was away is dropped on return: the block asks its place afresh instead of collapsing")
-    func heldCollapseOfAnEndedSessionIsDropped() {
-        let bed = EmbeddedBlockTestBed()
-        bed.provider.start()
-        bed.page?.reportRendered(1)
-        bed.resolver.resolution = .empty
-        bed.announceNewConfig()
-        bed.provider.stop()
-        bed.expireSession()
-        let resolvesBefore = bed.resolver.resolveCount
-        var states: [EmbeddedBlockState] = []
-        bed.provider.onStateChange = { states.append($0) }
-
-        bed.provider.start()
-
-        #expect(states == [.loading])
         #expect(bed.resolver.resolveCount == resolvesBefore + 1)
     }
 
@@ -2050,6 +2063,152 @@ struct EmbeddedBlockWebViewProviderTests {
 
         #expect(bed.page?.initDataPushes.isEmpty == true)
         #expect(bed.page?.isClosed == false)
+    }
+
+    @Test("A page that draws nothing for the new session keeps the block's content on screen, through the background and unshown, and collapses it as the user leaves, giving the place's slot back")
+    func pageThatDrawsNothingAfterShowingHoldsUntilTheUserLeaves() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.announceNewSession()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.page?.reportRendered(0)
+        bed.enterBackground()
+        bed.returnToApp()
+        bed.finishSessionCheck()
+
+        #expect(states.isEmpty)
+        #expect(bed.provider.contentView === bed.page?.view)
+        #expect(bed.page?.isClosed == false)
+        #expect(bed.accounting.shows.count == 1)
+        let releasesBefore = bed.budget.releases
+
+        bed.provider.stop()
+
+        #expect(states == [.empty])
+        #expect(bed.page?.isClosed == true)
+        #expect(bed.budget.releases == releasesBefore + [.place("block-id")])
+    }
+
+    @Test("A page that draws nothing and then draws something takes its report back: the new session's show goes and leaving collapses nothing")
+    func pageThatDrawsAgainLiftsItsHold() {
+        let bed = EmbeddedBlockTestBed()
+        let first = bed.resolver.sessionEpoch
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.announceNewSession()
+        bed.page?.reportRendered(0)
+
+        bed.page?.reportRendered(2)
+
+        #expect(bed.accounting.sessionEpochs == [first, first + 1])
+
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+        bed.provider.stop()
+
+        #expect(states.isEmpty)
+        #expect(bed.page?.isClosed == false)
+    }
+
+    @Test("An answer naming the same page does not take back the report of a page that drew nothing: the block still collapses as the user leaves")
+    func sameContentDoesNotLiftThePagesHold() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.announceNewSession()
+        bed.page?.reportRendered(0)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.announceNewConfig()
+        bed.provider.stop()
+
+        #expect(states == [.empty])
+        #expect(bed.accounting.shows.count == 1)
+    }
+
+    @Test("A page that drew nothing is still handed a later session's data, and that session's show goes once the page draws it")
+    func pageThatDrewNothingTakesALaterSessionsData() {
+        let bed = EmbeddedBlockTestBed()
+        let first = bed.resolver.sessionEpoch
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.announceNewSession()
+        bed.page?.reportRendered(0)
+
+        bed.announceNewSession()
+        #expect(bed.page?.initDataPushes.count == 2)
+
+        bed.page?.reportRendered(1)
+
+        #expect(bed.accounting.sessionEpochs == [first, first + 2])
+    }
+
+    @Test("A page that drew nothing is not rebuilt for a later push it never confirmed: it keeps the block's content until the user leaves")
+    func pageThatDrewNothingIsNotRebuiltOnAckTimeout() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.announceNewSession()
+        bed.page?.confirmInitData()
+        bed.page?.reportRendered(0)
+        bed.announceNewSession()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.ackScheduler.fire()
+
+        #expect(states.isEmpty)
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.page?.isClosed == false)
+
+        bed.provider.stop()
+
+        #expect(states == [.empty])
+    }
+
+    @Test("A held block that fails holds no collapse any more: the host hears the failure alone, and leaving adds nothing",
+          arguments: [true, false])
+    func failedHeldBlockLandsNothingOnLeaving(isPageHold: Bool) {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        if isPageHold {
+            bed.announceNewSession()
+            bed.page?.reportRendered(0)
+        } else {
+            bed.resolver.resolution = .empty
+            bed.announceNewConfig()
+        }
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.page?.failLoad()
+        bed.provider.stop()
+
+        #expect(states == [.failed(.networkError)])
+        #expect(bed.provider.heldCollapse == nil)
+    }
+
+    @Test("A block whose page drew nothing and whose place then answers nothing lands as its place answered when the user leaves",
+          arguments: [NothingToShow.brokenWinner, .configUnavailable, .targetingUnavailable])
+    func placeAnswerLandsOverThePagesReport(_ answer: NothingToShow) {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.announceNewSession()
+        bed.page?.reportRendered(0)
+        bed.resolver.resolution = answer.resolution
+        bed.announceNewConfig()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.stop()
+
+        #expect(states == [answer.collapsedState])
     }
 
     // MARK: - Which in-apps the page may draw
@@ -2323,8 +2482,8 @@ struct EmbeddedBlockWebViewProviderTests {
 
     // MARK: - Stop and restart
 
-    /// After `stop()` the provider must stay silent — the container relies on this when it
-    /// collapses expired content on its own timeout.
+    /// After `stop()` the provider stays silent, a held collapse landing in it aside — the container relies
+    /// on this when it collapses expired content on its own timeout.
     @Test("Stop keeps the page, records what it says and announces nothing")
     func stopPausesThePage() {
         let bed = EmbeddedBlockTestBed()

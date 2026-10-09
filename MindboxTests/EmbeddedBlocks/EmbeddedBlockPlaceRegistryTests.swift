@@ -569,6 +569,38 @@ struct EmbeddedBlockPlaceRegistryTests {
         #expect(rig.budget.reservations.isEmpty)
     }
 
+    @Test("A new session's content asked while a block showed the place takes no slot when it lands after the block left, its delay included, and takes it when a block brings it on screen, timed from then",
+          arguments: [false, true])
+    func newSessionContentLandingAfterTheBlockLeftTakesNoSlot(isDelayed: Bool) throws {
+        let rig = Rig()
+        let content: EmbeddedBlockWebContent = isDelayed ? .delayed() : .stub
+        rig.resolver.resolution = .content(content)
+        rig.resolver.isDeferred = true
+        rig.resolver.processingDuration = 4
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.expireSession()
+        rig.resolver.sessionEpoch = rig.currentSessionEpoch
+        rig.presence.finishSessionCheck(startsNewSession: true)
+        if isDelayed {
+            rig.resolver.flush()
+        }
+
+        block.isActive = false
+        rig.resolver.flush()
+        rig.delayScheduler.fireAll()
+
+        let parked = try #require(block.answers.last)
+        #expect(block.applied == [.content(content)])
+        #expect(parked.isAskedOffScreen)
+        #expect(rig.budget.reservations.isEmpty)
+
+        let brought = rig.registry.bringOnScreen(parked, at: "stories")
+
+        #expect(brought?.processingDuration == 0)
+        #expect(rig.budget.reservedOwners == [.place("stories")])
+    }
+
     @Test("A new session's ask queued behind a pass while its block was off screen is timed from the block's return when it comes back before the ask runs, even with a config's pass queued after the return",
           arguments: [false, true])
     func newSessionQueuedOffScreenIsTimedFromTheReturn(configQueuedAfterTheReturn: Bool) {
