@@ -408,10 +408,15 @@ public final class MindboxEmbeddedBlockView: UIView {
             self?.waitBudget.armIfNeeded()
         }
 
+        // A pause, not a reset: if the kept content is dropped, the rest of the budget still bounds the wait.
+        contentProvider.onKeptContentChanged = { [weak self] in
+            self?.waitBudget.refresh()
+        }
+
         waitBudget.isNeeded = { [weak self] in
             guard let self else { return false }
             return self.isEffectivelyVisible && self.state == .loading && !self.contentProvider.isAwaitingDelayedContent
-                && !self.contentProvider.isStartPending
+                && !self.contentProvider.isStartPending && !self.contentProvider.isAwaitingKeptContent
         }
         waitBudget.onExpire = { [weak self] in
             self?.handleTimeout()

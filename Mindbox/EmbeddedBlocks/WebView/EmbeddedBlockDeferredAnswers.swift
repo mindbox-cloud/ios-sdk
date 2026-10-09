@@ -19,7 +19,7 @@ struct EmbeddedBlockDeferredAnswers {
     private var parked: EmbeddedBlockPlaceAnswer?
 
     /// The block came on screen between a return and the end of that return's session check: it starts
-    /// once the check ends, so its parked answer and its first ask meet the session the check leaves.
+    /// once the check ends, so its parked content and its first ask meet the session the check leaves.
     var isStartAwaitingSessionCheck = false
 
     var isHolding: Bool { held != nil }
@@ -52,6 +52,14 @@ struct EmbeddedBlockDeferredAnswers {
         defer { parked = nil }
 
         guard let parked, !ledger.hasEnded(parked.sessionEpoch) else { return nil }
+
+        return parked
+    }
+
+    /// A parked answer without content of a session that has not ended, left parked: it lands before the first frame
+    /// while the start waits for the session check, and that start still decides by it.
+    func parkedCollapse(unlessEndedIn ledger: InappSessionLedger) -> EmbeddedBlockPlaceAnswer? {
+        guard let parked, parked.resolution.content == nil, !ledger.hasEnded(parked.sessionEpoch) else { return nil }
 
         return parked
     }

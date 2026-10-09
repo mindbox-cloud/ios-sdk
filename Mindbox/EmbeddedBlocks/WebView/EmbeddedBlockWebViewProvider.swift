@@ -15,7 +15,8 @@ import MindboxLogger
 /// An instance belongs to one container: `start()` and `stop()` mirror its visibility, in cycles, and a `start()` after a
 /// return waits for that return's session check. After `stop()` the container hears nothing until the next `start()`, which
 /// it relies on when it collapses an expired block. A collapse held while the user looked drops the page at `stop()` and lands
-/// on the next `start()`, unless its session has ended by then: the block then begins anew.
+/// on the next `start()` — before the first frame, without waiting for a session check — unless its session has ended by then:
+/// the new session's answer, asked while the block was off screen, lands instead, or the block begins anew.
 final class EmbeddedBlockWebViewProvider {
 
     /// Reports every state change on the main thread. Set by the container.
@@ -24,6 +25,8 @@ final class EmbeddedBlockWebViewProvider {
     var onContentArrived: (() -> Void)?
 
     var onContentDelayed: (() -> Void)?
+
+    var onKeptContentChanged: (() -> Void)?
 
     /// The content really started: at once on `start()`, or when the return's session check it waited for ended.
     var onStarted: (() -> Void)?
@@ -36,6 +39,8 @@ final class EmbeddedBlockWebViewProvider {
 
     /// While set, the block keeps loading on purpose: content is coming, the SDK is not silent.
     private(set) var isAwaitingDelayedContent = false
+
+    var isAwaitingKeptContent: Bool { page == nil && registry.keepsContent(for: placeSystemName) }
 
     private let placeSystemName: String
     private let registry: EmbeddedBlockPlaceRegistering
@@ -109,6 +114,9 @@ final class EmbeddedBlockWebViewProvider {
 
         guard !appPresence.isAwaitingSessionCheck else {
             deferred.isStartAwaitingSessionCheck = true
+            if let collapse = deferred.parkedCollapse(unlessEndedIn: SessionTemporaryStorage.shared.ledger) {
+                take(collapse, isParked: true)
+            }
             return
         }
 
@@ -123,7 +131,7 @@ final class EmbeddedBlockWebViewProvider {
         // First, as on Android: a page the parked answer replaces or drops is not resumed. A reset after this
         // read re-asks the started place.
         let generation = loadGeneration
-        let parked = deferred.takeParked(unlessEndedIn: SessionTemporaryStorage.shared.ledger)
+        let parked = deferred.takeParked(unlessEndedIn: SessionTemporaryStorage.shared.ledger).flatMap { registry.bringOnScreen($0, at: placeSystemName) }
         if let parked {
             take(parked, isParked: true)
         }
@@ -238,50 +246,25 @@ final class EmbeddedBlockWebViewProvider {
 
         deferred.lift()
 
-        switch answer.resolution {
-        case .empty:
-            dropPage()
-            guard outcome != .empty else { return }
-
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': nothing at this place — collapsing",
-                          category: .embeddedBlocks)
-            outcome = .empty
-            onStateChange?(.empty)
-
-        case .failure(let failure):
-            dropPage()
-            let failed = EmbeddedBlockState.failed(MindboxEmbeddedBlockFailReason(failure.reason))
-            guard outcome != failed else { return }
-
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': \(failure.details) — failing",
-                          level: .error, category: .embeddedBlocks)
-            settle(failed)
-            if !isParked { failures.report(failure, isBlockOnScreen: isStarted) }
-
-        case .configUnavailable:
-            dropPage()
-            let failed = EmbeddedBlockState.failed(MindboxEmbeddedBlockFailReason(.waitBudgetExceeded))
-            guard outcome != failed else { return }
-
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the SDK has no config to answer with — failing",
-                          level: .error, category: .embeddedBlocks)
-            if !isParked { failures.reportUnansweredWaitOnce(answer.processingDuration, inSession: answer.sessionEpoch) }
-            settle(failed)
-
-        case .targetingUnavailable:
-            dropPage()
-            let failed = EmbeddedBlockState.failed(.networkError)
-            guard outcome != failed else { return }
-
-            // A 5xx the pass reported for every candidate it cut, and offline is not reported at all;
-            // nothing to add here.
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the place could not be checked — failing",
-                          level: .error, category: .embeddedBlocks)
-            settle(failed)
-
-        case .content(let fresh):
-            applyContent(fresh, of: answer)
+        guard case .content(let fresh) = answer.resolution else {
+            collapse(by: answer, isParked: isParked)
+            return
         }
+
+        applyContent(fresh, of: answer)
+    }
+
+    /// Told to the container at once, even while the start waits for the return's session check.
+    private func collapse(by answer: EmbeddedBlockPlaceAnswer, isParked: Bool) {
+        dropPage()
+        guard let collapse = answer.resolution.collapse, outcome != collapse.state else { return }
+
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': \(collapse.reason)",
+                      level: collapse.state.isFailed ? .error : .debug, category: .embeddedBlocks)
+        if !isParked { failures.report(failureOf: answer) }
+        outcome = collapse.state
+        if outcome.isFailed { registry.blockAttemptEnded(placeSystemName) }
+        onStateChange?(outcome)
     }
 
     func contentIsDelayed() {
@@ -292,6 +275,10 @@ final class EmbeddedBlockWebViewProvider {
         isAwaitingDelayedContent = true
         onContentDelayed?()
     }
+
+    func contentIsKept() { if page == nil { onKeptContentChanged?() } }
+
+    func keptContentIsReleased() { onKeptContentChanged?() }
 
     private func applyContent(_ fresh: EmbeddedBlockWebContent, of answer: EmbeddedBlockPlaceAnswer) {
         // Only a block that shows something is talked to; one that shows nothing is rebuilt. A page

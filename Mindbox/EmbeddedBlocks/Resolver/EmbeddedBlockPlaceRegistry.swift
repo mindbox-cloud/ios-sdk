@@ -10,54 +10,6 @@ import Foundation
 import QuartzCore
 import MindboxLogger
 
-struct EmbeddedBlockPlaceAnswer {
-
-    let resolution: EmbeddedBlockResolution
-
-    /// How long the selection worked on it, the wait for a config included.
-    let processingDuration: TimeInterval
-
-    /// The session whose config the answer was computed from: an answer of an earlier session never
-    /// accounts a show in a later one.
-    let sessionEpoch: Int
-
-    /// Only an operation asked — no config, session or appearance came with it: an answer of nothing
-    /// applies at once, even under the user's eyes.
-    let isOperationTriggered: Bool
-
-    func with(_ resolution: EmbeddedBlockResolution) -> EmbeddedBlockPlaceAnswer {
-        EmbeddedBlockPlaceAnswer(resolution: resolution,
-                                 processingDuration: processingDuration,
-                                 sessionEpoch: sessionEpoch,
-                                 isOperationTriggered: isOperationTriggered)
-    }
-}
-
-protocol EmbeddedBlockPlaceHandling: AnyObject {
-
-    var isActive: Bool { get }
-
-    /// The place's fresh answer, on the main thread.
-    func apply(_ answer: EmbeddedBlockPlaceAnswer)
-
-    /// The place's answer is known and held back by its `delayTime`: content is coming, the SDK is not silent.
-    func contentIsDelayed()
-
-    /// Loading or showing, on screen or paused off it: the block still owes the place a show or a give-up.
-    var holdsAnAttempt: Bool { get }
-}
-
-/// Main-thread confined, and every entry point hops there itself: a block's `init` and the container's
-/// `deinit` are not promised the main thread by UIKit.
-protocol EmbeddedBlockPlaceRegistering: AnyObject {
-
-    func register(_ block: EmbeddedBlockPlaceHandling, place: String)
-
-    func blockAppeared(_ place: String)
-
-    func blockAttemptEnded(_ place: String)
-}
-
 /// The place map and the router between blocks and the selection — in sync with Android, where the
 /// same component carries the same name and rules.
 final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
@@ -68,69 +20,15 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         weak var block: EmbeddedBlockPlaceHandling?
     }
 
-    private struct QueuedInvalidation {
-        var trigger: ApplicationEvent?
-        var includesNonOperation: Bool
-        /// The new session's re-ask that waited behind a pass in flight: its show is timed from here.
-        var newSessionAskedAt: TimeInterval?
-    }
-
-    private enum ResolveCause {
-        case blockAppeared
-        case newConfig
-        case newSession
-        case operation(ApplicationEvent)
-        case queued(QueuedInvalidation)
-
-        var trigger: ApplicationEvent? {
-            switch self {
-                case .blockAppeared, .newConfig, .newSession: return nil
-                case .operation(let event): return event
-                case .queued(let queued): return queued.trigger
-            }
-        }
-
-        /// A pass that also answers a config, a session or an appearance is not an operation's, whatever
-        /// operation it carries.
-        var includesNonOperation: Bool {
-            switch self {
-                case .blockAppeared, .newConfig, .newSession: return true
-                case .queued(let queued): return queued.includesNonOperation
-                case .operation: return false
-            }
-        }
-
-        var newSessionAskedAt: TimeInterval? {
-            guard case .queued(let queued) = self else { return nil }
-
-            return queued.newSessionAskedAt
-        }
-
-        var queuesWhenBusy: Bool {
-            if case .blockAppeared = self {
-                return false
-            }
-
-            return true
-        }
-
-        var logDescription: String {
-            switch self {
-                case .blockAppeared: return "the block appeared"
-                case .newConfig: return "a new config"
-                case .newSession: return "a new session"
-                case .operation(let event): return "operation '\(event.name)'"
-                case .queued: return "a queued invalidation"
-            }
-        }
-    }
-
     private var blocksByPlace: [String: [WeakBlock]] = [:]
     private var resolvingPlaces: Set<String> = []
     private var queuedInvalidations: [String: QueuedInvalidation] = [:]
 
     /// A block came back while its place's pass flew: that pass answers the appearance too.
     private var placesAppearedMidResolve: Set<String> = []
+
+    /// When a block last came on screen at the place: a pass asked while nobody looked times its show from there.
+    private var appearedAt: [String: TimeInterval] = [:]
 
     /// `nil` until a config has been seen: gating on an empty map before that would silently drop
     /// operations whose resolve would simply have waited for the config.
@@ -241,11 +139,29 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
     }
 
     func blockAppeared(_ place: String) {
-        onMain { $0.requestResolve(place: place, cause: .blockAppeared) }
+        onMain {
+            $0.appearedAt[place] = $0.now()
+            $0.requestResolve(place: place, cause: .blockAppeared)
+        }
     }
 
     func blockAttemptEnded(_ place: String) {
         onMain { $0.releaseSlotIfUnclaimed(place) }
+    }
+
+    func keepsContent(for place: String) -> Bool {
+        contentAwaitingTheSessionCheck[place] != nil
+    }
+
+    func bringOnScreen(_ answer: EmbeddedBlockPlaceAnswer, at place: String) -> EmbeddedBlockPlaceAnswer? {
+        guard answer.isAskedOffScreen, let content = answer.resolution.content else { return answer }
+
+        let shownFromNow = answer.shownFromNow()
+        switch inItsSession(answer, { $0.placeShownInappId[place] == content.inAppId }) {
+        case nil: return nil
+        case true?: return shownFromNow
+        case false?: return slotted(content, of: shownFromNow, at: place)
+        }
     }
 
     // MARK: - Channels
@@ -262,7 +178,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
     /// Asked at the reset, not at the new config: a block on screen times the new session's show from here,
     /// and its selection waits for that session's config.
     private func sessionStarted() {
-        for place in placesWithActiveBlocks() {
+        for place in Array(blocksByPlace.keys) where hasActiveBlocks(place) || holdsAnAttempt(at: place) {
             requestResolve(place: place, cause: .newSession)
         }
     }
@@ -299,8 +215,9 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
     /// but a dropped operation never speaks its own `Inapp.Targeting`.
     private func requestResolve(place: String, cause: ResolveCause) {
         prune(place)
+        let isOffScreen = !hasActiveBlocks(place)
 
-        guard hasActiveBlocks(place) else {
+        guard !isOffScreen || cause.reachesOffScreen && holdsAnAttempt(at: place) else {
             Logger.common(message: "[EmbeddedBlock] Place '\(place)': \(cause.logDescription), but no block is on screen — nowhere to draw, the next start() re-asks",
                           category: .embeddedBlocks)
             return
@@ -323,7 +240,8 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
             }
             queuedInvalidations[place] = QueuedInvalidation(trigger: cause.trigger ?? queued?.trigger,
                                                             includesNonOperation: cause.includesNonOperation || queued?.includesNonOperation == true,
-                                                            newSessionAskedAt: [queued?.newSessionAskedAt, newSessionAskedAt].compactMap { $0 }.min())
+                                                            newSessionAskedAt: [queued?.newSessionAskedAt, newSessionAskedAt].compactMap { $0 }.min(),
+                                                            isAskedOffScreen: isOffScreen || queued?.isAskedOffScreen == true)
 
             Logger.common(message: "[EmbeddedBlock] Place '\(place)': \(cause.logDescription) landed mid-resolve — queued for the pass after",
                           category: .embeddedBlocks)
@@ -332,16 +250,19 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
 
         resolvingPlaces.insert(place)
         let waitedForThePassInFlight = cause.newSessionAskedAt.map { now() - $0 } ?? 0
+        let isAskedOffScreen = isOffScreen || cause.wasQueuedOffScreen
 
         resolver.resolve(place, trigger: cause.trigger) { [weak self] resolution, processingDuration, sessionEpoch in
             guard let self else { return }
 
             self.resolvingPlaces.remove(place)
             let appearedMidResolve = self.placesAppearedMidResolve.remove(place) != nil
+            let processed = waitedForThePassInFlight + processingDuration
             self.handle(EmbeddedBlockPlaceAnswer(resolution: resolution,
-                                                 processingDuration: waitedForThePassInFlight + processingDuration,
+                                                 processingDuration: isAskedOffScreen ? self.sinceTheReturn(to: place, atMost: processed) : processed,
                                                  sessionEpoch: sessionEpoch,
-                                                 isOperationTriggered: !cause.includesNonOperation && !appearedMidResolve),
+                                                 isOperationTriggered: !cause.includesNonOperation && !appearedMidResolve,
+                                                 isAskedOffScreen: isAskedOffScreen),
                         at: place)
 
             if let queued = self.queuedInvalidations.removeValue(forKey: place) {
@@ -354,6 +275,10 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
                 self.requestResolve(place: place, cause: .queued(QueuedInvalidation(trigger: nil, includesNonOperation: true)))
             }
         }
+    }
+
+    private func sinceTheReturn(to place: String, atMost processed: TimeInterval) -> TimeInterval {
+        appearedAt[place].map { min(processed, now() - $0) } ?? processed
     }
 
     /// A winner with `delayTime` waits like an overlay in the schedule queue and the blocks stand their wait
@@ -433,22 +358,38 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         case true?:
             deliver(answer, at: place)
             releaseSlotIfUnclaimed(place)
+        case false? where answer.isAskedOffScreen && !hasActiveBlocks(place):
+            Logger.common(message: "[EmbeddedBlock] Place '\(place)': in-app \(content.inAppId) answered while no block shows the place — its slot waits for a block back on screen",
+                          category: .embeddedBlocks)
+            deliver(answer, at: place)
         case false?:
             reserveSlot(for: content, of: answer, at: place)
         }
     }
 
     private func reserveSlot(for content: EmbeddedBlockWebContent, of answer: EmbeddedBlockPlaceAnswer, at place: String) {
+        guard let slotted = slotted(content, of: answer, at: place) else {
+            dropStale(answer, at: place)
+            return
+        }
+
+        deliver(slotted, at: place)
+        if slotted.resolution.content != nil {
+            releaseSlotIfUnclaimed(place)
+        }
+    }
+
+    /// The answer as it is, or empty when the show budgets are spent; `nil` when its session has ended.
+    private func slotted(_ content: EmbeddedBlockWebContent, of answer: EmbeddedBlockPlaceAnswer, at place: String) -> EmbeddedBlockPlaceAnswer? {
         switch budget.reserve(.place(place), inAppId: content.inAppId, isPriority: content.isPriority, frequency: content.frequency, inSession: answer.sessionEpoch) {
         case nil:
-            dropStale(answer, at: place)
+            return nil
         case .refused?:
             Logger.common(message: "[EmbeddedBlock] Place '\(place)': in-app \(content.inAppId) won it, but the show budgets are spent — the place stays empty",
                           category: .embeddedBlocks)
-            deliver(answer.with(.empty), at: place)
+            return answer.with(.empty)
         case .granted?, .notNeeded?:
-            deliver(answer, at: place)
-            releaseSlotIfUnclaimed(place)
+            return answer
         }
     }
 
@@ -470,6 +411,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         Logger.common(message: "[EmbeddedBlock] Place '\(place)': content arrived before the return's session check ended — kept until it has",
                       category: .embeddedBlocks)
         contentAwaitingTheSessionCheck[place] = answer
+        blocksByPlace[place]?.forEach { $0.block?.contentIsKept() }
         return true
     }
 
@@ -481,7 +423,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
     private func releaseSlotIfUnclaimed(_ place: String) {
         prune(place)
 
-        guard !(blocksByPlace[place] ?? []).contains(where: { $0.block?.holdsAnAttempt == true }) else { return }
+        guard !holdsAnAttempt(at: place) else { return }
 
         budget.release(.place(place))
     }
@@ -519,6 +461,10 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         (blocksByPlace[place] ?? []).contains { $0.block?.isActive == true }
     }
 
+    private func holdsAnAttempt(at place: String) -> Bool {
+        (blocksByPlace[place] ?? []).contains { $0.block?.holdsAnAttempt == true }
+    }
+
     private func placesWithActiveBlocks() -> [String] {
         blocksByPlace.keys.filter { hasActiveBlocks($0) }
     }
@@ -527,6 +473,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         let alive = (blocksByPlace[place] ?? []).filter { $0.block != nil }
         if alive.isEmpty {
             blocksByPlace.removeValue(forKey: place)
+            appearedAt.removeValue(forKey: place)
         } else {
             blocksByPlace[place] = alive
         }
@@ -549,6 +496,9 @@ extension EmbeddedBlockPlaceRegistry: EmbeddedBlockAppPresenceSubscribing {
     func userDidBecomePresent() {
         let kept = contentAwaitingTheSessionCheck
         contentAwaitingTheSessionCheck = [:]
-        kept.forEach { place, answer in handle(answer, at: place) }
+        kept.forEach { place, answer in
+            handle(answer, at: place)
+            blocksByPlace[place]?.forEach { $0.block?.keptContentIsReleased() }
+        }
     }
 }
