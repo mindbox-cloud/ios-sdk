@@ -27,6 +27,7 @@ final class OperationActionHandler: WebBridgeActionHandler {
     private let makeDatabaseRepository: () -> DatabaseRepositoryProtocol
     private let makeEventRepository: () -> EventRepository
     private let makeInAppEventSender: () -> InappMessageEventSender
+    private let inappInCurrentConfig: (_ id: String) -> InApp?
 
     init(featureToggleManager: @escaping @autoclosure () -> FeatureToggleManager
          = DI.injectOrFail(FeatureToggleManager.self),
@@ -35,18 +36,24 @@ final class OperationActionHandler: WebBridgeActionHandler {
          eventRepository: @escaping @autoclosure () -> EventRepository
          = DI.injectOrFail(EventRepository.self),
          inAppEventSender: @escaping @autoclosure () -> InappMessageEventSender
-         = DI.injectOrFail(InappMessageEventSender.self)) {
+         = DI.injectOrFail(InappMessageEventSender.self),
+         inappInCurrentConfig: ((_ id: String) -> InApp?)? = nil) {
         self.makeFeatureToggleManager = featureToggleManager
         self.makeDatabaseRepository = databaseRepository
         self.makeEventRepository = eventRepository
         self.makeInAppEventSender = inAppEventSender
+        self.inappInCurrentConfig = inappInCurrentConfig ?? { id in
+            DI.injectOrFail(InAppConfigurationManagerProtocol.self).inappInCurrentConfig(withId: id)
+        }
     }
 
     func handle(_ message: BridgeMessage, host: WebBridgeHost) {
-        guard let operation = operation(from: message, host: host) else {
-            host.respondError(.invalidPayload,
-                              detail: "could not parse operation/body or encode the operation body",
-                              to: message)
+        let operation: (name: String, body: String)
+        switch self.operation(from: message, host: host) {
+        case .success(let parsed):
+            operation = parsed
+        case .failure(let refusal):
+            host.respondError(.invalidPayload, detail: refusal.detail, to: message)
             return
         }
 
@@ -134,23 +141,74 @@ private extension OperationActionHandler {
     }
 
     /// The operation name and its body, with the in-app tags merged in and encoded ready to send.
-    func operation(from message: BridgeMessage, host: WebBridgeHost) -> (name: String, body: String)? {
+    func operation(from message: BridgeMessage, host: WebBridgeHost) -> Result<(name: String, body: String), Refusal> {
         guard let payload = message.payloadObject,
               case .string(let name)? = payload["operation"],
               !name.isEmpty,
               let body = payload["body"] else {
-            return nil
+            return .failure(.malformed)
         }
 
-        let gatedTags = featureToggleManager.gatedTags(host.tags)
-        let mergedBody = JSONValue.mergingInAppTags(gatedTags, into: body)
+        guard case .tags(let tags) = OperationTagsResolver.resolve(inappId: payload["inappId"],
+                                                                   host: host,
+                                                                   lookup: inappInCurrentConfig) else {
+            return .failure(.invalidInappId)
+        }
+
+        let mergedBody = JSONValue.mergingInAppTags(featureToggleManager.gatedTags(tags), into: body)
 
         guard let data = try? JSONEncoder().encode(mergedBody),
               let bodyString = String(data: data, encoding: .utf8) else {
-            return nil
+            return .failure(.malformed)
         }
 
-        return (name, bodyString)
+        return .success((name, bodyString))
+    }
+
+    enum Refusal: Error {
+        case malformed
+        case invalidInappId
+
+        var detail: String {
+            switch self {
+            case .malformed:
+                return "could not parse operation/body or encode the operation body"
+            case .invalidInappId:
+                return "inappId must be a non-empty string or null"
+            }
+        }
+    }
+}
+
+// MARK: - Tags
+
+enum OperationTagsResolver {
+
+    enum Resolution {
+        case tags([String: String]?)
+        case invalidInappId
+    }
+
+    /// `lookup` must not wait: operations keep their order because each is tagged and sent within one main-thread turn.
+    static func resolve(inappId: JSONValue?,
+                        host: WebBridgeHost,
+                        lookup: (_ id: String) -> InApp?) -> Resolution {
+        switch inappId {
+        case .none, .null:
+            return .tags(host.tags)
+        case .string(let id) where !id.isEmpty && id == host.contentId:
+            return .tags(host.tags)
+        case .string(let id) where !id.isEmpty:
+            guard let inapp = lookup(id) else {
+                Logger.common(message: "[WebView] Operation names in-app \(id), which is not in the current config: it goes without SDK tags",
+                              level: .error,
+                              category: host.logCategory)
+                return .tags(nil)
+            }
+            return .tags(inapp.tags)
+        default:
+            return .invalidInappId
+        }
     }
 }
 

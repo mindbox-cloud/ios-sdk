@@ -15,12 +15,15 @@ import Foundation
 ///
 /// Two neighbours own the rest of this action deliberately. `TransparentViewSyncOperationResponseTests`
 /// covers `makeSyncOperationResponse` on its own, as the pure mapping it is, so nothing here
-/// re-checks the shape of every backend outcome. `TransparentViewJSBridgeTests` covers the tag merge
-/// through the view, which is where the tags come from. This suite is the wiring in between: parse,
-/// write, answer, and whose lifetime the answer depends on.
+/// re-checks the shape of every backend outcome. `TransparentViewJSBridgeTests` proves the window's
+/// tags reach the handler through the view; whose tags an operation carries is decided here. This
+/// suite is the wiring in between: parse, tag, write, answer, and whose lifetime the answer depends on.
 @Suite("OperationActionHandler", .tags(.webView))
 @MainActor
 struct OperationActionHandlerTests {
+
+    private let featureToggleManager = FeatureToggleManager()
+    private let config = ConfigLookupSpy()
 
     init() {
         TestConfiguration.configure()
@@ -31,17 +34,45 @@ struct OperationActionHandlerTests {
         events: SyncOperationRepositoryStub = SyncOperationRepositoryStub()
     ) -> (handler: OperationActionHandler, database: DatabaseRepositoryStub, events: SyncOperationRepositoryStub, core: InAppCoreManagerMock, host: HostSpy) {
         let core = InAppCoreManagerMock()
-        let handler = OperationActionHandler(featureToggleManager: FeatureToggleManager(),
+        let handler = OperationActionHandler(featureToggleManager: featureToggleManager,
                                             databaseRepository: database,
                                             eventRepository: events,
-                                            inAppEventSender: InappMessageEventSender(inAppMessagesManager: core))
+                                            inAppEventSender: InappMessageEventSender(inAppMessagesManager: core),
+                                            inappInCurrentConfig: config.inappInCurrentConfig(withId:))
         return (handler, database, events, core, HostSpy())
     }
 
     private func request(_ action: BridgeMessage.Action,
                          operation: String = "Test.Operation",
-                         body: JSONValue = .object(["field": .string("value")])) -> BridgeMessage {
-        .request(action, payload: .object(["operation": .string(operation), "body": body]))
+                         body: JSONValue = .object(["field": .string("value")]),
+                         inappId: JSONValue? = nil) -> BridgeMessage {
+        var payload: [String: JSONValue] = ["operation": .string(operation), "body": body]
+        payload["inappId"] = inappId
+        return .request(action, payload: .object(payload))
+    }
+
+    private func inapp(_ id: String, tags: [String: String]?) -> InApp {
+        InApp(id: id,
+              isPriority: false,
+              delayTime: nil,
+              sdkVersion: SdkVersion(min: 8, max: nil),
+              targeting: .true(TrueTargeting()),
+              frequency: nil,
+              displayConditions: .unrestricted,
+              form: InAppForm(variants: []),
+              tags: tags)
+    }
+
+    private func body(of event: Event?) throws -> [String: JSONValue] {
+        let event = try #require(event)
+        let customEvent = try #require(BodyDecoder<CustomEvent>(decodable: event.body)?.body)
+        return try JSONDecoder().decode([String: JSONValue].self, from: Data(customEvent.payload.utf8))
+    }
+
+    private func applyTagsToggle(enabled: Bool) {
+        featureToggleManager.applyFeatureToggles(
+            Settings.FeatureToggles(shouldSendInAppShowError: nil, shouldSendInAppTags: enabled, shouldPrewarmInAppWebView: nil, shouldCacheInAppWebView: nil)
+        )
     }
 
     @Test("Owns both operation actions")
@@ -213,6 +244,153 @@ struct OperationActionHandlerTests {
         #expect(event.model == InappOperationJSONModel(viewProduct: .init(product: .init(ids: ["website": "sku-1"]))))
     }
 
+    // MARK: - Tags
+
+    @Test("An operation naming another in-app carries that in-app's tags instead of the window's", .tags(.inAppTags))
+    func namedInappTagsReplaceTheWindows() throws {
+        config.inapps = [inapp("story-2", tags: ["templateType": "Story"])]
+        let sut = makeSUT()
+        sut.host.tags = ["templateType": "Window", "campaign": "window-only"]
+
+        sut.handler.handle(request(.asyncOperation, inappId: .string("story-2")), host: sut.host)
+
+        let body = try body(of: sut.database.created.first)
+        #expect(body["tags"] == .object(["templateType": .string("Story")]))
+        #expect(body["field"] == .string("value"))
+        #expect(config.askedIds == ["story-2"])
+    }
+
+    @Test("An operation that names no other in-app carries the window's tags and looks nothing up",
+          .tags(.inAppTags),
+          arguments: [
+            #"{"operation":"Test.Operation","body":{}}"#,
+            #"{"operation":"Test.Operation","body":{},"inappId":null}"#,
+            #"{"operation":"Test.Operation","body":{},"inappId":"test-content-id"}"#
+          ])
+    func windowTagsWhenNoOtherInappIsNamed(payload: String) throws {
+        config.inapps = [inapp("test-content-id", tags: ["templateType": "FromConfig"])]
+        let sut = makeSUT()
+        sut.host.tags = ["templateType": "Window"]
+
+        sut.handler.handle(.request(.asyncOperation, payload: .string(payload)), host: sut.host)
+
+        let body = try body(of: sut.database.created.first)
+        #expect(body["tags"] == .object(["templateType": .string("Window")]))
+        #expect(config.askedIds.isEmpty)
+    }
+
+    @Test("An unknown in-app id sends the operation without any SDK tags, and the queue confirms it", .tags(.inAppTags))
+    func unknownInappSendsWithoutTags() throws {
+        let sut = makeSUT()
+        sut.host.tags = ["templateType": "Window"]
+
+        sut.handler.handle(request(.asyncOperation, inappId: .string("gone-story")), host: sut.host)
+
+        let body = try body(of: sut.database.created.first)
+        #expect(body.keys.contains("tags") == false)
+        #expect(config.askedIds == ["gone-story"])
+        #expect(try #require(sut.host.sent.first).payload == .object(["success": .bool(true)]))
+    }
+
+    @Test("An unknown in-app id on a sync operation sends without SDK tags and hands the backend body back", .tags(.inAppTags))
+    func unknownInappSyncOperationReturnsTheBackendBody() async throws {
+        let sut = makeSUT()
+        sut.host.tags = ["templateType": "Window"]
+
+        sut.handler.handle(request(.syncOperation, inappId: .string("gone-story")), host: sut.host)
+        sut.events.answer(.success(Data(#"{"status":"Success"}"#.utf8)))
+        await drainMainQueue(until: { !sut.host.sent.isEmpty })
+
+        let body = try body(of: sut.events.sentRaw.first)
+        #expect(body.keys.contains("tags") == false)
+        let response = try #require(sut.host.sent.first)
+        #expect(response.type == .response)
+        #expect(response.payload == .string(#"{"status":"Success"}"#))
+    }
+
+    @Test("A named in-app without tags adds none, and the window's do not stand in", .tags(.inAppTags))
+    func namedInappWithoutTagsAddsNone() throws {
+        config.inapps = [inapp("story-2", tags: nil)]
+        let sut = makeSUT()
+        sut.host.tags = ["templateType": "Window"]
+
+        sut.handler.handle(request(.asyncOperation, inappId: .string("story-2")), host: sut.host)
+
+        let body = try body(of: sut.database.created.first)
+        #expect(body.keys.contains("tags") == false)
+    }
+
+    @Test("An in-app id that is not a non-empty string is refused, and nothing is queued, sent or announced",
+          .tags(.inAppTags),
+          arguments: [BridgeMessage.Action.asyncOperation, .syncOperation], [#"42"#, #""""#])
+    func invalidInappIdIsRefused(action: BridgeMessage.Action, inappId: String) throws {
+        let sut = makeSUT()
+        let payload = #"{"operation":"Test.Operation","body":{},"inappId":\#(inappId)}"#
+
+        sut.handler.handle(.request(action, payload: .string(payload)), host: sut.host)
+
+        let response = try #require(sut.host.sent.first)
+        #expect(response.type == .error)
+        #expect(response.payload == .object(["error": .string("invalid_payload")]))
+        #expect(sut.database.created.isEmpty)
+        #expect(sut.events.sentRaw.isEmpty)
+        #expect(sut.core.sendEventCalled.isEmpty)
+        #expect(config.askedIds.isEmpty)
+    }
+
+    @Test("An empty in-app id is refused even from a window whose own id is empty", .tags(.inAppTags))
+    func emptyInappIdIsRefusedForAnEmptyWindowId() throws {
+        let sut = makeSUT()
+        sut.host.contentId = ""
+
+        sut.handler.handle(request(.asyncOperation, inappId: .string("")), host: sut.host)
+
+        let response = try #require(sut.host.sent.first)
+        #expect(response.payload == .object(["error": .string("invalid_payload")]))
+        #expect(sut.database.created.isEmpty)
+    }
+
+    @Test("With the tags toggle off no tags are added, yet a named in-app is still looked up", .tags(.inAppTags))
+    func toggleOffStillLooksUp() throws {
+        applyTagsToggle(enabled: false)
+        config.inapps = [inapp("story-2", tags: ["templateType": "Story"])]
+        let sut = makeSUT()
+        sut.host.tags = ["templateType": "Window"]
+
+        sut.handler.handle(request(.asyncOperation, inappId: .string("story-2")), host: sut.host)
+
+        let body = try body(of: sut.database.created.first)
+        #expect(body.keys.contains("tags") == false)
+        #expect(config.askedIds == ["story-2"])
+    }
+
+    @Test("The page's own tag keys win over the named in-app's", .tags(.inAppTags))
+    func pageTagKeysWinOverTheNamedInapps() throws {
+        config.inapps = [inapp("story-2", tags: ["templateType": "Story", "campaign": "story-campaign"])]
+        let sut = makeSUT()
+        let body: JSONValue = .object(["tags": .object(["templateType": .string("client")])])
+
+        sut.handler.handle(request(.asyncOperation, body: body, inappId: .string("story-2")), host: sut.host)
+
+        let sentBody = try self.body(of: sut.database.created.first)
+        #expect(sentBody["tags"] == .object([
+            "templateType": .string("client"),
+            "campaign": .string("story-campaign")
+        ]))
+    }
+
+    @Test("A sync operation naming another in-app carries that in-app's tags", .tags(.inAppTags))
+    func syncOperationCarriesTheNamedInappsTags() throws {
+        config.inapps = [inapp("story-2", tags: ["templateType": "Story"])]
+        let sut = makeSUT()
+        sut.host.tags = ["templateType": "Window"]
+
+        sut.handler.handle(request(.syncOperation, inappId: .string("story-2")), host: sut.host)
+
+        let body = try body(of: sut.events.sentRaw.first)
+        #expect(body["tags"] == .object(["templateType": .string("Story")]))
+    }
+
     // MARK: - Refusals
 
     @Test("A request without a payload is refused", arguments: [BridgeMessage.Action.asyncOperation, .syncOperation])
@@ -296,6 +474,17 @@ struct OperationActionHandlerTests {
 }
 
 // MARK: - Doubles
+
+private final class ConfigLookupSpy {
+
+    var inapps: [InApp] = []
+    private(set) var askedIds: [String] = []
+
+    func inappInCurrentConfig(withId id: String) -> InApp? {
+        askedIds.append(id)
+        return inapps.first { $0.id == id }
+    }
+}
 
 /// Records what was written and can refuse to write.
 private final class DatabaseRepositoryStub: DatabaseRepositoryProtocol {

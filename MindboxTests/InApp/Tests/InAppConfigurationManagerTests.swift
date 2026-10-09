@@ -165,6 +165,14 @@ struct InAppConfigurationManagerTests {
         return try Data(contentsOf: url)
     }
 
+    private func fixtureData(editingInapps edit: (inout [[String: Any]]) throws -> Void) throws -> Data {
+        var root = try #require(try JSONSerialization.jsonObject(with: fixtureData()) as? [String: Any])
+        var inapps = try #require(root["inapps"] as? [[String: Any]])
+        try edit(&inapps)
+        root["inapps"] = inapps
+        return try JSONSerialization.data(withJSONObject: root)
+    }
+
     private func waitUntil(_ condition: @autoclosure () -> Bool,
                            sourceLocation: SourceLocation = #_sourceLocation) async throws {
         let step: UInt64 = 20_000_000
@@ -415,6 +423,71 @@ struct InAppConfigurationManagerTests {
 
         try await waitUntil(pages.all.count == 2 && places.all.count == 2)
         #expect(counting.prepareCount == 1)
+    }
+
+    @Test("An in-app asked by id is answered with nothing until a config lands, then from that config")
+    func inappInCurrentConfigAnswersFromTheLandedConfig() async throws {
+        #expect(manager.inappInCurrentConfig(withId: Constants.liveStoryId) == nil)
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.data(try fixtureData()))
+        try await waitUntil(manager.hasConfig)
+
+        let inapp = try #require(manager.inappInCurrentConfig(withId: Constants.liveStoryId))
+        #expect(inapp.id == Constants.liveStoryId)
+        #expect(inapp.tags == ["templateType": "Popup"])
+        #expect(manager.inappInCurrentConfig(withId: "no-such-inapp") == nil)
+    }
+
+    @Test("An id the config carries twice is answered with its first copy")
+    func inappInCurrentConfigTakesTheFirstCopy() async throws {
+        let data = try fixtureData { inapps in
+            var copy = try #require(inapps.first { $0["id"] as? String == Constants.liveStoryId })
+            copy["tags"] = ["templateType": "SecondCopy"]
+            inapps.append(copy)
+        }
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.data(data))
+        try await waitUntil(manager.hasConfig)
+
+        #expect(manager.inappInCurrentConfig(withId: Constants.liveStoryId)?.tags == ["templateType": "Popup"])
+    }
+
+    @Test("An id whose first copy is meant for another SDK version is answered with the copy for this one")
+    func inappInCurrentConfigSkipsACopyForAnotherSDK() async throws {
+        let data = try fixtureData { inapps in
+            let index = try #require(inapps.firstIndex { $0["id"] as? String == Constants.liveStoryId })
+            var otherSDKCopy = inapps[index]
+            otherSDKCopy["sdkVersion"] = ["min": 9999, "max": NSNull()]
+            otherSDKCopy["tags"] = ["templateType": "OtherSDK"]
+            inapps.insert(otherSDKCopy, at: index)
+        }
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.data(data))
+        try await waitUntil(manager.hasConfig)
+
+        #expect(manager.inappInCurrentConfig(withId: Constants.liveStoryId)?.tags == ["templateType": "Popup"])
+    }
+
+    @Test("A config arriving later replaces the in-app an id is answered with")
+    func laterConfigReplacesTheRenderableInapp() async throws {
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.data(try fixtureData()))
+        try await waitUntil(manager.hasConfig)
+        #expect(manager.inappInCurrentConfig(withId: Constants.liveStoryId)?.tags == ["templateType": "Popup"])
+
+        let replaced = try fixtureData { inapps in
+            let index = try #require(inapps.firstIndex { $0["id"] as? String == Constants.liveStoryId })
+            inapps[index]["tags"] = ["templateType": "Replaced"]
+        }
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.data(replaced))
+
+        try await waitUntil(manager.inappInCurrentConfig(withId: Constants.liveStoryId)?.tags == ["templateType": "Replaced"])
     }
 
     @Test("A config arriving later replaces the models the previous one left")
