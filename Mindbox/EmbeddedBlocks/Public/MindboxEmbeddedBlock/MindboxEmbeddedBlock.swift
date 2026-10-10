@@ -21,7 +21,8 @@ import UIKit
 /// content once on this device and a placeholder from then on. The first look is known before the
 /// first frame, so a block that waits hidden never flashes reserved space.
 ///
-/// A different `placeSystemName` is a different block, built from scratch in place of the old one.
+/// A different place is a different block, built from scratch in place of the old one; a
+/// `placeSystemName` that differs only in padding or letter case is the same place and the same block.
 /// A different `height` resizes the block where it stands — the same content, no reload. The
 /// strategy and `animatesReveal` are read once, when the block is created.
 ///

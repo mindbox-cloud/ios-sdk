@@ -740,8 +740,10 @@ struct MindboxEmbeddedBlockViewTests {
 
     // MARK: - The place name
 
-    @Test("A place name with surrounding whitespace is normalized at the block's boundary")
-    func paddedPlaceNameIsNormalized() {
+    @Test("The host reads its own spelling back, the SDK is asked by the key",
+          arguments: [("  stories \n", "stories", "stories"),
+                      (" Main-Screen-Top ", "Main-Screen-Top", "main-screen-top")])
+    func hostSpellingStaysPublicAndTheKeyGoesInside(given: String, publicName: String, key: String) {
         let bed = EmbeddedBlockTestBed()
         let factory = EmbeddedBlockContentProviderFactoryMock(provider: bed.provider)
         let memory = EmbeddedBlockPlaceMemoryMock()
@@ -760,40 +762,32 @@ struct MindboxEmbeddedBlockViewTests {
         }
         MBInject.mode = .test
 
-        let view = MindboxEmbeddedBlockView(placeSystemName: "  stories \n", height: 120, loadingStrategy: .placeholder)
+        let view = MindboxEmbeddedBlockView(placeSystemName: given, height: 120, loadingStrategy: .placeholder)
 
-        #expect(view.placeSystemName == "stories")
-        #expect(factory.requestedPlaces == ["stories"])
-        // The memory is keyed by the same normalized name, or a padded name would never find its record.
-        #expect(memory.askedPlaces == ["stories"])
+        #expect(view.placeSystemName == publicName)
+        #expect(factory.requestedPlaces == [key])
+        #expect(memory.askedPlaces == [key])
     }
 
-    // The host reads back what it wrote, in sync with Android's public `placeSystemName`; the SDK
-    // is asked by the case-folded key, so `Main-Screen-Top` and `main-screen-top` are one place.
-    @Test("The host's spelling stays public, the SDK is asked by the case-folded key")
-    func hostSpellingStaysPublicAndTheKeyGoesInside() {
-        let bed = EmbeddedBlockTestBed()
-        let factory = EmbeddedBlockContentProviderFactoryMock(provider: bed.provider)
-        let memory = EmbeddedBlockPlaceMemoryMock()
-        let savedBuilder = MBInject.buildTestContainer
-        let savedMode = MBInject.mode
-        defer {
-            MBInject.buildTestContainer = savedBuilder
-            MBInject.mode = savedMode
-        }
-        MBInject.buildTestContainer = {
-            let container = MBContainer()
-            container.register(EmbeddedBlockContentProviderMaking.self) { factory }
-            container.register(EmbeddedBlockPlaceRemembering.self) { memory }
-            return container
-        }
-        MBInject.mode = .test
+    @Test("Shown content is remembered under the key, not under the host's spelling")
+    func shownContentIsRememberedUnderTheKey() {
+        let block = BlockFixture(placeSystemName: "Main-Screen-Top", loadingStrategy: .automatic)
+        block.attachToWindow()
 
-        let view = MindboxEmbeddedBlockView(placeSystemName: " Main-Screen-Top ", height: 120, loadingStrategy: .placeholder)
+        block.page?.reportRendered(1)
 
-        #expect(view.placeSystemName == "Main-Screen-Top")
-        #expect(factory.requestedPlaces == ["main-screen-top"])
-        #expect(memory.askedPlaces == ["main-screen-top"])
+        #expect(block.memory.remembered == ["main-screen-top"])
+    }
+
+    @Test("An empty place is forgotten under the key, not under the host's spelling")
+    func emptyPlaceIsForgottenUnderTheKey() {
+        let memory = EmbeddedBlockPlaceMemoryMock(shownPlaces: ["main-screen-top"])
+        let block = BlockFixture(placeSystemName: "Main-Screen-Top", resolution: .empty, loadingStrategy: .automatic, memory: memory)
+
+        block.attachToWindow()
+
+        #expect(memory.forgotten == ["main-screen-top"])
+        #expect(memory.shownPlaces.isEmpty)
     }
 
     @Test("Only the surrounding whitespace goes, the name itself is kept as it is",
@@ -1970,7 +1964,8 @@ private final class BlockFixture {
 
     /// `placeholder` by default: most of the suite is about what happens after the block took its
     /// space, and that is the look every block used to start with.
-    init(height: CGFloat = 120,
+    init(placeSystemName: String = "block-id",
+         height: CGFloat = 120,
          resolution: EmbeddedBlockResolution = .content(.stub),
          loadingStrategy: MindboxEmbeddedBlockLoadingStrategy = .placeholder,
          animatesReveal: Bool = true,
@@ -1982,7 +1977,7 @@ private final class BlockFixture {
         self.waitBudgetBed = waitBudgetBed
         self.memory = memory
         self.reveal = reveal
-        self.view = MindboxEmbeddedBlockView(placeSystemName: "block-id",
+        self.view = MindboxEmbeddedBlockView(placeSystemName: placeSystemName,
                                              height: height,
                                              contentProvider: bed.provider,
                                              placeMemory: memory,
