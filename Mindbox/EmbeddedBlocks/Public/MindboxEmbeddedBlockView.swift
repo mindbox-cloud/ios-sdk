@@ -216,8 +216,7 @@ public final class MindboxEmbeddedBlockView: UIView {
 
     private var runtime: Runtime?
 
-    /// Whether the block has its dependencies and runs: right after the initializer for a block
-    /// from code, after `awakeFromNib` for one from a nib. The setup is frozen from then on.
+    /// Whether the block has its dependencies and runs. The setup is frozen from then on.
     var isBuilt: Bool { runtime != nil }
 
     var preferredHeight: CGFloat = 0 {
@@ -342,9 +341,7 @@ public final class MindboxEmbeddedBlockView: UIView {
               makeWaitBudget: makeWaitBudget)
     }
 
-    /// The one place a block gets its dependencies: right away from the initializer, in
-    /// `awakeFromNib` for a block from a nib. Once — a second call changes nothing.
-    /// See `MindboxEmbeddedBlockView+InterfaceBuilder`.
+    /// The one place a block gets its dependencies. Once: a second call changes nothing.
     func build(contentProvider: EmbeddedBlockWebViewProvider,
                placeMemory: EmbeddedBlockPlaceRemembering,
                revealAnimation: EmbeddedBlockRevealAnimation,

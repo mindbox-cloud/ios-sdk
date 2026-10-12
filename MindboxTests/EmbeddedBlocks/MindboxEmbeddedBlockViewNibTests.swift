@@ -66,7 +66,7 @@ struct MindboxEmbeddedBlockViewNibTests {
         let nib = NibFixture()
         let view = try nib.makeUnbuiltBlock()
         view.setValue("stories", forKey: "placeSystemName")
-        view.setValue(120, forKey: "height")
+        view.setValue(120, forKey: "blockHeight")
         view.setValue(name, forKey: "loadingStrategyName")
 
         view.awakeFromNib()
@@ -92,7 +92,7 @@ struct MindboxEmbeddedBlockViewNibTests {
         let view = try nib.makeUnbuiltBlock()
         view.setValue("hidden", forKey: "loadingStrategyName")
         view.setValue("stories", forKey: "placeSystemName")
-        view.setValue(120, forKey: "height")
+        view.setValue(120, forKey: "blockHeight")
 
         view.awakeFromNib()
 
@@ -108,18 +108,17 @@ struct MindboxEmbeddedBlockViewNibTests {
         #expect(MindboxEmbeddedBlockView.timeout(fromInspectableSeconds: inspectable) == timeout)
     }
 
-    /// What the host reads back is the timeout the block runs with, never the raw value it was
-    /// given: a broken one was replaced by the default at creation.
     @Test("timeoutSeconds reads back the timeout in effect, whichever way the block was created",
           arguments: [(nil, TimeInterval(Constants.EmbeddedBlock.answerTimeoutSeconds)),
                       (-5.0, TimeInterval(Constants.EmbeddedBlock.answerTimeoutSeconds)),
                       (12.0, 12.0)] as [(TimeInterval?, TimeInterval)])
     func timeoutSecondsIsTheEffectiveTimeout(given: TimeInterval?, effective: TimeInterval) {
-        _ = NibFixture()
+        let nib = NibFixture()
 
         let view = MindboxEmbeddedBlockView(placeSystemName: "block-id", height: 120, timeout: given)
 
         #expect(view.timeoutSeconds == effective)
+        #expect(nib.factory.requestedPlaces == ["block-id"])
     }
 
     @Test("A nib block that left the timeout alone reads back the SDK default")
@@ -142,8 +141,6 @@ struct MindboxEmbeddedBlockViewNibTests {
 
     // MARK: - View attributes
 
-    /// The background and the clipping belong to the host, like on any view: a block from a nib keeps
-    /// what the Attributes Inspector gave it, and only a block from code starts clear and clipping.
     @Test("A block from a nib keeps the background colour and the clipping set in Interface Builder")
     func nibBlockKeepsItsViewAttributes() throws {
         let nib = NibFixture()
@@ -156,12 +153,13 @@ struct MindboxEmbeddedBlockViewNibTests {
 
     @Test("A block from code starts transparent and clipping, as before")
     func codeBlockStartsClearAndClipping() {
-        _ = NibFixture()
+        let nib = NibFixture()
 
         let view = MindboxEmbeddedBlockView(placeSystemName: "block-id", height: 120)
 
         #expect(view.backgroundColor == .clear)
         #expect(view.clipsToBounds == true)
+        #expect(nib.factory.requestedPlaces == ["block-id"])
     }
 
     // MARK: - After the block is built
@@ -174,7 +172,7 @@ struct MindboxEmbeddedBlockViewNibTests {
         let view = try nib.loadConfiguredBlock()
 
         view.setValue("other", forKey: "placeSystemName")
-        view.setValue(200, forKey: "height")
+        view.setValue(200, forKey: "blockHeight")
         view.setValue("hidden", forKey: "loadingStrategyName")
         view.setValue(1, forKey: "timeoutSeconds")
         view.setValue(true, forKey: "animatesReveal")
@@ -192,7 +190,7 @@ struct MindboxEmbeddedBlockViewNibTests {
         let view = MindboxEmbeddedBlockView(placeSystemName: "block-id", height: 120, loadingStrategy: .placeholder)
 
         view.setValue("other", forKey: "placeSystemName")
-        view.setValue(200, forKey: "height")
+        view.setValue(200, forKey: "blockHeight")
 
         #expect(view.placeSystemName == "block-id")
         #expect(view.intrinsicContentSize.height == 120)
@@ -217,37 +215,31 @@ struct MindboxEmbeddedBlockViewNibTests {
         #expect(view.intrinsicContentSize.height == 96)
     }
 
-    /// A view decoded outside a nib — an archive clone, say — never gets `awakeFromNib`. It must
-    /// not crash on its dependencies; the window is the latest moment to build it.
     @Test("A decoded block that never got awakeFromNib builds itself on entering a window")
     func unbuiltBlockBuildsOnEnteringWindow() throws {
         let nib = NibFixture()
         let view = try nib.makeUnbuiltBlock()
         view.setValue("stories", forKey: "placeSystemName")
-        view.setValue(120, forKey: "height")
+        view.setValue(120, forKey: "blockHeight")
         view.setValue("placeholder", forKey: "loadingStrategyName")
 
         nib.window.addSubview(view)
 
         #expect(nib.factory.requestedPlaces == ["stories"])
         #expect(view.intrinsicContentSize.height == 120)
-        // Content started: the place was resolved and its page made.
         #expect(nib.page(for: "stories") != nil)
     }
 
-    /// A wrapper may let go of a decoded block that never reached a window: `release()` has nothing
-    /// to stop and must not touch the dependencies the build never made.
     @Test("Releasing a decoded block that was never built neither crashes nor builds it later")
     func releasingUnbuiltBlockIsSafe() throws {
         let nib = NibFixture()
         let view = try nib.makeUnbuiltBlock()
         view.setValue("stories", forKey: "placeSystemName")
-        view.setValue(120, forKey: "height")
+        view.setValue(120, forKey: "blockHeight")
 
         view.release()
         nib.window.addSubview(view)
 
-        // Released for good: the window does not build a block nobody will show.
         #expect(nib.factory.requestedPlaces.isEmpty)
         #expect(view.intrinsicContentSize.height == 0)
     }

@@ -14,8 +14,9 @@ import MindboxLogger
 /// In the Identity Inspector set the class to `MindboxEmbeddedBlockView` and the module to `Mindbox`:
 /// without the module UIKit reports "Unknown class MindboxEmbeddedBlockView in Interface Builder
 /// file" and silently puts a plain `UIView` in its place. In the Attributes Inspector fill the
-/// inspectables: `placeSystemName` and `height` are required and mean what the initializer's
-/// parameters mean; `loadingStrategyName`, `timeoutSeconds` and `animatesReveal` are optional.
+/// inspectables: `placeSystemName` and `blockHeight` are required and mean what the initializer's
+/// `placeSystemName` and `height` mean; `loadingStrategyName`, `timeoutSeconds` and `animatesReveal`
+/// are optional.
 /// Constrain the position and the width only, the way a block from code is laid out — the height
 /// is the block's own, through `intrinsicContentSize`, and collapses to 0 when there is nothing to
 /// show. The `delegate` is assigned from code: outlets cannot hold it.
@@ -31,10 +32,11 @@ import MindboxLogger
 extension MindboxEmbeddedBlockView {
 
     /// The height the block occupies when shown — the initializer's `height`. Required: left at 0,
-    /// the block reserves no space and stays invisible whatever loads.
-    @IBInspectable public private(set) var height: CGFloat {
+    /// the block reserves no space and stays invisible whatever loads. Not `height`: that name
+    /// collides with the `UIView` helpers many hosts carry, in Swift and in Objective-C alike.
+    @IBInspectable public private(set) var blockHeight: CGFloat {
         get { preferredHeight }
-        set { applyInspectable("height") { preferredHeight = newValue } }
+        set { applyInspectable("blockHeight") { preferredHeight = newValue } }
     }
 
     /// The initializer's `loadingStrategy` by name: `automatic`, `placeholder` or `hidden`, in any
@@ -63,8 +65,7 @@ extension MindboxEmbeddedBlockView {
         buildIfNeeded()
     }
 
-    /// Builds a decoded block from the setup Interface Builder applied. Once: a block from code is
-    /// built by its initializer and never passes here.
+    /// Builds the block from its setup with the SDK's own dependencies, unless it is built already.
     func buildIfNeeded() {
         guard !isBuilt else { return }
 

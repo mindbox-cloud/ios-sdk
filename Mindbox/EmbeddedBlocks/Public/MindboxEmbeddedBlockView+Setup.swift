@@ -69,8 +69,7 @@ extension MindboxEmbeddedBlockView {
     /// Integration errors in the setup, reported once at the build. None of them stops the block:
     /// it runs its whole cycle and the host sees the outcome through the delegate.
     func warnAboutSetup() {
-        // An empty name addresses no place, and the name is never normalized: whatever the host
-        // passed is what the config is asked for.
+        // An empty name addresses no place.
         if placeSystemName.isEmpty {
             Logger.common(message: "[EmbeddedBlock] A block was created without a place system name: it has nothing to resolve and stays invisible.",
                           level: .error,
