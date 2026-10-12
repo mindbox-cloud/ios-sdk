@@ -80,8 +80,8 @@ final class VariantFilterService: VariantFilterProtocol {
     }
 
     private func makeEmbeddedVariant(from dto: EmbeddedFormVariantDTO) -> EmbeddedFormVariant? {
-        // A place name padded with spaces in the admin panel still means the same place; case has to match.
-        let placeSystemName = dto.placeSystemName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        // A place name padded with spaces or typed in another letter case in the admin panel still means the same place.
+        let placeSystemName = EmbeddedFormVariant.placeKey(dto.placeSystemName ?? "")
 
         guard !placeSystemName.isEmpty else {
             Logger.common(message: "[EmbeddedVariant] Variant has no place system name. Variant will be skipped.",

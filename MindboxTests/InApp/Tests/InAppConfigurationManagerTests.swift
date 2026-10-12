@@ -173,6 +173,14 @@ struct InAppConfigurationManagerTests {
         return try JSONSerialization.data(withJSONObject: root)
     }
 
+    /// The fixture with every `stories-list-container` place spelled in another letter case.
+    private func fixtureDataWithOtherCasePlace() throws -> Data {
+        let json = try #require(String(data: try fixtureData(), encoding: .utf8))
+        let otherCase = json.replacingOccurrences(of: "\"stories-list-container\"", with: "\"Stories-List-Container\"")
+        try #require(otherCase != json, "the fixture is expected to address the place in lowercase")
+        return Data(otherCase.utf8)
+    }
+
     private func waitUntil(_ condition: @autoclosure () -> Bool,
                            sourceLocation: SourceLocation = #_sourceLocation) async throws {
         let step: UInt64 = 20_000_000
@@ -488,6 +496,36 @@ struct InAppConfigurationManagerTests {
         api.deliver(.data(replaced))
 
         try await waitUntil(manager.inappInCurrentConfig(withId: Constants.liveStoryId)?.tags == ["templateType": "Replaced"])
+    }
+
+    // MARK: - The place name's letter case
+
+    @Test("A config spelling the place in another letter case still answers the block")
+    func placeInAnotherLetterCaseStillResolves() async throws {
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.data(try fixtureDataWithOtherCasePlace()))
+
+        let answers = Answers<InAppTransitionData?>()
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _ in answers.append(answer.inapp) }
+
+        try await waitUntil(!answers.isEmpty)
+        #expect((answers.first ?? nil)?.inAppId == "11111111-1111-1111-1111-111111111111")
+    }
+
+    @Test("The operation gate knows the places by their canonical name, whatever case the config uses")
+    func embeddedPlacesAreKeyedByCanonicalName() async throws {
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.data(try fixtureDataWithOtherCasePlace()))
+
+        let answers = Answers<[String: Set<String>]?>()
+        manager.getEmbeddedPlaces { answers.append($0) }
+
+        try await waitUntil(!answers.isEmpty)
+        let places = try #require(answers.first ?? nil)
+        #expect(places["stories-list-container"] != nil)
+        #expect(places["Stories-List-Container"] == nil)
     }
 
     @Test("A config arriving later replaces the models the previous one left")

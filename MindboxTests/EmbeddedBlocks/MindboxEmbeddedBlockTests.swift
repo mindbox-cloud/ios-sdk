@@ -263,6 +263,16 @@ struct MindboxEmbeddedBlockTests {
         #expect(memory.askedPlaces == ["stories"])
     }
 
+    @Test("The first look asks the memory by the case-folded key, like the block itself")
+    func initialAppearanceAsksByTheKey() {
+        let memory = EmbeddedBlockPlaceMemoryMock(shownPlaces: ["main-screen-top"])
+
+        withTestContainer(memory: memory) {
+            #expect(MindboxEmbeddedBlockView.initialAppearance(placeSystemName: " Main-Screen-Top ", loadingStrategy: .automatic) == .placeholder)
+        }
+        #expect(memory.askedPlaces == ["main-screen-top"])
+    }
+
     /// A SwiftUI value is created on every pass of its parent's body, and may be created before the
     /// SDK is initialized: the first look is for the body to read, once it is built.
     @Test("Creating the block asks nothing of the memory; the body does")
