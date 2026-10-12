@@ -21,7 +21,8 @@ import UIKit
 /// content once on this device and a placeholder from then on. The first look is known before the
 /// first frame, so a block that waits hidden never flashes reserved space.
 ///
-/// A different `placeSystemName` is a different block, built from scratch in place of the old one.
+/// A different place is a different block, built from scratch in place of the old one; a
+/// `placeSystemName` that differs only in padding or letter case is the same place and the same block.
 /// A different `height` resizes the block where it stands — the same content, no reload. The
 /// strategy and `animatesReveal` are read once, when the block is created.
 ///
@@ -72,8 +73,9 @@ public struct MindboxEmbeddedBlock: View {
     private(set) var errorBuilder: (() -> AnyView)?
 
     /// - Parameters:
-    ///   - placeSystemName: The system name of the place from the admin panel. Whitespace around
-    ///     it is ignored; the name itself is matched as it is, case included.
+    ///   - placeSystemName: The system name of the place from the admin panel. Matched with the
+    ///     surrounding whitespace trimmed and the letter case ignored, the way an operation system
+    ///     name is: `Main-Screen-Top` and `main-screen-top` are the same place.
     ///   - height: The height the block occupies when shown — and while loading, unless it waits
     ///     hidden by its `loadingStrategy`. A new value resizes the block in place, without
     ///     reloading its content.
@@ -106,8 +108,7 @@ public struct MindboxEmbeddedBlock: View {
                 onLoad: (() -> Void)? = nil,
                 onEmpty: (() -> Void)? = nil,
                 onFail: ((MindboxEmbeddedBlockFailReason) -> Void)? = nil) {
-        // Normalized here too, so `.id(placeSystemName)` keeps one SwiftUI identity per place
-        // however the name was padded.
+        // Normalized here too, so the view below gets the name the way the UIKit init would.
         self.placeSystemName = MindboxEmbeddedBlockView.normalizedPlaceSystemName(placeSystemName)
         self.height = height
         self.timeout = timeout
@@ -151,7 +152,9 @@ public struct MindboxEmbeddedBlock: View {
                           onFail: onFail,
                           placeholder: placeholderBuilder,
                           errorContent: errorBuilder)
-            .id(placeSystemName)
+            // One SwiftUI identity per place, however the name was padded or cased: `Stories` and
+            // `stories` are the same place to the SDK, so they are the same block here.
+            .id(MindboxEmbeddedBlockView.placeKey(placeSystemName))
     }
 }
 

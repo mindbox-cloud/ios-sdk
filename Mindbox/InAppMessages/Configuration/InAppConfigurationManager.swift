@@ -48,6 +48,7 @@ protocol InAppConfigurationManagerProtocol: AnyObject {
     func getInAppToShowById(_ id: String, params: [String: JSONValue], _ completion: @escaping (InAppFormData?) -> Void)
     func getEmbeddedPlaces(_ completion: @escaping ([String: Set<String>]?) -> Void)
     func resetInappManager()
+    func inappInCurrentConfig(withId id: String) -> InApp?
 }
 
 /// Prepares in-apps configation (loads from network, stores in cache, cache invalidation).
@@ -58,8 +59,9 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     private let queue = DispatchQueue(label: "com.Mindbox.configurationManager")
     private var configResponse: ConfigResponse?
 
-    /// Confined to `queue`, like `configResponse`.
-    private var configCandidates: ConfigCandidates?
+    /// Written, and checked before a wait, only on `queue`; locked only so a page's operation can read it
+    /// synchronously from the main thread.
+    @Locked private var configCandidates: ConfigCandidates?
 
     @Locked private(set) var hasConfig = false
 
@@ -185,6 +187,10 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         }
     }
 
+    func inappInCurrentConfig(withId id: String) -> InApp? {
+        configCandidates?.renderable.first { $0.id == id }
+    }
+
     /// A raw scan, not the selection: unvalidated variants count in on purpose — the resolve applies
     /// the real filters.
     func getEmbeddedPlaces(_ completion: @escaping ([String: Set<String>]?) -> Void) {
@@ -198,9 +204,9 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             for inapp in config.inapps?.elements ?? [] {
                 let inappPlaces = (inapp.form.variants ?? []).compactMap { variant -> String? in
                     guard case .embedded(let embedded) = variant else { return nil }
-                    // Must trim the way the selection trims, or the gate would close on a place
-                    // the resolve behind it would serve.
-                    let place = embedded.placeSystemName?.trimmingCharacters(in: .whitespacesAndNewlines)
+                    // Must key the name the way the selection keys it, or the gate would close on a
+                    // place the resolve behind it would serve.
+                    let place = embedded.placeSystemName.map(EmbeddedFormVariant.placeKey)
                     return place?.isEmpty == false ? place : nil
                 }
 

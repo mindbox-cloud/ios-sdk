@@ -73,11 +73,11 @@ struct InappPlaceFilterTests {
         #expect(inapps.isEmpty)
     }
 
-    @Test("Place names are case-sensitive")
-    func placeNamesAreCaseSensitive() throws {
+    @Test("A place spelled in another letter case in the config is the same place")
+    func placeNamesMatchRegardlessOfLetterCase() throws {
         let sut = try #require(sut)
         let inapps = sut.filter(place: place, in: candidates([inapp(id: "1", variants: [embedded(place: "Stories-List-Container")])]))
-        #expect(inapps.isEmpty)
+        #expect(ids(inapps) == ["1"])
     }
 
     @Test("A modal in-app is never a candidate for a place")

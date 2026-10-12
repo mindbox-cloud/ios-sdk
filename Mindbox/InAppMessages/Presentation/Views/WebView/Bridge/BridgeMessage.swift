@@ -310,7 +310,7 @@ public struct BridgeMessage: Codable {
         ///
         /// - Payload:
         ///   ```json
-        ///   { "operation": "<string>", "body": { ... } }
+        ///   { "operation": "<string>", "body": { ... }, "inappId": "<string, optional>" }
         ///   ```
         /// - Response:
         ///   ```json
@@ -322,7 +322,7 @@ public struct BridgeMessage: Codable {
         ///
         /// - Payload:
         ///   ```json
-        ///   { "operation": "<string>", "body": { ... } }
+        ///   { "operation": "<string>", "body": { ... }, "inappId": "<string, optional>" }
         ///   ```
         /// - Response: operation response JSON from Mindbox backend
         case syncOperation

@@ -348,23 +348,10 @@ extension InappsFilterService {
         sortInappsByPriority(filterInappsByAlreadyShown(filterOutDirectCallInapps(inapps)))
     }
 
+    /// Both sides arrive as `EmbeddedFormVariant.placeKey`s, so an exact match is a match whatever
+    /// padding or letter case the config and the host used.
     func filterInappsByPlace(_ place: String, inapps: [InApp]) -> [InApp] {
-        inapps.filter { inapp in
-            let places = inapp.form.variants.compactMap { $0.placeSystemName }
-
-            guard !places.isEmpty else { return false }
-
-            if places.contains(place) {
-                return true
-            }
-
-            if let sameNameOtherCase = places.first(where: { $0.lowercased() == place.lowercased() }) {
-                Logger.common(message: "[InappsFilterService] In-app \(inapp.id) is set up for place '\(sameNameOtherCase)' and the block asked for '\(place)'. Place names are case-sensitive.",
-                              level: .error, category: .inAppMessages)
-            }
-
-            return false
-        }
+        inapps.filter { inapp in inapp.form.variants.contains { $0.placeSystemName == place } }
     }
 
     func filterOutNonOverlayInapps(_ inapps: [InApp]) -> [InApp] {

@@ -42,8 +42,13 @@ public final class MindboxEmbeddedBlockView: UIView {
     // MARK: - Host API
 
     /// The system name of the place from the admin panel, given at creation and stripped of the
-    /// whitespace around it. Decides what content the SDK puts inside.
+    /// whitespace around it; the letter case is kept as the host wrote it, in sync with Android.
+    /// Decides what content the SDK puts inside: the SDK matches the place ignoring the case.
     public let placeSystemName: String
+
+    /// The name the SDK knows the place by — `placeSystemName` with the case folded, the key the
+    /// resolver, the place memory and the session ledger share with the config side.
+    private let placeKey: String
 
     /// What the block shows until the SDK answers, given at creation.
     /// See `MindboxEmbeddedBlockLoadingStrategy`.
@@ -175,9 +180,8 @@ public final class MindboxEmbeddedBlockView: UIView {
             return initialAppearance(for: loadingStrategy, hasShownContentBefore: false)
         }
 
-        let place = normalizedPlaceSystemName(placeSystemName)
         let memory = DI.injectOrFail(EmbeddedBlockPlaceRemembering.self)
-        return initialAppearance(for: loadingStrategy, hasShownContentBefore: memory.hasShownContent(at: place))
+        return initialAppearance(for: loadingStrategy, hasShownContentBefore: memory.hasShownContent(at: placeKey(placeSystemName)))
     }
 
     // MARK: - State
@@ -239,8 +243,9 @@ public final class MindboxEmbeddedBlockView: UIView {
     // MARK: - Life cycle
 
     /// - Parameters:
-    ///   - placeSystemName: The place system name from the admin panel. Whitespace around it is
-    ///     ignored; the name itself is matched as it is, case included.
+    ///   - placeSystemName: The place system name from the admin panel. Matched with the
+    ///     surrounding whitespace trimmed and the letter case ignored, the way an operation system
+    ///     name is: `Main-Screen-Top` and `main-screen-top` are the same place.
     ///   - height: The height the block occupies when shown — and while loading, unless it waits
     ///     hidden by its `loadingStrategy`. Reserving it is the host's job and there is no default:
     ///     a height of 0 or less leaves the block invisible whatever its content turns out to be,
@@ -263,7 +268,7 @@ public final class MindboxEmbeddedBlockView: UIView {
         let place = Self.normalizedPlaceSystemName(placeSystemName)
         self.init(placeSystemName: place,
                   height: height,
-                  contentProvider: DI.injectOrFail(EmbeddedBlockContentProviderMaking.self).makeProvider(placeSystemName: place),
+                  contentProvider: DI.injectOrFail(EmbeddedBlockContentProviderMaking.self).makeProvider(placeSystemName: Self.placeKey(place)),
                   placeMemory: DI.injectOrFail(EmbeddedBlockPlaceRemembering.self),
                   loadingStrategy: loadingStrategy,
                   timeout: timeout,
@@ -271,9 +276,15 @@ public final class MindboxEmbeddedBlockView: UIView {
     }
 
     /// Padding is not part of a name: a name pasted from the admin panel with a stray space still
-    /// finds its place, in sync with Android.
+    /// finds its place, and the host reads it back without the padding — in sync with Android.
     static func normalizedPlaceSystemName(_ given: String) -> String {
         given.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// The case is not part of a name either, but the host reads its own spelling back: the
+    /// folding happens here, on the way into the SDK, and `placeSystemName` stays as given.
+    static func placeKey(_ placeSystemName: String) -> String {
+        EmbeddedFormVariant.placeKey(placeSystemName)
     }
 
     /// Blocks are not created from storyboards: the place system name and the height are required
@@ -293,6 +304,7 @@ public final class MindboxEmbeddedBlockView: UIView {
          revealAnimation: EmbeddedBlockRevealAnimation = EmbeddedBlockRevealAnimation(),
          makeWaitBudget: ((_ placeSystemName: String, _ duration: @escaping () -> TimeInterval) -> EmbeddedBlockWaitBudget)? = nil) {
         self.placeSystemName = placeSystemName
+        self.placeKey = Self.placeKey(placeSystemName)
         self.preferredHeight = height
         self.contentProvider = contentProvider
         self.placeMemory = placeMemory
@@ -311,7 +323,7 @@ public final class MindboxEmbeddedBlockView: UIView {
         // Decided synchronously, before the first layout pass: a wrapper reads the same answer
         // through `initialAppearance(placeSystemName:loadingStrategy:)`.
         let initial = Self.initialAppearance(for: loadingStrategy,
-                                             hasShownContentBefore: placeMemory.hasShownContent(at: placeSystemName))
+                                             hasShownContentBefore: placeMemory.hasShownContent(at: placeKey))
         self.shownAppearance = initial
         self.hasSettled = initial == .collapsed
         super.init(frame: .zero)
@@ -484,7 +496,7 @@ public final class MindboxEmbeddedBlockView: UIView {
 
     private func resetToInitialLook() {
         let initial = Self.initialAppearance(for: loadingStrategy,
-                                             hasShownContentBefore: placeMemory.hasShownContent(at: placeSystemName))
+                                             hasShownContentBefore: placeMemory.hasShownContent(at: placeKey))
         shownAppearance = initial
         hasSettled = initial == .collapsed
     }
@@ -566,9 +578,9 @@ public final class MindboxEmbeddedBlockView: UIView {
     private func updatePlaceMemory(for state: EmbeddedBlockState) {
         switch state {
         case .ready:
-            placeMemory.rememberShownContent(at: placeSystemName)
+            placeMemory.rememberShownContent(at: placeKey)
         case .empty:
-            placeMemory.forgetPlace(placeSystemName)
+            placeMemory.forgetPlace(placeKey)
         case .loading, .failed:
             break
         }
