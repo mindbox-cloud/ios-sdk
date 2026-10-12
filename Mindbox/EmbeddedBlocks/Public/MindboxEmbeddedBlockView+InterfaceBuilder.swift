@@ -68,8 +68,7 @@ extension MindboxEmbeddedBlockView {
     func buildIfNeeded() {
         guard !isBuilt else { return }
 
-        let place = setup.placeSystemName
-        build(contentProvider: DI.injectOrFail(EmbeddedBlockContentProviderMaking.self).makeProvider(placeSystemName: place),
+        build(contentProvider: DI.injectOrFail(EmbeddedBlockContentProviderMaking.self).makeProvider(placeSystemName: placeKey),
               placeMemory: DI.injectOrFail(EmbeddedBlockPlaceRemembering.self),
               revealAnimation: EmbeddedBlockRevealAnimation(),
               makeWaitBudget: nil)

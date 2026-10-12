@@ -39,6 +39,7 @@ struct InAppCoreManagerTests {
             completion(nil)
         }
         func resetInappManager() {}
+        func inappInCurrentConfig(withId id: String) -> InApp? { nil }
     }
 
     private final class SchedulerStub: InappScheduleManagerProtocol {

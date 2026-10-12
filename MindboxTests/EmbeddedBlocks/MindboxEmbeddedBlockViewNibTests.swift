@@ -48,8 +48,10 @@ struct MindboxEmbeddedBlockViewNibTests {
 
         _ = try nib.loadConfiguredBlock()
 
-        #expect(nib.factory.requestedPlaces == ["Stories", "promo"])
-        #expect(nib.memory.askedPlaces == ["Stories", "promo"])
+        // The SDK knows the place by its key — the name with the case folded — while the host
+        // reads its own spelling back.
+        #expect(nib.factory.requestedPlaces == ["stories", "promo"])
+        #expect(nib.memory.askedPlaces == ["stories", "promo"])
     }
 
     @Test("The strategy name is matched by its case-insensitive spelling, an unknown name means automatic",
@@ -207,7 +209,7 @@ struct MindboxEmbeddedBlockViewNibTests {
         view.delegate = delegate
 
         nib.window.addSubview(view)
-        let page = try #require(nib.page(for: "Stories"))
+        let page = try #require(nib.page(for: "stories"))
         page.reportRendered(1)
         await mainQueueTurn()
 
