@@ -157,7 +157,8 @@ final class EmbeddedBlockWebViewProvider {
         // The outcome is deliberately not reset: otherwise every pass of the block across the screen
         // would cost a full reload.
         suspendDataPushAck()
-        // Neither the show's time nor the page's budget runs while nobody is looking.
+        // The show's time stops with the block: it left the window or the host hid it. The background
+        // is not a stop — the stopwatch excludes it on its own.
         presentationStopwatch.suspend()
         // The page stays alive off screen, so it has to be told that nobody is looking.
         page?.isUserPresent = false

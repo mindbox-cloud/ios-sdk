@@ -616,6 +616,9 @@ final class EmbeddedBlockTestBed {
     /// One per bed: a new config must reach only this provider.
     let center: NotificationCenter
 
+    /// The application state a stopwatch reads at birth; the notifications below keep it in step.
+    let appState = ApplicationStateStub()
+
     /// One clock for both seams: the page's rendering time (the block's part of `timeToDisplay`) and the ack wait.
     let clock: TestClock
 
@@ -656,12 +659,26 @@ final class EmbeddedBlockTestBed {
                                                      reportFailure: { failureReporter.report($0, $1, $2, $3) },
                                                      reportUnansweredWait: { failureReporter.reportUnansweredWait($0) },
                                                      scheduleAckTimeout: { ackScheduler.schedule($0, $1) },
-                                                     makeStopwatch: { ForegroundStopwatch(notificationCenter: center, now: { clock.now }) },
+                                                     makeStopwatch: { [appState] in
+                                                         ForegroundStopwatch(notificationCenter: center,
+                                                                             now: { clock.now },
+                                                                             isInBackground: { appState.isInBackground })
+                                                     },
                                                      now: { clock.now })
     }
 
     func announceNewConfig() {
         center.post(name: .mobileConfigDownloaded, object: nil)
+    }
+
+    func enterBackground() {
+        appState.isInBackground = true
+        center.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
+    }
+
+    func enterForeground() {
+        appState.isInBackground = false
+        center.post(name: UIApplication.willEnterForegroundNotification, object: nil)
     }
 
     func deliverSamePageWithNewData(_ marker: String = "fresh") {
@@ -680,6 +697,10 @@ final class EmbeddedBlockTestBed {
         center.post(name: .inAppOperationOccurred, object: event)
         return event
     }
+}
+
+final class ApplicationStateStub {
+    var isInBackground = false
 }
 
 /// The place's memory across launches, kept in memory: a fixture built over the same mock is the

@@ -1690,6 +1690,8 @@ struct EmbeddedBlockWebViewProviderTests {
 
         bed.provider.start()
         bed.page?.reportRendered(1)
+        // Time on screen after the first show: an inherited stopwatch would carry it into the second.
+        bed.clock.advance(5)
         bed.provider.stop()
         bed.clock.advance(30)
         bed.provider.start()
@@ -1699,6 +1701,44 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.clock.advance(0.5)
         bed.page?.reportRendered(1)
 
+        #expect(bed.accounting.shows.map(\.timeToDisplay) == [2, 1.5])
+    }
+
+    @Test("The app's background between the start and the render is not in timeToDisplay")
+    func showExcludesTheBackgroundBeforeTheRender() throws {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.processingDuration = 2
+
+        bed.provider.start()
+        bed.clock.advance(0.5)
+        bed.enterBackground()
+        bed.clock.advance(20)
+        bed.enterForeground()
+        bed.clock.advance(0.5)
+        bed.page?.reportRendered(1)
+
+        let show = try #require(bed.accounting.shows.first)
+        #expect(show.timeToDisplay == 3)
+    }
+
+    @Test("A page built from an answer that landed in the background measures from the return")
+    func pageBuiltInTheBackgroundMeasuresFromTheReturn() throws {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.processingDuration = 2
+
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.enterBackground()
+        bed.clock.advance(10)
+        bed.resolver.resolution = .content(.other)
+        bed.resolver.processingDuration = 1
+        bed.announceNewConfig()
+        bed.clock.advance(10)
+        bed.enterForeground()
+        bed.clock.advance(0.5)
+        bed.page?.reportRendered(1)
+
+        #expect(bed.pageFactory.pages.count == 2)
         #expect(bed.accounting.shows.map(\.timeToDisplay) == [2, 1.5])
     }
 
