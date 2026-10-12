@@ -1742,6 +1742,33 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.accounting.shows.map(\.timeToDisplay) == [2, 1.5])
     }
 
+    @Test("An answer released by the return itself, with the app still reporting the background, measures from the activation")
+    func answerReleasedByTheReturnMeasuresFromTheActivation() throws {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.processingDuration = 2
+
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.enterBackground()
+        bed.clock.advance(10)
+        bed.resolver.resolution = .content(.other)
+        bed.resolver.processingDuration = 1
+        // A delayed delivery releases its parked answer inside the foreground notification — while
+        // the application state still reads the background, as UIKit has it.
+        let release = bed.center.addObserver(forName: UIApplication.willEnterForegroundNotification,
+                                             object: nil,
+                                             queue: .main) { _ in
+            bed.announceNewConfig()
+        }
+        defer { bed.center.removeObserver(release) }
+        bed.enterForeground()
+        bed.clock.advance(0.5)
+        bed.page?.reportRendered(1)
+
+        #expect(bed.pageFactory.pages.count == 2)
+        #expect(bed.accounting.shows.map(\.timeToDisplay) == [2, 1.5])
+    }
+
     @Test("Failed block tries again when it comes back")
     func failedBlockTriesAgainOnReturn() {
         let bed = EmbeddedBlockTestBed()

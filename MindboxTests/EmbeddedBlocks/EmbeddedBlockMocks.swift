@@ -676,9 +676,12 @@ final class EmbeddedBlockTestBed {
         center.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
     }
 
+    /// UIKit's order: the foreground notification goes out while the state still reads the
+    /// background; the state flips after it, and `didBecomeActive` follows.
     func enterForeground() {
-        appState.isInBackground = false
         center.post(name: UIApplication.willEnterForegroundNotification, object: nil)
+        appState.isInBackground = false
+        center.post(name: UIApplication.didBecomeActiveNotification, object: nil)
     }
 
     func deliverSamePageWithNewData(_ marker: String = "fresh") {

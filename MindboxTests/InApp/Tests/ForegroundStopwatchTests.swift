@@ -161,6 +161,18 @@ struct ForegroundStopwatchTests {
         stopwatch.stop()
     }
 
+    @Test("A stopwatch that missed the foreground notification starts counting when the app becomes active")
+    func elapsed_createdInBackground_countsFromTheActivation() throws {
+        let stopwatch = makeStopwatch(inBackground: true)
+
+        clock.advance(5)
+        nc.post(name: UIApplication.didBecomeActiveNotification, object: nil)
+        clock.advance(0.25)
+
+        #expect(stopwatch.elapsed == 0.25)
+        stopwatch.stop()
+    }
+
     @Test("A second suspend changes nothing: one resume reopens the count")
     func suspend_twice_oneResumeReopensTheCount() throws {
         let stopwatch = makeStopwatch()

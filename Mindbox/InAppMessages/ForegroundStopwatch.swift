@@ -11,9 +11,10 @@ import QuartzCore
 import UIKit
 
 /// A stopwatch that only counts time while somebody could be looking: the app is in the foreground
-/// and the owner has not suspended it. Background time (between `didEnterBackground` and
-/// `willEnterForeground`) and suspended time are excluded from `elapsed`, and an overlap of the two
-/// is excluded once — the stopwatch is either running or not.
+/// and the owner has not suspended it. Background time — from `didEnterBackground`, or from a birth
+/// in the background, until the foreground: `willEnterForeground`, or `didBecomeActive` when that
+/// one was missed — and suspended time are excluded from `elapsed`, and an overlap of the two is
+/// excluded once: the stopwatch is either running or not.
 final class ForegroundStopwatch {
     private let now: () -> CFTimeInterval
 
@@ -26,6 +27,7 @@ final class ForegroundStopwatch {
 
     private var bgObserver: NSObjectProtocol?
     private var fgObserver: NSObjectProtocol?
+    private var activeObserver: NSObjectProtocol?
 
     private let notificationCenter: NotificationCenter
 
@@ -49,15 +51,26 @@ final class ForegroundStopwatch {
             self.settle()
         }
 
-        fgObserver = notificationCenter.addObserver(
-            forName: UIApplication.willEnterForegroundNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
+        let foreground: (Notification) -> Void = { [weak self] _ in
             guard let self else { return }
             self.isInBackground = false
             self.settle()
         }
+        fgObserver = notificationCenter.addObserver(
+            forName: UIApplication.willEnterForegroundNotification,
+            object: nil,
+            queue: .main,
+            using: foreground
+        )
+        // The state still reads the background while `willEnterForeground` is being delivered, and
+        // an observer added during that delivery misses it. A stopwatch born inside it — a delayed
+        // answer released on the return builds its page there — opens its run here instead.
+        activeObserver = notificationCenter.addObserver(
+            forName: UIApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: .main,
+            using: foreground
+        )
     }
 
     /// Elapsed running time since the stopwatch was created.
@@ -82,8 +95,10 @@ final class ForegroundStopwatch {
     func stop() {
         if let bgObserver { notificationCenter.removeObserver(bgObserver) }
         if let fgObserver { notificationCenter.removeObserver(fgObserver) }
+        if let activeObserver { notificationCenter.removeObserver(activeObserver) }
         bgObserver = nil
         fgObserver = nil
+        activeObserver = nil
     }
 
     /// Brings the open run in line with the gates: opens one when both are clear, closes it otherwise.
