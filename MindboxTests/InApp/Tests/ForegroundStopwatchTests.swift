@@ -87,6 +87,17 @@ struct ForegroundStopwatchTests {
         #expect(stopwatch.elapsed == 1.25)
     }
 
+    @Test("stop() removes the activation observer too: an activation after it opens nothing")
+    func stop_removesTheActivationObserver() throws {
+        let stopwatch = makeStopwatch(inBackground: true)
+
+        stopwatch.stop()
+        nc.post(name: UIApplication.didBecomeActiveNotification, object: nil)
+        clock.advance(1)
+
+        #expect(stopwatch.elapsed == 0)
+    }
+
     // MARK: - Suspension
 
     @Test("Suspended time is excluded: the stopwatch counts only between resume and suspend")

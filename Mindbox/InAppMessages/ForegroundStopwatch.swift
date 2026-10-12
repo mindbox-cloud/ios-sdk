@@ -14,7 +14,8 @@ import UIKit
 /// and the owner has not suspended it. Background time — from `didEnterBackground`, or from a birth
 /// in the background, until the foreground: `willEnterForeground`, or `didBecomeActive` when that
 /// one was missed — and suspended time are excluded from `elapsed`, and an overlap of the two is
-/// excluded once: the stopwatch is either running or not.
+/// excluded once: the stopwatch is either running or not. Main thread only: the state at birth is
+/// read from `UIApplication`.
 final class ForegroundStopwatch {
     private let now: () -> CFTimeInterval
 
