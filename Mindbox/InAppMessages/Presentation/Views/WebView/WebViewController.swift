@@ -251,7 +251,6 @@ extension WebViewController: WebVCDelegate {
 extension WebViewController: WebViewAction {
 
     func onInit() {
-        Logger.common(message: "[WebView] TransparentWebView: received init action", category: .webViewInAppMessages)
         removeLifecycleObservers()
         DispatchQueue.main.async {
             guard !self.hasClosed else { return }
