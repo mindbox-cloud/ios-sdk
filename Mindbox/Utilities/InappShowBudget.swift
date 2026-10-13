@@ -73,12 +73,13 @@ final class InappShowBudget: InappShowBudgeting {
             }
 
             if isPriority || !InappFrequency.countsShows(frequency) {
-                Logger.common(message: "[ShowBudget] \(isPriority ? "Priority" : "Unlimited") in-app \(inAppId) passes the show budgets without a slot",
+                Logger.common(message: "[ShowBudget] In-app \(inAppId) \(isPriority ? "is priority" : "has unlimited frequency"), limits not checked",
                               level: .debug, category: .inAppMessages)
                 return .notNeeded
             }
 
             guard isUnderSessionLimit(state), isUnderDailyLimit(state), hasElapsedMinimumInterval(state) else {
+                Logger.common(message: "[ShowBudget] In-app \(inAppId) refused by show limits", level: .info, category: .inAppMessages)
                 return .refused
             }
 
@@ -96,7 +97,10 @@ final class InappShowBudget: InappShowBudgeting {
                 state.reservations.removeValue(forKey: owner)
             }
 
-            guard InappFrequency.countsShows(frequency) else { return }
+            guard InappFrequency.countsShows(frequency) else {
+                Logger.common(message: "[ShowBudget] In-app \(inAppId) has unlimited frequency, show not counted", level: .debug, category: .inAppMessages)
+                return
+            }
 
             state.shownInSession.append(inAppId)
             trackingService.trackInAppShown(id: inAppId)
@@ -120,13 +124,15 @@ final class InappShowBudget: InappShowBudgeting {
 
     // MARK: - The budget rules
 
+    // "Counted" in the lines below: an in-app with unlimited frequency (a story) is never counted, see `commit`.
+
     private func isUnderSessionLimit(_ state: InappShowBudgetState) -> Bool {
         guard let limit = positiveLimit(SessionTemporaryStorage.shared.inAppSettings?.maxInappsPerSession, named: "Session") else {
             return true
         }
 
         let isAllowed = limit > state.shownInSession.count + state.reservations.count
-        Logger.common(message: "[ShowBudget] [Session] shown: \(state.shownInSession.count), reserved: \(state.reservations.count), limit: \(limit), allowed: \(isAllowed)",
+        Logger.common(message: "[ShowBudget] [Session] counted: \(state.shownInSession.count), reserved: \(state.reservations.count), limit: \(limit), allowed: \(isAllowed)",
                       level: .info, category: .inAppMessages)
         return isAllowed
     }
@@ -138,7 +144,7 @@ final class InappShowBudget: InappShowBudgeting {
 
         let shownToday = shownTodayCount()
         let isAllowed = limit > shownToday + state.reservations.count
-        Logger.common(message: "[ShowBudget] [Daily] shown today: \(shownToday), reserved: \(state.reservations.count), limit: \(limit), allowed: \(isAllowed)",
+        Logger.common(message: "[ShowBudget] [Daily] counted today: \(shownToday), reserved: \(state.reservations.count), limit: \(limit), allowed: \(isAllowed)",
                       level: .info, category: .inAppMessages)
         return isAllowed
     }
@@ -154,7 +160,7 @@ final class InappShowBudget: InappShowBudgeting {
 
         let lastReservation = state.reservations.values.map(\.reservedAt).max()
         guard let lastChange = [persistenceStorage.lastInappStateChangeDate, lastReservation].compactMap({ $0 }).max() else {
-            Logger.common(message: "[ShowBudget] [minInterval] nothing shown or reserved yet, allowing", level: .info, category: .inAppMessages)
+            Logger.common(message: "[ShowBudget] [minInterval] no counted shows or reservations yet, allowing", level: .info, category: .inAppMessages)
             return true
         }
 
