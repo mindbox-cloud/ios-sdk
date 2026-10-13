@@ -339,7 +339,11 @@ final class SharedWebLayerMock: InappWebViewFacadeProtocol {
 
     func cleanWebView() {}
 
-    func endShow() {}
+    private(set) var endedShows = 0
+
+    func endShow() {
+        endedShows += 1
+    }
 
     private(set) var startPayloadRequests = 0
 
