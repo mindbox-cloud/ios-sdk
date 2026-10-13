@@ -33,6 +33,8 @@ final class TransparentView: UIView {
     /// later ready-check give-up (a post-load navigation dropped the bridge) has no other
     /// closing authority — it must close the show itself.
     private var hasReceivedInit = false
+    /// When the current wait for `init` started; nil once `init` came or the wait timed out.
+    private var initWaitStartedAt: Date?
     private var hasEndedBridgeSession = false
     private var hasCapturedObservedHosts = false
     private let noCacheRetryPolicy: WebViewNoCacheRetryPolicy
@@ -138,6 +140,9 @@ final class TransparentView: UIView {
     }
 
     func endShow() {
+        if !hasReceivedInit, let waited = takeInitWait() {
+            Logger.common(message: "[WebView] Closed before init after \(waited)", category: .webViewInAppMessages)
+        }
         endBridgeSession()
         captureObservedResourceHosts()
         facade?.endShow()
@@ -172,10 +177,19 @@ final class TransparentView: UIView {
     private func setupTimeoutTimer() {
         quizInitTimeoutWorkItem?.cancel()
         let workItem = DispatchWorkItem { [weak self] in
+            self?.initWaitStartedAt = nil
             self?.delegate?.closeTimeoutWebViewVC()
         }
         quizInitTimeoutWorkItem = workItem
+        initWaitStartedAt = Date()
         DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(Constants.WebView.timeoutSeconds), execute: workItem)
+    }
+
+    /// How long the page has been waited for, as "2.37s", or nil when no wait is running; ends the wait.
+    private func takeInitWait() -> String? {
+        guard let startedAt = initWaitStartedAt else { return nil }
+        initWaitStartedAt = nil
+        return String(format: "%.2fs", Date().timeIntervalSince(startedAt))
     }
 }
 
@@ -233,6 +247,9 @@ extension TransparentView: WebBridgeLifecycleHosting {
         // First, before anything else can read it: the no-cache retry policy decides whether a
         // failed subresource is worth healing by asking whether the page ever booted, and a
         // late flag silently disables that.
+        if !hasReceivedInit, let waited = takeInitWait() {
+            Logger.common(message: "[WebView] Init received after \(waited)", category: .webViewInAppMessages)
+        }
         hasReceivedInit = true
         quizInitTimeoutWorkItem?.cancel()
         // The page has proven it can boot — drop the retained retry content (mirror of
@@ -318,7 +335,7 @@ extension TransparentView: WebBridgeNavigationDelegate {
 
     func webBridge(_ bridge: MindboxWebBridge, didFinishNavigation url: URL?) {
         let urlString = url?.absoluteString ?? "unknown"
-        Logger.common(message: "[WebView] WKNavigationDelegate: Upload completed \(urlString)", category: .webViewInAppMessages)
+        Logger.common(message: "[WebView] WKNavigationDelegate: finished loading \(urlString)", category: .webViewInAppMessages)
         guard !hasEndedBridgeSession else { return }
 
         // Avoid duplicate checks on multiple didFinish calls for the same URL.
