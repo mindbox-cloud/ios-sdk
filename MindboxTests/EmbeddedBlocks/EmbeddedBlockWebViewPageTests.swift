@@ -130,6 +130,15 @@ struct EmbeddedBlockWebViewPageTests {
         #expect(registry.count == 1)
     }
 
+    @Test("A cancelled page closes its web layer at once")
+    func cancelledPageClosesItsWebLayerAtOnce() {
+        let bed = PageBed()
+
+        bed.page.cancel()
+
+        #expect(bed.facade.endedShows == 1)
+    }
+
     @Test("A booted page lets the markup kept for the retry go, once")
     func bootedPageReleasesTheRetainedMarkup() {
         let bed = PageBed()

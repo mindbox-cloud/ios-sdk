@@ -81,8 +81,10 @@ final class EmbeddedBlockWebViewPage: NSObject, EmbeddedBlockPageHosting {
         }
     }
 
+    /// Synchronous on purpose: the provider drops the page right after, and a close that hops to
+    /// the main queue would find the facade already gone and do nothing.
     func cancel() {
-        facade.cleanWebView()
+        facade.endShow()
     }
 
     func sendInitData(params: [String: JSONValue]) {
