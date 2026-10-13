@@ -202,6 +202,10 @@ extension EmbeddedBlockWebViewPage: WebBridgeMessageDelegate {
 
         isRegistered = true
         registry.register(self)
+        // The page has proven it can boot: the markup kept for the no-cache retry is dead weight
+        // from here — the retry policy refuses a heal on a booted page — so it goes, as the overlay
+        // lets it go on `init`.
+        facade.releaseRetainedContent()
     }
 }
 
