@@ -446,11 +446,11 @@ final class EmbeddedBlockWebViewProvider {
     }
 
     func handleLoadFailure() {
-        fail(.webviewLoadFailed, "The block's page failed to load")
+        fail(.webviewLoadFailed, "Page failed to load")
     }
 
     func failSilentPage() {
-        fail(.presentationFailed, "The block's page did not report itself in time")
+        fail(.presentationFailed, "Page did not send contentRendered within \(Constants.EmbeddedBlock.readyTimeoutSeconds)s")
         abandonAttempt()
     }
 
@@ -545,7 +545,7 @@ final class EmbeddedBlockWebViewProvider {
 
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': contentRendered without a readable count, treating as broken",
                       level: .error, category: .embeddedBlocks)
-        fail(.presentationFailed, "The block's page reported contentRendered without a readable count")
+        fail(.presentationFailed, "Page sent contentRendered with an invalid count")
     }
 
     private func accountForShow() {
