@@ -9,8 +9,8 @@
 import UIKit
 
 /// Holds a place's answer for its `delayTime`, like the schedule queue holds an overlay: one answer per
-/// place, the newest content replaces the waiting one, nothing is delivered in the background. Main
-/// thread only.
+/// place, the caller refreshes the waiting one through `refresh(place:_:)` while its delay keeps
+/// running, nothing is delivered in the background. Main thread only.
 final class EmbeddedBlockDelayedDelivery<Answer> {
 
     typealias Delivery = (Answer) -> Void

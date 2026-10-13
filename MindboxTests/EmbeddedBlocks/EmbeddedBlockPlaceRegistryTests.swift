@@ -469,6 +469,29 @@ struct EmbeddedBlockPlaceRegistryTests {
         #expect(block.processingDurations == [0.3])
     }
 
+    @Test("The same winner resolved again without a delay is delivered at once, with its own selection time")
+    func sameWinnerWithoutADelayIsDeliveredAtOnce() {
+        let rig = Rig()
+        rig.resolver.resolution = .content(.delayed())
+        rig.resolver.processingDuration = 0.3
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+
+        // The config dropped the delay: there is nothing left to wait out, and the user waited for
+        // this very answer.
+        rig.resolver.resolution = .content(.delayed("00:00:00", params: ["fresh": .bool(true)]))
+        rig.resolver.processingDuration = 2.5
+        rig.announceNewConfig()
+
+        #expect(block.applied == [.content(.delayed("00:00:00", params: ["fresh": .bool(true)]))])
+        #expect(block.processingDurations == [2.5])
+
+        rig.delayScheduler.fireAll()
+
+        #expect(block.applied.count == 1)
+    }
+
     @Test("The same winner resolved again after its delay ran out in the background is delivered on return, not delayed again")
     func sameWinnerAfterBackgroundExpiryIsNotDelayedAgain() {
         let rig = Rig()

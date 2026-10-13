@@ -267,8 +267,12 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         }
 
         let answer = PlaceAnswer(content: content, processingDuration: processingDuration)
+        let delay = TimeInterval.delay(fromTimeSpan: content.delayTime)
 
-        if delayedDelivery.isWaiting(place: place, for: content.inAppId) {
+        // A fresh answer without a delay is not held back by the delay it used to have: nothing is
+        // left to wait out, and the user waited for this very answer — it goes below, at once, with
+        // its own selection time, as on Android.
+        if delay > 0, delayedDelivery.isWaiting(place: place, for: content.inAppId) {
             Logger.common(message: "[EmbeddedBlock] Place '\(place)': in-app \(content.inAppId) is still waiting out its delay",
                           category: .embeddedBlocks)
             // The fresh content, with the selection time of the answer that started the delay: this
@@ -283,7 +287,6 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
 
         delayedDelivery.cancel(place: place)
 
-        let delay = TimeInterval.delay(fromTimeSpan: content.delayTime)
         let served = ServedPlaceDelay(place: place, inappId: content.inAppId)
         // Checked here, inserted when the delay fires — both on the main thread; the ledger's
         // lock protects other readers, not this sequence.

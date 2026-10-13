@@ -60,6 +60,33 @@ struct EmbeddedBlockDelayedDeliveryTests {
         #expect(delivered == ["b"])
     }
 
+    @Test("A refresh updates the waiting answer and keeps its delay running")
+    func refreshUpdatesTheWaitingAnswer() {
+        let rig = Rig()
+        var delivered: [String] = []
+
+        rig.delivery.schedule(place: "stories", inappId: "a", answer: "a", after: 5) { delivered.append($0) }
+        rig.delivery.refresh(place: "stories") { $0 + "+fresh" }
+
+        #expect(rig.scheduler.armCount == 1)
+
+        rig.scheduler.fireAll()
+
+        #expect(delivered == ["a+fresh"])
+    }
+
+    @Test("A refresh with nothing waiting at the place changes nothing")
+    func refreshWithNothingWaitingIsANoOp() {
+        let rig = Rig()
+        var updates = 0
+
+        rig.delivery.refresh(place: "stories") { updates += 1; return $0 }
+        rig.scheduler.fireAll()
+
+        #expect(updates == 0)
+        #expect(rig.delivery.isWaiting(place: "stories", for: "a") == false)
+    }
+
     @Test("Cancelling drops the waiting answer")
     func cancelDropsTheWaitingAnswer() {
         let rig = Rig()
