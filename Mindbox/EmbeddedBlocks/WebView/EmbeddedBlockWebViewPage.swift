@@ -34,7 +34,8 @@ final class EmbeddedBlockWebViewPage: NSObject, EmbeddedBlockPageHosting {
     var isUserPresent = true
 
     private let content: EmbeddedBlockWebContent
-    private let facade: InappWebViewFacadeProtocol
+    /// Internal for the tests that pin the release of the whole web chain.
+    let facade: InappWebViewFacadeProtocol
     private let registry: MindboxWebPageRegistry
     private let actionRegistry: WebBridgeActionRegistry
     private let pageView: UIView
