@@ -271,7 +271,12 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         if delayedDelivery.isWaiting(place: place, for: content.inAppId) {
             Logger.common(message: "[EmbeddedBlock] Place '\(place)': in-app \(content.inAppId) is still waiting out its delay",
                           category: .embeddedBlocks)
-            delayedDelivery.refresh(place: place, answer: answer)
+            // The fresh content, with the selection time of the answer that started the delay: this
+            // pass ran inside the delay, which is not the user's waiting, so its own duration says
+            // nothing about how long the user waited.
+            delayedDelivery.refresh(place: place) { waiting in
+                PlaceAnswer(content: content, processingDuration: waiting.processingDuration)
+            }
             announceDelay(at: place)
             return
         }

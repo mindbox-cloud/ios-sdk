@@ -449,6 +449,26 @@ struct EmbeddedBlockPlaceRegistryTests {
         #expect(block.applied == [.content(.delayed(params: ["fresh": .bool(true)]))])
     }
 
+    @Test("The same winner resolved again during its delay keeps the selection time of the answer that started the delay")
+    func sameWinnerKeepsTheFirstSelectionTime() {
+        let rig = Rig()
+        rig.resolver.resolution = .content(.delayed())
+        rig.resolver.processingDuration = 0.3
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+
+        // The second pass runs inside the delay, which is not the user's waiting: its own duration
+        // says nothing about how long the user waited for the first answer.
+        rig.resolver.resolution = .content(.delayed(params: ["fresh": .bool(true)]))
+        rig.resolver.processingDuration = 2.5
+        rig.announceNewConfig()
+        rig.delayScheduler.fireAll()
+
+        #expect(block.applied == [.content(.delayed(params: ["fresh": .bool(true)]))])
+        #expect(block.processingDurations == [0.3])
+    }
+
     @Test("The same winner resolved again after its delay ran out in the background is delivered on return, not delayed again")
     func sameWinnerAfterBackgroundExpiryIsNotDelayedAgain() {
         let rig = Rig()

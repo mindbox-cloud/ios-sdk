@@ -9,7 +9,8 @@
 import UIKit
 
 /// Holds a place's answer for its `delayTime`, like the schedule queue holds an overlay: one answer per
-/// place, the newest replaces the waiting one, nothing is delivered in the background. Main thread only.
+/// place, the newest content replaces the waiting one, nothing is delivered in the background. Main
+/// thread only.
 final class EmbeddedBlockDelayedDelivery<Answer> {
 
     typealias Delivery = (Answer) -> Void
@@ -81,9 +82,11 @@ final class EmbeddedBlockDelayedDelivery<Answer> {
         schedule(delay, timer)
     }
 
-    /// The newest answer for the in-app already waiting at the place; its delay keeps running.
-    func refresh(place: String, answer: Answer) {
-        waiting[place]?.answer = answer
+    /// Updates the answer of the in-app already waiting at the place; its delay keeps running.
+    func refresh(place: String, _ update: (Answer) -> Answer) {
+        guard let current = waiting[place]?.answer else { return }
+
+        waiting[place]?.answer = update(current)
     }
 
     func cancel(place: String) {
