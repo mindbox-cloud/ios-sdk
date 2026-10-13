@@ -73,8 +73,26 @@ public final class MindboxWebBridge: NSObject {
         webView.navigationDelegate = self
     }
 
-    // No deinit teardown needed: `navigationDelegate` is weak (zeroes automatically), and
-    // the successor's init does remove-then-add on the script handler.
+    // No deinit teardown: a bridge still on its web view is retained by the user content
+    // controller, so `deinit` cannot be where it leaves. The owner takes it off with `detach()`;
+    // a successor's init does remove-then-add on the script handlers anyway.
+
+    /// Takes the bridge off its web view: the script handlers and the navigation delegate.
+    ///
+    /// The user content controller retains its handlers and outlives the web view itself, so a
+    /// bridge left on it stays registered — and alive — after the page is gone. The owner of the
+    /// web view calls this when it lets the web view go; a borrowed warm instance is not
+    /// detached, its handlers are the next show's to replace.
+    func detach() {
+        guard let webView else { return }
+
+        let controller = webView.configuration.userContentController
+        controller.removeScriptMessageHandler(forName: Constants.WebViewBridgeJS.handlerName)
+        controller.removeScriptMessageHandler(forName: Constants.WebViewHTTPErrorJS.handlerName)
+        if webView.navigationDelegate === self {
+            webView.navigationDelegate = nil
+        }
+    }
 
     func send(_ message: BridgeMessage) {
         guard let json = message.jsonString() else {

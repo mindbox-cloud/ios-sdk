@@ -41,7 +41,8 @@ public typealias WebViewLogError = (String) -> Void
 public final class MindboxWebViewFacade: InappWebViewFacadeProtocol {
 
     private let webView: WKWebView
-    private let bridge: MindboxWebBridge
+    /// Internal for the tests that pin its release.
+    let bridge: MindboxWebBridge
     private let warmWebViewLender: InAppWebViewPrewarmServiceProtocol?
 
     /// Main-confined, like every other send on this facade.
@@ -120,6 +121,13 @@ public final class MindboxWebViewFacade: InappWebViewFacadeProtocol {
         // The fetch completion holds only a weak self, so a pending request can outlive
         // the facade; cancel it so it can never resume work against a reused webView.
         fetchTask?.cancel()
+        // An owned web view goes with the facade, but its user content controller keeps the
+        // script handlers — and the bridge with them — past the web view itself: the bridge is
+        // taken off here. A borrowed warm instance keeps its handlers for the prewarm's monitor;
+        // the next show's bridge replaces them.
+        if warmWebViewLender == nil {
+            bridge.detach()
+        }
     }
 
     public func makeView() -> UIView {
