@@ -120,9 +120,7 @@ final class TransparentView: UIView {
         setupTimeoutTimer()
 
         facade?.loadHTML(baseUrl: baseUrl, contentUrl: contentUrl) { [weak self] in
-            self?.delegate?.closeLoadFailedWebViewVC(
-                reason: "[WebView] Failed to load HTML content from baseUrl=\(baseUrl), contentUrl=\(contentUrl)"
-            )
+            self?.delegate?.closeLoadFailedWebViewVC(reason: "Failed to fetch page HTML")
         }
     }
 
@@ -366,10 +364,9 @@ extension TransparentView: WebBridgeNavigationDelegate {
             // anyway; the flag above lets that timeout report the real category. After
             // `init` the timeout is already cancelled, so a give-up here (a post-load
             // navigation dropped the bridge) is the only signal left — close now, else the
-            // in-app stays up with a dead bridge. The give-up flag makes this report
-            // webview_presentation_failed, matching the pre-refactor behavior.
+            // in-app stays up with a dead bridge, reported as webview_presentation_failed.
             if self.hasReceivedInit {
-                self.delegate?.closeTimeoutWebViewVC()
+                self.delegate?.closeBridgeLostWebViewVC()
             }
         })
     }
@@ -410,7 +407,7 @@ extension TransparentView: WebBridgeNavigationDelegate {
     func webBridge(_ bridge: MindboxWebBridge, didFailProvisionalNavigation url: URL?, error: any Error) {
         Logger.common(message: "[WebView] WKNavigationDelegate: Loading error \(error.localizedDescription)", category: .webViewInAppMessages)
         delegate?.closeLoadFailedWebViewVC(
-            reason: "[WebView] WKNavigation loading failed for URL \(url?.absoluteString ?? "unknown"): \(error.localizedDescription)"
+            reason: "Page failed to load: \((error as NSError).code) \(error.localizedDescription)"
         )
     }
     
