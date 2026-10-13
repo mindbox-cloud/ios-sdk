@@ -130,6 +130,18 @@ struct EmbeddedBlockWebViewPageTests {
         #expect(registry.count == 1)
     }
 
+    @Test("A booted page lets the markup kept for the retry go, once")
+    func bootedPageReleasesTheRetainedMarkup() {
+        let bed = PageBed()
+
+        #expect(bed.facade.retainedContentReleases == 0)
+
+        bed.receive(.pageRequest(.ready))
+        bed.receive(.pageRequest(.ready))
+
+        #expect(bed.facade.retainedContentReleases == 1)
+    }
+
     @Test("The page's question reaches the block and the answer goes back to it")
     func pageQuestionReachesTheBlock() throws {
         let bed = PageBed()
