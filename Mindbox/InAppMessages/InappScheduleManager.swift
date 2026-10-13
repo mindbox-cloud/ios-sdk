@@ -176,7 +176,7 @@ internal extension InappScheduleManager {
 
             winner.holdsSlot = winner.holdsSlot || reservation == .granted
             self.inappsByPresentationTime[presentationTime] = [winner]
-            Logger.common(message: "[InappScheduleManager] \(winner.inapp.inAppId) waits for the foreground with its slot taken",
+            Logger.common(message: "[InappScheduleManager] \(winner.inapp.inAppId) waits for the foreground",
                           level: .debug, category: .inAppMessages)
         }
     }
