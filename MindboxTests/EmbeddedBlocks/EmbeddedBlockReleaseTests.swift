@@ -90,6 +90,57 @@ struct EmbeddedBlockReleaseTests {
         chain.expectReleased()
     }
 
+    @Test("A block reloaded many times in a row is released, every dropped page with it")
+    func blockReloadedInAStormIsReleased() async {
+        let chain = Chain()
+
+        await chain.exercise { block in
+            block.attach()
+            await block.waitUntilLoaded()
+            for _ in 0..<10 {
+                block.view.reload()
+                await settle(0.05)
+            }
+            await settle(0.5)
+        }
+
+        chain.expectReleased()
+        #expect(chain.pagesBuilt == 11)
+    }
+
+    @Test("A block let go with a data push still unconfirmed is released whole")
+    func blockLetGoDuringADataPushIsReleased() async {
+        let chain = Chain()
+
+        await chain.exercise { block in
+            block.attach()
+            await block.waitUntilLoaded()
+            chain.pushNewData()
+            await settle(0.5)
+        }
+
+        chain.expectReleased()
+        // The same page was told about its data, not rebuilt.
+        #expect(chain.pagesBuilt == 1)
+    }
+
+    @Test("A block that went to the background and came back is released whole")
+    func blockAfterBackgroundRoundTripIsReleased() async {
+        let chain = Chain()
+
+        await chain.exercise { block in
+            block.attach()
+            await block.waitUntilLoaded()
+            NotificationCenter.default.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
+            await settle(0.2)
+            NotificationCenter.default.post(name: UIApplication.willEnterForegroundNotification, object: nil)
+            NotificationCenter.default.post(name: UIApplication.didBecomeActiveNotification, object: nil)
+            await settle(0.2)
+        }
+
+        chain.expectReleased()
+    }
+
     @Test("Blocks created and dropped in a row leave nothing behind")
     func repeatedBlocksLeaveNothingBehind() async {
         let chain = Chain()
@@ -153,7 +204,9 @@ private final class Chain {
     }
 
     private let pageRegistry = MindboxWebPageRegistry()
-    private let resolver: EmbeddedBlockResolverMock
+    let resolver: EmbeddedBlockResolverMock
+    /// The registry's own center: a new config is announced here, nothing else hears it.
+    let center = NotificationCenter()
     private let placeRegistry: EmbeddedBlockPlaceRegistry
     private var lastPage: EmbeddedBlockWebViewPage?
     private(set) var pagesBuilt = 0
@@ -165,7 +218,7 @@ private final class Chain {
         resolver = EmbeddedBlockResolverMock(resolution: .content(Self.content(reports: reports)))
         placeRegistry = EmbeddedBlockPlaceRegistry(resolver: resolver,
                                                    budget: InappShowBudgetMock(),
-                                                   notificationCenter: NotificationCenter(),
+                                                   notificationCenter: center,
                                                    fetchEmbeddedPlaces: { $0(nil) })
     }
 
@@ -226,8 +279,21 @@ private final class Chain {
         #expect(pageRegistry.count == 0)
     }
 
+    /// The same page with new params: what a changed config pushes into a live page.
+    func pushNewData() {
+        var content = Self.content(reports: true)
+        content = EmbeddedBlockWebContent(inAppId: content.inAppId,
+                                          baseUrl: content.baseUrl,
+                                          contentUrl: content.contentUrl,
+                                          frequency: content.frequency,
+                                          tags: content.tags,
+                                          params: ["pushed": .bool(true)])
+        resolver.resolution = .content(content)
+        center.post(name: .mobileConfigDownloaded, object: nil)
+    }
+
     /// A page served from a `data:` URL that reports one rendered item on its own, or nothing.
-    private static func content(reports: Bool) -> EmbeddedBlockWebContent {
+    static func content(reports: Bool) -> EmbeddedBlockWebContent {
         let report = """
         <script>
         var message = {version: 1, type: "request", action: "contentRendered",
