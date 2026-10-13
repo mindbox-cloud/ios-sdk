@@ -10,24 +10,37 @@ import Foundation
 import QuartzCore
 import UIKit
 
-/// A stopwatch that only counts time while the app is in the foreground.
-/// Background time (between `didEnterBackground` and `willEnterForeground`) is excluded from `elapsed`.
+/// A stopwatch that only counts time while somebody could be looking: the app is in the foreground
+/// and the owner has not suspended it. Background time — from `didEnterBackground`, or from a birth
+/// in the background, until the foreground: `willEnterForeground`, or `didBecomeActive` when that
+/// one was missed — and suspended time are excluded from `elapsed`, and an overlap of the two is
+/// excluded once: the stopwatch is either running or not. Main thread only: the state at birth is
+/// read from `UIApplication`.
 final class ForegroundStopwatch {
     private let now: () -> CFTimeInterval
-    private let startTime: CFTimeInterval
-    private var totalBackgroundDuration: CFTimeInterval = 0
-    private var backgroundEntryTime: CFTimeInterval?
+
+    /// Running time settled so far; the open run, if any, is added on top.
+    private var accumulated: CFTimeInterval = 0
+    private var runningSince: CFTimeInterval?
+
+    private var isInBackground = false
+    private var isSuspended = false
 
     private var bgObserver: NSObjectProtocol?
     private var fgObserver: NSObjectProtocol?
+    private var activeObserver: NSObjectProtocol?
 
     private let notificationCenter: NotificationCenter
 
     init(notificationCenter: NotificationCenter = .default,
-         now: @escaping () -> CFTimeInterval = { CACurrentMediaTime() }) {
+         now: @escaping () -> CFTimeInterval = { CACurrentMediaTime() },
+         isInBackground: () -> Bool = { UIApplication.shared.applicationState == .background }) {
         self.notificationCenter = notificationCenter
         self.now = now
-        self.startTime = now()
+        // Born in the background — an answer that landed while the app was away — the count waits
+        // for the foreground; the notifications only report changes, not the state at birth.
+        self.isInBackground = isInBackground()
+        self.runningSince = self.isInBackground ? nil : now()
 
         bgObserver = notificationCenter.addObserver(
             forName: UIApplication.didEnterBackgroundNotification,
@@ -35,35 +48,72 @@ final class ForegroundStopwatch {
             queue: .main
         ) { [weak self] _ in
             guard let self else { return }
-            self.backgroundEntryTime = self.now()
+            self.isInBackground = true
+            self.settle()
         }
 
+        let foreground: (Notification) -> Void = { [weak self] _ in
+            guard let self else { return }
+            self.isInBackground = false
+            self.settle()
+        }
         fgObserver = notificationCenter.addObserver(
             forName: UIApplication.willEnterForegroundNotification,
             object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            guard let self, let entryTime = self.backgroundEntryTime else { return }
-            self.totalBackgroundDuration += self.now() - entryTime
-            self.backgroundEntryTime = nil
-        }
+            queue: .main,
+            using: foreground
+        )
+        // The state still reads the background while `willEnterForeground` is being delivered, and
+        // an observer added during that delivery misses it. A stopwatch born inside it — a delayed
+        // answer released on the return builds its page there — opens its run here instead.
+        activeObserver = notificationCenter.addObserver(
+            forName: UIApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: .main,
+            using: foreground
+        )
     }
 
-    /// Elapsed foreground-only time since the stopwatch was created.
+    /// Elapsed running time since the stopwatch was created.
     var elapsed: TimeInterval {
-        var currentBackgroundDuration = totalBackgroundDuration
-        if let entryTime = backgroundEntryTime {
-            currentBackgroundDuration += now() - entryTime
-        }
-        return now() - startTime - currentBackgroundDuration
+        accumulated + (runningSince.map { now() - $0 } ?? 0)
     }
 
-    /// Stops the stopwatch and removes notification observers.
+    /// Stops the count until `resume()`: nobody is looking at what is being measured.
+    func suspend() {
+        isSuspended = true
+        settle()
+    }
+
+    /// Resumes the count after `suspend()`; on a running stopwatch it changes nothing.
+    func resume() {
+        isSuspended = false
+        settle()
+    }
+
+    /// Removes the notification observers once the reading is taken. The count itself is not
+    /// frozen — `suspend()` is for that — so read `elapsed` before calling this.
     func stop() {
         if let bgObserver { notificationCenter.removeObserver(bgObserver) }
         if let fgObserver { notificationCenter.removeObserver(fgObserver) }
+        if let activeObserver { notificationCenter.removeObserver(activeObserver) }
         bgObserver = nil
         fgObserver = nil
+        activeObserver = nil
+    }
+
+    /// Brings the open run in line with the gates: opens one when both are clear, closes it otherwise.
+    private func settle() {
+        let shouldRun = !isInBackground && !isSuspended
+
+        if shouldRun {
+            if runningSince == nil {
+                runningSince = now()
+            }
+        } else if let runningSince {
+            accumulated += now() - runningSince
+            self.runningSince = nil
+        }
     }
 
     deinit {

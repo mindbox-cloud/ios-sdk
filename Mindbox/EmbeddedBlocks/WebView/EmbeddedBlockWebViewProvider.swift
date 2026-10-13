@@ -44,9 +44,9 @@ final class EmbeddedBlockWebViewProvider {
 
     private var content: EmbeddedBlockWebContent?
 
-    private var isStarted = false
+    private(set) var isStarted = false
 
-    private var isPaused = false
+    private(set) var isPaused = false
 
     private var outcome: EmbeddedBlockState = .loading
 
@@ -79,7 +79,7 @@ final class EmbeddedBlockWebViewProvider {
 
     private var ackBudget: EmbeddedBlockAckBudget
 
-    private var pendingResolution: (resolution: EmbeddedBlockResolution, processingDuration: TimeInterval)?
+    private(set) var pendingResolution: (resolution: EmbeddedBlockResolution, processingDuration: TimeInterval)?
 
     init(placeSystemName: String,
          registry: EmbeddedBlockPlaceRegistering,
@@ -115,6 +115,7 @@ final class EmbeddedBlockWebViewProvider {
         isStarted = true
         isPaused = false
         page?.isUserPresent = true
+        presentationStopwatch.resume()
 
         failures.flushHeld()
 
@@ -156,6 +157,9 @@ final class EmbeddedBlockWebViewProvider {
         // The outcome is deliberately not reset: otherwise every pass of the block across the screen
         // would cost a full reload.
         suspendDataPushAck()
+        // The show's time stops with the block: it left the window or the host hid it. The background
+        // is not a stop — the stopwatch excludes it on its own.
+        presentationStopwatch.suspend()
         // The page stays alive off screen, so it has to be told that nobody is looking.
         page?.isUserPresent = false
     }
@@ -474,7 +478,7 @@ final class EmbeddedBlockWebViewProvider {
                         isBlockOnScreen: isStarted)
     }
 
-    private var isAttemptAlive: Bool {
+    var isAttemptAlive: Bool {
         outcome == .loading || outcome == .ready
     }
 
@@ -560,13 +564,4 @@ final class EmbeddedBlockWebViewProvider {
                                              timeToDisplay: timeToDisplay),
                                    at: placeSystemName)
     }
-}
-
-// MARK: - The registry's view of the block
-
-extension EmbeddedBlockWebViewProvider: EmbeddedBlockPlaceHandling {
-
-    var isActive: Bool { isStarted }
-
-    var holdsAnAttempt: Bool { (isStarted || isPaused) && (isAttemptAlive || pendingResolution?.resolution.content != nil) }
 }
