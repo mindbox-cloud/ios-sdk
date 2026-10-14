@@ -87,7 +87,7 @@ struct EmbeddedBlockDeferredAnswers {
 
         guard isAttemptAlive, let unseen = contentAwaitingTheUser else { return nil }
 
-        park(unseen.landedOffScreen(), overPageOf: nil, timedBy: makeStopwatch)
+        park(unseen, overPageOf: nil, timedBy: makeStopwatch)
         return unseen
     }
 

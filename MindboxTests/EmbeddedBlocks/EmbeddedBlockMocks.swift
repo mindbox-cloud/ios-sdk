@@ -842,8 +842,7 @@ final class EmbeddedBlockTestBed: EmbeddedBlockSessionRig {
         EmbeddedBlockPlaceAnswer(resolution: resolution,
                                  processingDuration: 0,
                                  sessionEpoch: resolver.sessionEpoch,
-                                 isOperationTriggered: false,
-                                 isAskedOffScreen: false)
+                                 isOperationTriggered: false)
     }
 
     func deliverSamePageWithNewData(_ marker: String = "fresh") {

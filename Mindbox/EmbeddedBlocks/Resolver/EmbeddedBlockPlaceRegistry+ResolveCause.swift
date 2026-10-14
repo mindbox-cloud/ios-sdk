@@ -14,7 +14,6 @@ extension EmbeddedBlockPlaceRegistry {
         var trigger: ApplicationEvent?
         var includesNonOperation: Bool
         var newSessionAskedAt: TimeInterval?
-        var isAskedOffScreen = false
     }
 
     enum ResolveCause {
@@ -53,12 +52,6 @@ extension EmbeddedBlockPlaceRegistry {
             }
 
             return newSessionAskedAt != nil
-        }
-
-        var wasQueuedOffScreen: Bool {
-            guard case .queued(let queued) = self else { return false }
-
-            return queued.isAskedOffScreen
         }
 
         var queuesWhenBusy: Bool {

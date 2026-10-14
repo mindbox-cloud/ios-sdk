@@ -140,7 +140,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
     }
 
     func bringOnScreen(_ answer: EmbeddedBlockPlaceAnswer, at place: String) -> EmbeddedBlockPlaceAnswer? {
-        guard answer.isAskedOffScreen, let content = answer.resolution.content else { return answer }
+        guard let content = answer.resolution.content else { return answer }
 
         switch inItsSession(answer, { $0.placeShownInappId[place] == content.inAppId }) {
         case nil: return nil
@@ -230,8 +230,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
             }
             queuedInvalidations[place] = QueuedInvalidation(trigger: cause.trigger ?? queued?.trigger,
                                                             includesNonOperation: cause.includesNonOperation || queued?.includesNonOperation == true,
-                                                            newSessionAskedAt: [queued?.newSessionAskedAt, newSessionAskedAt].compactMap { $0 }.min(),
-                                                            isAskedOffScreen: isOffScreen || queued?.isAskedOffScreen == true)
+                                                            newSessionAskedAt: [queued?.newSessionAskedAt, newSessionAskedAt].compactMap { $0 }.min())
 
             Logger.common(message: "[EmbeddedBlock] Place '\(place)': \(cause.logDescription) landed mid-resolve — queued for the pass after",
                           category: .embeddedBlocks)
@@ -240,7 +239,6 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
 
         resolvingPlaces.insert(place)
         let waitedForThePassInFlight = cause.newSessionAskedAt.map { now() - $0 } ?? 0
-        let isAskedOffScreen = isOffScreen || cause.wasQueuedOffScreen
         let askedInSession = SessionTemporaryStorage.shared.ledger.sessionEpoch
 
         resolver.resolve(place, trigger: cause.trigger) { [weak self] resolution, processingDuration, sessionEpoch in
@@ -251,8 +249,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
             let answer = EmbeddedBlockPlaceAnswer(resolution: resolution,
                                                   processingDuration: waitedForThePassInFlight + processingDuration,
                                                   sessionEpoch: sessionEpoch,
-                                                  isOperationTriggered: !cause.includesNonOperation && !appearedMidResolve,
-                                                  isAskedOffScreen: isAskedOffScreen)
+                                                  isOperationTriggered: !cause.includesNonOperation && !appearedMidResolve)
             self.handle(self.asTheQueuedNewSessionAsk(answer, askedInSession: askedInSession, at: place) ?? answer, at: place)
 
             if let queued = self.queuedInvalidations.removeValue(forKey: place) {
@@ -273,8 +270,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         return EmbeddedBlockPlaceAnswer(resolution: answer.resolution,
                                         processingDuration: now() - newSessionAskedAt,
                                         sessionEpoch: answer.sessionEpoch,
-                                        isOperationTriggered: false,
-                                        isAskedOffScreen: queued.isAskedOffScreen)
+                                        isOperationTriggered: false)
     }
 
     /// A winner with `delayTime` waits like an overlay in the schedule queue and the blocks stand their wait
@@ -355,7 +351,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         case false? where !hasActiveBlocks(place):
             Logger.common(message: "[EmbeddedBlock] Place '\(place)': in-app \(content.inAppId) answered while no block of the place is started — handed over without a slot, taken when a block brings it on screen",
                           category: .embeddedBlocks)
-            deliver(answer.landedOffScreen(), at: place)
+            deliver(answer, at: place)
         case false?:
             reserveSlot(for: content, of: answer, at: place)
         }

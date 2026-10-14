@@ -548,7 +548,6 @@ struct EmbeddedBlockPlaceRegistryTests {
 
         #expect(rig.resolver.resolvedPlaces == ["stories"])
         #expect(away.applied == [.content(.stub)])
-        #expect(away.answers.map(\.isAskedOffScreen) == [true])
         #expect(rig.budget.reservations.isEmpty)
 
         let parked = try #require(away.answers.last)
@@ -594,7 +593,7 @@ struct EmbeddedBlockPlaceRegistryTests {
         rig.resolver.sessionEpoch = rig.currentSessionEpoch
         rig.resolver.flush()
 
-        #expect(block.answers.map(\.isAskedOffScreen) == [true])
+        #expect(block.answers.count == 1)
         #expect(rig.budget.reservations.isEmpty)
     }
 
@@ -625,7 +624,6 @@ struct EmbeddedBlockPlaceRegistryTests {
 
         let parked = try #require(block.answers.last)
         #expect(block.applied == [.content(content)])
-        #expect(parked.isAskedOffScreen)
         #expect(rig.budget.reservations.isEmpty)
 
         let brought = rig.registry.bringOnScreen(parked, at: "stories")
@@ -652,7 +650,6 @@ struct EmbeddedBlockPlaceRegistryTests {
 
         let parked = try #require(block.answers.last)
         #expect(block.applied == [.content(.delayed())])
-        #expect(parked.isAskedOffScreen)
         #expect(parked.processingDuration == 4)
         #expect(rig.budget.reservations.isEmpty)
     }
@@ -740,19 +737,20 @@ struct EmbeddedBlockPlaceRegistryTests {
         #expect(brought?.resolution == expected)
     }
 
-    @Test("An answer asked while a block showed the place is brought on screen as it is, touching no slot")
-    func answerAskedOnScreenIsBroughtBackAsItIs() {
+    @Test("An answer asked while a block showed the place asks for the place's slot again when it is brought on screen, keeping its selection time")
+    func answerAskedOnScreenAsksForItsSlotAgainWhenBroughtOnScreen() {
         let rig = Rig()
         let block = BlockFake()
         rig.registry.register(block, place: "stories")
         rig.resolver.processingDuration = 2
         rig.registry.blockAppeared("stories")
-        let reservations = rig.budget.reservations.count
+        #expect(rig.budget.reservedOwners == [.place("stories")])
 
         let brought = rig.registry.bringOnScreen(block.answers[0], at: "stories")
 
+        #expect(brought?.resolution == .content(.stub))
         #expect(brought?.processingDuration == 2)
-        #expect(rig.budget.reservations.count == reservations)
+        #expect(rig.budget.reservedOwners == [.place("stories"), .place("stories")])
     }
 
     @Test("A second block of the place, back on screen with an answer asked off screen, takes no new slot for the in-app the first one already shows")
@@ -1511,8 +1509,7 @@ struct EmbeddedBlockPlaceRegistryTests {
         let answer = EmbeddedBlockPlaceAnswer(resolution: .content(.stub),
                                               processingDuration: 0,
                                               sessionEpoch: rig.currentSessionEpoch,
-                                              isOperationTriggered: false,
-                                              isAskedOffScreen: false)
+                                              isOperationTriggered: false)
         if unseen == .shownInItsSession {
             SessionTemporaryStorage.shared.$ledger.mutate { $0.placeShownInappId["stories"] = EmbeddedBlockWebContent.stub.inAppId }
         }

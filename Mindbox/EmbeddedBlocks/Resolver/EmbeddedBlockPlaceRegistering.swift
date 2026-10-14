@@ -18,8 +18,6 @@ struct EmbeddedBlockPlaceAnswer {
 
     let isOperationTriggered: Bool
 
-    let isAskedOffScreen: Bool
-
     func with(_ resolution: EmbeddedBlockResolution) -> EmbeddedBlockPlaceAnswer {
         copy(resolution: resolution)
     }
@@ -28,23 +26,16 @@ struct EmbeddedBlockPlaceAnswer {
         copy(processingDuration: processingDuration)
     }
 
-    func landedOffScreen() -> EmbeddedBlockPlaceAnswer {
-        copy(isAskedOffScreen: true)
-    }
-
     func replacing(_ waiting: EmbeddedBlockPlaceAnswer) -> EmbeddedBlockPlaceAnswer {
-        copy(processingDuration: waiting.processingDuration,
-             isAskedOffScreen: isAskedOffScreen || waiting.isAskedOffScreen)
+        copy(processingDuration: waiting.processingDuration)
     }
 
     private func copy(resolution: EmbeddedBlockResolution? = nil,
-                      processingDuration: TimeInterval? = nil,
-                      isAskedOffScreen: Bool? = nil) -> EmbeddedBlockPlaceAnswer {
+                      processingDuration: TimeInterval? = nil) -> EmbeddedBlockPlaceAnswer {
         EmbeddedBlockPlaceAnswer(resolution: resolution ?? self.resolution,
                                  processingDuration: processingDuration ?? self.processingDuration,
                                  sessionEpoch: sessionEpoch,
-                                 isOperationTriggered: isOperationTriggered,
-                                 isAskedOffScreen: isAskedOffScreen ?? self.isAskedOffScreen)
+                                 isOperationTriggered: isOperationTriggered)
     }
 }
 
