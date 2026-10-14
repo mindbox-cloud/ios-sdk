@@ -1989,6 +1989,57 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.accounting.shows.map(\.timeToDisplay) == [2.75, 1])
     }
 
+    @Test("Answers a new session gives for the same in-app one after another while the block is off screen keep the selection time of the first, as on Android; an answer for another in-app keeps its own",
+          arguments: [true, false])
+    func answersParkedInOneNewSessionKeepTheFirstSelectionTime(isSameInapp: Bool) {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.provider.stop()
+        bed.expireSession()
+        bed.resolver.sessionEpoch = bed.currentSessionEpoch
+        let later: EmbeddedBlockWebContent = isSameInapp ? .stub : .other
+
+        bed.provider.apply(bed.answer(.content(.stub)).with(processingDuration: 0.5))
+        bed.provider.apply(bed.answer(.content(later)).with(processingDuration: 0.05))
+        bed.resolver.isDeferred = true
+        bed.provider.start()
+        bed.clock.advance(0.25)
+        bed.page?.reportRendered(1)
+
+        #expect(bed.accounting.shownIds.last == later.inAppId)
+        #expect(bed.accounting.shows.last?.timeToDisplay == (isSameInapp ? 0.75 : 0.3))
+    }
+
+    @Test("An answer parked while the block was off screen counts in its timeToDisplay the time the block is back on screen between a return and the end of its session check, and not the time it leaves again before the check ends",
+          arguments: [true, false])
+    func answerParkedBeforeTheReturnCountsTheCheckOnScreen(isSamePage: Bool) {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.provider.stop()
+        bed.expireSession()
+        bed.resolver.sessionEpoch = bed.currentSessionEpoch
+        bed.provider.apply(bed.answer(.content(isSamePage ? .stub : .other)).with(processingDuration: 2))
+        bed.enterBackground()
+        bed.clock.advance(60)
+        bed.returnToApp()
+        bed.resolver.isDeferred = true
+
+        bed.provider.start()
+        bed.clock.advance(0.75)
+        bed.provider.stop()
+        bed.clock.advance(30)
+        bed.provider.start()
+        bed.clock.advance(0.5)
+        bed.finishSessionCheck()
+        bed.clock.advance(0.25)
+        bed.page?.reportRendered(1)
+
+        #expect(bed.pageFactory.pages.count == (isSamePage ? 1 : 2))
+        #expect(bed.accounting.shows.last?.timeToDisplay == 3.5)
+    }
+
     @Test("A new session's clock restarted on screen stops while the block is off screen before the page redraws")
     func newSessionClockStopsWhileTheBlockIsOffScreen() {
         let bed = EmbeddedBlockTestBed()
