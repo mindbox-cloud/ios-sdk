@@ -29,7 +29,17 @@ struct EmbeddedBlockDeferredAnswers {
 
     private var parked: EmbeddedBlockPlaceAnswer?
 
-    var isStartAwaitingSessionCheck = false
+    private var parkedTimeOnScreen: ForegroundStopwatch?
+
+    var isStartAwaitingSessionCheck = false {
+        didSet {
+            if isStartAwaitingSessionCheck {
+                parkedTimeOnScreen?.resume()
+            } else {
+                parkedTimeOnScreen?.suspend()
+            }
+        }
+    }
 
     var isHolding: Bool { heldAnswer != nil || isPageEmpty }
 
@@ -66,26 +76,37 @@ struct EmbeddedBlockDeferredAnswers {
         return held
     }
 
-    mutating func park(_ answer: EmbeddedBlockPlaceAnswer) {
+    mutating func park(_ answer: EmbeddedBlockPlaceAnswer, overPageOf pageSession: Int?, timedBy makeStopwatch: () -> ForegroundStopwatch) {
+        if let earlier = parked, let pageSession, answer.sessionEpoch > pageSession, earlier.sessionEpoch == answer.sessionEpoch,
+           let inAppId = answer.resolution.content?.inAppId, earlier.resolution.content?.inAppId == inAppId {
+            parked = answer.replacing(earlier)
+            return
+        }
+
         parked = answer
+        parkedTimeOnScreen = makeStopwatch()
+        if !isStartAwaitingSessionCheck {
+            parkedTimeOnScreen?.suspend()
+        }
     }
 
     mutating func dropParked() {
         parked = nil
+        parkedTimeOnScreen = nil
     }
 
     mutating func takeParked(unlessEndedIn ledger: InappSessionLedger) -> EmbeddedBlockPlaceAnswer? {
-        defer { parked = nil }
+        defer { dropParked() }
 
         guard let parked, !ledger.hasEnded(parked.sessionEpoch) else { return nil }
 
-        return parked
+        return parked.with(processingDuration: parked.processingDuration + (parkedTimeOnScreen?.elapsed ?? 0))
     }
 
     var parkedCollapse: EmbeddedBlockPlaceAnswer? { parked?.resolution.content == nil ? parked : nil }
 
     mutating func reset() {
-        parked = nil
+        dropParked()
         isStartAwaitingSessionCheck = false
     }
 }

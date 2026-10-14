@@ -234,7 +234,7 @@ final class EmbeddedBlockWebViewProvider {
         guard isStarted || isStartPending && isReady && answer.resolution.content == nil else {
             if isPaused {
                 failures.report(failureOf: answer)
-                deferred.park(answer)
+                deferred.park(answer, overPageOf: pageShow?.confirmedEpoch, timedBy: makeStopwatch)
             }
             return
         }
