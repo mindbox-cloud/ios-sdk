@@ -37,38 +37,31 @@ final class InappSessionManager: InappSessionManagerProtocol {
     }
 
     func checkInappSession() {
-        let isSDKInitialized = SessionTemporaryStorage.shared.isInitializationCalled
-        if !isSDKInitialized {
-            return
-        }
+        guard SessionTemporaryStorage.shared.isInitializationCalled else { return }
         
         let now = Date()
-        var updatingInappSession = false
-        
+        let sessionTime = getConfigSession().flatMap { $0 > 0 ? $0 : nil }
+        let previous = $lastTrackVisitTimestamp.exchange(now)
+        let visit = (previous: previous, isExpired: previous.flatMap { previous in sessionTime.map { now.timeIntervalSince(previous) > $0 } } ?? false)
+        Logger.common(message: "[InappSessionManager] Updating lastTrackVisitTimestamp to \(now.asDateTimeWithSeconds).")
+
         defer {
-            if isSDKInitialized {
-                lastTrackVisitTimestamp = now
-                Logger.common(message: "[InappSessionManager] Updating lastTrackVisitTimestamp to \(now.asDateTimeWithSeconds).")
-                
-                if !updatingInappSession {
-                    logNearestInappSessionExpirationTime()
-                }
+            if !visit.isExpired {
+                logNearestInappSessionExpirationTime()
             }
         }
 
-        guard let lastTimestamp = lastTrackVisitTimestamp else {
+        guard visit.previous != nil else {
             Logger.common(message: "[InappSessionManager] lastTrackVisitTimestamp is nil — skip session expiration check.")
             return
         }
         
-        guard let sessionTimeInSeconds = getConfigSession(), sessionTimeInSeconds > 0 else {
+        guard sessionTime != nil else {
             Logger.common(message: "[InappSessionManager] expiredInappTime is nil/invalid or <= 0 — skip session expiration check.")
             return
         }
 
-        let timeBetweenVisitsSeconds = now.timeIntervalSince(lastTimestamp)
-        if timeBetweenVisitsSeconds > Double(sessionTimeInSeconds) {
-            updatingInappSession = true
+        if visit.isExpired {
             Logger.common(message: "──────────────── [New session] ────────────────", level: .info, category: .general)
             Logger.common(message: "[InappSessionManager] Session expired. Need to update session...")
             updateInappSession()

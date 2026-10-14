@@ -55,10 +55,10 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         // and its notification is not coming again.
         refreshEmbeddedPlaces()
 
-        observers.append(notificationCenter.addObserver(forName: .mobileConfigDownloaded,
+        observers.append(notificationCenter.addObserver(forName: .mobileConfigDownloadConcluded,
                                                         object: nil,
-                                                        queue: .main) { [weak self] _ in
-            self?.configApplied()
+                                                        queue: nil) { [weak self] _ in
+            self?.onMain { $0.configConcluded() }
         })
 
         observers.append(notificationCenter.addObserver(forName: .inAppOperationOccurred,
@@ -120,7 +120,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
 
     // MARK: - Channels
 
-    private func configApplied() {
+    private func configConcluded() {
         refreshEmbeddedPlaces()
 
         for place in placesWithActiveBlocks() {

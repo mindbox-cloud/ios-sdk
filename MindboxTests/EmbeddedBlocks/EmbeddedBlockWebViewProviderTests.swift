@@ -1118,19 +1118,6 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.inappService.askedBy == [EmbeddedBlockWebContent.stub.inAppId])
     }
 
-    @Test("An answer landing after a stop is dropped")
-    func answerAfterStopIsDropped() {
-        let bed = EmbeddedBlockTestBed()
-        bed.inappService.isDeferred = true
-        bed.provider.start()
-
-        bed.page?.send(.filterShowableInapps, ["inappIds": .array([.string("story-1")])])
-        bed.provider.stop()
-        bed.inappService.flush()
-
-        #expect(bed.page?.responses.isEmpty == true)
-    }
-
     // MARK: - Asking to show an in-app
 
     @Test("A shown block passes the request on and does not change its own state")

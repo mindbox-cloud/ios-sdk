@@ -91,6 +91,8 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
 
     private let now: () -> TimeInterval
 
+    private let notificationCenter: NotificationCenter
+
     init(
         inAppConfigAPI: InAppConfigurationAPI,
         inAppConfigRepository: InAppConfigurationRepository,
@@ -100,7 +102,8 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         webViewPrewarmService: InAppWebViewPrewarmServiceProtocol,
         inappFilterService: InappFilterProtocol,
         configWaitBudget: TimeInterval = InAppConfigurationManager.defaultConfigWaitBudget,
-        now: @escaping () -> TimeInterval = { CACurrentMediaTime() }
+        now: @escaping () -> TimeInterval = { CACurrentMediaTime() },
+        notificationCenter: NotificationCenter = .default
     ) {
         self.inAppConfigRepository = inAppConfigRepository
         self.inappMapper = inappMapper
@@ -111,6 +114,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         self.inappFilterService = inappFilterService
         self.configWaitBudget = configWaitBudget
         self.now = now
+        self.notificationCenter = notificationCenter
     }
 
     weak var delegate: InAppConfigurationDelegate?
@@ -329,6 +333,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         }
         self.delegate?.didPreparedConfiguration()
         sendNotification(with: configResponse?.settings?.slidingExpiration?.pushTokenKeepalive)
+        notificationCenter.post(name: .mobileConfigDownloadConcluded, object: nil)
     }
 
     private func applyDownloadedConfig(_ config: ConfigResponse, rawData: Data) {

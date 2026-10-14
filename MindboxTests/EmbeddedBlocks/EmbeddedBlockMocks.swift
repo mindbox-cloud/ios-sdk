@@ -668,7 +668,7 @@ final class EmbeddedBlockTestBed {
     }
 
     func announceNewConfig() {
-        center.post(name: .mobileConfigDownloaded, object: nil)
+        center.post(name: .mobileConfigDownloadConcluded, object: nil)
     }
 
     func enterBackground() {

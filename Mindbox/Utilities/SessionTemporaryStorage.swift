@@ -65,7 +65,6 @@ final class SessionTemporaryStorage {
         isUserVisitSaved = false
         lastInappClickedID = nil
         ledger = InappSessionLedger()
-        lastTrackVisit = nil
         inAppSettings = nil
         configSessionExpirationTime = nil
         Logger.common(message: "[SessionTemporaryStorage] Erased.")

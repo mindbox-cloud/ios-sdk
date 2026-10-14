@@ -331,8 +331,8 @@ final class EmbeddedBlockWebViewProvider {
         page.onUnreadableContentReport = { [weak self] in
             self?.handleUnreadableContentReport()
         }
-        page.onShowableQuestion = { [weak self] ids, completion in
-            self?.answerShowableQuestion(ids, completion: completion)
+        page.onShowableQuestion = { [weak self, weak page] ids, completion in
+            self?.answerShowableQuestion(ids, askedFrom: page, completion: completion)
         }
         page.onShowInAppRequest = { [weak self, weak page] inappId, params, completion in
             self?.showInapp(id: inappId, params: params, askedFrom: page, completion: completion)
@@ -443,16 +443,13 @@ final class EmbeddedBlockWebViewProvider {
 
     private func isShowing(_ page: EmbeddedBlockPageHosting?) -> Bool { isStarted && isAttemptAlive && page != nil && self.page === page }
 
-    /// A question shows nothing, so it is answered for as long as the block is running — including
-    /// while it is still loading, which is exactly when a page asks.
-    private func answerShowableQuestion(_ ids: [String], completion: @escaping ([String]) -> Void) {
-        guard isStarted, let content else { return }
+    private func answerShowableQuestion(_ ids: [String], askedFrom page: EmbeddedBlockPageHosting?, completion: @escaping ([String]) -> Void) {
+        guard let content, page != nil, self.page === page else { return }
 
-        let generation = loadGeneration
-        inappService.showableInappIds(among: ids, askedBy: content.inAppId) { [weak self] allowed in
-            guard let self, self.isStarted, self.loadGeneration == generation else { return }
+        inappService.showableInappIds(among: ids, askedBy: content.inAppId) { [weak self, weak page] answer in
+            guard let self, page != nil, self.page === page else { return }
 
-            completion(allowed)
+            completion(answer)
         }
     }
 
