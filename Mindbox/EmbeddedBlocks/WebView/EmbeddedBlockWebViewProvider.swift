@@ -114,7 +114,7 @@ final class EmbeddedBlockWebViewProvider {
         guard !appPresence.isAwaitingSessionCheck else {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': on screen before the return's session check ended — its start waits for the check", category: .embeddedBlocks)
             deferred.isStartAwaitingSessionCheck = true
-            if let collapse = deferred.parkedCollapse(unlessEndedIn: SessionTemporaryStorage.shared.ledger) {
+            if let collapse = deferred.parkedCollapse {
                 take(collapse, isParked: true)
             } else if page != nil, outcome == .empty {
                 onStateChange?(outcome)

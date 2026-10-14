@@ -82,11 +82,7 @@ struct EmbeddedBlockDeferredAnswers {
         return parked
     }
 
-    func parkedCollapse(unlessEndedIn ledger: InappSessionLedger) -> EmbeddedBlockPlaceAnswer? {
-        guard let parked, parked.resolution.content == nil, !ledger.hasEnded(parked.sessionEpoch) else { return nil }
-
-        return parked
-    }
+    var parkedCollapse: EmbeddedBlockPlaceAnswer? { parked?.resolution.content == nil ? parked : nil }
 
     mutating func reset() {
         parked = nil
