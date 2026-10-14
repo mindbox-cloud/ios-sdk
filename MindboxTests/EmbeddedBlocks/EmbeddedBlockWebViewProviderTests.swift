@@ -1185,6 +1185,34 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.resolver.resolveCount == resolvesBefore + 1)
     }
 
+    enum ParkedAnswer: CaseIterable {
+        case empty
+        case anotherPage
+
+        var resolution: EmbeddedBlockResolution { self == .empty ? .empty : .content(.other) }
+    }
+
+    @Test("An answer parked in a session that ended while the user was away is dropped on return: the page stays, and the place's answer decides",
+          arguments: ParkedAnswer.allCases)
+    func parkedAnswerOfAnEndedSessionIsDropped(_ parked: ParkedAnswer) {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.provider.stop()
+        bed.provider.apply(bed.answer(parked.resolution))
+        bed.expireSession()
+        let resolvesBefore = bed.resolver.resolveCount
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.start()
+
+        #expect(states == [.ready])
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.page?.isClosed == false)
+        #expect(bed.resolver.resolveCount == resolvesBefore + 1)
+    }
+
     @Test("A failure that reaches a block off screen is reported at once; only the state waits for the return, and a teardown first loses nothing",
           arguments: [NothingToShow.brokenWinner, .configUnavailable], [true, false])
     func parkedFailureIsReportedOnArrival(_ answer: NothingToShow, isTornDownFirst: Bool) {
@@ -1209,6 +1237,38 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.failureReporter.reasons == answer.reportedFailures)
         #expect(bed.failureReporter.unansweredWaits.count == answer.unansweredWaitReports)
         #expect(states == (isTornDownFirst ? [] : [answer.collapsedState]))
+    }
+
+    @Test("An answer parked in the session a check is ending is dropped on return, like one of a session that has ended")
+    func parkedAnswerOfAnEndingSessionIsDropped() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.provider.stop()
+        bed.provider.apply(bed.answer(.empty))
+        SessionTemporaryStorage.shared.$ledger.mutate { $0.isSessionEnding = true }
+        defer { SessionTemporaryStorage.shared.$ledger.mutate { $0.isSessionEnding = false } }
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.start()
+
+        #expect(states == [.ready])
+        #expect(bed.page?.isClosed == false)
+    }
+
+    @Test("An unavailable config that reaches a block off screen after its session ended is not reported in the session that follows")
+    func parkedUnavailableConfigOfAnEndedSessionIsNotReported() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.provider.stop()
+        let answer = bed.answer(.configUnavailable)
+        bed.expireSession()
+
+        bed.provider.apply(answer)
+
+        #expect(bed.failureReporter.unansweredWaits.isEmpty)
+        #expect(!SessionTemporaryStorage.shared.ledger.placesReportedUnanswered.contains("block-id"))
     }
 
     @Test("Content answered while a collapse is held keeps the block as it is through the next return")

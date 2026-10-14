@@ -81,6 +81,37 @@ struct InappSessionLedgerTests {
         #expect(otherPlace == .new)
     }
 
+    @Test("A show computed in an earlier session is refused and records nothing")
+    func showOfAnEarlierSessionIsStale() {
+        var ledger = InappSessionLedger(sessionEpoch: 3)
+
+        let stale = ledger.recordShow("inapp-1", at: "place", sessionEpoch: 2)
+        let current = ledger.recordShow("inapp-1", at: "place", sessionEpoch: 3)
+
+        #expect(stale == .stale)
+        #expect(current == .new)
+    }
+
+    @Test("A show of the session a check is ending is refused and records nothing")
+    func showOfAnEndingSessionIsStale() {
+        var ledger = InappSessionLedger(sessionEpoch: 3)
+        ledger.isSessionEnding = true
+
+        let ending = ledger.recordShow("inapp-1", at: "place", sessionEpoch: 3)
+
+        #expect(ending == .stale)
+        #expect(ledger.placeShownInappId.isEmpty)
+    }
+
+    @Test("A session has ended once a later one began, and is ending while a check ends it", arguments: [false, true])
+    func sessionEndsWithTheResetOrTheCheckEndingIt(isEnding: Bool) {
+        var ledger = InappSessionLedger(sessionEpoch: 3)
+        ledger.isSessionEnding = isEnding
+
+        #expect(ledger.hasEnded(2))
+        #expect(ledger.hasEnded(3) == isEnding)
+    }
+
     @Test("A silent place is reported once per session")
     func unansweredPlaceIsReportedOnce() {
         var ledger = InappSessionLedger()

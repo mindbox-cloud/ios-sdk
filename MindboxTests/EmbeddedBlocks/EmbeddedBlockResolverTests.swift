@@ -86,6 +86,28 @@ struct EmbeddedBlockResolverTests {
         #expect(answer == .empty)
     }
 
+    @Test("The session the selection was made in reaches the block as the loader stamped it, whether the answer comes from a background thread or from main",
+          arguments: [true, false])
+    func selectionsSessionTravelsToTheBlock(answersFromTheBackground: Bool) async {
+        let stamped = SessionTemporaryStorage.shared.ledger.sessionEpoch + 1
+        let resolver = EmbeddedBlockResolver(load: { _, _, completion in
+            guard answersFromTheBackground else {
+                completion(.content(.stub), 0, stamped)
+                return
+            }
+
+            DispatchQueue.global().async { completion(.content(.stub), 0, stamped) }
+        })
+
+        let delivered: Int = await withCheckedContinuation { continuation in
+            resolver.resolve("promo") { _, _, sessionEpoch in
+                continuation.resume(returning: sessionEpoch)
+            }
+        }
+
+        #expect(delivered == stamped)
+    }
+
     // MARK: - What the selection's answer becomes
 
     private func embeddedInapp(params: [String: JSONValue], isPriority: Bool = false) throws -> InAppTransitionData {

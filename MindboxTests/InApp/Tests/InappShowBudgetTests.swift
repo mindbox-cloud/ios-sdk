@@ -268,6 +268,40 @@ struct InappShowBudgetTests {
         #expect(reservations.isEmpty)
     }
 
+    @Test("The reset stamps the budget with the ledger's new session")
+    func resetStampsTheBudgetWithTheNewSession() {
+        SessionTemporaryStorage.shared.erase()
+
+        #expect(SessionTemporaryStorage.shared.showBudget.sessionEpoch == SessionTemporaryStorage.shared.ledger.sessionEpoch)
+    }
+
+    @Test("A place's reservation of a session that has ended is refused as stale and takes no slot of the current one")
+    func reservationOfAnEndedSessionTakesNothing() {
+        let ended = SessionTemporaryStorage.shared.ledger.sessionEpoch
+        SessionTemporaryStorage.shared.erase()
+
+        let outcome = budget.reserve(.place("stories"), inAppId: "a", isPriority: false, frequency: restricted, inSession: ended)
+
+        #expect(outcome == nil)
+        #expect(reservations.isEmpty)
+    }
+
+    @Test("A place's show of a session that has ended is written to the frequency history only, and a release of it frees nothing")
+    func showOfAnEndedSessionKeepsTheCurrentSessionsCounts() {
+        let ended = SessionTemporaryStorage.shared.ledger.sessionEpoch
+        SessionTemporaryStorage.shared.erase()
+        let current = SessionTemporaryStorage.shared.ledger.sessionEpoch
+        #expect(budget.reserve(.place("stories"), inAppId: "b", isPriority: false, frequency: restricted, inSession: current) == .granted)
+
+        budget.commit(.place("stories"), inAppId: "a", frequency: restricted, inSession: ended)
+        budget.release(.place("stories"), inSession: ended)
+
+        #expect(shownInSession.isEmpty)
+        #expect(reservations[.place("stories")]?.inAppId == "b")
+        #expect(trackingService.trackInAppShownCallCount == 1)
+        #expect(trackingService.saveInappStateChangeCallCount == 1)
+    }
+
     // MARK: - The budget rules
 
     /// In sync with Android, whose config validator turns zero and below into no limit.

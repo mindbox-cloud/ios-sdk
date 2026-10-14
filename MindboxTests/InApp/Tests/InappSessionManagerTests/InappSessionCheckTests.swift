@@ -57,6 +57,7 @@ struct InappSessionCheckTests {
     @Test("Two visits at once after the session expired start one new session: the check that ends it has already taken its visit's time when it resets")
     func concurrentVisitsResetTheSessionOnce() throws {
         manager.lastTrackVisitTimestamp = Date().addingTimeInterval(-2400)
+        let sessionEpoch = SessionTemporaryStorage.shared.ledger.sessionEpoch
         let manager = manager
         var visitAtTheReset: Date?
         coreManager.onDiscard = { visitAtTheReset = manager.lastTrackVisitTimestamp }
@@ -67,6 +68,7 @@ struct InappSessionCheckTests {
         waitForMain()
 
         #expect(coreManager.startEvents == 1)
+        #expect(SessionTemporaryStorage.shared.ledger.sessionEpoch == sessionEpoch + 1)
         let visit = try #require(visitAtTheReset)
         #expect(visit.timeIntervalSinceNow > -60)
     }
@@ -89,10 +91,34 @@ struct InappSessionCheckTests {
         #expect(coreManager.startEvents == 0)
     }
 
+    @Test("A block show recorded after a check has found the session expired, before its reset, is not accounted")
+    func showWhileTheCheckEndsTheSessionIsNotAccounted() {
+        manager.lastTrackVisitTimestamp = Date().addingTimeInterval(-2400)
+        let endingSession = SessionTemporaryStorage.shared.ledger.sessionEpoch
+        let tracker = InAppMessagesTrackerSpyMock()
+        let accountant = InappShowAccountant(tracker: tracker, budget: InappShowBudgetMock())
+        var wasEndingMeanwhile: Bool?
+        coreManager.onDiscard = {
+            wasEndingMeanwhile = SessionTemporaryStorage.shared.ledger.isSessionEnding
+            accountant.recordBlockShow(InappShow(inAppId: "inapp", frequency: .unlimited, tags: nil, timeToDisplay: 1),
+                                       at: "stories",
+                                       sessionEpoch: endingSession)
+        }
+
+        manager.checkInappSession()
+        waitForMain()
+
+        #expect(wasEndingMeanwhile == true)
+        #expect(tracker.trackViewCallCount == 0)
+        #expect(SessionTemporaryStorage.shared.ledger.placeShownInappId.isEmpty)
+        #expect(SessionTemporaryStorage.shared.ledger.isSessionEnding == false)
+    }
+
     @Test("A visit that starts a new session is still the page's track-visit source after the reset")
     func visitThatStartsASessionOutlivesItsReset() async throws {
         manager.lastTrackVisitTimestamp = Date().addingTimeInterval(-2400)
         SessionTemporaryStorage.shared.lastTrackVisit = nil
+        let sessionEpoch = SessionTemporaryStorage.shared.ledger.sessionEpoch
         let link = NSUserActivity(activityType: NSUserActivityTypeBrowsingWeb)
         link.webpageURL = URL(string: "https://test-site.s.mindbox.ru/new-session")
         let trackVisitManager = TrackVisitManager(databaseRepository: DI.injectOrFail(DatabaseRepositoryProtocol.self),
@@ -101,6 +127,7 @@ struct InappSessionCheckTests {
         try trackVisitManager.track(.universalLink(link))
         let payload = try await startPayload()
 
+        #expect(SessionTemporaryStorage.shared.ledger.sessionEpoch == sessionEpoch + 1)
         #expect(payload["trackVisitSource"] == .string(TrackVisitSource.link.rawValue))
         #expect(payload["trackVisitRequestUrl"] == .string("https://test-site.s.mindbox.ru/new-session"))
     }

@@ -398,14 +398,121 @@ struct EmbeddedBlockPlaceRegistryTests {
     func conclusionOffMainDoesNotWaitForMain() {
         let rig = Rig()
         let center = rig.center
+        let sessionEpoch = rig.currentSessionEpoch
         let posted = DispatchSemaphore(value: 0)
 
         DispatchQueue.global().async {
-            center.post(name: .mobileConfigDownloadConcluded, object: nil)
+            center.post(name: .mobileConfigDownloadConcluded, object: nil, userInfo: [Constants.Notification.sessionEpoch: sessionEpoch])
             posted.signal()
         }
 
         #expect(posted.wait(timeout: .now() + 2) == .success)
+    }
+
+    @Test("A block that came back while an earlier session's pass flew is asked for again once that pass is dropped")
+    func answerOlderThanTheConcludedDownloadIsAskedAgain() {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+
+        block.isActive = false
+        rig.expireSession()
+        rig.announceNewConfig(sessionEpoch: rig.currentSessionEpoch)
+        block.isActive = true
+        rig.registry.blockAppeared("stories")
+        rig.resolver.flush()
+        #expect(rig.resolver.resolveCount == 2)
+        #expect(block.answers.isEmpty)
+
+        rig.resolver.sessionEpoch = rig.currentSessionEpoch
+        rig.resolver.flush()
+
+        #expect(rig.resolver.resolveCount == 2)
+        #expect(block.answers.map(\.sessionEpoch) == [rig.currentSessionEpoch])
+    }
+
+    @Test("An answer of the session a check is ending reaches no block and touches no slot", arguments: SlotAnswer.allCases)
+    func answerOfAnEndingSessionIsDropped(_ answer: SlotAnswer) {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        rig.resolver.resolution = answer.resolution
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+        SessionTemporaryStorage.shared.$ledger.mutate { $0.isSessionEnding = true }
+        defer { SessionTemporaryStorage.shared.$ledger.mutate { $0.isSessionEnding = false } }
+
+        rig.resolver.flush()
+
+        #expect(block.answers.isEmpty)
+        #expect(rig.budget.callSessions.isEmpty)
+    }
+
+    enum SlotAnswer: CaseIterable {
+        case empty
+        case content
+
+        var resolution: EmbeddedBlockResolution { self == .empty ? .empty : .content(.stub) }
+    }
+
+    @Test("An answer of an earlier session reaches no block and touches no slot", arguments: SlotAnswer.allCases)
+    func answerOfAnEarlierSessionIsDropped(_ answer: SlotAnswer) {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        rig.resolver.resolution = answer.resolution
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+
+        rig.expireSession()
+        rig.resolver.flush()
+
+        #expect(block.answers.isEmpty)
+        #expect(rig.budget.reservations.isEmpty)
+        #expect(rig.budget.releases.isEmpty)
+    }
+
+    @Test("An answer takes or gives back its place's slot in the session it was computed in", arguments: SlotAnswer.allCases)
+    func slotIsTakenInTheAnswersSession(_ answer: SlotAnswer) {
+        let rig = Rig()
+        rig.resolver.resolution = answer.resolution
+        let answersSession = rig.currentSessionEpoch + 1
+        rig.resolver.sessionEpoch = answersSession
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+
+        rig.registry.blockAppeared("stories")
+
+        #expect(rig.budget.callSessions == [answersSession])
+        #expect(block.answers.count == 1)
+    }
+
+    @Test("Content whose session ends before its slot is taken reaches no block, rather than emptying the place")
+    func contentOfASessionEndedBeforeItsSlotIsDropped() {
+        let rig = Rig()
+        rig.budget.isOfAnEndedSession = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+
+        rig.registry.blockAppeared("stories")
+
+        #expect(block.answers.isEmpty)
+    }
+
+    @Test("An answer from the config the last download left is not asked for again")
+    func answerOfTheConcludedDownloadIsFinal() {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+
+        rig.announceNewConfig()
+        rig.resolver.flush()
+
+        #expect(rig.resolver.resolveCount == 1)
+        #expect(block.applied == [.content(.stub)])
     }
 
     @Test("An answer tells its blocks whether an operation asked for it")
@@ -549,6 +656,42 @@ struct EmbeddedBlockPlaceRegistryTests {
         rig.delayScheduler.fireAll()
 
         #expect(block.applied.count == 1)
+    }
+
+    @Test("A winner a new session picks again waits its whole delay again, as at cold start")
+    func delayedWinnerArrivesWithItsNewestSession() {
+        let rig = Rig()
+        rig.resolver.resolution = .content(.delayed("00:00:05"))
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+
+        rig.expireSession()
+        rig.resolver.sessionEpoch = rig.currentSessionEpoch
+        rig.announceNewConfig()
+
+        #expect(rig.delayScheduler.armCount == 2)
+        #expect(rig.delayScheduler.lastDelay == 5)
+
+        rig.delayScheduler.fireAll()
+
+        #expect(block.answers.map(\.sessionEpoch) == [rig.currentSessionEpoch])
+    }
+
+    @Test("A delay of an earlier session that runs out delivers nothing and marks nothing")
+    func delayOfAnEarlierSessionDeliversNothing() {
+        let rig = Rig()
+        rig.resolver.resolution = .content(.delayed())
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+
+        rig.expireSession()
+        rig.delayScheduler.fireAll()
+
+        #expect(block.applied.isEmpty)
+        #expect(rig.budget.reservations.isEmpty)
+        #expect(SessionTemporaryStorage.shared.ledger.servedPlaceDelays.isEmpty)
     }
 
     @Test("The same winner resolved again after its delay ran out in the background is delivered on return, not delayed again")

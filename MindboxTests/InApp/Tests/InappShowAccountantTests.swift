@@ -113,4 +113,41 @@ struct InappShowAccountantTests {
 
         #expect(tracker.trackViewCallCount == 2)
     }
+
+    @Test("A show from an earlier session's answer sends nothing, records nothing and leaves the place's slot alone")
+    func showOfAnEarlierSessionIsRefused() {
+        let earlier = sessionEpoch
+        SessionTemporaryStorage.shared.erase()
+
+        accountant.recordBlockShow(show(.once(OnceFrequency(kind: .lifetime))), at: "place", sessionEpoch: earlier)
+
+        #expect(tracker.trackViewCallCount == 0)
+        #expect(budget.commits.isEmpty)
+        #expect(budget.releases.isEmpty)
+        #expect(SessionTemporaryStorage.shared.ledger.placeShownInappId.isEmpty)
+    }
+
+    @Test("A new session's show of a counted in-app commits the place's slot again")
+    func newSessionCommitsACountedShowAgain() {
+        let frequency: InappFrequency = .once(OnceFrequency(kind: .session))
+        accountant.recordBlockShow(show(frequency), at: "place", sessionEpoch: sessionEpoch)
+        SessionTemporaryStorage.shared.erase()
+
+        accountant.recordBlockShow(show(frequency), at: "place", sessionEpoch: sessionEpoch)
+
+        #expect(budget.commits == [.init(owner: .place("place"), inAppId: "inapp-1", frequency: frequency),
+                                   .init(owner: .place("place"), inAppId: "inapp-1", frequency: frequency)])
+    }
+
+    @Test("A block show is committed, or its slot given back, in the session it was shown in")
+    func blockShowReachesTheBudgetInItsSession() {
+        let epoch = sessionEpoch
+
+        accountant.recordBlockShow(show(.unlimited), at: "place", sessionEpoch: epoch)
+        accountant.recordBlockShow(show(.unlimited), at: "place", sessionEpoch: epoch)
+
+        #expect(budget.commits.count == 1)
+        #expect(budget.releases == [.place("place")])
+        #expect(budget.callSessions == [epoch, epoch])
+    }
 }
