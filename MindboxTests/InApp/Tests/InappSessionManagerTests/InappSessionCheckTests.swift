@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import QuartzCore
 import Testing
 import class MindboxLogger.Locked
 @_spi(Internal) @testable import Mindbox
@@ -32,6 +33,33 @@ struct InappSessionCheckTests {
         func discardEvents() {
             onDiscard?()
             Thread.sleep(forTimeInterval: 0.2)
+        }
+    }
+
+    private final class AnnouncementSpy {
+        struct Announcement {
+            let sessionEpoch: Int
+            let startedAt: TimeInterval?
+            let startsNewSession: Bool?
+        }
+
+        @Locked private(set) var announcements: [Announcement] = []
+
+        private var observer: NSObjectProtocol?
+
+        init() {
+            observer = NotificationCenter.default.addObserver(forName: .inappSessionChecked, object: nil, queue: nil) { [weak self] notification in
+                let announcement = Announcement(sessionEpoch: SessionTemporaryStorage.shared.ledger.sessionEpoch,
+                                                startedAt: notification.userInfo?[Constants.Notification.sessionCheckStartedAt] as? TimeInterval,
+                                                startsNewSession: notification.userInfo?[Constants.Notification.startsNewSession] as? Bool)
+                self?.$announcements.mutate { $0.append(announcement) }
+            }
+        }
+
+        deinit {
+            if let observer {
+                NotificationCenter.default.removeObserver(observer)
+            }
         }
     }
 
@@ -80,6 +108,55 @@ struct InappSessionCheckTests {
         _ = ran.wait(timeout: .now() + 2)
     }
 
+    @Test("A session check is announced when it ends, after the reset of an expired session, stamped on the monotonic clock",
+          arguments: [true, false])
+    func sessionCheckIsAnnouncedAfterTheReset(isExpired: Bool) throws {
+        manager.lastTrackVisitTimestamp = Date().addingTimeInterval(isExpired ? -2400 : -10)
+        let sessionEpoch = SessionTemporaryStorage.shared.ledger.sessionEpoch
+        let spy = AnnouncementSpy()
+        let checkStarted = CACurrentMediaTime()
+
+        manager.checkInappSession()
+
+        let checkEnded = CACurrentMediaTime()
+        waitForMain()
+        let announcement = try #require(spy.announcements.first)
+        let startedAt = try #require(announcement.startedAt)
+        #expect(spy.announcements.count == 1)
+        #expect(announcement.sessionEpoch == sessionEpoch + (isExpired ? 1 : 0))
+        #expect(announcement.startsNewSession == isExpired)
+        #expect(startedAt >= checkStarted && startedAt <= checkEnded)
+    }
+
+    @Test("A visit that arrives while another check resets the expired session waits for that reset, and both checks are announced only once it is done, in the order they were decided")
+    func concurrentChecksAreAnnouncedAfterTheReset() {
+        manager.lastTrackVisitTimestamp = Date().addingTimeInterval(-2400)
+        let sessionEpoch = SessionTemporaryStorage.shared.ledger.sessionEpoch
+        let spy = AnnouncementSpy()
+        let manager = manager
+        let coreManager = coreManager
+        let secondChecked = DispatchSemaphore(value: 0)
+        var secondCheckedMidReset: Bool?
+        coreManager.onDiscard = {
+            coreManager.onDiscard = nil
+            DispatchQueue.global().async {
+                manager.checkInappSession()
+                secondChecked.signal()
+            }
+            secondCheckedMidReset = secondChecked.wait(timeout: .now() + 0.1) == .success
+        }
+
+        manager.checkInappSession()
+        if secondCheckedMidReset == false {
+            _ = secondChecked.wait(timeout: .now() + 2)
+        }
+        waitForMain()
+
+        #expect(secondCheckedMidReset == false)
+        #expect(spy.announcements.map(\.sessionEpoch) == [sessionEpoch + 1, sessionEpoch + 1])
+        #expect(spy.announcements.map(\.startsNewSession) == [true, false])
+    }
+
     @Test("A check before initialization starts no session")
     func checkBeforeInitializationStartsNoSession() {
         _ = SessionTemporaryStorage.shared.$isInitializationCalled.exchange(false)
@@ -90,6 +167,30 @@ struct InappSessionCheckTests {
         waitForMain()
 
         #expect(coreManager.startEvents == 0)
+    }
+
+    @Test("A check made off the main thread returns while main waits for it: the announcement never makes it wait for main")
+    func checkOffMainDoesNotWaitForMain() {
+        manager.lastTrackVisitTimestamp = Date().addingTimeInterval(-10)
+        let observer = NotificationCenter.default.addObserver(forName: .inappSessionChecked, object: nil, queue: .main) { _ in }
+        defer { NotificationCenter.default.removeObserver(observer) }
+        let manager = manager
+        let mainWaited = DispatchSemaphore(value: 0)
+        var returnedWhileMainWaited = false
+
+        DispatchQueue.main.async {
+            let checked = DispatchSemaphore(value: 0)
+            DispatchQueue.global().async {
+                manager.checkInappSession()
+                checked.signal()
+            }
+            returnedWhileMainWaited = checked.wait(timeout: .now() + 2) == .success
+            mainWaited.signal()
+        }
+        _ = mainWaited.wait(timeout: .now() + 5)
+        waitForMain()
+
+        #expect(returnedWhileMainWaited)
     }
 
     @Test("A block show recorded after a check has found the session expired, before its reset, is not accounted")

@@ -435,6 +435,117 @@ struct EmbeddedBlockPlaceRegistryTests {
         #expect(block.answers.map(\.sessionEpoch) == [rig.currentSessionEpoch])
     }
 
+    @Test("Content answered between a return and the end of a session check that kept the session is handed over once the check ends")
+    func contentInsideTheReturnOfAKeptSessionArrivesAfterTheCheck() {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+        rig.presence.enterBackground()
+        rig.presence.returnToApp()
+        rig.resolver.flush()
+
+        rig.presence.finishSessionCheck()
+
+        #expect(block.applied == [.content(.stub)])
+        #expect(rig.budget.reservedOwners == [.place("stories")])
+    }
+
+    @Test("Of the content answered between a return and the end of its session check, only the newest reaches the block")
+    func onlyTheNewestContentInsideTheReturnArrives() {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+        rig.presence.enterBackground()
+        rig.presence.returnToApp()
+        rig.resolver.flush()
+
+        rig.resolver.resolution = .content(.other)
+        rig.registry.blockAppeared("stories")
+        rig.resolver.flush()
+        rig.presence.finishSessionCheck()
+
+        #expect(block.applied == [.content(.other)])
+    }
+
+    @Test("An answer of nothing between a return and the end of its session check goes out at once, and the content kept before it never follows")
+    func nothingInsideTheReturnOvertakesTheKeptContent() {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+        rig.presence.enterBackground()
+        rig.presence.returnToApp()
+        rig.resolver.flush()
+
+        rig.resolver.resolution = .empty
+        rig.registry.blockAppeared("stories")
+        rig.resolver.flush()
+        #expect(block.applied == [.empty])
+
+        rig.presence.finishSessionCheck()
+
+        #expect(block.applied == [.empty])
+    }
+
+    @Test("An answer of nothing from a session that has ended does not undo the content kept for the end of the return's session check")
+    func staleNothingInsideTheReturnKeepsTheKeptContent() {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+        rig.presence.enterBackground()
+        rig.presence.returnToApp()
+        rig.resolver.flush()
+
+        rig.resolver.resolution = .empty
+        rig.resolver.sessionEpoch = rig.currentSessionEpoch - 1
+        rig.registry.blockAppeared("stories")
+        rig.resolver.flush()
+        rig.presence.finishSessionCheck()
+
+        #expect(block.applied == [.content(.stub)])
+    }
+
+    @Test("Content for a place no block shows is handed over at once between a return and the end of its session check, for the block to park")
+    func contentForAPlaceOffScreenInsideTheReturnIsHandedOver() {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+        rig.presence.enterBackground()
+        rig.presence.returnToApp()
+        block.isActive = false
+
+        rig.resolver.flush()
+
+        #expect(block.applied == [.content(.stub)])
+    }
+
+    @Test("An operation between a return and the end of a session check that kept the session is asked as the operation it is once that check ends, not when a check from before the return ends")
+    func operationInsideTheReturnOfAKeptSessionIsAskedAfterTheCheck() {
+        let rig = Rig()
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.presence.enterBackground()
+        rig.presence.returnToApp()
+
+        let operation = rig.announceOperation()
+        rig.presence.finishSessionCheck(startedAt: rig.presence.clock.now - 1)
+        #expect(rig.resolver.resolveCount == 0)
+
+        rig.presence.finishSessionCheck()
+
+        #expect(rig.resolver.triggers == [operation])
+        #expect(block.answers.map(\.isOperationTriggered) == [true])
+    }
+
     @Test("An answer of the session a check is ending reaches no block and touches no slot", arguments: SlotAnswer.allCases)
     func answerOfAnEndingSessionIsDropped(_ answer: SlotAnswer) {
         let rig = Rig()
@@ -717,6 +828,32 @@ struct EmbeddedBlockPlaceRegistryTests {
         rig.presence.finishSessionCheck()
 
         #expect(block.applied == [.content(.delayed())])
+    }
+
+    @Test("A delay that ran out in the background of a session that ended meanwhile delivers nothing on return, and the new session waits the whole delay")
+    func delayDueFromAnExpiredSessionIsNotDeliveredOnReturn() {
+        let rig = Rig()
+        rig.resolver.resolution = .content(.delayed("00:00:05"))
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+        rig.presence.enterBackground()
+        rig.delayScheduler.fireAll()
+
+        rig.presence.returnToApp()
+        rig.expireSession()
+        rig.presence.finishSessionCheck(startsNewSession: true)
+
+        #expect(block.applied.isEmpty)
+        #expect(rig.budget.reservations.isEmpty)
+        #expect(SessionTemporaryStorage.shared.ledger.servedPlaceDelays.isEmpty)
+
+        rig.resolver.sessionEpoch = rig.currentSessionEpoch
+        rig.announceNewConfig()
+
+        #expect(rig.delayScheduler.armCount == 2)
+        #expect(rig.delayScheduler.lastDelay == 5)
+        #expect(block.applied.isEmpty)
     }
 
     @Test("A block appearing while the place waits out its delay is told content is coming")

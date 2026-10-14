@@ -1176,6 +1176,76 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(withPage.view.intrinsicContentSize.height == 120)
     }
 
+    @Test("A block that enters the window before the return's session check ends spends no wait budget until its content starts")
+    func blockInsideTheReturnWaitsWithoutItsBudget() async {
+        let block = BlockFixture()
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.bed.resolver.isDeferred = true
+        block.goToTheBackgroundAndBack()
+
+        block.attachToWindow()
+        block.expireTimeout()
+        await mainQueueTurn()
+        #expect(delegate.events.isEmpty)
+        #expect(block.bed.failureReporter.unansweredWaits.isEmpty)
+
+        block.bed.finishSessionCheck()
+
+        #expect(block.bed.resolver.resolveCount == 1)
+        #expect(block.waitBudgetBed.scheduler.lastDelay == block.waitBudgetBed.duration)
+    }
+
+    @Test("A loading block whose answer is kept for the return's session check spends no wait budget until the content arrives, through another return or the app inactive after the check",
+          arguments: [true, false])
+    func keptAnswerStandsTheBudgetDown(isActiveWhenTheCheckEnds: Bool) async {
+        let block = BlockFixture()
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.bed.resolver.isDeferred = true
+        block.attachToWindow()
+        await mainQueueTurn()
+        block.goToTheBackgroundAndBack()
+
+        block.bed.resolver.flush()
+        block.expireTimeout()
+        block.goToTheBackgroundAndBack()
+        block.expireTimeout()
+        if !isActiveWhenTheCheckEnds {
+            block.bed.applicationState = .inactive
+            block.bed.finishSessionCheck()
+            block.expireTimeout()
+        }
+        await mainQueueTurn()
+        #expect(delegate.events.isEmpty)
+        #expect(block.bed.failureReporter.unansweredWaits.isEmpty)
+
+        if isActiveWhenTheCheckEnds {
+            block.bed.finishSessionCheck()
+        } else {
+            block.bed.becomeActive()
+        }
+        block.page?.reportRendered(1)
+        await mainQueueTurn()
+
+        #expect(delegate.events == [.loaded])
+        #expect(block.bed.failureReporter.unansweredWaits.isEmpty)
+    }
+
+    @Test("A block whose page is loading keeps its wait budget paused in the background when its place keeps a newer answer for the return's session check")
+    func keptAnswerLeavesAPageBudgetPausedInTheBackground() async {
+        let block = BlockFixture()
+        block.attachToWindow()
+        await mainQueueTurn()
+        block.goToTheBackgroundAndBack()
+        block.goToTheBackground()
+
+        block.bed.deliverSamePageWithNewData()
+
+        #expect(block.page != nil)
+        #expect(!block.waitBudgetBed.budget.isRunning)
+    }
+
     @Test("Returning from the background does not arm a timeout outside a window")
     func foregroundOutsideWindowArmsNothing() async {
         let block = BlockFixture()
