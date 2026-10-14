@@ -2741,6 +2741,37 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(newSessionsAsk == nil)
     }
 
+    @Test("A queued pass that merged an operation with a new config, started after the session's reset and still in flight when the new session is announced, has a trigger, so it is not that session's ask: the new session's own ask, with no trigger, follows it, and the pass's refusal for a shown block is held, since it carries a config update")
+    func mergedPassWithATriggerAskedAfterTheResetHoldsItsRefusalAndTheNewSessionAsksAfterIt() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        let resolvesBefore = bed.resolver.resolveCount
+        bed.resolver.isDeferred = true
+        bed.announceNewConfig()
+        bed.announceNewConfig()
+        let event = bed.announceOperation()
+        bed.expireSession()
+        bed.resolver.sessionEpoch = bed.currentSessionEpoch
+        bed.resolver.flush()
+        bed.finishSessionCheck(startsNewSession: true)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+        bed.resolver.resolution = .empty
+
+        bed.resolver.flush()
+
+        #expect(states.isEmpty)
+        #expect(bed.provider.heldCollapse == .empty)
+        #expect(bed.page?.isClosed == false)
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.resolver.resolveCount == resolvesBefore + 3)
+        let mergedPass = bed.resolver.triggers.dropLast().last ?? nil
+        let newSessionsAsk = bed.resolver.triggers.last ?? nil
+        #expect(mergedPass === event)
+        #expect(newSessionsAsk == nil)
+    }
+
     @Test("A page its place no longer shows is not shown in the new session when it draws")
     func heldCollapseKeepsTheShowBack() {
         let bed = EmbeddedBlockTestBed()
