@@ -1088,6 +1088,167 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.view.intrinsicContentSize.height == 0)
     }
 
+    @Test("A block that failed on its wait budget, its answer late, is asked again once the user is back from the background and the return's session check has ended, in the same session or the new one, and shows the feed",
+          arguments: [false, true])
+    func blockFailedOnItsWaitBudgetIsAskedAgainOnTheReturn(startsNewSession: Bool) async {
+        let block = BlockFixture()
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.failOnTheWaitBudgetWithTheAnswerLate()
+        await mainQueueTurn()
+        #expect(delegate.events == [.failed(.networkError)])
+        let resolvesBefore = block.bed.resolver.resolveCount
+        let armsBefore = block.waitBudgetBed.scheduler.armCount
+
+        block.goToTheBackgroundAndBack()
+        #expect(block.bed.resolver.resolveCount == resolvesBefore)
+        if startsNewSession {
+            block.bed.renewSession()
+        } else {
+            block.bed.finishSessionCheck()
+        }
+
+        #expect(block.bed.resolver.resolveCount == resolvesBefore + 1)
+        #expect(block.waitBudgetBed.scheduler.armCount == armsBefore + 1)
+        block.bed.resolver.flush()
+        block.page?.reportRendered(1)
+        await mainQueueTurn()
+
+        #expect(block.bed.resolver.resolveCount == resolvesBefore + 1)
+        #expect(block.bed.pageFactory.pages.count == 1)
+        #expect(block.view.intrinsicContentSize.height == 120)
+        #expect(block.bed.accounting.sessionEpochs == [block.bed.currentSessionEpoch])
+        #expect(delegate.events == [.failed(.networkError), .loaded])
+    }
+
+    @Test("A block that failed on its wait budget is asked again only once the app is active when the return's session check ends before it is")
+    func blockFailedOnItsWaitBudgetIsAskedAgainOnceTheAppIsActive() {
+        let block = BlockFixture()
+        block.failOnTheWaitBudgetWithTheAnswerLate()
+        let resolvesBefore = block.bed.resolver.resolveCount
+        block.goToTheBackgroundAndBack(isActiveOnReturn: false)
+
+        block.bed.finishSessionCheck()
+        #expect(block.bed.resolver.resolveCount == resolvesBefore)
+
+        block.bed.becomeActive()
+
+        #expect(block.bed.resolver.resolveCount == resolvesBefore + 1)
+        #expect(block.bed.provider.isActive)
+    }
+
+    @Test("A block whose page stayed silent or failed to load is asked again once the user is back from the background and the return's session check has ended",
+          arguments: [false, true])
+    func blockWhosePageFailedIsAskedAgainOnTheReturn(pageFailedToLoad: Bool) async {
+        let block = BlockFixture()
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.attachToWindow()
+        if pageFailedToLoad {
+            block.page?.failLoad()
+        } else {
+            block.expireTimeout()
+        }
+        await mainQueueTurn()
+        let resolvesBefore = block.bed.resolver.resolveCount
+
+        block.comeBackFromTheBackground()
+        block.page?.reportRendered(1)
+        await mainQueueTurn()
+
+        #expect(block.bed.resolver.resolveCount == resolvesBefore + 1)
+        #expect(block.bed.pageFactory.pages.count == 2)
+        #expect(block.view.intrinsicContentSize.height == 120)
+        #expect(block.bed.accounting.shows.count == 1)
+        #expect(delegate.events == [.failed(pageFailedToLoad ? .networkError : .internalError), .loaded])
+    }
+
+    @Test("A block that fails after a return is not asked again when the app only turns inactive and active again, or when a new session starts with no trip to the background",
+          arguments: [false, true])
+    func failedBlockIsNotAskedAgainWithoutATripToTheBackground(throughANewSession: Bool) async {
+        let block = BlockFixture()
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.bed.resolver.isDeferred = true
+        block.attachToWindow()
+        block.comeBackFromTheBackground()
+        block.expireTimeout()
+        block.bed.resolver.flush()
+        let resolvesBefore = block.bed.resolver.resolveCount
+
+        if throughANewSession {
+            block.bed.renewSession()
+        } else {
+            block.bed.applicationState = .inactive
+            block.bed.becomeActive()
+        }
+        await mainQueueTurn()
+
+        #expect(block.bed.resolver.resolveCount == resolvesBefore)
+        #expect(block.bed.provider.isActive == false)
+        #expect(delegate.events == [.failed(.networkError)])
+    }
+
+    @Test("A failed block out of the window or hidden by the host is not asked again on the return, and is asked once it is back on screen",
+          arguments: [false, true])
+    func failedBlockOffScreenIsAskedOnceBackNotOnTheReturn(hiddenByTheHost: Bool) {
+        let block = BlockFixture()
+        block.failOnTheWaitBudgetWithTheAnswerLate()
+        let resolvesBefore = block.bed.resolver.resolveCount
+        if hiddenByTheHost {
+            block.view.setHostVisible(false)
+        } else {
+            block.removeFromWindow()
+        }
+
+        block.comeBackFromTheBackground()
+        #expect(block.bed.resolver.resolveCount == resolvesBefore)
+
+        if hiddenByTheHost {
+            block.view.setHostVisible(true)
+        } else {
+            block.attachToWindow()
+        }
+
+        #expect(block.bed.resolver.resolveCount == resolvesBefore + 1)
+        #expect(block.bed.provider.isActive)
+    }
+
+    enum UnfailedOutcome: CaseIterable {
+        case loading
+        case shown
+        case empty
+        case held
+    }
+
+    @Test("A block that is loading its page, shown, empty or keeping its content until the user leaves is left as it is by the return: no new attempt and no extra ask",
+          arguments: UnfailedOutcome.allCases)
+    func unfailedBlockIsLeftAsItIsByTheReturn(_ outcome: UnfailedOutcome) async {
+        let block = BlockFixture(resolution: outcome == .empty ? .empty : .content(.stub))
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.attachToWindow()
+        if outcome == .shown || outcome == .held {
+            block.page?.reportRendered(1)
+        }
+        if outcome == .held {
+            block.bed.resolver.resolution = .empty
+            block.bed.announceNewConfig()
+        }
+        await mainQueueTurn()
+        let eventsBefore = delegate.events
+        let resolvesBefore = block.bed.resolver.resolveCount
+        let pagesBefore = block.bed.pageFactory.pages.count
+
+        block.comeBackFromTheBackground()
+        await mainQueueTurn()
+
+        #expect(block.bed.resolver.resolveCount == resolvesBefore)
+        #expect(block.bed.pageFactory.pages.count == pagesBefore)
+        #expect(block.view.intrinsicContentSize.height == (outcome == .empty ? 0 : 120))
+        #expect(delegate.events == eventsBefore)
+    }
+
     // MARK: - Timeout
 
     /// The same knob Android exposes as an XML attribute.
@@ -2509,11 +2670,27 @@ private final class BlockFixture {
         enterBackground()
     }
 
-    func goToTheBackgroundAndBack() {
+    func goToTheBackgroundAndBack(isActiveOnReturn: Bool = true) {
         goToTheBackground()
         bed.center.post(name: UIApplication.willEnterForegroundNotification, object: nil)
         enterForeground()
-        bed.becomeActive()
+        if isActiveOnReturn {
+            bed.becomeActive()
+        } else {
+            bed.applicationState = .inactive
+        }
+    }
+
+    func comeBackFromTheBackground() {
+        goToTheBackgroundAndBack()
+        bed.finishSessionCheck()
+    }
+
+    func failOnTheWaitBudgetWithTheAnswerLate() {
+        bed.resolver.isDeferred = true
+        attachToWindow()
+        expireTimeout()
+        bed.resolver.flush()
     }
 }
 
