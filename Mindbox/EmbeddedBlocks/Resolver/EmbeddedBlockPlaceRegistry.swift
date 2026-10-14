@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import QuartzCore
 import MindboxLogger
 
 /// The place map and the router between blocks and the selection — in sync with Android, where the
@@ -31,11 +32,17 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
 
     private var concludedSessionEpoch: Int?
 
+    private var contentAwaitingTheSessionCheck: [String: (answer: EmbeddedBlockPlaceAnswer, keptAt: TimeInterval)] = [:]
+
+    private var operationsAwaitingTheSessionCheck: [String: ApplicationEvent] = [:]
+
     private let resolver: EmbeddedBlockResolving
     private let budget: InappShowBudgeting
     private let fetchEmbeddedPlaces: EmbeddedPlacesFetching
     private let notificationCenter: NotificationCenter
     private let delayedDelivery: EmbeddedBlockDelayedDelivery<EmbeddedBlockPlaceAnswer>
+    private let presence: EmbeddedBlockAppPresence
+    private let now: () -> TimeInterval
 
     private var observers: [NSObjectProtocol] = []
 
@@ -43,12 +50,18 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
          budget: InappShowBudgeting,
          notificationCenter: NotificationCenter = .default,
          fetchEmbeddedPlaces: @escaping EmbeddedPlacesFetching = EmbeddedBlockPlaceRegistry.fetchPlacesFromConfig,
-         delayedDelivery: EmbeddedBlockDelayedDelivery<EmbeddedBlockPlaceAnswer> = EmbeddedBlockDelayedDelivery()) {
+         presence: EmbeddedBlockAppPresence = .shared,
+         delayedDelivery: EmbeddedBlockDelayedDelivery<EmbeddedBlockPlaceAnswer> = EmbeddedBlockDelayedDelivery(),
+         now: @escaping () -> TimeInterval = { CACurrentMediaTime() }) {
         self.resolver = resolver
         self.budget = budget
         self.notificationCenter = notificationCenter
         self.fetchEmbeddedPlaces = fetchEmbeddedPlaces
+        self.presence = presence
         self.delayedDelivery = delayedDelivery
+        self.now = now
+
+        presence.subscribe(self)
 
         // The registry is created lazily, with the first block — a config may already be in memory,
         // and its notification is not coming again.
@@ -118,6 +131,10 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         onMain { $0.releaseSlotIfUnclaimed(place) }
     }
 
+    func keepsContent(for place: String) -> Bool {
+        contentAwaitingTheSessionCheck[place] != nil
+    }
+
     // MARK: - Channels
 
     private func configConcluded(sessionEpoch: Int?) {
@@ -134,7 +151,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
     private func operationOccurred(_ event: ApplicationEvent) {
         let operationName = event.name.lowercased()
 
-        for place in placesWithActiveBlocks() {
+        for place in placesWithBlocksOnScreen() {
             if let known = embeddedPlacesInConfig {
                 guard let operations = known[place] else {
                     Logger.common(message: "[EmbeddedBlock] Operation '\(event.name)': the config addresses no embedded in-app to place '\(place)', not resolving",
@@ -147,6 +164,13 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
                                   level: .debug, category: .embeddedBlocks)
                     continue
                 }
+            }
+
+            guard !presence.isAwaitingSessionCheck else {
+                Logger.common(message: "[EmbeddedBlock] Operation '\(event.name)' arrived during the return's session check — held for place '\(place)' and asked with it once the check ends, if a block is still there",
+                              category: .embeddedBlocks)
+                operationsAwaitingTheSessionCheck[place] = event
+                continue
             }
 
             requestResolve(place: place, cause: .operation(event))
@@ -163,7 +187,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         prune(place)
 
         guard hasActiveBlocks(place) else {
-            Logger.common(message: "[EmbeddedBlock] Place '\(place)': \(cause.logDescription), but no block is on screen — nowhere to draw, the next start() re-asks",
+            Logger.common(message: "[EmbeddedBlock] Place '\(place)': \(cause.logDescription), but no block of the place is started — nowhere to draw, the next start() re-asks",
                           category: .embeddedBlocks)
             return
         }
@@ -217,11 +241,14 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         }
 
         guard let content = answer.resolution.content else {
+            contentAwaitingTheSessionCheck[place] = nil
             budget.release(.place(place), inSession: answer.sessionEpoch)
             delayedDelivery.cancel(place: place)
             deliver(answer, at: place)
             return
         }
+
+        guard !keepsForTheSessionCheck(answer, at: place) else { return }
 
         let delay = TimeInterval.delay(fromTimeSpan: content.delayTime)
 
@@ -316,6 +343,18 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         }
     }
 
+    private func keepsForTheSessionCheck(_ answer: EmbeddedBlockPlaceAnswer, at place: String) -> Bool {
+        guard contentAwaitingTheSessionCheck[place] != nil || (presence.isAwaitingSessionCheck && hasActiveBlocks(place)) else {
+            return false
+        }
+
+        Logger.common(message: "[EmbeddedBlock] Place '\(place)': content kept until the return is over — its session check has ended and the app is active",
+                      category: .embeddedBlocks)
+        contentAwaitingTheSessionCheck[place] = (answer, now())
+        blocksByPlace[place]?.forEach { $0.block?.contentIsKept() }
+        return true
+    }
+
     private func dropStale(_ answer: EmbeddedBlockPlaceAnswer, at place: String) {
         Logger.common(message: "[EmbeddedBlock] Place '\(place)': an answer of a session that has ended or is ending (\(answer.sessionEpoch)) — dropped, the current session answers anew",
                       category: .embeddedBlocks)
@@ -366,6 +405,12 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         blocksByPlace.keys.filter { hasActiveBlocks($0) }
     }
 
+    private func placesWithBlocksOnScreen() -> [String] {
+        blocksByPlace.keys.filter { place in
+            (blocksByPlace[place] ?? []).contains { $0.block?.isActive == true || $0.block?.isStartPending == true }
+        }
+    }
+
     private func prune(_ place: String) {
         let alive = (blocksByPlace[place] ?? []).filter { $0.block != nil }
         if alive.isEmpty {
@@ -382,5 +427,25 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         }
 
         configurationManager.getEmbeddedPlaces(completion)
+    }
+}
+
+extension EmbeddedBlockPlaceRegistry: EmbeddedBlockAppPresenceSubscribing {
+
+    func sessionChecked(startedAt: TimeInterval?, startsNewSession: Bool) {
+        guard startsNewSession || presence.answersTheReturn(checkStartedAt: startedAt) else { return }
+
+        let operations = operationsAwaitingTheSessionCheck
+        operationsAwaitingTheSessionCheck = [:]
+        operations.forEach { place, event in requestResolve(place: place, cause: .operation(event)) }
+    }
+
+    func userDidBecomePresent() {
+        let kept = contentAwaitingTheSessionCheck
+        contentAwaitingTheSessionCheck = [:]
+        kept.forEach { place, kept in
+            handle(kept.answer.with(processingDuration: kept.answer.processingDuration + now() - kept.keptAt), at: place)
+            blocksByPlace[place]?.forEach { $0.block?.keptContentIsReleased() }
+        }
     }
 }

@@ -14,5 +14,11 @@ extension EmbeddedBlockWebViewProvider: EmbeddedBlockPlaceHandling {
 
     var isActive: Bool { isStarted }
 
+    var isStartPending: Bool { deferred.isStartAwaitingSessionCheck }
+
     var holdsAnAttempt: Bool { (isStarted || isPaused) && (isAttemptAlive || deferred.parksContent) }
+
+    func contentIsKept() { if isAwaitingAnswer { onKeptContentChanged?() } }
+
+    func keptContentIsReleased() { onKeptContentChanged?() }
 }

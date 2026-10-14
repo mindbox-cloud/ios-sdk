@@ -410,9 +410,18 @@ public final class MindboxEmbeddedBlockView: UIView {
             waitBudget.reset()
         }
 
+        contentProvider.onStarted = {
+            waitBudget.armIfNeeded()
+        }
+
+        contentProvider.onKeptContentChanged = {
+            waitBudget.refresh()
+        }
+
         waitBudget.isNeeded = { [weak self, weak contentProvider] in
             guard let self, let contentProvider else { return false }
             return self.isContentRunning && self.state == .loading && !contentProvider.isAwaitingDelayedContent
+                && !contentProvider.isStartPending && !contentProvider.isAwaitingKeptContent
         }
         waitBudget.onExpire = { [weak self] in
             self?.handleTimeout()

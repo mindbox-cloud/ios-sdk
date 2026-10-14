@@ -9,11 +9,13 @@
 import Foundation
 import MindboxLogger
 
-final class EmbeddedBlockDataPushWait {
+final class EmbeddedBlockDataPushWait: EmbeddedBlockAppPresenceSubscribing {
 
     private let placeSystemName: String
 
     private let schedule: EmbeddedBlockWaitScheduling
+
+    private let presence: EmbeddedBlockAppPresence
 
     private var budget: EmbeddedBlockAckBudget
 
@@ -23,10 +25,18 @@ final class EmbeddedBlockDataPushWait {
 
     init(placeSystemName: String,
          now: @escaping () -> TimeInterval,
-         schedule: @escaping EmbeddedBlockWaitScheduling) {
+         schedule: @escaping EmbeddedBlockWaitScheduling,
+         presence: EmbeddedBlockAppPresence) {
         self.placeSystemName = placeSystemName
         self.budget = EmbeddedBlockAckBudget(now: now)
         self.schedule = schedule
+        self.presence = presence
+
+        presence.subscribe(self)
+    }
+
+    func appDidEnterBackground() {
+        suspend()
     }
 
     func arm(onTimeout: @escaping () -> Void) {
@@ -37,7 +47,7 @@ final class EmbeddedBlockDataPushWait {
     }
 
     func resumeIfSuspended() {
-        guard onTimeout != nil, timer == nil else { return }
+        guard onTimeout != nil, timer == nil, presence.isPresent else { return }
 
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': a data push is still unconfirmed — waiting out the remaining \(budget.remaining)s",
                       category: .embeddedBlocks)

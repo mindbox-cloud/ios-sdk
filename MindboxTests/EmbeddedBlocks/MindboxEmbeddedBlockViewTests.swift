@@ -2226,6 +2226,18 @@ private final class BlockFixture {
     func enterForeground() {
         waitBudgetBed.enterForeground()
     }
+
+    func goToTheBackground() {
+        bed.enterBackground()
+        enterBackground()
+    }
+
+    func goToTheBackgroundAndBack() {
+        goToTheBackground()
+        bed.center.post(name: UIApplication.willEnterForegroundNotification, object: nil)
+        enterForeground()
+        bed.becomeActive()
+    }
 }
 
 /// A block on the waiting budget the container builds for itself — its own switch between the answer

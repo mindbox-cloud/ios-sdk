@@ -64,6 +64,8 @@ final class InappShowAccountingMock: InappShowAccounting {
 
     private(set) var places: [String] = []
 
+    private(set) var sessionEpochs: [Int] = []
+
     var shownIds: [String] { shows.map(\.inAppId) }
 
     func recordShow(_ show: InappShow) {
@@ -77,6 +79,7 @@ final class InappShowAccountingMock: InappShowAccounting {
     func recordBlockShow(_ show: InappShow, at place: String, sessionEpoch: Int) {
         places.append(place)
         shows.append(show)
+        sessionEpochs.append(sessionEpoch)
     }
 }
 
@@ -557,6 +560,63 @@ final class EmbeddedBlockWaitBudgetBed {
     }
 }
 
+final class AppPresenceBed {
+
+    var applicationState: UIApplication.State
+
+    var isSDKInitialized = true
+
+    let clock: TestClock
+
+    let center: NotificationCenter
+
+    private(set) var presence: EmbeddedBlockAppPresence!
+
+    init(center: NotificationCenter = NotificationCenter(), clock: TestClock = TestClock(), applicationState: UIApplication.State = .active) {
+        self.center = center
+        self.clock = clock
+        self.applicationState = applicationState
+        presence = EmbeddedBlockAppPresence(applicationState: { [weak self] in self?.applicationState ?? .active },
+                                            isSDKInitialized: { [weak self] in self?.isSDKInitialized ?? true },
+                                            now: { clock.now },
+                                            notificationCenter: center)
+    }
+
+    func enterBackground() {
+        applicationState = .background
+        center.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
+    }
+
+    func returnToApp() {
+        center.post(name: UIApplication.willEnterForegroundNotification, object: nil)
+        becomeActive()
+    }
+
+    func enterForegroundAtLaunch() {
+        applicationState = .inactive
+        center.post(name: UIApplication.willEnterForegroundNotification, object: nil)
+    }
+
+    func returnToAppWithNoSessionCheck() {
+        let wasInitialized = isSDKInitialized
+        isSDKInitialized = false
+        returnToApp()
+        isSDKInitialized = wasInitialized
+    }
+
+    func becomeActive() {
+        applicationState = .active
+        center.post(name: UIApplication.didBecomeActiveNotification, object: nil)
+    }
+
+    func finishSessionCheck(startedAt: TimeInterval? = nil, startsNewSession: Bool = false) {
+        center.post(name: .inappSessionChecked,
+                    object: nil,
+                    userInfo: [Constants.Notification.sessionCheckStartedAt: startedAt ?? clock.now,
+                               Constants.Notification.startsNewSession: startsNewSession])
+    }
+}
+
 final class EmbeddedPlacesStub {
     /// `nil` — no config seen (gate open); a place maps to the operations its in-apps listen to, an empty set wakes nothing.
     var places: [String: Set<String>]?
@@ -652,20 +712,27 @@ final class EmbeddedBlockTestBed: EmbeddedBlockSessionRig {
     let budget = InappShowBudgetMock()
     let failureReporter: EmbeddedBlockFailureReporterMock
     let ackScheduler: EmbeddedBlockAckSchedulerMock
+    let delayScheduler: TestScheduler
 
     /// One per bed: a new config must reach only this provider.
     let center: NotificationCenter
 
-    /// The application state a stopwatch reads at birth; the notifications below keep it in step.
-    let appState = ApplicationStateStub()
-
-    /// One clock for both seams: the page's rendering time (the block's part of `timeToDisplay`) and the ack wait.
     let clock: TestClock
+
+    let presenceBed: AppPresenceBed
+
+    var applicationState: UIApplication.State {
+        get { presenceBed.applicationState }
+        set { presenceBed.applicationState = newValue }
+    }
 
     var page: EmbeddedBlockPageMock? { pageFactory.page }
 
+    private let providerAt: (String) -> EmbeddedBlockWebViewProvider
+
     init(placeSystemName: String = "block-id",
-         resolution: EmbeddedBlockResolution = .content(.stub)) {
+         resolution: EmbeddedBlockResolution = .content(.stub),
+         applicationState: UIApplication.State = .active) {
         // Once-per-session state lives on the shared singleton — reset, or beds would see each other's silence.
         SessionTemporaryStorage.shared.$ledger.mutate { $0.placesReportedUnanswered = [] }
 
@@ -678,46 +745,85 @@ final class EmbeddedBlockTestBed: EmbeddedBlockSessionRig {
         let accounting = InappShowAccountingMock()
         let failureReporter = EmbeddedBlockFailureReporterMock()
         let ackScheduler = EmbeddedBlockAckSchedulerMock()
+        let delayScheduler = TestScheduler()
+        let presenceBed = AppPresenceBed(center: center, clock: clock, applicationState: applicationState)
         let registry = EmbeddedBlockPlaceRegistry(resolver: resolver,
                                                   budget: budget,
                                                   notificationCenter: center,
-                                                  fetchEmbeddedPlaces: { embeddedPlaces.fetch($0) })
+                                                  fetchEmbeddedPlaces: { embeddedPlaces.fetch($0) },
+                                                  presence: presenceBed.presence,
+                                                  delayedDelivery: EmbeddedBlockDelayedDelivery(presence: presenceBed.presence,
+                                                                                                schedule: { delayScheduler.schedule($0, $1) }),
+                                                  now: { clock.now })
+        let providerAt = { (place: String) in
+            EmbeddedBlockWebViewProvider(placeSystemName: place,
+                                         registry: registry,
+                                         inappService: inappService,
+                                         makePage: { pageFactory.make($0) },
+                                         accounting: accounting,
+                                         reportFailure: { failureReporter.report($0, $1, $2, $3) },
+                                         reportUnansweredWait: { failureReporter.reportUnansweredWait($0) },
+                                         scheduleAckTimeout: { ackScheduler.schedule($0, $1) },
+                                         makeStopwatch: {
+                                             ForegroundStopwatch(notificationCenter: center,
+                                                                 now: { clock.now },
+                                                                 isInBackground: { presenceBed.applicationState == .background })
+                                         },
+                                         now: { clock.now },
+                                         appPresence: presenceBed.presence)
+        }
 
         self.clock = clock
         self.accounting = accounting
         self.ackScheduler = ackScheduler
+        self.delayScheduler = delayScheduler
         self.failureReporter = failureReporter
         self.center = center
         self.resolver = resolver
         self.inappService = inappService
         self.pageFactory = pageFactory
-        self.provider = EmbeddedBlockWebViewProvider(placeSystemName: placeSystemName,
-                                                     registry: registry,
-                                                     inappService: inappService,
-                                                     makePage: { pageFactory.make($0) },
-                                                     accounting: accounting,
-                                                     reportFailure: { failureReporter.report($0, $1, $2, $3) },
-                                                     reportUnansweredWait: { failureReporter.reportUnansweredWait($0) },
-                                                     scheduleAckTimeout: { ackScheduler.schedule($0, $1) },
-                                                     makeStopwatch: { [appState] in
-                                                         ForegroundStopwatch(notificationCenter: center,
-                                                                             now: { clock.now },
-                                                                             isInBackground: { appState.isInBackground })
-                                                     },
-                                                     now: { clock.now })
+        self.presenceBed = presenceBed
+        self.providerAt = providerAt
+        self.provider = providerAt(placeSystemName)
+    }
+
+    func makeProvider(placeSystemName: String) -> EmbeddedBlockWebViewProvider {
+        providerAt(placeSystemName)
+    }
+
+    func concludeNewSessionDownload() {
+        resolver.sessionEpoch = currentSessionEpoch
+        announceNewConfig()
+    }
+
+    func renewSession() {
+        expireSession()
+        resolver.sessionEpoch = currentSessionEpoch
+        finishSessionCheck(startsNewSession: true)
     }
 
     func enterBackground() {
-        appState.isInBackground = true
-        center.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
+        presenceBed.enterBackground()
     }
 
-    /// UIKit's order: the foreground notification goes out while the state still reads the
-    /// background; the state flips after it, and `didBecomeActive` follows.
+    func returnToApp() {
+        presenceBed.returnToApp()
+    }
+
+    func enterForegroundAtLaunch() {
+        presenceBed.enterForegroundAtLaunch()
+    }
+
     func enterForeground() {
-        center.post(name: UIApplication.willEnterForegroundNotification, object: nil)
-        appState.isInBackground = false
-        center.post(name: UIApplication.didBecomeActiveNotification, object: nil)
+        presenceBed.returnToAppWithNoSessionCheck()
+    }
+
+    func becomeActive() {
+        presenceBed.becomeActive()
+    }
+
+    func finishSessionCheck(startedAt: TimeInterval? = nil, startsNewSession: Bool = false) {
+        presenceBed.finishSessionCheck(startedAt: startedAt, startsNewSession: startsNewSession)
     }
 
     func answer(_ resolution: EmbeddedBlockResolution) -> EmbeddedBlockPlaceAnswer {
@@ -737,10 +843,7 @@ final class EmbeddedBlockTestBed: EmbeddedBlockSessionRig {
         resolver.resolution = .content(fresh)
         announceNewConfig()
     }
-}
 
-final class ApplicationStateStub {
-    var isInBackground = false
 }
 
 /// The place's memory across launches, kept in memory: a fixture built over the same mock is the

@@ -29,6 +29,8 @@ struct EmbeddedBlockDeferredAnswers {
 
     private var parked: EmbeddedBlockPlaceAnswer?
 
+    var isStartAwaitingSessionCheck = false
+
     var isHolding: Bool { heldAnswer != nil || isPageEmpty }
 
     var held: HeldCollapse? { heldAnswer.map { .placeAnswer($0) } ?? (isPageEmpty ? .emptyPage : nil) }
@@ -66,6 +68,10 @@ struct EmbeddedBlockDeferredAnswers {
         parked = answer
     }
 
+    mutating func dropParked() {
+        parked = nil
+    }
+
     mutating func takeParked(unlessEndedIn ledger: InappSessionLedger) -> EmbeddedBlockPlaceAnswer? {
         defer { parked = nil }
 
@@ -74,7 +80,14 @@ struct EmbeddedBlockDeferredAnswers {
         return parked
     }
 
+    func parkedCollapse(unlessEndedIn ledger: InappSessionLedger) -> EmbeddedBlockPlaceAnswer? {
+        guard let parked, parked.resolution.content == nil, !ledger.hasEnded(parked.sessionEpoch) else { return nil }
+
+        return parked
+    }
+
     mutating func reset() {
         parked = nil
+        isStartAwaitingSessionCheck = false
     }
 }

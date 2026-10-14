@@ -31,7 +31,7 @@ final class EmbeddedBlockFailureReporter {
 
     func report(_ failure: EmbeddedBlockResolutionFailure, isBlockOnScreen: Bool) {
         guard isBlockOnScreen else {
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': \(failure.reason.rawValue) for in-app \(failure.inAppId) happened off screen — held until the block is looked at",
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': \(failure.reason.rawValue) for in-app \(failure.inAppId) happened while the block was not started — held until it starts",
                           category: .embeddedBlocks)
             held = failure
             return

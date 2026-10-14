@@ -24,12 +24,18 @@ final class EmbeddedBlockWebViewProvider {
 
     var onContentDelayed: (() -> Void)?
 
+    var onKeptContentChanged: (() -> Void)?
+
+    var onStarted: (() -> Void)?
+
     var contentView: UIView? { isReady ? page?.view : nil }
 
     var isAwaitingAnswer: Bool { page == nil }
 
     /// While set, the block keeps loading on purpose: content is coming, the SDK is not silent.
     private(set) var isAwaitingDelayedContent = false
+
+    var isAwaitingKeptContent: Bool { page == nil && registry.keepsContent(for: placeSystemName) }
 
     var heldCollapse: EmbeddedBlockState? { deferred.held?.state }
 
@@ -64,6 +70,8 @@ final class EmbeddedBlockWebViewProvider {
 
     private let makeStopwatch: () -> ForegroundStopwatch
 
+    private let appPresence: EmbeddedBlockAppPresence
+
     private let dataPushWait: EmbeddedBlockDataPushWait
 
     private(set) var deferred = EmbeddedBlockDeferredAnswers()
@@ -79,7 +87,8 @@ final class EmbeddedBlockWebViewProvider {
              DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
          },
          makeStopwatch: @escaping () -> ForegroundStopwatch = { ForegroundStopwatch() },
-         now: @escaping () -> TimeInterval = { CACurrentMediaTime() }) {
+         now: @escaping () -> TimeInterval = { CACurrentMediaTime() },
+         appPresence: EmbeddedBlockAppPresence = .shared) {
         self.placeSystemName = placeSystemName
         self.registry = registry
         self.inappService = inappService
@@ -89,7 +98,10 @@ final class EmbeddedBlockWebViewProvider {
                                                      report: reportFailure,
                                                      reportUnansweredWait: reportUnansweredWait)
         self.makeStopwatch = makeStopwatch
-        self.dataPushWait = EmbeddedBlockDataPushWait(placeSystemName: placeSystemName, now: now, schedule: scheduleAckTimeout)
+        self.appPresence = appPresence
+        self.dataPushWait = EmbeddedBlockDataPushWait(placeSystemName: placeSystemName, now: now, schedule: scheduleAckTimeout, presence: appPresence)
+
+        appPresence.subscribe(self)
 
         registry.register(self, place: placeSystemName)
     }
@@ -97,10 +109,24 @@ final class EmbeddedBlockWebViewProvider {
     func start() {
         guard !isStarted else { return }
 
+        pageShow?.resume()
+
+        guard !appPresence.isAwaitingSessionCheck else {
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': on screen before the return's session check ended — its start waits for the check", category: .embeddedBlocks)
+            deferred.isStartAwaitingSessionCheck = true
+            if let collapse = deferred.parkedCollapse(unlessEndedIn: SessionTemporaryStorage.shared.ledger) {
+                take(collapse, isParked: true)
+            } else if page != nil, outcome == .empty {
+                onStateChange?(outcome)
+            }
+            return
+        }
+
+        deferred.isStartAwaitingSessionCheck = false
         isStarted = true
         isPaused = false
         page?.isUserPresent = true
-        pageShow?.resume()
+        defer { onStarted?() }
 
         failures.flushHeld()
 
@@ -134,6 +160,10 @@ final class EmbeddedBlockWebViewProvider {
     }
 
     func stop() {
+        deferred.isStartAwaitingSessionCheck = false
+        // The show's time stops with the block: it left the window or the host hid it. The background
+        // is not a stop — the stopwatch excludes it on its own.
+        pageShow?.suspend()
         if let held = deferred.takeHeld() {
             land(held)
         }
@@ -144,9 +174,6 @@ final class EmbeddedBlockWebViewProvider {
         // The outcome is deliberately not reset: otherwise every pass of the block across the screen
         // would cost a full reload.
         dataPushWait.suspend()
-        // The show's time stops with the block: it left the window or the host hid it. The background
-        // is not a stop — the stopwatch excludes it on its own.
-        pageShow?.suspend()
         // The page stays alive off screen, so it has to be told that nobody is looking.
         page?.isUserPresent = false
     }
@@ -181,10 +208,10 @@ final class EmbeddedBlockWebViewProvider {
         dropPage()
         deferred.reset()
         loadGeneration += 1
-        isStarted = true
+        isStarted = false
         isPaused = false
 
-        beginAttempt()
+        start()
     }
 
     private func beginAttempt() {
@@ -204,7 +231,7 @@ final class EmbeddedBlockWebViewProvider {
     // MARK: - The registry's answer
 
     func apply(_ answer: EmbeddedBlockPlaceAnswer) {
-        guard isStarted else {
+        guard isStarted || isStartPending && isReady && answer.resolution.content == nil else {
             if isPaused {
                 failures.report(failureOf: answer)
                 deferred.park(answer)
@@ -212,6 +239,7 @@ final class EmbeddedBlockWebViewProvider {
             return
         }
 
+        deferred.dropParked()
         take(answer, isParked: false)
     }
 
@@ -449,7 +477,7 @@ final class EmbeddedBlockWebViewProvider {
         }
 
         guard renderedCount > 0 else {
-            guard isStarted, isReady else {
+            guard isStarted || isStartPending, isReady else {
                 Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': page rendered nothing", category: .embeddedBlocks)
                 settle(.empty)
                 return
@@ -465,9 +493,6 @@ final class EmbeddedBlockWebViewProvider {
         didReportShownContent = true
         pageShow?.pageRendered()
         settle(.ready)
-
-        guard isStarted else { return }
-
         accountForShow()
     }
 
@@ -484,7 +509,8 @@ final class EmbeddedBlockWebViewProvider {
     }
 
     private func accountForShow() {
-        guard let content, let due = pageShow?.takeDueShow() else { return }
+        guard isStarted, isReady, appPresence.isPresent, let content,
+              let due = pageShow?.takeDueShow() else { return }
 
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': in-app \(content.inAppId) is shown in session \(due.sessionEpoch), timeToDisplay=\(due.timeToDisplay.toTimeSpan())",
                       category: .embeddedBlocks)
@@ -494,5 +520,21 @@ final class EmbeddedBlockWebViewProvider {
                                              timeToDisplay: due.timeToDisplay),
                                    at: placeSystemName,
                                    sessionEpoch: due.sessionEpoch)
+    }
+}
+
+extension EmbeddedBlockWebViewProvider: EmbeddedBlockAppPresenceSubscribing {
+
+    func sessionCheckEndedWhileNotActive() { if deferred.isStartAwaitingSessionCheck { start() } }
+
+    func userDidBecomePresent() {
+        if deferred.isStartAwaitingSessionCheck {
+            start()
+        }
+
+        guard isStarted else { return }
+
+        dataPushWait.resumeIfSuspended()
+        accountForShow()
     }
 }

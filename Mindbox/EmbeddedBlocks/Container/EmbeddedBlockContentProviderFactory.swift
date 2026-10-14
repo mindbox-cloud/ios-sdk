@@ -23,15 +23,18 @@ final class EmbeddedBlockContentProviderFactory: EmbeddedBlockContentProviderMak
     private let inappService: InappRequestServing
     private let failureManager: InappShowFailureManagerProtocol
     private let accounting: InappShowAccounting
+    private let appPresence: EmbeddedBlockAppPresence
 
     init(registry: EmbeddedBlockPlaceRegistering,
          inappService: InappRequestServing,
          failureManager: InappShowFailureManagerProtocol,
-         accounting: InappShowAccounting) {
+         accounting: InappShowAccounting,
+         appPresence: EmbeddedBlockAppPresence = .shared) {
         self.registry = registry
         self.inappService = inappService
         self.failureManager = failureManager
         self.accounting = accounting
+        self.appPresence = appPresence
     }
 
     func makeProvider(placeSystemName: String) -> EmbeddedBlockWebViewProvider {
@@ -49,7 +52,8 @@ final class EmbeddedBlockContentProviderFactory: EmbeddedBlockContentProviderMak
                                          failureManager.sendWaitBudgetExceeded(place: placeSystemName,
                                                                                waited: waited,
                                                                                phase: inappService.hasConfig ? .resolvePending : .configMissing)
-                                     })
+                                     },
+                                     appPresence: appPresence)
     }
 
     /// Past the buffer: it keeps one failure per in-app id and would drop this one whenever a

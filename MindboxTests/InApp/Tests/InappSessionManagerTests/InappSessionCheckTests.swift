@@ -45,6 +45,7 @@ struct InappSessionCheckTests {
     init() {
         TestConfiguration.configure()
         SessionTemporaryStorage.shared.erase()
+        EmbeddedBlockAppPresence.shared.reset()
         SessionTemporaryStorage.shared.isInitializationCalled = true
         SessionTemporaryStorage.shared.expiredConfigSession = "0.00:30:00.0000000"
 

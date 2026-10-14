@@ -17,6 +17,7 @@ struct EmbeddedBlockPlaceRegistryTests {
 
     private final class BlockFake: EmbeddedBlockPlaceHandling {
         var isActive = true
+        var isStartPending = false
         var holdsAnAttempt = true
         private(set) var answers: [EmbeddedBlockPlaceAnswer] = []
         private(set) var delayedCount = 0
@@ -31,6 +32,10 @@ struct EmbeddedBlockPlaceRegistryTests {
         func contentIsDelayed() {
             delayedCount += 1
         }
+
+        func contentIsKept() {}
+
+        func keptContentIsReleased() {}
     }
 
     private final class Rig: EmbeddedBlockSessionRig {
@@ -39,8 +44,8 @@ struct EmbeddedBlockPlaceRegistryTests {
         let embeddedPlaces: EmbeddedPlacesStub
         let delayScheduler: TestScheduler
         let budget = InappShowBudgetMock()
+        let presence: AppPresenceBed
         let registry: EmbeddedBlockPlaceRegistry
-        var isInBackground = false
 
         init() {
             // Served delays and shown slots live on the shared session singleton — reset, or rigs would see each other's.
@@ -53,23 +58,20 @@ struct EmbeddedBlockPlaceRegistryTests {
             let center = NotificationCenter()
             let embeddedPlaces = EmbeddedPlacesStub()
             let delayScheduler = TestScheduler()
+            let presence = AppPresenceBed(center: center)
             self.resolver = resolver
             self.center = center
             self.embeddedPlaces = embeddedPlaces
             self.delayScheduler = delayScheduler
-            var background = { false }
+            self.presence = presence
             registry = EmbeddedBlockPlaceRegistry(resolver: resolver,
                                                   budget: budget,
                                                   notificationCenter: center,
                                                   fetchEmbeddedPlaces: { embeddedPlaces.fetch($0) },
-                                                  delayedDelivery: EmbeddedBlockDelayedDelivery(isInBackground: { background() },
-                                                                                                notificationCenter: center,
-                                                                                                schedule: { delayScheduler.schedule($0, $1) }))
-            background = { [weak self] in self?.isInBackground ?? false }
-        }
-
-        func enterForeground() {
-            center.post(name: UIApplication.willEnterForegroundNotification, object: nil)
+                                                  presence: presence.presence,
+                                                  delayedDelivery: EmbeddedBlockDelayedDelivery(presence: presence.presence,
+                                                                                                schedule: { delayScheduler.schedule($0, $1) }),
+                                                  now: { presence.clock.now })
         }
     }
 
@@ -694,14 +696,14 @@ struct EmbeddedBlockPlaceRegistryTests {
         #expect(SessionTemporaryStorage.shared.ledger.servedPlaceDelays.isEmpty)
     }
 
-    @Test("The same winner resolved again after its delay ran out in the background is delivered on return, not delayed again")
+    @Test("The same winner resolved again after its delay ran out in the background is delivered once the user is back and the return's session check is over, not delayed again")
     func sameWinnerAfterBackgroundExpiryIsNotDelayedAgain() {
         let rig = Rig()
         rig.resolver.resolution = .content(.delayed())
         let block = BlockFake()
         rig.registry.register(block, place: "stories")
         rig.registry.blockAppeared("stories")
-        rig.isInBackground = true
+        rig.presence.enterBackground()
         rig.delayScheduler.fireAll()
 
         rig.announceNewConfig()
@@ -709,8 +711,10 @@ struct EmbeddedBlockPlaceRegistryTests {
         #expect(rig.delayScheduler.armCount == 1)
         #expect(block.applied.isEmpty)
 
-        rig.isInBackground = false
-        rig.enterForeground()
+        rig.presence.returnToApp()
+        #expect(block.applied.isEmpty)
+
+        rig.presence.finishSessionCheck()
 
         #expect(block.applied == [.content(.delayed())])
     }

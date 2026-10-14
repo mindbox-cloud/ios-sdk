@@ -22,6 +22,10 @@ struct EmbeddedBlockPlaceAnswer {
         copy(resolution: resolution)
     }
 
+    func with(processingDuration: TimeInterval) -> EmbeddedBlockPlaceAnswer {
+        copy(processingDuration: processingDuration)
+    }
+
     func replacing(_ waiting: EmbeddedBlockPlaceAnswer) -> EmbeddedBlockPlaceAnswer {
         copy(processingDuration: waiting.processingDuration)
     }
@@ -39,18 +43,24 @@ protocol EmbeddedBlockPlaceHandling: AnyObject {
 
     var isActive: Bool { get }
 
+    var isStartPending: Bool { get }
+
     /// The place's fresh answer, on the main thread.
     func apply(_ answer: EmbeddedBlockPlaceAnswer)
 
     /// The place's answer is known and held back by its `delayTime`: content is coming, the SDK is not silent.
     func contentIsDelayed()
 
+    func contentIsKept()
+
+    func keptContentIsReleased()
+
     /// Loading or showing, on screen or paused off it: the block still owes the place a show or a give-up.
     var holdsAnAttempt: Bool { get }
 }
 
-/// Main-thread confined, and every entry point hops there itself: a block's `init` and the container's
-/// `deinit` are not promised the main thread by UIKit.
+/// Main-thread confined. The void entry points hop there themselves: a block's `init` and the container's `deinit` are not
+/// promised the main thread by UIKit. `keepsContent(for:)` answers synchronously: call it on main.
 protocol EmbeddedBlockPlaceRegistering: AnyObject {
 
     func register(_ block: EmbeddedBlockPlaceHandling, place: String)
@@ -58,4 +68,6 @@ protocol EmbeddedBlockPlaceRegistering: AnyObject {
     func blockAppeared(_ place: String)
 
     func blockAttemptEnded(_ place: String)
+
+    func keepsContent(for place: String) -> Bool
 }

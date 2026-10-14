@@ -24,6 +24,7 @@ final class InappSessionManagerTests: XCTestCase {
         targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
         SessionTemporaryStorage.shared.expiredConfigSession = ""
         SessionTemporaryStorage.shared.isInitializationCalled = true
+        EmbeddedBlockAppPresence.shared.reset()
     }
 
     override func tearDown() {

@@ -104,6 +104,14 @@ final class EmbeddedBlockWaitBudget {
         consumed = 0
     }
 
+    func refresh() {
+        if isNeeded() {
+            armIfNeeded()
+        } else {
+            pause()
+        }
+    }
+
     @objc
     private func applicationDidEnterBackground() {
         guard isRunning else { return }
