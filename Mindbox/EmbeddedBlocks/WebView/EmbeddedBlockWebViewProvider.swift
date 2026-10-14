@@ -404,6 +404,12 @@ final class EmbeddedBlockWebViewProvider {
                 return
             }
 
+            guard !SessionTemporaryStorage.shared.ledger.hasEnded(pageShow.confirmedEpoch) else {
+                Logger.common(message: "[EmbeddedBlock] Block '\(self.placeSystemName)': the page never confirmed the data push of a session that has ended — keeping it until the current session answers",
+                              category: .embeddedBlocks)
+                return
+            }
+
             Logger.common(message: "[EmbeddedBlock] Block '\(self.placeSystemName)': the page never confirmed the data push — rebuilding it",
                           level: .error, category: .embeddedBlocks)
             self.buildPage(with: content, sessionEpoch: pageShow.confirmedEpoch, processingDuration: pageShow.processingDurationOfARebuild)
