@@ -1118,6 +1118,49 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.inappService.askedBy == [EmbeddedBlockWebContent.stub.inAppId])
     }
 
+    @Test("An answer landing after a stop still reaches the page")
+    func answerAfterStopReachesThePage() {
+        let bed = EmbeddedBlockTestBed()
+        bed.inappService.allowed = ["story-1"]
+        bed.inappService.isDeferred = true
+        bed.provider.start()
+
+        bed.page?.send(.filterShowableInapps, ["inappIds": .array([.string("story-1")])])
+        bed.provider.stop()
+        bed.inappService.flush()
+
+        #expect(bed.page?.responses.map(\.payload) == [.object(["inappIds": .array([.string("story-1")])])])
+    }
+
+    @Test("A block off screen answers its page's question")
+    func stoppedBlockAnswersTheQuestion() {
+        let bed = EmbeddedBlockTestBed()
+        bed.inappService.allowed = ["story-1"]
+        bed.provider.start()
+        bed.provider.stop()
+
+        bed.page?.send(.filterShowableInapps, ["inappIds": .array([.string("story-1")])])
+
+        #expect(bed.inappService.askedIds == [["story-1"]])
+        #expect(bed.page?.responses.map(\.payload) == [.object(["inappIds": .array([.string("story-1")])])])
+    }
+
+    @Test("An answer for a page the block has since replaced is dropped")
+    func answerForAReplacedPageIsDropped() {
+        let bed = EmbeddedBlockTestBed()
+        bed.inappService.isDeferred = true
+        bed.provider.start()
+        let first = bed.page
+
+        first?.send(.filterShowableInapps, ["inappIds": .array([.string("story-1")])])
+        bed.resolver.resolution = .content(.other)
+        bed.announceNewConfig()
+        bed.inappService.flush()
+
+        #expect(bed.pageFactory.pages.count == 2)
+        #expect(first?.responses.isEmpty == true)
+    }
+
     // MARK: - Asking to show an in-app
 
     @Test("A shown block passes the request on and does not change its own state")

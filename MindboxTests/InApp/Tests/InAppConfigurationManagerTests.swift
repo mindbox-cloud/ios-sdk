@@ -32,6 +32,24 @@ struct InAppConfigurationManagerTests {
         }
     }
 
+    private final class ConclusionLog {
+        let center = NotificationCenter()
+        let announced = Answers<Notification.Name>()
+        private var observer: NSObjectProtocol?
+
+        init() {
+            observer = center.addObserver(forName: .mobileConfigDownloadConcluded, object: nil, queue: nil) { [announced] in
+                announced.append($0.name)
+            }
+        }
+
+        deinit {
+            if let observer {
+                center.removeObserver(observer)
+            }
+        }
+    }
+
     /// Poll `isFetchPending` before delivering — a result delivered into a fetch that has not started yet would vanish.
     private final class HeldConfigAPI: InAppConfigurationAPI {
         private let lock = NSLock()
@@ -145,7 +163,8 @@ struct InAppConfigurationManagerTests {
     private static func makeManager(api: InAppConfigurationAPI,
                                     configWaitBudget: TimeInterval,
                                     inappFilterService: InappFilterProtocol = DI.injectOrFail(InappFilterProtocol.self),
-                                    now: @escaping () -> TimeInterval = { CACurrentMediaTime() }) -> InAppConfigurationManager {
+                                    now: @escaping () -> TimeInterval = { CACurrentMediaTime() },
+                                    notificationCenter: NotificationCenter = .default) -> InAppConfigurationManager {
         InAppConfigurationManager(
             inAppConfigAPI: api,
             inAppConfigRepository: EmptyConfigRepository(),
@@ -155,7 +174,8 @@ struct InAppConfigurationManagerTests {
             webViewPrewarmService: DI.injectOrFail(InAppWebViewPrewarmServiceProtocol.self),
             inappFilterService: inappFilterService,
             configWaitBudget: configWaitBudget,
-            now: now
+            now: now,
+            notificationCenter: notificationCenter
         )
     }
 
@@ -179,6 +199,28 @@ struct InAppConfigurationManagerTests {
         let otherCase = json.replacingOccurrences(of: "\"stories-list-container\"", with: "\"Stories-List-Container\"")
         try #require(otherCase != json, "the fixture is expected to address the place in lowercase")
         return Data(otherCase.utf8)
+    }
+
+    enum DownloadOutcome: CaseIterable {
+        case config
+        case configWithoutSettings
+        case nothing
+        case failure
+    }
+
+    private func result(_ outcome: DownloadOutcome) throws -> InAppConfigurationAPIResult {
+        switch outcome {
+        case .config:
+            return .data(try fixtureData())
+        case .configWithoutSettings:
+            var root = try #require(try JSONSerialization.jsonObject(with: fixtureData()) as? [String: Any])
+            root["settings"] = nil
+            return .data(try JSONSerialization.data(withJSONObject: root))
+        case .nothing:
+            return .empty
+        case .failure:
+            return .error(MindboxError.connectionError)
+        }
     }
 
     private func waitUntil(_ condition: @autoclosure () -> Bool,
@@ -547,5 +589,18 @@ struct InAppConfigurationManagerTests {
         manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _ in withoutBlock.append(answer.inapp) }
         try await waitUntil(!withoutBlock.isEmpty)
         #expect((withoutBlock.first ?? nil)?.inAppId == nil)
+    }
+
+    @Test("Every download announces it concluded, whatever it brought", arguments: DownloadOutcome.allCases)
+    func everyDownloadAnnouncesItsConclusion(_ outcome: DownloadOutcome) async throws {
+        let log = ConclusionLog()
+        let manager = Self.makeManager(api: api, configWaitBudget: 0.2, notificationCenter: log.center)
+
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(try result(outcome))
+
+        try await waitUntil(!log.announced.isEmpty)
+        #expect(log.announced.all == [.mobileConfigDownloadConcluded])
     }
 }

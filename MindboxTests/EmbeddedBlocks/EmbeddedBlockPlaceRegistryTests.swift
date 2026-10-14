@@ -362,6 +362,20 @@ struct EmbeddedBlockPlaceRegistryTests {
         #expect(sleeping.applied == [.content(.stub)])
     }
 
+    @Test("A download's end announced off the main thread does not make that thread wait for main")
+    func conclusionOffMainDoesNotWaitForMain() {
+        let rig = Rig()
+        let center = rig.center
+        let posted = DispatchSemaphore(value: 0)
+
+        DispatchQueue.global().async {
+            center.post(name: .mobileConfigDownloadConcluded, object: nil)
+            posted.signal()
+        }
+
+        #expect(posted.wait(timeout: .now() + 2) == .success)
+    }
+
     /// A limitation, not an oversight: neither platform remembers past operations — pinned so the day it changes is a decision.
     @Test("An operation that happened off screen is not replayed on return")
     func operationOffScreenIsNotReplayed() {
