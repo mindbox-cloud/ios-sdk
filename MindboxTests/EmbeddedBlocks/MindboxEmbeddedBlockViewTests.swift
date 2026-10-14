@@ -757,6 +757,34 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(BlockFixture(loadingStrategy: .automatic, memory: memory).view.intrinsicContentSize.height == 0)
     }
 
+    @Test("A shown block whose page draws nothing for the new session keeps its content on screen and collapses as the user leaves")
+    func pageThatDrawsNothingCollapsesTheBlockAsTheUserLeaves() async throws {
+        let memory = EmbeddedBlockPlaceMemoryMock()
+        let block = BlockFixture(memory: memory)
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.attachToWindow()
+        block.page?.reportRendered(1)
+        let content = try #require(block.page?.view)
+        block.bed.announceNewSession()
+
+        block.page?.reportRendered(0)
+        await mainQueueTurn()
+
+        #expect(content.superview === block.view)
+        #expect(block.view.intrinsicContentSize.height == 120)
+        #expect(delegate.events == [.loaded])
+        #expect(memory.shownPlaces == ["block-id"])
+
+        block.removeFromWindow()
+        await mainQueueTurn()
+
+        #expect(content.superview == nil)
+        #expect(block.view.intrinsicContentSize.height == 0)
+        #expect(delegate.events == [.loaded, .empty])
+        #expect(memory.shownPlaces.isEmpty)
+    }
+
     @Test("A block its place can no longer check keeps its content on screen and fails as the user leaves: the host hears the failure out of the window, and the place's memory stays as it was")
     func heldFailureLandsAsTheUserLeavesAndKeepsTheMemory() async throws {
         let memory = EmbeddedBlockPlaceMemoryMock()
@@ -904,6 +932,127 @@ struct MindboxEmbeddedBlockViewTests {
         hidden.view.setHostVisible(false)
 
         #expect(hidden.page?.isUserPresent == false)
+    }
+
+    @Test("A shown block a new session refuses while the user is on another screen is collapsed in the pass that brings the user back, with no slot taken and no show")
+    func blockRefusedOffScreenIsCollapsedOnReturn() async throws {
+        let block = BlockFixture()
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.attachToWindow()
+        block.page?.reportRendered(1)
+        let content = try #require(block.page?.view)
+        await mainQueueTurn()
+        block.removeFromWindow()
+        let reservationsBefore = block.bed.budget.reservations.count
+        let resolvesBefore = block.bed.resolver.resolveCount
+
+        block.bed.resolver.resolution = .empty
+        block.goToTheBackgroundAndBack()
+        block.bed.renewSession()
+        #expect(block.bed.resolver.resolveCount == resolvesBefore + 1)
+
+        block.attachToWindow()
+
+        #expect(content.superview == nil)
+        #expect(block.view.intrinsicContentSize.height == 0)
+        #expect(block.bed.budget.reservations.count == reservationsBefore)
+        #expect(block.bed.accounting.shows.count == 1)
+
+        await mainQueueTurn()
+        #expect(delegate.events == [.loaded, .empty])
+    }
+
+    @Test("A shown block a new session refuses while the user is on another screen collapses before its first frame when the user comes back during the next return's session check, and stays collapsed once the check keeps the session",
+          arguments: [false, true])
+    func blockRefusedOffScreenCollapsesBeforeTheReturnsSessionCheckEnds(placeCannotBeChecked: Bool) async throws {
+        let block = BlockFixture()
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.attachToWindow()
+        block.page?.reportRendered(1)
+        let content = try #require(block.page?.view)
+        await mainQueueTurn()
+        block.removeFromWindow()
+        block.bed.resolver.resolution = placeCannotBeChecked ? .targetingUnavailable : .empty
+        block.goToTheBackgroundAndBack()
+        block.bed.renewSession()
+        let reservationsBefore = block.bed.budget.reservations.count
+        let resolvesBefore = block.bed.resolver.resolveCount
+        block.goToTheBackgroundAndBack()
+
+        block.attachToWindow()
+        #expect(content.superview == nil)
+        #expect(block.view.intrinsicContentSize.height == 0)
+
+        block.bed.finishSessionCheck()
+        await mainQueueTurn()
+
+        #expect(content.superview == nil)
+        #expect(block.view.intrinsicContentSize.height == 0)
+        #expect(block.bed.resolver.resolveCount == resolvesBefore + 1)
+        #expect(block.bed.budget.reservations.count == reservationsBefore)
+        #expect(block.bed.accounting.shows.count == 1)
+        #expect(delegate.events == [.loaded, placeCannotBeChecked ? .failed(.networkError) : .empty])
+    }
+
+    @Test("A block collapsed before its first frame by a refusal parked off screen is asked anew when the return's session check starts another session, and shows what that session lets in")
+    func blockCollapsedInsideTheReturnIsAskedAnewByTheNextSession() async {
+        let block = BlockFixture()
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.attachToWindow()
+        block.page?.reportRendered(1)
+        await mainQueueTurn()
+        block.removeFromWindow()
+        block.bed.resolver.resolution = .empty
+        block.goToTheBackgroundAndBack()
+        block.bed.renewSession()
+        block.goToTheBackgroundAndBack()
+        block.attachToWindow()
+        #expect(block.view.intrinsicContentSize.height == 0)
+        await mainQueueTurn()
+
+        block.bed.resolver.resolution = .content(.stub)
+        block.bed.renewSession()
+        #expect(block.view.intrinsicContentSize.height == 0)
+        block.page?.reportRendered(1)
+        await mainQueueTurn()
+
+        #expect(block.bed.pageFactory.pages.count == 2)
+        #expect(block.view.intrinsicContentSize.height == 120)
+        #expect(block.bed.accounting.sessionEpochs == [block.bed.currentSessionEpoch - 2, block.bed.currentSessionEpoch])
+        #expect(delegate.events == [.loaded, .empty, .loaded])
+    }
+
+    @Test("A shown block the user comes back to before the new session answers stays as it was, and a refusal landing then waits for the user to leave")
+    func blockBackBeforeTheNewSessionAnswersHoldsTheRefusal() async throws {
+        let block = BlockFixture()
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.attachToWindow()
+        block.page?.reportRendered(1)
+        let content = try #require(block.page?.view)
+        await mainQueueTurn()
+        block.removeFromWindow()
+        block.bed.resolver.isDeferred = true
+        block.bed.resolver.resolution = .empty
+        block.bed.renewSession()
+
+        block.attachToWindow()
+        #expect(content.superview === block.view)
+        #expect(block.view.subviews.contains { $0 is EmbeddedBlockShimmerView } == false)
+
+        block.bed.resolver.flush()
+        await mainQueueTurn()
+        #expect(content.superview === block.view)
+        #expect(block.view.intrinsicContentSize.height == 120)
+        #expect(delegate.events == [.loaded])
+
+        block.removeFromWindow()
+        block.attachToWindow()
+
+        #expect(block.view.intrinsicContentSize.height == 0)
     }
 
     // MARK: - Timeout
@@ -1230,6 +1379,31 @@ struct MindboxEmbeddedBlockViewTests {
 
         #expect(delegate.events == [.loaded])
         #expect(block.bed.failureReporter.unansweredWaits.isEmpty)
+    }
+
+    @Test("A kept answer that the return's session check drops leaves the block the rest of its wait budget")
+    func droppedKeptAnswerResumesTheBudget() async {
+        let block = BlockFixture()
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.bed.resolver.isDeferred = true
+        block.attachToWindow()
+        await mainQueueTurn()
+        block.goToTheBackgroundAndBack()
+        block.waitBudgetBed.clock.advance(2)
+        block.bed.resolver.flush()
+
+        block.bed.expireSession()
+        block.bed.finishSessionCheck(startsNewSession: true)
+
+        #expect(block.bed.resolver.resolveCount == 2)
+        #expect(block.waitBudgetBed.budget.isRunning)
+        #expect(block.waitBudgetBed.scheduler.lastDelay == block.waitBudgetBed.duration - 2)
+
+        block.expireTimeout()
+        await mainQueueTurn()
+
+        #expect(delegate.events == [.failed(.networkError)])
     }
 
     @Test("A block whose page is loading keeps its wait budget paused in the background when its place keeps a newer answer for the return's session check")
