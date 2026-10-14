@@ -1095,6 +1095,142 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.resolver.resolveCount == resolvesBefore)
     }
 
+    enum NothingToShow {
+        case empty
+        case brokenWinner
+        case configUnavailable
+        case targetingUnavailable
+
+        static let whileShown: [NothingToShow] = [.empty, .brokenWinner, .targetingUnavailable]
+
+        var resolution: EmbeddedBlockResolution {
+            switch self {
+            case .empty: return .empty
+            case .brokenWinner: return .failure(.broken)
+            case .configUnavailable: return .configUnavailable
+            case .targetingUnavailable: return .targetingUnavailable
+            }
+        }
+
+        var reportedFailures: [InAppShowFailureReason] { self == .brokenWinner ? [.unknownError] : [] }
+
+        var unansweredWaitReports: Int { self == .configUnavailable ? 1 : 0 }
+
+        var collapsedState: EmbeddedBlockState {
+            switch self {
+            case .empty: return .empty
+            case .brokenWinner: return .failed(.internalError)
+            case .configUnavailable, .targetingUnavailable: return .failed(.networkError)
+            }
+        }
+    }
+
+    @Test("A shown block keeps its content while the user looks, whatever its place answers instead, and reports a failure at once",
+          arguments: NothingToShow.whileShown)
+    func shownBlockHoldsTheCollapse(_ answer: NothingToShow) {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.resolver.resolution = answer.resolution
+        bed.announceNewConfig()
+
+        #expect(states.isEmpty)
+        #expect(bed.provider.contentView === bed.page?.view)
+        #expect(bed.page?.isClosed == false)
+        #expect(bed.failureReporter.reasons == answer.reportedFailures)
+        #expect(bed.failureReporter.unansweredWaits.isEmpty)
+    }
+
+    @Test("A held failure reported when it arrived is not reported again when the collapse lands")
+    func heldFailureIsReportedOnce() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.resolver.resolution = .failure(.broken)
+        bed.announceNewConfig()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.stop()
+
+        #expect(states == [.failed(.internalError)])
+        #expect(bed.failureReporter.reasons == [.unknownError])
+    }
+
+    @Test("A held collapse lands as the user leaves, whatever its place answered instead: the page is dropped, the container hears it off screen, and the return asks the place anew",
+          arguments: NothingToShow.whileShown)
+    func heldCollapseLandsAsTheUserLeaves(_ answer: NothingToShow) {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.resolver.resolution = answer.resolution
+        bed.announceNewConfig()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.stop()
+
+        #expect(states == [answer.collapsedState])
+        #expect(bed.page?.isClosed == true)
+        #expect(bed.provider.contentView == nil)
+
+        let resolvesBefore = bed.resolver.resolveCount
+        bed.provider.start()
+
+        #expect(states == [answer.collapsedState, .loading, answer.collapsedState])
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.resolver.resolveCount == resolvesBefore + 1)
+    }
+
+    @Test("A failure that reaches a block off screen is reported at once; only the state waits for the return, and a teardown first loses nothing",
+          arguments: [NothingToShow.brokenWinner, .configUnavailable], [true, false])
+    func parkedFailureIsReportedOnArrival(_ answer: NothingToShow, isTornDownFirst: Bool) {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.provider.stop()
+        bed.resolver.isDeferred = true
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.apply(bed.answer(answer.resolution))
+        #expect(bed.failureReporter.reasons == answer.reportedFailures)
+        #expect(bed.failureReporter.unansweredWaits.count == answer.unansweredWaitReports)
+        #expect(states.isEmpty)
+
+        if isTornDownFirst {
+            bed.provider.teardown()
+        } else {
+            bed.provider.start()
+        }
+
+        #expect(bed.failureReporter.reasons == answer.reportedFailures)
+        #expect(bed.failureReporter.unansweredWaits.count == answer.unansweredWaitReports)
+        #expect(states == (isTornDownFirst ? [] : [answer.collapsedState]))
+    }
+
+    @Test("Content answered while a collapse is held keeps the block as it is through the next return")
+    func contentCancelsTheHeldCollapse() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.resolver.resolution = .empty
+        bed.announceNewConfig()
+
+        bed.resolver.resolution = .content(.stub)
+        bed.announceNewConfig()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+        bed.provider.stop()
+        bed.provider.start()
+
+        #expect(states == [.ready])
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.page?.isClosed == false)
+    }
+
     // MARK: - Which in-apps the page may draw
 
     @Test("A loading block answers which in-apps it may draw")
@@ -1144,6 +1280,23 @@ struct EmbeddedBlockWebViewProviderTests {
 
         #expect(bed.inappService.askedIds == [["story-1"]])
         #expect(bed.page?.responses.map(\.payload) == [.object(["inappIds": .array([.string("story-1")])])])
+    }
+
+    @Test("An answer for a page dropped when the user left a block its place no longer shows is dropped")
+    func answerForAPageDroppedOnLeavingIsDropped() {
+        let bed = EmbeddedBlockTestBed()
+        bed.inappService.isDeferred = true
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.resolver.resolution = .empty
+        bed.announceNewConfig()
+
+        bed.page?.send(.filterShowableInapps, ["inappIds": .array([.string("story-1")])])
+        bed.provider.stop()
+        bed.inappService.flush()
+
+        #expect(bed.page?.isClosed == true)
+        #expect(bed.page?.responses.contains { $0.action == "filterShowableInapps" } == false)
     }
 
     @Test("An answer for a page the block has since replaced is dropped")

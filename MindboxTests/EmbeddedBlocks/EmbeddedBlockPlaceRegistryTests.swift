@@ -194,6 +194,48 @@ struct EmbeddedBlockPlaceRegistryTests {
         }
     }
 
+    @Test("A queued pass that also re-checks a new config is a config pass, whatever operation it carries, in either order")
+    func queuedPassWithANewConfigIsNotAnOperationPass() {
+        for operationFirst in [true, false] {
+            let rig = Rig()
+            rig.resolver.isDeferred = true
+            let block = BlockFake()
+            rig.registry.register(block, place: "stories")
+            rig.registry.blockAppeared("stories")
+
+            var event: ApplicationEvent?
+            if operationFirst {
+                event = rig.announceOperation()
+                rig.announceNewConfig()
+            } else {
+                rig.announceNewConfig()
+                event = rig.announceOperation()
+            }
+            rig.resolver.flush()
+            rig.resolver.flush()
+
+            let carried = rig.resolver.triggers.last ?? nil
+            #expect(carried === event)
+            #expect(block.answers.map(\.isOperationTriggered) == [false, false])
+        }
+    }
+
+    @Test("A block that comes back while an operation's pass flies is answered as on its own return, not as by the operation")
+    func appearanceAbsorbedByAnOperationPassIsNotAnOperationAnswer() {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        rig.resolver.resolution = .empty
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.announceOperation()
+
+        rig.registry.blockAppeared("stories")
+        rig.resolver.flush()
+
+        #expect(rig.resolver.resolveCount == 1)
+        #expect(block.answers.map(\.isOperationTriggered) == [false])
+    }
+
     @Test("A pull mid-resolve is answered by the flying pass, not queued")
     func pullMidResolveIsNotQueued() {
         let rig = Rig()
@@ -375,6 +417,19 @@ struct EmbeddedBlockPlaceRegistryTests {
         }
 
         #expect(posted.wait(timeout: .now() + 2) == .success)
+    }
+
+    @Test("An answer tells its blocks whether an operation asked for it")
+    func answerCarriesItsCause() {
+        let rig = Rig()
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+
+        rig.announceNewConfig()
+        rig.announceOperation()
+        rig.registry.blockAppeared("stories")
+
+        #expect(block.answers.map(\.isOperationTriggered) == [false, true, false])
     }
 
     /// A limitation, not an oversight: neither platform remembers past operations — pinned so the day it changes is a decision.

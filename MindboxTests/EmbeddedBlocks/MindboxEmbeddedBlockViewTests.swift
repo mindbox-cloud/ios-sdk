@@ -726,6 +726,186 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.view.subviews.isEmpty)
     }
 
+    @Test("A block its place no longer shows keeps its content on screen and collapses as the user leaves: the host hears it out of the window, the place is forgotten, and the block stays collapsed on return and on the next launch")
+    func heldCollapseLandsAsTheUserLeaves() async throws {
+        let memory = EmbeddedBlockPlaceMemoryMock()
+        let block = BlockFixture(loadingStrategy: .automatic, memory: memory)
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.attachToWindow()
+        block.page?.reportRendered(1)
+        let content = try #require(block.page?.view)
+
+        block.bed.resolver.resolution = .empty
+        block.bed.announceNewConfig()
+        await mainQueueTurn()
+
+        #expect(content.superview === block.view)
+        #expect(block.view.intrinsicContentSize.height == 120)
+        #expect(delegate.events == [.loaded])
+
+        block.removeFromWindow()
+        await mainQueueTurn()
+
+        #expect(content.superview == nil)
+        #expect(block.view.intrinsicContentSize.height == 0)
+        #expect(delegate.events == [.loaded, .empty])
+        #expect(memory.shownPlaces.isEmpty)
+
+        block.attachToWindow()
+        #expect(block.view.intrinsicContentSize.height == 0)
+        #expect(BlockFixture(loadingStrategy: .automatic, memory: memory).view.intrinsicContentSize.height == 0)
+    }
+
+    @Test("A block its place can no longer check keeps its content on screen and fails as the user leaves: the host hears the failure out of the window, and the place's memory stays as it was")
+    func heldFailureLandsAsTheUserLeavesAndKeepsTheMemory() async throws {
+        let memory = EmbeddedBlockPlaceMemoryMock()
+        let block = BlockFixture(loadingStrategy: .automatic, memory: memory)
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.attachToWindow()
+        block.page?.reportRendered(1)
+
+        block.bed.resolver.resolution = .targetingUnavailable
+        block.bed.announceNewConfig()
+        await mainQueueTurn()
+        #expect(delegate.events == [.loaded])
+
+        block.removeFromWindow()
+        await mainQueueTurn()
+
+        #expect(delegate.events == [.loaded, .failed(.networkError)])
+        #expect(memory.shownPlaces == ["block-id"])
+        #expect(memory.forgotten.isEmpty)
+    }
+
+    @Test("A block let go within the pass of main it left the window in still forgets the place it held a collapse for")
+    func blockLetGoBeforeItStopsForgetsItsHeldCollapse() {
+        let memory = EmbeddedBlockPlaceMemoryMock()
+        let bed = EmbeddedBlockTestBed()
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 320, height: 480))
+        weak var released: MindboxEmbeddedBlockView?
+        autoreleasepool {
+            let view = MindboxEmbeddedBlockView(placeSystemName: "block-id",
+                                                height: 120,
+                                                contentProvider: bed.provider,
+                                                placeMemory: memory,
+                                                loadingStrategy: .placeholder,
+                                                animatesReveal: false,
+                                                afterMainPass: { _ in })
+            released = view
+            window.addSubview(view)
+            bed.page?.reportRendered(1)
+            bed.resolver.resolution = .empty
+            bed.announceNewConfig()
+            #expect(memory.shownPlaces == ["block-id"])
+
+            view.removeFromSuperview()
+        }
+
+        #expect(released == nil)
+        #expect(memory.shownPlaces.isEmpty)
+    }
+
+    @Test("A block let go within the pass of main it left the window in keeps the place's memory when what it held was a failure")
+    func blockLetGoBeforeItStopsKeepsTheMemoryForAHeldFailure() {
+        let memory = EmbeddedBlockPlaceMemoryMock()
+        let bed = EmbeddedBlockTestBed()
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 320, height: 480))
+        weak var released: MindboxEmbeddedBlockView?
+        autoreleasepool {
+            let view = MindboxEmbeddedBlockView(placeSystemName: "block-id",
+                                                height: 120,
+                                                contentProvider: bed.provider,
+                                                placeMemory: memory,
+                                                loadingStrategy: .placeholder,
+                                                animatesReveal: false,
+                                                afterMainPass: { _ in })
+            released = view
+            window.addSubview(view)
+            bed.page?.reportRendered(1)
+            bed.resolver.resolution = .targetingUnavailable
+            bed.announceNewConfig()
+            #expect(bed.provider.heldCollapse == .failed(.networkError))
+
+            view.removeFromSuperview()
+        }
+
+        #expect(released == nil)
+        #expect(memory.shownPlaces == ["block-id"])
+        #expect(memory.forgotten.isEmpty)
+    }
+
+    @Test("A block moved out of the window and back within one pass of main, as a navigation transition moves the screen it leaves, has not left: its held collapse stays held")
+    func blockMovedWithinOnePassHasNotLeft() async throws {
+        let block = BlockFixture()
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.attachToWindow()
+        block.page?.reportRendered(1)
+        let content = try #require(block.page?.view)
+        block.bed.resolver.resolution = .empty
+        block.bed.announceNewConfig()
+        await mainQueueTurn()
+
+        block.view.removeFromSuperview()
+        block.attachToWindow()
+        block.mainPass.fireAll()
+        await mainQueueTurn()
+
+        #expect(content.superview === block.view)
+        #expect(block.page?.isUserPresent == true)
+        #expect(block.view.intrinsicContentSize.height == 120)
+        #expect(delegate.events == [.loaded])
+    }
+
+    @Test("A block that left the window stops its content once the pass of main it left in is over")
+    func leavingTheWindowStopsAfterThePass() async {
+        let block = OwnBudgetBlockFixture(timeout: 30)
+        block.attachToWindow()
+
+        block.view.removeFromSuperview()
+        #expect(block.bed.page?.isUserPresent == true)
+
+        await mainQueueTurn()
+        #expect(block.bed.page?.isUserPresent == false)
+    }
+
+    @Test("An answer landing while the block is moved within one pass of main arms the wait budget for its page")
+    func answerDuringAMoveWithinOnePassArmsTheBudget() async {
+        let block = BlockFixture()
+        block.bed.resolver.isDeferred = true
+        block.attachToWindow()
+        await mainQueueTurn()
+
+        block.view.removeFromSuperview()
+        block.bed.resolver.flush()
+        await mainQueueTurn()
+        block.attachToWindow()
+        block.mainPass.fireAll()
+
+        #expect(block.waitBudgetBed.budget.isRunning)
+    }
+
+    @Test("Released or hidden by the host while it waits out the pass it left the window in, a block stops at once")
+    func releaseOrHostHidingDuringThePassStopsAtOnce() {
+        let released = BlockFixture()
+        released.attachToWindow()
+        released.view.removeFromSuperview()
+
+        released.view.release()
+
+        #expect(released.page?.cancelCount == 1)
+
+        let hidden = BlockFixture()
+        hidden.attachToWindow()
+        hidden.view.removeFromSuperview()
+
+        hidden.view.setHostVisible(false)
+
+        #expect(hidden.page?.isUserPresent == false)
+    }
+
     // MARK: - Timeout
 
     /// The same knob Android exposes as an XML attribute.
