@@ -78,7 +78,7 @@ final class InappShowBudget: InappShowBudgeting {
 
     func reserve(_ owner: InappShowBudgetOwner, inAppId: String, isPriority: Bool, frequency: InappFrequency?, inSession sessionEpoch: Int?) -> InappShowReservationOutcome? {
         SessionTemporaryStorage.shared.$showBudget.mutate { state in
-            guard state.counts(sessionEpoch) else { return nil }
+            guard state.counts(sessionEpoch), sessionEpoch.map({ !SessionTemporaryStorage.shared.ledger.hasEnded($0) }) ?? true else { return nil }
 
             if state.reservations[owner]?.inAppId == inAppId {
                 return .notNeeded
