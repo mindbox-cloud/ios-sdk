@@ -68,6 +68,8 @@ final class InappShowAccountingMock: InappShowAccounting {
 
     var shownIds: [String] { shows.map(\.inAppId) }
 
+    var accountant: InappShowAccounting?
+
     func recordShow(_ show: InappShow) {
         shows.append(show)
     }
@@ -80,6 +82,7 @@ final class InappShowAccountingMock: InappShowAccounting {
         places.append(place)
         shows.append(show)
         sessionEpochs.append(sessionEpoch)
+        accountant?.recordBlockShow(show, at: place, sessionEpoch: sessionEpoch)
     }
 }
 
@@ -734,7 +737,10 @@ final class EmbeddedBlockTestBed: EmbeddedBlockSessionRig {
          resolution: EmbeddedBlockResolution = .content(.stub),
          applicationState: UIApplication.State = .active) {
         // Once-per-session state lives on the shared singleton — reset, or beds would see each other's silence.
-        SessionTemporaryStorage.shared.$ledger.mutate { $0.placesReportedUnanswered = [] }
+        SessionTemporaryStorage.shared.$ledger.mutate {
+            $0.placesReportedUnanswered = []
+            $0.servedPlaceDelays = []
+        }
 
         let clock = TestClock()
         let resolver = EmbeddedBlockResolverMock(resolution: resolution)
@@ -791,6 +797,11 @@ final class EmbeddedBlockTestBed: EmbeddedBlockSessionRig {
         providerAt(placeSystemName)
     }
 
+    func announceNewSession() {
+        expireSession()
+        concludeNewSessionDownload()
+    }
+
     func concludeNewSessionDownload() {
         resolver.sessionEpoch = currentSessionEpoch
         announceNewConfig()
@@ -830,7 +841,9 @@ final class EmbeddedBlockTestBed: EmbeddedBlockSessionRig {
         EmbeddedBlockPlaceAnswer(resolution: resolution,
                                  processingDuration: 0,
                                  sessionEpoch: resolver.sessionEpoch,
-                                 isOperationTriggered: false)
+                                 isOperationTriggered: false,
+                                 isAskedOffScreen: false,
+                                 isNewSessionAsk: false)
     }
 
     func deliverSamePageWithNewData(_ marker: String = "fresh") {

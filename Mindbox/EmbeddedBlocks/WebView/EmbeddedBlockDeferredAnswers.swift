@@ -33,6 +33,8 @@ struct EmbeddedBlockDeferredAnswers {
 
     var isHolding: Bool { heldAnswer != nil || isPageEmpty }
 
+    var isHoldingPlaceAnswer: Bool { heldAnswer != nil }
+
     var held: HeldCollapse? { heldAnswer.map { .placeAnswer($0) } ?? (isPageEmpty ? .emptyPage : nil) }
 
     var parksContent: Bool { parked?.resolution.content != nil }

@@ -132,7 +132,7 @@ final class EmbeddedBlockWebViewProvider {
 
         // The parked answer goes first, as on Android: a page it replaces or drops is not resumed.
         let generation = loadGeneration
-        let parked = deferred.takeParked(unlessEndedIn: SessionTemporaryStorage.shared.ledger)
+        let parked = deferred.takeParked(unlessEndedIn: SessionTemporaryStorage.shared.ledger).flatMap { registry.bringOnScreen($0, at: placeSystemName) }
         if let parked {
             take(parked, isParked: true)
         }
@@ -147,7 +147,7 @@ final class EmbeddedBlockWebViewProvider {
                           category: .embeddedBlocks)
             onStateChange?(outcome)
             if outcome == .ready {
-                accountForShow()
+                catchUpShownPage()
             }
             dataPushWait.resumeIfSuspended()
         }
@@ -289,32 +289,43 @@ final class EmbeddedBlockWebViewProvider {
         // Only a block that shows something is talked to; one that shows nothing is rebuilt. A page
         // confirms a data push and stays exactly as it was, so a collapsed block told about its content
         // would sit waiting for a report that never comes. Rebuilding revives it, in sync with Android.
-        if let current = content, let page = page, isAttemptAlive {
-            if fresh == current {
-                Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the place resolved to the same content — nothing to change",
-                              category: .embeddedBlocks)
-                return
+        if let current = content, page != nil, isAttemptAlive, fresh.isSamePage(as: current) {
+            content = fresh
+            pageShow?.confirm(answer)
+            if fresh.params != current.params {
+                pageShow?.requireRefresh()
             }
 
-            if fresh.isSamePage(as: current) {
-                content = fresh
-                guard fresh.params != current.params else {
-                    Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': same page, only its frequency or tags moved — refreshing the snapshot, nothing to tell the page",
-                                  category: .embeddedBlocks)
-                    return
-                }
-
-                Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': same page, new data — telling the page",
+            if pageShow?.isRefreshDue != true {
+                Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the place resolved to the same page with the same data — nothing to tell the page",
                               category: .embeddedBlocks)
-                didReportShownContent = false
-                page.sendInitData(params: fresh.params)
-                armDataPushAck()
-                return
             }
+            catchUpShownPage()
+            return
         }
 
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': \(rebuildReason)", category: .embeddedBlocks)
         buildPage(with: fresh, sessionEpoch: answer.sessionEpoch, processingDuration: answer.processingDuration)
+    }
+
+    private func catchUpShownPage() {
+        guard let page, let content, let owed = pageShow, owed.isRefreshDue else {
+            accountForShow()
+            return
+        }
+
+        guard isStarted, isReady, !deferred.isHoldingPlaceAnswer, appPresence.isPresent, !SessionTemporaryStorage.shared.ledger.hasEnded(owed.confirmedEpoch) else {
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': new data waits — the page has not drawn, the user cannot see it or its place no longer shows it; told once it can, within its session",
+                          category: .embeddedBlocks)
+            return
+        }
+
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': same page, new data — telling the page",
+                      category: .embeddedBlocks)
+        pageShow?.refreshSent()
+        didReportShownContent = false
+        page.sendInitData(params: content.params)
+        armDataPushAck()
     }
 
     private var rebuildReason: String {
@@ -381,11 +392,14 @@ final class EmbeddedBlockWebViewProvider {
         dataPushWait.arm { [weak self] in
             guard let self, let content = self.content, let pageShow = self.pageShow else { return }
 
-            guard !self.deferred.isHolding else { return }
+            guard !self.deferred.isHolding else {
+                self.pageShow?.requireRefresh()
+                return
+            }
 
             Logger.common(message: "[EmbeddedBlock] Block '\(self.placeSystemName)': the page never confirmed the data push — rebuilding it",
                           level: .error, category: .embeddedBlocks)
-            self.buildPage(with: content, sessionEpoch: pageShow.confirmedEpoch, processingDuration: pageShow.processingDuration)
+            self.buildPage(with: content, sessionEpoch: pageShow.confirmedEpoch, processingDuration: pageShow.processingDurationOfARebuild)
         }
     }
 
@@ -493,7 +507,7 @@ final class EmbeddedBlockWebViewProvider {
         didReportShownContent = true
         pageShow?.pageRendered()
         settle(.ready)
-        accountForShow()
+        catchUpShownPage()
     }
 
     private func handleUnreadableContentReport() {
@@ -509,7 +523,7 @@ final class EmbeddedBlockWebViewProvider {
     }
 
     private func accountForShow() {
-        guard isStarted, isReady, appPresence.isPresent, let content,
+        guard isStarted, isReady, !deferred.isHolding, appPresence.isPresent, let content,
               let due = pageShow?.takeDueShow() else { return }
 
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': in-app \(content.inAppId) is shown in session \(due.sessionEpoch), timeToDisplay=\(due.timeToDisplay.toTimeSpan())",
@@ -535,6 +549,6 @@ extension EmbeddedBlockWebViewProvider: EmbeddedBlockAppPresenceSubscribing {
         guard isStarted else { return }
 
         dataPushWait.resumeIfSuspended()
-        accountForShow()
+        catchUpShownPage()
     }
 }

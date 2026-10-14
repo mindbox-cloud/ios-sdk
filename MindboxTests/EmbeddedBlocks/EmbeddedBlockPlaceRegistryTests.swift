@@ -1011,8 +1011,8 @@ struct EmbeddedBlockPlaceRegistryTests {
         #expect(rig.budget.releases == [.place("stories")])
     }
 
-    @Test("Content for a place whose blocks have given up gives the slot straight back")
-    func contentForAnAbandonedPlaceGivesTheSlotBack() {
+    @Test("Content for a place whose blocks have given up takes no slot")
+    func contentForAnAbandonedPlaceTakesNoSlot() {
         let rig = Rig()
         rig.resolver.isDeferred = true
         let block = BlockFake()
@@ -1023,12 +1023,12 @@ struct EmbeddedBlockPlaceRegistryTests {
         block.holdsAnAttempt = false
         rig.resolver.flush()
 
-        #expect(rig.budget.reservedOwners == [.place("stories")])
-        #expect(rig.budget.releases == [.place("stories")])
+        #expect(rig.budget.reservations.isEmpty)
+        #expect(rig.budget.releases.isEmpty)
     }
 
-    @Test("Content for a place whose blocks are gone gives the slot straight back")
-    func contentForAPlaceWithNoBlocksGivesTheSlotBack() {
+    @Test("Content for a place whose blocks are gone takes no slot")
+    func contentForAPlaceWithNoBlocksTakesNoSlot() {
         let rig = Rig()
         rig.resolver.isDeferred = true
         var block: BlockFake? = BlockFake()
@@ -1040,7 +1040,8 @@ struct EmbeddedBlockPlaceRegistryTests {
         block = nil
         rig.resolver.flush()
 
-        #expect(rig.budget.releases == [.place("stories")])
+        #expect(rig.budget.reservations.isEmpty)
+        #expect(rig.budget.releases.isEmpty)
     }
 
     @Test("A block whose attempt ended off the main queue releases the place's slot on it")

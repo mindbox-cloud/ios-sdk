@@ -18,6 +18,10 @@ struct EmbeddedBlockPlaceAnswer {
 
     let isOperationTriggered: Bool
 
+    let isAskedOffScreen: Bool
+
+    let isNewSessionAsk: Bool
+
     func with(_ resolution: EmbeddedBlockResolution) -> EmbeddedBlockPlaceAnswer {
         copy(resolution: resolution)
     }
@@ -26,16 +30,26 @@ struct EmbeddedBlockPlaceAnswer {
         copy(processingDuration: processingDuration)
     }
 
+    func landedOffScreen() -> EmbeddedBlockPlaceAnswer {
+        copy(isAskedOffScreen: true)
+    }
+
     func replacing(_ waiting: EmbeddedBlockPlaceAnswer) -> EmbeddedBlockPlaceAnswer {
-        copy(processingDuration: waiting.processingDuration)
+        copy(processingDuration: waiting.processingDuration,
+             isAskedOffScreen: isAskedOffScreen || waiting.isAskedOffScreen,
+             isNewSessionAsk: isNewSessionAsk || waiting.isNewSessionAsk)
     }
 
     private func copy(resolution: EmbeddedBlockResolution? = nil,
-                      processingDuration: TimeInterval? = nil) -> EmbeddedBlockPlaceAnswer {
+                      processingDuration: TimeInterval? = nil,
+                      isAskedOffScreen: Bool? = nil,
+                      isNewSessionAsk: Bool? = nil) -> EmbeddedBlockPlaceAnswer {
         EmbeddedBlockPlaceAnswer(resolution: resolution ?? self.resolution,
                                  processingDuration: processingDuration ?? self.processingDuration,
                                  sessionEpoch: sessionEpoch,
-                                 isOperationTriggered: isOperationTriggered)
+                                 isOperationTriggered: isOperationTriggered,
+                                 isAskedOffScreen: isAskedOffScreen ?? self.isAskedOffScreen,
+                                 isNewSessionAsk: isNewSessionAsk ?? self.isNewSessionAsk)
     }
 }
 
@@ -60,7 +74,7 @@ protocol EmbeddedBlockPlaceHandling: AnyObject {
 }
 
 /// Main-thread confined. The void entry points hop there themselves: a block's `init` and the container's `deinit` are not
-/// promised the main thread by UIKit. `keepsContent(for:)` answers synchronously: call it on main.
+/// promised the main thread by UIKit. `keepsContent(for:)` and `bringOnScreen(_:at:)` answer synchronously: call them on main.
 protocol EmbeddedBlockPlaceRegistering: AnyObject {
 
     func register(_ block: EmbeddedBlockPlaceHandling, place: String)
@@ -70,4 +84,6 @@ protocol EmbeddedBlockPlaceRegistering: AnyObject {
     func blockAttemptEnded(_ place: String)
 
     func keepsContent(for place: String) -> Bool
+
+    func bringOnScreen(_ answer: EmbeddedBlockPlaceAnswer, at place: String) -> EmbeddedBlockPlaceAnswer?
 }
