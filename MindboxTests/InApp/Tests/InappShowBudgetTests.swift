@@ -286,6 +286,22 @@ struct InappShowBudgetTests {
         #expect(reservations.isEmpty)
     }
 
+    @Test("A place's reservation while a check is ending its session is refused as stale and takes no slot, also once the check has reset the ledger and not yet the budget",
+          arguments: [false, true])
+    func reservationOfAnEndingSessionTakesNothing(isLedgerReset: Bool) {
+        let ending = SessionTemporaryStorage.shared.ledger.sessionEpoch
+        let ledger = SessionTemporaryStorage.shared.ledger
+        defer { SessionTemporaryStorage.shared.ledger = ledger }
+        SessionTemporaryStorage.shared.ledger = isLedgerReset
+            ? InappSessionLedger(sessionEpoch: ending + 1)
+            : InappSessionLedger(sessionEpoch: ending, isSessionEnding: true)
+
+        let outcome = budget.reserve(.place("stories"), inAppId: "a", isPriority: false, frequency: restricted, inSession: ending)
+
+        #expect(outcome == nil)
+        #expect(reservations.isEmpty)
+    }
+
     @Test("A place's show of a session that has ended is written to the frequency history only, and a release of it frees nothing")
     func showOfAnEndedSessionKeepsTheCurrentSessionsCounts() {
         let ended = SessionTemporaryStorage.shared.ledger.sessionEpoch
