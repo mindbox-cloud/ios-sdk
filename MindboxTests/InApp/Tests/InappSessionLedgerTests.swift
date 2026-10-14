@@ -68,17 +68,17 @@ struct InappSessionLedgerTests {
     func showsAreRecordedPerPlaceChange() {
         var ledger = InappSessionLedger()
 
-        let shown = ledger.recordShow("inapp-1", at: "place")
-        let held = ledger.recordShow("inapp-1", at: "place")
-        let changed = ledger.recordShow("inapp-2", at: "place")
-        let returned = ledger.recordShow("inapp-1", at: "place")
-        let otherPlace = ledger.recordShow("inapp-1", at: "other-place")
+        let shown = ledger.recordShow("inapp-1", at: "place", sessionEpoch: 0)
+        let held = ledger.recordShow("inapp-1", at: "place", sessionEpoch: 0)
+        let changed = ledger.recordShow("inapp-2", at: "place", sessionEpoch: 0)
+        let returned = ledger.recordShow("inapp-1", at: "place", sessionEpoch: 0)
+        let otherPlace = ledger.recordShow("inapp-1", at: "other-place", sessionEpoch: 0)
 
-        #expect(shown)
-        #expect(!held)
-        #expect(changed)
-        #expect(returned)
-        #expect(otherPlace)
+        #expect(shown == .new)
+        #expect(held == .repeated)
+        #expect(changed == .new)
+        #expect(returned == .new)
+        #expect(otherPlace == .new)
     }
 
     @Test("A silent place is reported once per session")

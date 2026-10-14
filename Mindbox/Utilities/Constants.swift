@@ -28,6 +28,7 @@ enum Constants {
 
         static let mindBoxIdentifireKey = "uniqueKey"
         static let pushTokenKeepalive = "pushTokenKeepalive"
+        static let sessionEpoch = "sessionEpoch"
     }
 
     /// Mobile configuration sdkVersion.

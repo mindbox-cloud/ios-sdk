@@ -65,6 +65,10 @@ final class EmbeddedBlockDelayedDelivery<Answer> {
         waiting[place]?.inappId == inappId
     }
 
+    func waitingAnswer(at place: String) -> Answer? {
+        waiting[place]?.answer
+    }
+
     func schedule(place: String, inappId: String, answer: Answer, after delay: TimeInterval, _ deliver: @escaping Delivery) {
         cancel(place: place)
 

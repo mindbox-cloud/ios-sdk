@@ -66,8 +66,10 @@ struct EmbeddedBlockDeferredAnswers {
         parked = answer
     }
 
-    mutating func takeParked() -> EmbeddedBlockPlaceAnswer? {
+    mutating func takeParked(unlessEndedIn ledger: InappSessionLedger) -> EmbeddedBlockPlaceAnswer? {
         defer { parked = nil }
+
+        guard let parked, !ledger.hasEnded(parked.sessionEpoch) else { return nil }
 
         return parked
     }

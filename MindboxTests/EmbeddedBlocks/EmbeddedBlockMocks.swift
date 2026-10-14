@@ -74,7 +74,7 @@ final class InappShowAccountingMock: InappShowAccounting {
         cooldowns.append(frequency)
     }
 
-    func recordBlockShow(_ show: InappShow, at place: String) {
+    func recordBlockShow(_ show: InappShow, at place: String, sessionEpoch: Int) {
         places.append(place)
         shows.append(show)
     }
@@ -97,6 +97,10 @@ final class InappShowBudgetMock: InappShowBudgeting {
 
     var refusedInAppIds: Set<String> = []
 
+    var isOfAnEndedSession = false
+
+    private(set) var callSessions: [Int?] = []
+
     private(set) var reservations: [Reservation] = []
     private(set) var commits: [Commit] = []
     private(set) var releases: [InappShowBudgetOwner] = []
@@ -105,16 +109,21 @@ final class InappShowBudgetMock: InappShowBudgeting {
 
     var reservedOwners: [InappShowBudgetOwner] { reservations.map(\.owner) }
 
-    func reserve(_ owner: InappShowBudgetOwner, inAppId: String, isPriority: Bool, frequency: InappFrequency?) -> InappShowReservationOutcome {
+    func reserve(_ owner: InappShowBudgetOwner, inAppId: String, isPriority: Bool, frequency: InappFrequency?, inSession sessionEpoch: Int?) -> InappShowReservationOutcome? {
+        callSessions.append(sessionEpoch)
+        guard !isOfAnEndedSession else { return nil }
+
         reservations.append(Reservation(owner: owner, inAppId: inAppId, isPriority: isPriority, frequency: frequency))
         return refusedInAppIds.contains(inAppId) ? .refused : .granted
     }
 
-    func commit(_ owner: InappShowBudgetOwner, inAppId: String, frequency: InappFrequency?) {
+    func commit(_ owner: InappShowBudgetOwner, inAppId: String, frequency: InappFrequency?, inSession sessionEpoch: Int?) {
+        callSessions.append(sessionEpoch)
         commits.append(Commit(owner: owner, inAppId: inAppId, frequency: frequency))
     }
 
-    func release(_ owner: InappShowBudgetOwner) {
+    func release(_ owner: InappShowBudgetOwner, inSession sessionEpoch: Int?) {
+        callSessions.append(sessionEpoch)
         releases.append(owner)
         releasedOnMainThread.append(Thread.isMainThread)
     }
@@ -380,6 +389,8 @@ final class EmbeddedBlockResolverMock: EmbeddedBlockResolving {
 
     var processingDuration: TimeInterval = 0
 
+    var sessionEpoch = SessionTemporaryStorage.shared.ledger.sessionEpoch
+
     /// `true` — the answer does not arrive until the test calls `flush()`: this is how a resolve
     /// that lands after the block was stopped or reloaded is checked.
     var isDeferred = false
@@ -390,7 +401,7 @@ final class EmbeddedBlockResolverMock: EmbeddedBlockResolving {
 
     var resolveCount: Int { resolvedPlaces.count }
 
-    private var pending: [(EmbeddedBlockResolution, TimeInterval) -> Void] = []
+    private var pending: [(EmbeddedBlockResolution, TimeInterval, Int) -> Void] = []
 
     init(resolution: EmbeddedBlockResolution = .content(.stub)) {
         self.resolution = resolution
@@ -398,21 +409,21 @@ final class EmbeddedBlockResolverMock: EmbeddedBlockResolving {
 
     func resolve(_ place: String,
                  trigger: ApplicationEvent?,
-                 completion: @escaping (EmbeddedBlockResolution, TimeInterval) -> Void) {
+                 completion: @escaping (EmbeddedBlockResolution, TimeInterval, Int) -> Void) {
         resolvedPlaces.append(place)
         triggers.append(trigger)
 
         if isDeferred {
             pending.append(completion)
         } else {
-            completion(resolution, processingDuration)
+            completion(resolution, processingDuration, sessionEpoch)
         }
     }
 
     func flush() {
         let completions = pending
         pending = []
-        completions.forEach { $0(resolution, processingDuration) }
+        completions.forEach { $0(resolution, processingDuration, sessionEpoch) }
     }
 }
 
@@ -602,7 +613,36 @@ final class EmbeddedBlockContentProviderFactoryMock: EmbeddedBlockContentProvide
     }
 }
 
-final class EmbeddedBlockTestBed {
+protocol EmbeddedBlockSessionRig: AnyObject {
+
+    var center: NotificationCenter { get }
+
+    var resolver: EmbeddedBlockResolverMock { get }
+}
+
+extension EmbeddedBlockSessionRig {
+
+    var currentSessionEpoch: Int { SessionTemporaryStorage.shared.ledger.sessionEpoch }
+
+    func expireSession() {
+        SessionTemporaryStorage.shared.erase()
+    }
+
+    func announceNewConfig(sessionEpoch: Int? = nil) {
+        center.post(name: .mobileConfigDownloadConcluded,
+                    object: nil,
+                    userInfo: [Constants.Notification.sessionEpoch: sessionEpoch ?? resolver.sessionEpoch])
+    }
+
+    @discardableResult
+    func announceOperation(_ name: String = "custom.operation") -> ApplicationEvent {
+        let event = ApplicationEvent(name: name, model: nil)
+        center.post(name: .inAppOperationOccurred, object: event)
+        return event
+    }
+}
+
+final class EmbeddedBlockTestBed: EmbeddedBlockSessionRig {
 
     let resolver: EmbeddedBlockResolverMock
     let inappService: InappRequestServiceMock
@@ -667,10 +707,6 @@ final class EmbeddedBlockTestBed {
                                                      now: { clock.now })
     }
 
-    func announceNewConfig() {
-        center.post(name: .mobileConfigDownloadConcluded, object: nil)
-    }
-
     func enterBackground() {
         appState.isInBackground = true
         center.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
@@ -687,6 +723,7 @@ final class EmbeddedBlockTestBed {
     func answer(_ resolution: EmbeddedBlockResolution) -> EmbeddedBlockPlaceAnswer {
         EmbeddedBlockPlaceAnswer(resolution: resolution,
                                  processingDuration: 0,
+                                 sessionEpoch: resolver.sessionEpoch,
                                  isOperationTriggered: false)
     }
 
@@ -699,13 +736,6 @@ final class EmbeddedBlockTestBed {
                                             params: [marker: .bool(true)])
         resolver.resolution = .content(fresh)
         announceNewConfig()
-    }
-
-    @discardableResult
-    func announceOperation(_ name: String = "custom.operation") -> ApplicationEvent {
-        let event = ApplicationEvent(name: name, model: nil)
-        center.post(name: .inAppOperationOccurred, object: event)
-        return event
     }
 }
 
@@ -854,7 +884,7 @@ final class EmbeddedBlockViewDelegateMock: MindboxEmbeddedBlockViewDelegate {
 
 extension EmbeddedBlockResolving {
 
-    func resolve(_ place: String, completion: @escaping (EmbeddedBlockResolution, TimeInterval) -> Void) {
+    func resolve(_ place: String, completion: @escaping (EmbeddedBlockResolution, TimeInterval, Int) -> Void) {
         resolve(place, trigger: nil, completion: completion)
     }
 }

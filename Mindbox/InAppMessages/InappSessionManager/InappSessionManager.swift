@@ -41,8 +41,13 @@ final class InappSessionManager: InappSessionManagerProtocol {
         
         let now = Date()
         let sessionTime = getConfigSession().flatMap { $0 > 0 ? $0 : nil }
-        let previous = $lastTrackVisitTimestamp.exchange(now)
-        let visit = (previous: previous, isExpired: previous.flatMap { previous in sessionTime.map { now.timeIntervalSince(previous) > $0 } } ?? false)
+        let visit = SessionTemporaryStorage.shared.$ledger.mutate { ledger -> (previous: Date?, isExpired: Bool) in
+            guard let previous = $lastTrackVisitTimestamp.exchange(now) else { return (nil, false) }
+            guard let sessionTime, now.timeIntervalSince(previous) > sessionTime else { return (previous, false) }
+
+            ledger.isSessionEnding = true
+            return (previous, true)
+        }
         Logger.common(message: "[InappSessionManager] Updating lastTrackVisitTimestamp to \(now.asDateTimeWithSeconds).")
 
         defer {

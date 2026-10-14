@@ -56,20 +56,11 @@ final class EmbeddedBlockWebViewProvider {
 
     private var loadGeneration = 0
 
-    private var didAccountForShow = false
-
     /// The page has drawn something and nothing has been asked of it since. A stray repeat must not
     /// un-show a shown block; a rebuild and a data push both invite a fresh report.
     private var didReportShownContent = false
 
-    /// The selection's part of `timeToDisplay`; the page's part runs on `presentationStopwatch`.
-    private var processingDuration: TimeInterval = 0
-
-    /// `timeToDisplay` frozen at the moment the page drew: a Show sent on a later return reports
-    /// the render, not the time nobody was looking.
-    private var renderedElapsed: TimeInterval?
-
-    private var presentationStopwatch: ForegroundStopwatch
+    private var pageShow: EmbeddedBlockPageShow?
 
     private let makeStopwatch: () -> ForegroundStopwatch
 
@@ -98,7 +89,6 @@ final class EmbeddedBlockWebViewProvider {
                                                      report: reportFailure,
                                                      reportUnansweredWait: reportUnansweredWait)
         self.makeStopwatch = makeStopwatch
-        self.presentationStopwatch = makeStopwatch()
         self.dataPushWait = EmbeddedBlockDataPushWait(placeSystemName: placeSystemName, now: now, schedule: scheduleAckTimeout)
 
         registry.register(self, place: placeSystemName)
@@ -110,13 +100,13 @@ final class EmbeddedBlockWebViewProvider {
         isStarted = true
         isPaused = false
         page?.isUserPresent = true
-        presentationStopwatch.resume()
+        pageShow?.resume()
 
         failures.flushHeld()
 
         // The parked answer goes first, as on Android: a page it replaces or drops is not resumed.
         let generation = loadGeneration
-        let parked = deferred.takeParked()
+        let parked = deferred.takeParked(unlessEndedIn: SessionTemporaryStorage.shared.ledger)
         if let parked {
             take(parked, isParked: true)
         }
@@ -156,7 +146,7 @@ final class EmbeddedBlockWebViewProvider {
         dataPushWait.suspend()
         // The show's time stops with the block: it left the window or the host hid it. The background
         // is not a stop — the stopwatch excludes it on its own.
-        presentationStopwatch.suspend()
+        pageShow?.suspend()
         // The page stays alive off screen, so it has to be told that nobody is looking.
         page?.isUserPresent = false
     }
@@ -288,8 +278,6 @@ final class EmbeddedBlockWebViewProvider {
 
                 Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': same page, new data — telling the page",
                               category: .embeddedBlocks)
-                // The stopwatch is deliberately not restarted: a re-render after a data push cannot
-                // account a show anyway (didAccountForShow holds), so its time goes nowhere.
                 didReportShownContent = false
                 page.sendInitData(params: fresh.params)
                 armDataPushAck()
@@ -298,7 +286,7 @@ final class EmbeddedBlockWebViewProvider {
         }
 
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': \(rebuildReason)", category: .embeddedBlocks)
-        buildPage(with: fresh, processingDuration: answer.processingDuration)
+        buildPage(with: fresh, sessionEpoch: answer.sessionEpoch, processingDuration: answer.processingDuration)
     }
 
     private var rebuildReason: String {
@@ -309,7 +297,7 @@ final class EmbeddedBlockWebViewProvider {
             : "nothing is shown here — rebuilding its page to revive it"
     }
 
-    private func buildPage(with fresh: EmbeddedBlockWebContent, processingDuration: TimeInterval) {
+    private func buildPage(with fresh: EmbeddedBlockWebContent, sessionEpoch: Int, processingDuration: TimeInterval) {
         dropPage()
 
         if outcome != .loading {
@@ -317,11 +305,8 @@ final class EmbeddedBlockWebViewProvider {
         }
         outcome = .loading
         loadGeneration += 1
-        didAccountForShow = false
         didReportShownContent = false
-        self.processingDuration = processingDuration
-        presentationStopwatch = makeStopwatch()
-        renderedElapsed = nil
+        pageShow = EmbeddedBlockPageShow(builtFor: sessionEpoch, processingDuration: processingDuration, makeStopwatch: makeStopwatch)
 
         let page = makePage(fresh)
         page.isUserPresent = true
@@ -358,6 +343,7 @@ final class EmbeddedBlockWebViewProvider {
         page?.cancel()
         page = nil
         content = nil
+        pageShow = nil
         deferred.lift()
     }
 
@@ -365,13 +351,13 @@ final class EmbeddedBlockWebViewProvider {
 
     private func armDataPushAck() {
         dataPushWait.arm { [weak self] in
-            guard let self, let content = self.content else { return }
+            guard let self, let content = self.content, let pageShow = self.pageShow else { return }
 
             guard !self.deferred.isHolding else { return }
 
             Logger.common(message: "[EmbeddedBlock] Block '\(self.placeSystemName)': the page never confirmed the data push — rebuilding it",
                           level: .error, category: .embeddedBlocks)
-            self.buildPage(with: content, processingDuration: self.processingDuration)
+            self.buildPage(with: content, sessionEpoch: pageShow.confirmedEpoch, processingDuration: pageShow.processingDuration)
         }
     }
 
@@ -477,7 +463,7 @@ final class EmbeddedBlockWebViewProvider {
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': page rendered \(renderedCount) item(s)", category: .embeddedBlocks)
         deferred.liftEmptyPage()
         didReportShownContent = true
-        renderedElapsed = processingDuration + presentationStopwatch.elapsed
+        pageShow?.pageRendered()
         settle(.ready)
 
         guard isStarted else { return }
@@ -498,19 +484,15 @@ final class EmbeddedBlockWebViewProvider {
     }
 
     private func accountForShow() {
-        guard let content = content, !didAccountForShow else { return }
+        guard let content, let due = pageShow?.takeDueShow() else { return }
 
-        didAccountForShow = true
-
-        let timeToDisplay = renderedElapsed ?? (processingDuration + presentationStopwatch.elapsed)
-        presentationStopwatch.stop()
-
-        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': in-app \(content.inAppId) is shown, timeToDisplay=\(timeToDisplay.toTimeSpan())",
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': in-app \(content.inAppId) is shown in session \(due.sessionEpoch), timeToDisplay=\(due.timeToDisplay.toTimeSpan())",
                       category: .embeddedBlocks)
         accounting.recordBlockShow(InappShow(inAppId: content.inAppId,
                                              frequency: content.frequency,
                                              tags: content.tags,
-                                             timeToDisplay: timeToDisplay),
-                                   at: placeSystemName)
+                                             timeToDisplay: due.timeToDisplay),
+                                   at: placeSystemName,
+                                   sessionEpoch: due.sessionEpoch)
     }
 }

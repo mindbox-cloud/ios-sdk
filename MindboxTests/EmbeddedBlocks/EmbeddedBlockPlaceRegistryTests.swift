@@ -33,7 +33,7 @@ struct EmbeddedBlockPlaceRegistryTests {
         }
     }
 
-    private final class Rig {
+    private final class Rig: EmbeddedBlockSessionRig {
         let resolver: EmbeddedBlockResolverMock
         let center: NotificationCenter
         let embeddedPlaces: EmbeddedPlacesStub
@@ -70,17 +70,6 @@ struct EmbeddedBlockPlaceRegistryTests {
 
         func enterForeground() {
             center.post(name: UIApplication.willEnterForegroundNotification, object: nil)
-        }
-
-        func announceNewConfig() {
-            center.post(name: .mobileConfigDownloadConcluded, object: nil)
-        }
-
-        @discardableResult
-        func announceOperation(_ name: String = "custom.operation") -> ApplicationEvent {
-            let event = ApplicationEvent(name: name, model: nil)
-            center.post(name: .inAppOperationOccurred, object: event)
-            return event
         }
     }
 

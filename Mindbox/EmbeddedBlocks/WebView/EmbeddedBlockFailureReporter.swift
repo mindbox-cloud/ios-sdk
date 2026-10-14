@@ -45,7 +45,7 @@ final class EmbeddedBlockFailureReporter {
         case .failure(let failure):
             send(failure)
         case .configUnavailable:
-            reportUnansweredWaitOnce(answer.processingDuration)
+            reportUnansweredWaitOnce(answer.processingDuration, inSession: answer.sessionEpoch)
         case .content, .empty, .targetingUnavailable:
             break
         }
@@ -71,8 +71,22 @@ final class EmbeddedBlockFailureReporter {
         report(failure.inAppId, failure.tags, failure.reason, failure.details)
     }
 
-    func reportUnansweredWaitOnce(_ waited: TimeInterval) {
-        guard SessionTemporaryStorage.shared.$ledger.mutate({ $0.recordUnanswered(placeSystemName) }) else {
+    func reportUnansweredWaitOnce(_ waited: TimeInterval, inSession sessionEpoch: Int? = nil) {
+        let isFirst = SessionTemporaryStorage.shared.$ledger.mutate { ledger -> Bool? in
+            if let sessionEpoch, ledger.hasEnded(sessionEpoch) {
+                return nil
+            }
+
+            return ledger.recordUnanswered(placeSystemName)
+        }
+
+        guard let isFirst else {
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': no config to answer with in a session that has ended — not reported",
+                          category: .embeddedBlocks)
+            return
+        }
+
+        guard isFirst else {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the SDK stayed silent again this session — already reported",
                           category: .embeddedBlocks)
             return

@@ -14,6 +14,8 @@ struct EmbeddedBlockPlaceAnswer {
 
     let processingDuration: TimeInterval
 
+    let sessionEpoch: Int
+
     let isOperationTriggered: Bool
 
     func with(_ resolution: EmbeddedBlockResolution) -> EmbeddedBlockPlaceAnswer {
@@ -28,6 +30,7 @@ struct EmbeddedBlockPlaceAnswer {
                       processingDuration: TimeInterval? = nil) -> EmbeddedBlockPlaceAnswer {
         EmbeddedBlockPlaceAnswer(resolution: resolution ?? self.resolution,
                                  processingDuration: processingDuration ?? self.processingDuration,
+                                 sessionEpoch: sessionEpoch,
                                  isOperationTriggered: isOperationTriggered)
     }
 }

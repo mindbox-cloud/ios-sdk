@@ -29,6 +29,8 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
     /// operations whose resolve would simply have waited for the config.
     private var embeddedPlacesInConfig: [String: Set<String>]?
 
+    private var concludedSessionEpoch: Int?
+
     private let resolver: EmbeddedBlockResolving
     private let budget: InappShowBudgeting
     private let fetchEmbeddedPlaces: EmbeddedPlacesFetching
@@ -54,8 +56,9 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
 
         observers.append(notificationCenter.addObserver(forName: .mobileConfigDownloadConcluded,
                                                         object: nil,
-                                                        queue: nil) { [weak self] _ in
-            self?.onMain { $0.configConcluded() }
+                                                        queue: nil) { [weak self] notification in
+            let sessionEpoch = notification.userInfo?[Constants.Notification.sessionEpoch] as? Int
+            self?.onMain { $0.configConcluded(sessionEpoch: sessionEpoch) }
         })
 
         observers.append(notificationCenter.addObserver(forName: .inAppOperationOccurred,
@@ -117,7 +120,8 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
 
     // MARK: - Channels
 
-    private func configConcluded() {
+    private func configConcluded(sessionEpoch: Int?) {
+        concludedSessionEpoch = sessionEpoch
         refreshEmbeddedPlaces()
 
         for place in placesWithActiveBlocks() {
@@ -183,18 +187,23 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
 
         resolvingPlaces.insert(place)
 
-        resolver.resolve(place, trigger: cause.trigger) { [weak self] resolution, processingDuration in
+        resolver.resolve(place, trigger: cause.trigger) { [weak self] resolution, processingDuration, sessionEpoch in
             guard let self else { return }
 
             self.resolvingPlaces.remove(place)
             let appearedMidResolve = self.placesAppearedMidResolve.remove(place) != nil
             let answer = EmbeddedBlockPlaceAnswer(resolution: resolution,
                                                   processingDuration: processingDuration,
+                                                  sessionEpoch: sessionEpoch,
                                                   isOperationTriggered: !cause.includesNonOperation && !appearedMidResolve)
             self.handle(answer, at: place)
 
             if let queued = self.queuedInvalidations.removeValue(forKey: place) {
                 self.requestResolve(place: place, cause: .queued(queued))
+            } else if let concluded = self.concludedSessionEpoch, sessionEpoch < concluded {
+                Logger.common(message: "[EmbeddedBlock] Place '\(place)': answered from an earlier session's config — asking again",
+                              category: .embeddedBlocks)
+                self.requestResolve(place: place, cause: .queued(QueuedInvalidation(trigger: nil, includesNonOperation: true)))
             }
         }
     }
@@ -202,9 +211,14 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
     /// A winner with `delayTime` waits like an overlay in the schedule queue and the blocks stand their wait
     /// budget down. A delay served once in the session is not waited again: a block coming back gets the content at once.
     private func handle(_ answer: EmbeddedBlockPlaceAnswer, at place: String) {
+        guard !SessionTemporaryStorage.shared.ledger.hasEnded(answer.sessionEpoch) else {
+            dropStale(answer, at: place)
+            return
+        }
+
         guard let content = answer.resolution.content else {
+            budget.release(.place(place), inSession: answer.sessionEpoch)
             delayedDelivery.cancel(place: place)
-            budget.release(.place(place))
             deliver(answer, at: place)
             return
         }
@@ -214,7 +228,8 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         // A fresh answer without a delay is not held back by the delay it used to have: nothing is
         // left to wait out, and the user waited for this very answer — it goes below, at once, with
         // its own selection time, as on Android.
-        if delay > 0, delayedDelivery.isWaiting(place: place, for: content.inAppId) {
+        if delay > 0, delayedDelivery.isWaiting(place: place, for: content.inAppId),
+           delayedDelivery.waitingAnswer(at: place)?.sessionEpoch == answer.sessionEpoch {
             Logger.common(message: "[EmbeddedBlock] Place '\(place)': in-app \(content.inAppId) is still waiting out its delay",
                           category: .embeddedBlocks)
             // The fresh content, with the selection time of the answer that started the delay: this
@@ -230,8 +245,6 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         delayedDelivery.cancel(place: place)
 
         let served = ServedPlaceDelay(place: place, inappId: content.inAppId)
-        // Checked here, inserted when the delay fires — both on the main thread; the ledger's
-        // lock protects other readers, not this sequence.
         guard delay > 0, !SessionTemporaryStorage.shared.ledger.servedPlaceDelays.contains(served) else {
             deliverContent(content, of: answer, at: place)
             return
@@ -242,32 +255,70 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         announceDelay(at: place)
 
         delayedDelivery.schedule(place: place, inappId: content.inAppId, answer: answer, after: delay) { [weak self] answer in
-            SessionTemporaryStorage.shared.$ledger.mutate { $0.servedPlaceDelays.insert(served) }
             guard let content = answer.resolution.content else { return }
 
-            self?.deliverContent(content, of: answer, at: place)
+            self?.deliverContent(content, of: answer, at: place, servingDelay: served)
         }
     }
 
     /// The slot is taken here, at the last point before a page is built, so a budget spent meanwhile costs no page load.
-    private func deliverContent(_ content: EmbeddedBlockWebContent, of answer: EmbeddedBlockPlaceAnswer, at place: String) {
-        guard holdsSlot(for: content, at: place) else {
-            Logger.common(message: "[EmbeddedBlock] Place '\(place)': in-app \(content.inAppId) won it, but the show budgets are spent — the place stays empty",
-                          category: .embeddedBlocks)
-            deliver(answer.with(.empty), at: place)
+    private func deliverContent(_ content: EmbeddedBlockWebContent,
+                                of answer: EmbeddedBlockPlaceAnswer,
+                                at place: String,
+                                servingDelay served: ServedPlaceDelay? = nil) {
+        let isShownAlready = inItsSession(answer) { ledger -> Bool in
+            if let served {
+                ledger.servedPlaceDelays.insert(served)
+            }
+
+            return ledger.placeShownInappId[place] == content.inAppId
+        }
+
+        switch isShownAlready {
+        case nil:
+            dropStale(answer, at: place)
+        case true?:
+            deliver(answer, at: place)
+            releaseSlotIfUnclaimed(place)
+        case false?:
+            reserveSlot(for: content, of: answer, at: place)
+        }
+    }
+
+    private func reserveSlot(for content: EmbeddedBlockWebContent, of answer: EmbeddedBlockPlaceAnswer, at place: String) {
+        guard let slotted = slotted(content, of: answer, at: place) else {
+            dropStale(answer, at: place)
             return
         }
 
-        deliver(answer, at: place)
-        releaseSlotIfUnclaimed(place)
+        deliver(slotted, at: place)
+        if slotted.resolution.content != nil {
+            releaseSlotIfUnclaimed(place)
+        }
     }
 
-    private func holdsSlot(for content: EmbeddedBlockWebContent, at place: String) -> Bool {
-        if SessionTemporaryStorage.shared.ledger.placeShownInappId[place] == content.inAppId {
-            return true
+    private func slotted(_ content: EmbeddedBlockWebContent, of answer: EmbeddedBlockPlaceAnswer, at place: String) -> EmbeddedBlockPlaceAnswer? {
+        switch budget.reserve(.place(place), inAppId: content.inAppId, isPriority: content.isPriority, frequency: content.frequency, inSession: answer.sessionEpoch) {
+        case nil:
+            return nil
+        case .refused?:
+            Logger.common(message: "[EmbeddedBlock] Place '\(place)': in-app \(content.inAppId) won it, but the show budgets are spent — the place stays empty",
+                          category: .embeddedBlocks)
+            return answer.with(.empty)
+        case .granted?, .notNeeded?:
+            return answer
         }
+    }
 
-        return budget.reserve(.place(place), inAppId: content.inAppId, isPriority: content.isPriority, frequency: content.frequency) != .refused
+    private func inItsSession<Value>(_ answer: EmbeddedBlockPlaceAnswer, _ work: (inout InappSessionLedger) -> Value) -> Value? {
+        SessionTemporaryStorage.shared.$ledger.mutate { ledger in
+            ledger.hasEnded(answer.sessionEpoch) ? nil : work(&ledger)
+        }
+    }
+
+    private func dropStale(_ answer: EmbeddedBlockPlaceAnswer, at place: String) {
+        Logger.common(message: "[EmbeddedBlock] Place '\(place)': an answer of a session that has ended or is ending (\(answer.sessionEpoch)) — dropped, the current session answers anew",
+                      category: .embeddedBlocks)
     }
 
     private func releaseSlotIfUnclaimed(_ place: String) {

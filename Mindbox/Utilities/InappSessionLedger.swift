@@ -28,9 +28,17 @@ struct ReportedFailure: Hashable {
     let reason: String
 }
 
+enum BlockShowRecord: Equatable {
+    case new
+    case repeated
+    case stale
+}
+
 /// What this session already told the funnel and served to places, kept so nothing is repeated.
 /// Reset as one with the session.
 struct InappSessionLedger: Equatable {
+
+    var sessionEpoch = 0
 
     /// In-apps vouched for once per session — the losers at a place.
     var vouchedInappIds: Set<String> = []
@@ -50,6 +58,12 @@ struct InappSessionLedger: Equatable {
     var placeShownInappId: [String: String] = [:]
 
     var reportedFailures: Set<ReportedFailure> = []
+
+    var isSessionEnding = false
+
+    func hasEnded(_ sessionEpoch: Int) -> Bool {
+        sessionEpoch < self.sessionEpoch || isSessionEnding
+    }
 }
 
 // Ask-and-record in one step, each meant to run inside a single `$ledger.mutate`: callers live on
@@ -73,12 +87,12 @@ extension InappSessionLedger {
         vouchedPageOffers.insert(offer).inserted
     }
 
-    /// True when the place shows something other than what it showed last.
-    mutating func recordShow(_ inappId: String, at place: String) -> Bool {
-        guard placeShownInappId[place] != inappId else { return false }
+    mutating func recordShow(_ inappId: String, at place: String, sessionEpoch: Int) -> BlockShowRecord {
+        guard sessionEpoch == self.sessionEpoch, !hasEnded(sessionEpoch) else { return .stale }
+        guard placeShownInappId[place] != inappId else { return .repeated }
 
         placeShownInappId[place] = inappId
-        return true
+        return .new
     }
 
     mutating func recordUnanswered(_ place: String) -> Bool {

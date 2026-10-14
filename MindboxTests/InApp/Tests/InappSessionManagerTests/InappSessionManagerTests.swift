@@ -189,6 +189,7 @@ final class InappSessionManagerTests: XCTestCase {
         targetingChecker.event = .init(name: "Test", model: nil)
         
         XCTAssertNil(persistenceStorage.lastInappStateChangeDate)
+        let sessionEpoch = SessionTemporaryStorage.shared.ledger.sessionEpoch
 
         manager.checkInappSession()
         
@@ -198,7 +199,7 @@ final class InappSessionManagerTests: XCTestCase {
         XCTAssertNil(SessionTemporaryStorage.shared.segmentationRequestResult)
         XCTAssertEqual(SessionTemporaryStorage.shared.sessionShownInApps, [])
         XCTAssertNil(SessionTemporaryStorage.shared.inAppSettings)
-        XCTAssertEqual(SessionTemporaryStorage.shared.ledger, InappSessionLedger())
+        XCTAssertEqual(SessionTemporaryStorage.shared.ledger, InappSessionLedger(sessionEpoch: sessionEpoch + 1))
         
         targetingChecker.context.isNeedGeoRequest = false
         targetingChecker.checkedSegmentations = nil
