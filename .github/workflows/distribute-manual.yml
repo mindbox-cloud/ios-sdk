@@ -19,3 +19,4 @@ jobs:
       app_ref: ${{ inputs.app_ref }}     # optional override for GitLab ref
     secrets:
       GITLAB_TRIGGER_TOKEN: ${{ secrets.GITLAB_TRIGGER_TOKEN }}
+      GITLAB_HOST: ${{ secrets.GITLAB_HOST }}
