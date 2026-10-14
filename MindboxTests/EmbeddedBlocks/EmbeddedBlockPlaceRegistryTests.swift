@@ -1304,6 +1304,59 @@ struct EmbeddedBlockPlaceRegistryTests {
         #expect(block.applied == [.content(.delayed())])
     }
 
+    @Test("Another winner answered between a return and the end of its session check cancels the delayed winner, whether its delay ran out while the app was away or runs out during the check: only the newer winner reaches the block and takes the slot, and no delay is marked served",
+          arguments: [true, false])
+    func newerWinnerInsideTheReturnCancelsTheDelayedWinner(didDelayRunOutAway: Bool) {
+        let rig = Rig()
+        rig.resolver.resolution = .content(.delayed())
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+        rig.resolver.isDeferred = true
+        rig.announceOperation()
+        rig.presence.enterBackground()
+        if didDelayRunOutAway {
+            rig.delayScheduler.fireAll()
+        }
+
+        rig.presence.returnToApp()
+        rig.resolver.resolution = .content(.other)
+        rig.resolver.flush()
+        rig.delayScheduler.fireAll()
+        rig.presence.finishSessionCheck()
+
+        #expect(block.applied == [.content(.other)])
+        #expect(rig.budget.reservations.map(\.inAppId) == [EmbeddedBlockWebContent.other.inAppId])
+        #expect(SessionTemporaryStorage.shared.ledger.servedPlaceDelays.isEmpty)
+    }
+
+    @Test("The same delayed winner answered again between a return and the end of its session check keeps its running delay and the selection time of the answer that started it")
+    func sameWinnerInsideTheReturnKeepsItsRunningDelay() {
+        let rig = Rig()
+        rig.resolver.resolution = .content(.delayed())
+        rig.resolver.processingDuration = 0.3
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+        rig.resolver.isDeferred = true
+        rig.announceOperation()
+        rig.presence.enterBackground()
+
+        rig.presence.returnToApp()
+        rig.resolver.resolution = .content(.delayed(params: ["fresh": .bool(true)]))
+        rig.resolver.processingDuration = 2.5
+        rig.resolver.flush()
+        rig.presence.finishSessionCheck()
+
+        #expect(rig.delayScheduler.armCount == 1)
+        #expect(block.applied.isEmpty)
+
+        rig.delayScheduler.fireAll()
+
+        #expect(block.applied == [.content(.delayed(params: ["fresh": .bool(true)]))])
+        #expect(block.processingDurations == [0.3])
+    }
+
     @Test("A delay that ran out in the background of a session that ended meanwhile delivers nothing on return, and the new session waits the whole delay")
     func delayDueFromAnExpiredSessionIsNotDeliveredOnReturn() {
         let rig = Rig()
