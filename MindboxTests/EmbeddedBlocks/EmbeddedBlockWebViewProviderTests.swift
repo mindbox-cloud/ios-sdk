@@ -2035,8 +2035,10 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.budget.releases == releasesAfterTheEmptyPage)
 
         bed.resolver.isDeferred = true
+        let resolvesBefore = bed.resolver.resolveCount
         bed.provider.start()
 
+        #expect(bed.resolver.resolveCount == resolvesBefore + 1)
         #expect(bed.pageFactory.pages.count == 2)
         #expect(bed.budget.reservations.count == 2)
     }
@@ -2112,7 +2114,6 @@ struct EmbeddedBlockWebViewProviderTests {
 
         bed.clock.advance(TimeInterval(Constants.EmbeddedBlock.readyTimeoutSeconds) * 3)
         bed.ackScheduler.fire()
-        bed.delayScheduler.fireAll()
         bed.page?.reportRendered(1)
 
         #expect(bed.pageFactory.pages.count == 1)

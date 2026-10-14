@@ -740,6 +740,7 @@ final class EmbeddedBlockTestBed: EmbeddedBlockSessionRig {
         SessionTemporaryStorage.shared.$ledger.mutate {
             $0.placesReportedUnanswered = []
             $0.servedPlaceDelays = []
+            $0.placeShownInappId = [:]
         }
 
         let clock = TestClock()
