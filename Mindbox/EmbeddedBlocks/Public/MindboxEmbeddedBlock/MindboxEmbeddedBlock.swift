@@ -86,7 +86,7 @@ public struct MindboxEmbeddedBlock: View {
     ///     `networkError`, in seconds; `errorView` applies unless the block waited hidden. `nil`
     ///     means the SDK default of 30. An answer that arrives after
     ///     that no longer expands the block; the next attempt starts when the block enters the
-    ///     window again.
+    ///     window again, or when the app comes back from the background with the block on screen.
     ///   - animatesReveal: Whether the SDK animates the reveal of the content — a fade, and the
     ///     growth of a block that waited hidden. `true` by default; the system's Reduce Motion
     ///     setting turns the animation off as well. Turn it off to animate the block's container

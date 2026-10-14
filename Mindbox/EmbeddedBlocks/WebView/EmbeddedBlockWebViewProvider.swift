@@ -28,6 +28,8 @@ final class EmbeddedBlockWebViewProvider {
 
     var onStarted: (() -> Void)?
 
+    var isOnScreen: () -> Bool = { false }
+
     var contentView: UIView? { isReady ? page?.view : nil }
 
     var isAwaitingAnswer: Bool { page == nil }
@@ -55,6 +57,8 @@ final class EmbeddedBlockWebViewProvider {
     private(set) var isStarted = false
 
     private(set) var isPaused = false
+
+    private var hasStartedSinceTheBackground = false
 
     private var outcome: EmbeddedBlockState = .loading
 
@@ -124,6 +128,7 @@ final class EmbeddedBlockWebViewProvider {
 
         deferred.isStartAwaitingSessionCheck = false
         isStarted = true
+        hasStartedSinceTheBackground = true
         isPaused = false
         page?.isUserPresent = true
         defer { onStarted?() }
@@ -513,7 +518,17 @@ final class EmbeddedBlockWebViewProvider {
 
 extension EmbeddedBlockWebViewProvider: EmbeddedBlockAppPresenceSubscribing {
 
+    func appDidEnterBackground() { hasStartedSinceTheBackground = false }
+
     func sessionCheckEndedWhileNotActive() { if deferred.isStartAwaitingSessionCheck { start() } }
+
+    func userReturned() {
+        guard outcome.isFailed, !hasStartedSinceTheBackground, isOnScreen() else { return }
+
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': back from the background with its attempt failed and nothing started since — starting it again", category: .embeddedBlocks)
+        isStarted = false
+        start()
+    }
 
     func userDidBecomePresent() {
         if deferred.isStartAwaitingSessionCheck {

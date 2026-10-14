@@ -290,7 +290,8 @@ public final class MindboxEmbeddedBlockView: UIView {
     ///     arrive and the selection has to run — before failing as `networkError`, in seconds;
     ///     `errorView` applies unless the block waited hidden. `nil` means the SDK default of 30. An answer that arrives after
     ///     that no longer expands the block; the next attempt starts when the block enters the
-    ///     window again. The separate budget a loaded page gets to render itself is not affected.
+    ///     window again, or when the app comes back from the background with the block on screen.
+    ///     The separate budget a loaded page gets to render itself is not affected.
     ///   - animatesReveal: Whether the SDK animates the reveal of the content. `true` by default;
     ///     the system's Reduce Motion setting turns the animation off as well.
     public convenience init(placeSystemName: String,
@@ -418,6 +419,8 @@ public final class MindboxEmbeddedBlockView: UIView {
             waitBudget.refresh()
         }
 
+        contentProvider.isOnScreen = { [weak self] in self?.isEffectivelyVisible == true }
+
         waitBudget.isNeeded = { [weak self, weak contentProvider] in
             guard let self, let contentProvider else { return false }
             return self.isContentRunning && self.state == .loading && !contentProvider.isAwaitingDelayedContent
@@ -494,8 +497,6 @@ public final class MindboxEmbeddedBlockView: UIView {
         }
     }
 
-    /// Internal and without a public wrapper: automatic reloads — on failure, on returning to the
-    /// app — will be built on this method.
     func reload() {
         guard let runtime, isContentRunning else {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' reload skipped: the block is not on screen",

@@ -19,6 +19,8 @@ protocol EmbeddedBlockAppPresenceSubscribing: AnyObject {
     func sessionCheckEndedWhileNotActive()
 
     func sessionChecked(startedAt: TimeInterval?, startsNewSession: Bool)
+
+    func userReturned()
 }
 
 extension EmbeddedBlockAppPresenceSubscribing {
@@ -30,6 +32,8 @@ extension EmbeddedBlockAppPresenceSubscribing {
     func sessionCheckEndedWhileNotActive() {}
 
     func sessionChecked(startedAt: TimeInterval?, startsNewSession: Bool) {}
+
+    func userReturned() {}
 }
 
 final class EmbeddedBlockAppPresence {
@@ -43,6 +47,8 @@ final class EmbeddedBlockAppPresence {
     private var returnedAt: TimeInterval?
 
     private var hasBeenInBackground = false
+
+    private var isReturnUnannounced = false
 
     private var subscribers: [WeakSubscriber] = []
 
@@ -78,12 +84,14 @@ final class EmbeddedBlockAppPresence {
         }
         observe(UIApplication.didBecomeActiveNotification) { presence, _ in
             presence.becamePresentIfSo()
+            presence.announceTheReturnIfPresent()
         }
         observe(.inappSessionChecked) { presence, notification in
             let startedAt = notification.userInfo?[Constants.Notification.sessionCheckStartedAt] as? TimeInterval
             let startsNewSession = notification.userInfo?[Constants.Notification.startsNewSession] as? Bool == true
             presence.sessionChecked(startedAt: startedAt)
             presence.notify { $0.sessionChecked(startedAt: startedAt, startsNewSession: startsNewSession) }
+            presence.announceTheReturnIfPresent()
         }
     }
 
@@ -120,12 +128,14 @@ final class EmbeddedBlockAppPresence {
 
         returnedAt = nil
         hasBeenInBackground = false
+        isReturnUnannounced = false
     }
 
     private func returned() {
         guard hasBeenInBackground, isSDKInitialized() else { return }
 
         returnedAt = now()
+        isReturnUnannounced = true
     }
 
     private func sessionChecked(startedAt: TimeInterval?) {
@@ -146,6 +156,13 @@ final class EmbeddedBlockAppPresence {
         guard isPresent else { return }
 
         notify { $0.userDidBecomePresent() }
+    }
+
+    private func announceTheReturnIfPresent() {
+        guard isReturnUnannounced, isPresent else { return }
+
+        isReturnUnannounced = false
+        notify { $0.userReturned() }
     }
 
     private func notify(_ event: (EmbeddedBlockAppPresenceSubscribing) -> Void) {
