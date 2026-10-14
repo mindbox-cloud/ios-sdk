@@ -2714,6 +2714,33 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.page?.isClosed == false)
     }
 
+    @Test("An operation's pass asked after the session's reset and still in flight when the new session is announced stays the operation's: a refusal it brings for a shown block collapses it at once, and the new session's own ask, with no trigger, follows it")
+    func operationPassAskedAfterTheResetCollapsesItsRefusalAndTheNewSessionAsksAfterIt() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        let resolvesBefore = bed.resolver.resolveCount
+        bed.resolver.isDeferred = true
+        bed.expireSession()
+        bed.resolver.sessionEpoch = bed.currentSessionEpoch
+        let event = bed.announceOperation()
+        bed.finishSessionCheck(startsNewSession: true)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+        bed.resolver.resolution = .empty
+
+        bed.resolver.flush()
+
+        #expect(states == [.empty])
+        #expect(bed.provider.heldCollapse == nil)
+        #expect(bed.page?.isClosed == true)
+        #expect(bed.resolver.resolveCount == resolvesBefore + 2)
+        let operationsPass = bed.resolver.triggers.dropLast().last ?? nil
+        let newSessionsAsk = bed.resolver.triggers.last ?? nil
+        #expect(operationsPass === event)
+        #expect(newSessionsAsk == nil)
+    }
+
     @Test("A page its place no longer shows is not shown in the new session when it draws")
     func heldCollapseKeepsTheShowBack() {
         let bed = EmbeddedBlockTestBed()
