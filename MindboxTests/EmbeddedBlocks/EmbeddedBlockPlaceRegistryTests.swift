@@ -1467,6 +1467,44 @@ struct EmbeddedBlockPlaceRegistryTests {
         #expect(rig.budget.releases == [.place("stories")])
     }
 
+    enum UnseenContent: CaseIterable {
+        case alone
+        case withAnotherBlockOnScreen
+        case withAnotherBlockAwaitingTheCheck
+        case shownInItsSession
+        case ofAnEndedSession
+
+        var givesTheSlotBack: Bool { self == .alone }
+    }
+
+    @Test("A block leaving with content the place answered while the app was away gives the place's slot back only when no other block of the place is on screen and the place has not shown that in-app in its session",
+          arguments: UnseenContent.allCases)
+    func unseenContentGivesTheSlotBack(_ unseen: UnseenContent) {
+        let rig = Rig()
+        let leaving = BlockFake()
+        leaving.isActive = false
+        let other = BlockFake()
+        other.isActive = unseen == .withAnotherBlockOnScreen
+        other.isStartPending = unseen == .withAnotherBlockAwaitingTheCheck
+        rig.registry.register(leaving, place: "stories")
+        rig.registry.register(other, place: "stories")
+        let answer = EmbeddedBlockPlaceAnswer(resolution: .content(.stub),
+                                              processingDuration: 0,
+                                              sessionEpoch: rig.currentSessionEpoch,
+                                              isOperationTriggered: false,
+                                              isAskedOffScreen: false)
+        if unseen == .shownInItsSession {
+            SessionTemporaryStorage.shared.$ledger.mutate { $0.placeShownInappId["stories"] = EmbeddedBlockWebContent.stub.inAppId }
+        }
+        if unseen == .ofAnEndedSession {
+            rig.expireSession()
+        }
+
+        rig.registry.giveSlotBack(answer, at: "stories")
+
+        #expect(rig.budget.releases == (unseen.givesTheSlotBack ? [.place("stories")] : []))
+    }
+
     @Test("Content for a place whose blocks have given up takes no slot")
     func contentForAnAbandonedPlaceTakesNoSlot() {
         let rig = Rig()
