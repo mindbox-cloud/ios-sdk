@@ -39,18 +39,18 @@ final class EmbeddedBlockWebViewProvider {
 
     var heldCollapse: EmbeddedBlockState? { deferred.held?.state }
 
-    private let placeSystemName: String
+    let placeSystemName: String
     private let registry: EmbeddedBlockPlaceRegistering
-    private let inappService: InappRequestServing
+    let inappService: InappRequestServing
     private let makePage: (EmbeddedBlockWebContent) -> EmbeddedBlockPageHosting
 
     private let accounting: InappShowAccounting
 
     private let failures: EmbeddedBlockFailureReporter
 
-    private var page: EmbeddedBlockPageHosting?
+    private(set) var page: EmbeddedBlockPageHosting?
 
-    private var content: EmbeddedBlockWebContent?
+    private(set) var content: EmbeddedBlockWebContent?
 
     private(set) var isStarted = false
 
@@ -453,34 +453,6 @@ final class EmbeddedBlockWebViewProvider {
 
     var isAttemptAlive: Bool {
         outcome == .loading || outcome == .ready
-    }
-
-    /// A page whose block has collapsed or failed is still alive and can still ask — but no user
-    /// touch stands behind it, and the in-app would appear over the app out of nowhere.
-    private func showInapp(id inappId: String, params: [String: JSONValue], askedFrom page: EmbeddedBlockPageHosting?, completion: @escaping (Result<Void, BridgeErrorCode>) -> Void) {
-        guard isShowing(page) else {
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': refused a show request from a block that is not shown",
-                          category: .embeddedBlocks)
-            completion(.failure(.notVisible))
-            return
-        }
-
-        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': showing in-app \(inappId) with \(params.count) param(s)",
-                      category: .embeddedBlocks)
-
-        inappService.showInapp(id: inappId, params: params, proceedIf: { [weak self, weak page] in self?.isShowing(page) ?? false }, completion: completion)
-    }
-
-    private func isShowing(_ page: EmbeddedBlockPageHosting?) -> Bool { isStarted && isAttemptAlive && page != nil && self.page === page }
-
-    private func answerShowableQuestion(_ ids: [String], askedFrom page: EmbeddedBlockPageHosting?, completion: @escaping ([String]) -> Void) {
-        guard let content, page != nil, self.page === page else { return }
-
-        inappService.showableInappIds(among: ids, askedBy: content.inAppId) { [weak self, weak page] answer in
-            guard let self, page != nil, self.page === page else { return }
-
-            completion(answer)
-        }
     }
 
     private func applyContentRendered(_ renderedCount: Int) {
