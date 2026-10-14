@@ -1514,6 +1514,39 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.resolver.resolveCount == 2)
     }
 
+    @Test("A refusal parked for a block that comes back on screen after the return's session check has ended the session, before the check is announced, still collapses it at once, and the start the check lets through asks the new session anew",
+          arguments: [false, true])
+    func collapseParkedForAReturnLandsAtOnceWhenTheCheckEndsTheSessionFirst(isResetDone: Bool) {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.provider.stop()
+        bed.provider.apply(bed.answer(.empty))
+        bed.resolver.isDeferred = true
+        bed.enterBackground()
+        bed.returnToApp()
+        if isResetDone {
+            bed.expireSession()
+        } else {
+            SessionTemporaryStorage.shared.$ledger.mutate { $0.isSessionEnding = true }
+        }
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.start()
+        #expect(states == [.empty])
+        #expect(bed.page?.isClosed == true)
+
+        if !isResetDone {
+            bed.expireSession()
+        }
+        bed.finishSessionCheck(startsNewSession: true)
+
+        #expect(states == [.empty, .loading])
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.resolver.resolveCount == 2)
+    }
+
     @Test("A refusal that reaches a block back on screen while the return's session check runs keeps the block's content until the user leaves, before the check ends or after it",
           arguments: [false, true])
     func refusalForABlockBackInsideTheReturnIsHeldUntilTheUserLeaves(leavesBeforeTheCheckEnds: Bool) {

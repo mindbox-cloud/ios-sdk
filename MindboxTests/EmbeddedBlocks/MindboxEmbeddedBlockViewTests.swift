@@ -1025,6 +1025,39 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(delegate.events == [.loaded, .empty, .loaded])
     }
 
+    @Test("A block a refusal parked off screen collapses before its first frame when the user comes back after the return's session check has already ended the session, and shows what the new session lets in once its page draws")
+    func blockRefusedOffScreenCollapsesWhenTheCheckEndsTheSessionBeforeTheBlockIsBack() async throws {
+        let block = BlockFixture()
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.attachToWindow()
+        block.page?.reportRendered(1)
+        let content = try #require(block.page?.view)
+        await mainQueueTurn()
+        block.removeFromWindow()
+        block.bed.resolver.resolution = .empty
+        block.goToTheBackgroundAndBack()
+        block.bed.renewSession()
+        block.goToTheBackgroundAndBack()
+        block.bed.expireSession()
+        block.bed.resolver.sessionEpoch = block.bed.currentSessionEpoch
+        block.bed.resolver.resolution = .content(.stub)
+
+        block.attachToWindow()
+        #expect(content.superview == nil)
+        #expect(block.view.intrinsicContentSize.height == 0)
+        await mainQueueTurn()
+
+        block.bed.finishSessionCheck(startsNewSession: true)
+        block.page?.reportRendered(1)
+        await mainQueueTurn()
+
+        #expect(block.bed.pageFactory.pages.count == 2)
+        #expect(block.view.intrinsicContentSize.height == 120)
+        #expect(block.bed.accounting.sessionEpochs == [block.bed.currentSessionEpoch - 2, block.bed.currentSessionEpoch])
+        #expect(delegate.events == [.loaded, .empty, .loaded])
+    }
+
     @Test("A shown block the user comes back to before the new session answers stays as it was, and a refusal landing then waits for the user to leave")
     func blockBackBeforeTheNewSessionAnswersHoldsTheRefusal() async throws {
         let block = BlockFixture()
