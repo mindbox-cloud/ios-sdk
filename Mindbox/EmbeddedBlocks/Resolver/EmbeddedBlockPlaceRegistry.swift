@@ -9,31 +9,6 @@
 import Foundation
 import MindboxLogger
 
-protocol EmbeddedBlockPlaceHandling: AnyObject {
-
-    var isActive: Bool { get }
-
-    /// The place's fresh answer, on the main thread, with how long the selection worked on it.
-    func apply(_ resolution: EmbeddedBlockResolution, processingDuration: TimeInterval)
-
-    /// The place's answer is known and held back by its `delayTime`: content is coming, the SDK is not silent.
-    func contentIsDelayed()
-
-    /// Loading or showing, on screen or paused off it: the block still owes the place a show or a give-up.
-    var holdsAnAttempt: Bool { get }
-}
-
-/// Main-thread confined, and every entry point hops there itself: a block's `init` and the container's
-/// `deinit` are not promised the main thread by UIKit.
-protocol EmbeddedBlockPlaceRegistering: AnyObject {
-
-    func register(_ block: EmbeddedBlockPlaceHandling, place: String)
-
-    func blockAppeared(_ place: String)
-
-    func blockAttemptEnded(_ place: String)
-}
-
 /// The place map and the router between blocks and the selection — in sync with Android, where the
 /// same component carries the same name and rules.
 final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
@@ -47,42 +22,6 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
 
     private struct WeakBlock {
         weak var block: EmbeddedBlockPlaceHandling?
-    }
-
-    private struct QueuedInvalidation {
-        var trigger: ApplicationEvent?
-    }
-
-    private enum ResolveCause {
-        case blockAppeared
-        case newConfig
-        case operation(ApplicationEvent)
-        case queued(ApplicationEvent?)
-
-        var trigger: ApplicationEvent? {
-            switch self {
-                case .blockAppeared, .newConfig: return nil
-                case .operation(let event): return event
-                case .queued(let trigger): return trigger
-            }
-        }
-
-        var queuesWhenBusy: Bool {
-            if case .blockAppeared = self {
-                return false
-            }
-
-            return true
-        }
-
-        var logDescription: String {
-            switch self {
-                case .blockAppeared: return "the block appeared"
-                case .newConfig: return "a new config"
-                case .operation(let event): return "operation '\(event.name)'"
-                case .queued: return "a queued invalidation"
-            }
-        }
     }
 
     private var blocksByPlace: [String: [WeakBlock]] = [:]

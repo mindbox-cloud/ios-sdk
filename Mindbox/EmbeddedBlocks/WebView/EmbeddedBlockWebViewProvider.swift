@@ -71,13 +71,7 @@ final class EmbeddedBlockWebViewProvider {
 
     private let makeStopwatch: () -> ForegroundStopwatch
 
-    private let scheduleAckTimeout: EmbeddedBlockWaitScheduling
-
-    private var dataPushAck: DispatchWorkItem?
-
-    private var isAwaitingDataPushAck = false
-
-    private var ackBudget: EmbeddedBlockAckBudget
+    private let dataPushWait: EmbeddedBlockDataPushWait
 
     private(set) var pendingResolution: (resolution: EmbeddedBlockResolution, processingDuration: TimeInterval)?
 
@@ -101,10 +95,9 @@ final class EmbeddedBlockWebViewProvider {
         self.failures = EmbeddedBlockFailureReporter(placeSystemName: placeSystemName,
                                                      report: reportFailure,
                                                      reportUnansweredWait: reportUnansweredWait)
-        self.scheduleAckTimeout = scheduleAckTimeout
         self.makeStopwatch = makeStopwatch
         self.presentationStopwatch = makeStopwatch()
-        self.ackBudget = EmbeddedBlockAckBudget(now: now)
+        self.dataPushWait = EmbeddedBlockDataPushWait(placeSystemName: placeSystemName, now: now, schedule: scheduleAckTimeout)
 
         registry.register(self, place: placeSystemName)
     }
@@ -139,7 +132,7 @@ final class EmbeddedBlockWebViewProvider {
             if outcome == .ready {
                 accountForShow()
             }
-            rearmDataPushAckIfAwaited()
+            dataPushWait.resumeIfSuspended()
         }
 
         askThePlaceAgain()
@@ -156,7 +149,7 @@ final class EmbeddedBlockWebViewProvider {
         isPaused = true
         // The outcome is deliberately not reset: otherwise every pass of the block across the screen
         // would cost a full reload.
-        suspendDataPushAck()
+        dataPushWait.suspend()
         // The show's time stops with the block: it left the window or the host hid it. The background
         // is not a stop — the stopwatch excludes it on its own.
         presentationStopwatch.suspend()
@@ -345,7 +338,7 @@ final class EmbeddedBlockWebViewProvider {
             self?.showInapp(id: inappId, params: params, askedFrom: page, completion: completion)
         }
         page.onDataPushConfirmed = { [weak self] in
-            self?.acknowledgeDataPush()
+            self?.dataPushWait.acknowledge()
         }
         page.onLoadFailure = { [weak self] in
             self?.handleLoadFailure()
@@ -360,7 +353,7 @@ final class EmbeddedBlockWebViewProvider {
 
     /// Detached from us first, so that its late messages do not end up in the new attempt.
     private func dropPage() {
-        cancelDataPushAck()
+        dataPushWait.cancel()
         page?.detachCallbacks()
         page?.cancel()
         page = nil
@@ -372,63 +365,13 @@ final class EmbeddedBlockWebViewProvider {
     /// An error answer to the push confirms nothing: like silence, it leaves the page to be rebuilt
     /// when the ack budget runs out.
     private func armDataPushAck() {
-        cancelDataPushAck()
+        dataPushWait.arm { [weak self] in
+            guard let self, let content = self.content else { return }
 
-        isAwaitingDataPushAck = true
-        resumeDataPushAck()
-    }
-
-    private func resumeDataPushAck() {
-        let generation = loadGeneration
-        let work = DispatchWorkItem { [weak self] in
-            guard let self, self.isStarted, self.loadGeneration == generation else { return }
-
-            self.dataPushAck = nil
-            self.ackBudget.exhaust()
-            self.isAwaitingDataPushAck = false
-
-            guard let content = self.content else { return }
-
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the page never confirmed the data push — rebuilding it",
+            Logger.common(message: "[EmbeddedBlock] Block '\(self.placeSystemName)': the page never confirmed the data push — rebuilding it",
                           level: .error, category: .embeddedBlocks)
             self.buildPage(with: content, processingDuration: self.processingDuration)
         }
-
-        ackBudget.resume()
-        dataPushAck = work
-        scheduleAckTimeout(ackBudget.remaining, work)
-    }
-
-    private func suspendDataPushAck() {
-        ackBudget.suspend()
-        dataPushAck?.cancel()
-        dataPushAck = nil
-    }
-
-    private func cancelDataPushAck() {
-        suspendDataPushAck()
-        ackBudget.reset()
-        isAwaitingDataPushAck = false
-    }
-
-    private func rearmDataPushAckIfAwaited() {
-        guard isAwaitingDataPushAck, dataPushAck == nil else { return }
-
-        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': back on screen with a data push still unconfirmed — waiting out the remaining \(ackBudget.remaining)s",
-                      category: .embeddedBlocks)
-        resumeDataPushAck()
-    }
-
-    private func acknowledgeDataPush() {
-        guard isAwaitingDataPushAck else {
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the page confirmed a data push nobody was waiting on",
-                          level: .debug, category: .embeddedBlocks)
-            return
-        }
-
-        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the page confirmed the data push",
-                      category: .embeddedBlocks)
-        cancelDataPushAck()
     }
 
     // MARK: - The page's reports

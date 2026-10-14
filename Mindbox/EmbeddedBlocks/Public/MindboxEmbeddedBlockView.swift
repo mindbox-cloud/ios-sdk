@@ -298,18 +298,6 @@ public final class MindboxEmbeddedBlockView: UIView {
                   animatesReveal: animatesReveal)
     }
 
-    /// Padding is not part of a name: a name pasted from the admin panel with a stray space still
-    /// finds its place, and the host reads it back without the padding — in sync with Android.
-    static func normalizedPlaceSystemName(_ given: String) -> String {
-        given.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
-    /// The case is not part of a name either, but the host reads its own spelling back: the
-    /// folding happens here, on the way into the SDK, and `placeSystemName` stays as given.
-    static func placeKey(_ placeSystemName: String) -> String {
-        EmbeddedFormVariant.placeKey(placeSystemName)
-    }
-
     /// A block from a storyboard or xib. Interface Builder applies the inspectables next, and the
     /// block builds itself in `awakeFromNib` — see `MindboxEmbeddedBlockView+InterfaceBuilder`.
     public required init?(coder: NSCoder) {
@@ -371,20 +359,6 @@ public final class MindboxEmbeddedBlockView: UIView {
         warnAboutSetup()
         logInitialLook()
         setUpContainer(runtime)
-    }
-
-    /// The strategy plus the place's memory, and nothing else: `placeholder` and `hidden` do not
-    /// look at the memory, `automatic` is decided by it.
-    static func initialAppearance(for strategy: MindboxEmbeddedBlockLoadingStrategy,
-                                  hasShownContentBefore: Bool) -> MindboxEmbeddedBlockAppearance {
-        switch strategy {
-        case .placeholder:
-            return .placeholder
-        case .hidden:
-            return .collapsed
-        case .automatic:
-            return hasShownContentBefore ? .placeholder : .collapsed
-        }
     }
 
     private func logInitialLook() {
