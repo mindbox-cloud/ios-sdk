@@ -248,8 +248,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
                                                   processingDuration: waitedForThePassInFlight + processingDuration,
                                                   sessionEpoch: sessionEpoch,
                                                   isOperationTriggered: !cause.includesNonOperation && !appearedMidResolve,
-                                                  isAskedOffScreen: isAskedOffScreen,
-                                                  isNewSessionAsk: cause.isNewSessionAsk)
+                                                  isAskedOffScreen: isAskedOffScreen)
             self.handle(self.asTheQueuedNewSessionAsk(answer, askedInSession: askedInSession, at: place) ?? answer, at: place)
 
             if let queued = self.queuedInvalidations.removeValue(forKey: place) {
@@ -271,8 +270,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
                                         processingDuration: now() - newSessionAskedAt,
                                         sessionEpoch: answer.sessionEpoch,
                                         isOperationTriggered: false,
-                                        isAskedOffScreen: queued.isAskedOffScreen,
-                                        isNewSessionAsk: true)
+                                        isAskedOffScreen: queued.isAskedOffScreen)
     }
 
     /// A winner with `delayTime` waits like an overlay in the schedule queue and the blocks stand their wait

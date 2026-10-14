@@ -527,7 +527,6 @@ struct EmbeddedBlockPlaceRegistryTests {
         rig.resolver.flush()
 
         #expect(block.processingDurations == [0.5])
-        #expect(block.answers.map(\.isNewSessionAsk) == [true])
         #expect(rig.budget.reservations.isEmpty == isOffScreen)
     }
 

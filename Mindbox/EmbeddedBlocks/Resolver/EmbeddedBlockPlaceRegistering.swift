@@ -20,8 +20,6 @@ struct EmbeddedBlockPlaceAnswer {
 
     let isAskedOffScreen: Bool
 
-    let isNewSessionAsk: Bool
-
     func with(_ resolution: EmbeddedBlockResolution) -> EmbeddedBlockPlaceAnswer {
         copy(resolution: resolution)
     }
@@ -36,20 +34,17 @@ struct EmbeddedBlockPlaceAnswer {
 
     func replacing(_ waiting: EmbeddedBlockPlaceAnswer) -> EmbeddedBlockPlaceAnswer {
         copy(processingDuration: waiting.processingDuration,
-             isAskedOffScreen: isAskedOffScreen || waiting.isAskedOffScreen,
-             isNewSessionAsk: isNewSessionAsk || waiting.isNewSessionAsk)
+             isAskedOffScreen: isAskedOffScreen || waiting.isAskedOffScreen)
     }
 
     private func copy(resolution: EmbeddedBlockResolution? = nil,
                       processingDuration: TimeInterval? = nil,
-                      isAskedOffScreen: Bool? = nil,
-                      isNewSessionAsk: Bool? = nil) -> EmbeddedBlockPlaceAnswer {
+                      isAskedOffScreen: Bool? = nil) -> EmbeddedBlockPlaceAnswer {
         EmbeddedBlockPlaceAnswer(resolution: resolution ?? self.resolution,
                                  processingDuration: processingDuration ?? self.processingDuration,
                                  sessionEpoch: sessionEpoch,
                                  isOperationTriggered: isOperationTriggered,
-                                 isAskedOffScreen: isAskedOffScreen ?? self.isAskedOffScreen,
-                                 isNewSessionAsk: isNewSessionAsk ?? self.isNewSessionAsk)
+                                 isAskedOffScreen: isAskedOffScreen ?? self.isAskedOffScreen)
     }
 }
 
@@ -73,8 +68,9 @@ protocol EmbeddedBlockPlaceHandling: AnyObject {
     var holdsAnAttempt: Bool { get }
 }
 
-/// Main-thread confined. The void entry points hop there themselves: a block's `init` and the container's `deinit` are not
-/// promised the main thread by UIKit. `keepsContent(for:)` and `bringOnScreen(_:at:)` answer synchronously: call them on main.
+/// Main-thread confined. The void entry points hop there themselves: a block's `init` is not promised the main thread. The
+/// container's `deinit` is, because UIKit releases a `UIView` on main. `keepsContent(for:)` and `bringOnScreen(_:at:)` answer
+/// synchronously: call them on main.
 protocol EmbeddedBlockPlaceRegistering: AnyObject {
 
     func register(_ block: EmbeddedBlockPlaceHandling, place: String)

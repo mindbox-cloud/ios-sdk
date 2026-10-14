@@ -842,8 +842,7 @@ final class EmbeddedBlockTestBed: EmbeddedBlockSessionRig {
                                  processingDuration: 0,
                                  sessionEpoch: resolver.sessionEpoch,
                                  isOperationTriggered: false,
-                                 isAskedOffScreen: false,
-                                 isNewSessionAsk: false)
+                                 isAskedOffScreen: false)
     }
 
     func deliverSamePageWithNewData(_ marker: String = "fresh") {

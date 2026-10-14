@@ -3264,8 +3264,6 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.clock.advance(10)
         bed.resolver.resolution = .content(.other)
         bed.resolver.processingDuration = 1
-        // A delayed delivery releases its parked answer inside the foreground notification — while
-        // the application state still reads the background, as UIKit has it.
         let release = bed.center.addObserver(forName: UIApplication.willEnterForegroundNotification,
                                              object: nil,
                                              queue: .main) { _ in
