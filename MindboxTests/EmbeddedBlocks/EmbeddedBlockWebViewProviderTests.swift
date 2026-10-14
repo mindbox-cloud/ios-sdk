@@ -2067,6 +2067,46 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.page?.isClosed == false)
     }
 
+    @Test("Content a place answers while the app is away reaches a block on screen and a paused block of the same place: when the return leaves the first block on another screen the place's slot goes back, and the paused block back on screen takes it again and shows the content, or leaves the place empty when the show budgets are spent by then",
+          arguments: [false, true])
+    func pausedBlockTakesTheSlotAgainForContentAnotherBlockGaveBack(isBudgetSpentByThen: Bool) {
+        let bed = EmbeddedBlockTestBed()
+        let paused = bed.makeProvider(placeSystemName: "block-id")
+        paused.start()
+        bed.page?.reportRendered(1)
+        paused.stop()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.enterBackground()
+        bed.resolver.resolution = .content(.other)
+        bed.announceNewConfig()
+        let reservationsBefore = bed.budget.reservations.count
+        let releasesBefore = bed.budget.releases
+
+        bed.returnToApp()
+        bed.provider.stop()
+        bed.finishSessionCheck()
+        #expect(bed.budget.releases == releasesBefore + [.place("block-id")])
+
+        if isBudgetSpentByThen {
+            bed.budget.refusedInAppIds = [EmbeddedBlockWebContent.other.inAppId]
+        }
+        var states: [EmbeddedBlockState] = []
+        paused.onStateChange = { states.append($0) }
+        bed.resolver.isDeferred = true
+        paused.start()
+        #expect(bed.budget.reservations.count == reservationsBefore + 1)
+        #expect(bed.budget.reservations.last?.inAppId == EmbeddedBlockWebContent.other.inAppId)
+        #expect(bed.pageFactory.pages.count == (isBudgetSpentByThen ? 3 : 4))
+        if !isBudgetSpentByThen {
+            bed.page?.reportRendered(1)
+        }
+
+        let stub = EmbeddedBlockWebContent.stub.inAppId
+        #expect(states == (isBudgetSpentByThen ? [.empty] : [.loading, .ready]))
+        #expect(bed.accounting.shownIds == (isBudgetSpentByThen ? [stub, stub] : [stub, stub, EmbeddedBlockWebContent.other.inAppId]))
+    }
+
     @Test("Data a page was owed for a session that ended while the user was away is not handed to it on return: only the session the user came back to pushes, once")
     func dataOwedForAnEndedSessionIsNotPushedOnReturn() {
         let bed = EmbeddedBlockTestBed()
