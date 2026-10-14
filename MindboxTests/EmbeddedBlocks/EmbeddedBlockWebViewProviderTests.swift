@@ -2695,22 +2695,14 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.resolver.resolveCount == resolvesBefore)
     }
 
-    @Test("An operation's pass that the new session's config answers is that session's ask, asked before the session's reset or after it and before the new session is announced: a refusal it brings for a shown block is held until the user leaves, not collapsed at once",
-          arguments: [false, true])
-    func operationPassAnsweredByTheNewSessionHoldsItsRefusal(isAskedAfterTheReset: Bool) {
+    @Test("An operation's pass asked before the session's reset that the new session's config answers is that session's ask: a refusal it brings for a shown block is held until the user leaves, not collapsed at once")
+    func operationPassAnsweredByTheNewSessionHoldsItsRefusal() {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
         bed.page?.reportRendered(1)
         bed.resolver.isDeferred = true
-        if isAskedAfterTheReset {
-            bed.expireSession()
-            bed.resolver.sessionEpoch = bed.currentSessionEpoch
-            bed.announceOperation()
-            bed.finishSessionCheck(startsNewSession: true)
-        } else {
-            bed.announceOperation()
-            bed.renewSession()
-        }
+        bed.announceOperation()
+        bed.renewSession()
         var states: [EmbeddedBlockState] = []
         bed.provider.onStateChange = { states.append($0) }
         bed.resolver.resolution = .empty

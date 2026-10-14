@@ -21,7 +21,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
     }
 
     private var blocksByPlace: [String: [WeakBlock]] = [:]
-    private var resolvingPlaces: [String: Int] = [:]
+    private var resolvingPlaces: [String: PassInFlight] = [:]
     private var queuedInvalidations: [String: QueuedInvalidation] = [:]
 
     private var placesAskedAgainMidResolve: Set<String> = []
@@ -161,11 +161,10 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
     }
 
     private func sessionStarted(carrying operations: [String: ApplicationEvent]) {
-        let sessionEpoch = SessionTemporaryStorage.shared.ledger.sessionEpoch
+        let theNewSessionsAsk = PassInFlight(askedInSession: SessionTemporaryStorage.shared.ledger.sessionEpoch, isTriggered: false)
         for place in Array(blocksByPlace.keys) where hasActiveBlocks(place) || holdsAnAttempt(at: place) {
-            guard operations[place] != nil || resolvingPlaces[place] != sessionEpoch else {
-                placesAskedAgainMidResolve.insert(place)
-                Logger.common(message: "[EmbeddedBlock] Place '\(place)': a new session, and the pass in flight was asked in it — its answer is the new session's",
+            guard operations[place] != nil || resolvingPlaces[place] != theNewSessionsAsk else {
+                Logger.common(message: "[EmbeddedBlock] Place '\(place)': a new session, and the pass in flight was asked in it with no operation — its answer is the new session's",
                               category: .embeddedBlocks)
                 continue
             }
@@ -246,7 +245,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         }
 
         let askedInSession = SessionTemporaryStorage.shared.ledger.sessionEpoch
-        resolvingPlaces[place] = askedInSession
+        resolvingPlaces[place] = PassInFlight(askedInSession: askedInSession, isTriggered: cause.trigger != nil)
         let waitedForThePassInFlight = cause.newSessionAskedAt.map { now() - $0 } ?? 0
 
         resolver.resolve(place, trigger: cause.trigger) { [weak self] resolution, processingDuration, sessionEpoch in

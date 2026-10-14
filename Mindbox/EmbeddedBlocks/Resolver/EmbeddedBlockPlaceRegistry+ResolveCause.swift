@@ -16,6 +16,11 @@ extension EmbeddedBlockPlaceRegistry {
         var newSessionAskedAt: TimeInterval?
     }
 
+    struct PassInFlight: Equatable {
+        let askedInSession: Int
+        let isTriggered: Bool
+    }
+
     enum ResolveCause {
         case blockAppeared
         case newConfig
