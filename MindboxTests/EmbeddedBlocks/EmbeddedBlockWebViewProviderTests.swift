@@ -2192,6 +2192,31 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.ackScheduler.scheduled.last?.delay == TimeInterval(Constants.EmbeddedBlock.readyTimeoutSeconds) - 2)
     }
 
+    @Test("A page left with an unconfirmed data push is not rebuilt from that push's session once a new session has started, whether the app came back from the background or the session ended in the foreground: it waits for the new session's answer",
+          arguments: [true, false])
+    func unconfirmedPushOfAnEndedSessionRebuildsNothing(isReturn: Bool) {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.announceNewSession()
+        #expect(bed.page?.initDataPushes.count == 1)
+
+        if isReturn {
+            bed.enterBackground()
+            bed.returnToApp()
+        }
+        bed.resolver.isDeferred = true
+        bed.renewSession()
+        bed.ackScheduler.fire()
+
+        #expect(bed.pageFactory.pages.count == 1)
+
+        bed.resolver.flush()
+
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.page?.initDataPushes.count == 2)
+    }
+
     @Test("A page that confirms the new session's data and draws it long after, past the confirmation wait's budget, still sends that session's show and keeps its page")
     func pageDrawingLongAfterTheConfirmedPushIsShown() {
         let bed = EmbeddedBlockTestBed()
