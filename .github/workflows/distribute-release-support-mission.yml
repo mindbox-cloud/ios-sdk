@@ -21,3 +21,4 @@ jobs:
       branch: ${{ github.event.pull_request.head.ref }}
     secrets:
       GITLAB_TRIGGER_TOKEN: ${{ secrets.GITLAB_TRIGGER_TOKEN }}
+      GITLAB_HOST: ${{ secrets.GITLAB_HOST }}
