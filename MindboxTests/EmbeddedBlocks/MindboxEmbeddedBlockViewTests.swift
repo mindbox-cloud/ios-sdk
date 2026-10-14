@@ -239,7 +239,7 @@ struct MindboxEmbeddedBlockViewTests {
         block.page?.reportRendered(1)
         let content = try #require(block.page?.view)
         block.bed.resolver.resolution = .empty
-        block.bed.announceNewConfig()
+        block.bed.announceOperation()
 
         #expect(content.superview == nil)
     }
@@ -496,7 +496,7 @@ struct MindboxEmbeddedBlockViewTests {
 
         block.page?.reportRendered(1)
         block.bed.resolver.resolution = .empty
-        block.bed.announceNewConfig()
+        block.bed.announceOperation()
 
         #expect(appearance.values == [.placeholder, .content, .collapsed])
     }
@@ -1956,6 +1956,8 @@ private final class BlockFixture {
     /// The SDK's reveal animation, run on the spot and counted.
     let reveal: EmbeddedBlockRevealAnimationSpy
 
+    let mainPass: TestScheduler
+
     let view: MindboxEmbeddedBlockView
 
     private let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 320, height: 480))
@@ -1973,7 +1975,9 @@ private final class BlockFixture {
         let bed = EmbeddedBlockTestBed(resolution: resolution)
         let waitBudgetBed = EmbeddedBlockWaitBudgetBed()
         let reveal = EmbeddedBlockRevealAnimationSpy()
+        let mainPass = TestScheduler()
         self.bed = bed
+        self.mainPass = mainPass
         self.waitBudgetBed = waitBudgetBed
         self.memory = memory
         self.reveal = reveal
@@ -1984,7 +1988,8 @@ private final class BlockFixture {
                                              loadingStrategy: loadingStrategy,
                                              animatesReveal: animatesReveal,
                                              revealAnimation: reveal.animation,
-                                             makeWaitBudget: { _, _ in waitBudgetBed.budget })
+                                             makeWaitBudget: { _, _ in waitBudgetBed.budget },
+                                             afterMainPass: { mainPass.schedule(0, DispatchWorkItem(block: $0)) })
     }
 
     func attachToWindow() {
@@ -2026,6 +2031,7 @@ private final class BlockFixture {
 
     func removeFromWindow() {
         view.removeFromSuperview()
+        mainPass.fireAll()
     }
 
     /// Declares that the waiting budget has run out.

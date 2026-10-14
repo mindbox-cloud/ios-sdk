@@ -132,7 +132,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.start()
         bed.provider.stop()
 
-        bed.provider.apply(.content(.stub), processingDuration: 0)
+        bed.provider.apply(bed.answer(.content(.stub)))
 
         #expect(bed.provider.holdsAnAttempt)
     }
@@ -308,7 +308,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.stop()
         bed.page?.reportRendered(3)
         bed.resolver.resolution = .content(.other)
-        bed.provider.apply(.content(.other), processingDuration: 0)
+        bed.provider.apply(bed.answer(.content(.other)))
         var states: [EmbeddedBlockState] = []
         bed.provider.onStateChange = { states.append($0) }
 
@@ -426,7 +426,7 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(delayedCalls == 1)
         #expect(states == [.loading])
 
-        bed.provider.apply(.content(.stub), processingDuration: 0)
+        bed.provider.apply(bed.answer(.content(.stub)))
 
         #expect(!bed.provider.isAwaitingDelayedContent)
     }
@@ -575,7 +575,7 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.failureReporter.reasons == [.unknownError])
     }
 
-    @Test("A broken winner arriving while the block is paused is applied on return")
+    @Test("A broken winner arriving while the block is paused is reported at once and applied on return")
     func brokenWinnerWhilePausedIsAppliedOnReturn() {
         let bed = EmbeddedBlockTestBed()
         bed.resolver.isDeferred = true
@@ -588,7 +588,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.resolver.flush()
 
         #expect(states == [.loading])
-        #expect(bed.failureReporter.reported.isEmpty)
+        #expect(bed.failureReporter.reasons == [.unknownError])
 
         bed.provider.start()
 
@@ -605,7 +605,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.page?.reportRendered(1)
 
         bed.resolver.resolution = .failure(.broken)
-        bed.announceNewConfig()
+        bed.announceOperation()
 
         #expect(states == [.loading, .ready, .failed(.internalError)])
         #expect(bed.provider.contentView == nil)
@@ -761,7 +761,7 @@ struct EmbeddedBlockWebViewProviderTests {
         var states: [EmbeddedBlockState] = []
         bed.provider.onStateChange = { states.append($0) }
 
-        bed.provider.apply(.empty, processingDuration: 0)
+        bed.provider.apply(bed.answer(.empty))
         bed.page?.reportRendered(1)
 
         #expect(bed.page?.isClosed == true)
@@ -851,7 +851,7 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.pageFactory.contents.last == .other)
     }
 
-    @Test("A place the new config dropped collapses the block")
+    @Test("A place an operation dropped collapses the block at once")
     func droppedPlaceCollapsesTheBlock() {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
@@ -860,7 +860,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.onStateChange = { states.append($0) }
 
         bed.resolver.resolution = .empty
-        bed.announceNewConfig()
+        bed.announceOperation()
 
         #expect(states == [.empty])
         #expect(bed.provider.contentView == nil)
@@ -966,7 +966,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.onStateChange = { states.append($0) }
 
         bed.announceNewConfig()
-        _ = bed.announceOperation()
+        bed.announceOperation()
 
         #expect(states.isEmpty)
         #expect(bed.page?.initDataPushes.isEmpty == true)
@@ -982,7 +982,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.page?.reportRendered(1)
 
         bed.resolver.resolution = .empty
-        bed.announceNewConfig()
+        bed.announceOperation()
 
         bed.resolver.resolution = .content(.stub)
         var states: [EmbeddedBlockState] = []
@@ -1054,7 +1054,7 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.accounting.shownIds == [EmbeddedBlockWebContent.stub.inAppId])
     }
 
-    @Test("A data push lets the page report itself again")
+    @Test("A data push lets the page report itself again: its report of nothing collapses the block once the user leaves")
     func dataPushReopensTheReport() {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
@@ -1064,6 +1064,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.onStateChange = { states.append($0) }
 
         bed.page?.reportRendered(0)
+        bed.provider.stop()
 
         #expect(states == [.empty])
     }
@@ -1089,7 +1090,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.stop()
         let resolvesBefore = bed.resolver.resolveCount
 
-        _ = bed.announceOperation()
+        bed.announceOperation()
 
         #expect(bed.resolver.resolveCount == resolvesBefore)
     }
@@ -1449,7 +1450,7 @@ struct EmbeddedBlockWebViewProviderTests {
                                              frequency: .unlimited,
                                              tags: EmbeddedBlockWebContent.stub.tags,
                                              params: ["fresh": .bool(true)])
-        bed.provider.apply(.content(sameId), processingDuration: 0)
+        bed.provider.apply(bed.answer(.content(sameId)))
 
         #expect(bed.pageFactory.pages.count == 1)
         #expect(bed.page?.initDataPushes == [["fresh": .bool(true)]])
@@ -1463,7 +1464,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.stop()
 
         bed.resolver.resolution = .content(.other)
-        bed.provider.apply(.content(.other), processingDuration: 0)
+        bed.provider.apply(bed.answer(.content(.other)))
         var states: [EmbeddedBlockState] = []
         bed.provider.onStateChange = { states.append($0) }
         bed.provider.start()
@@ -1496,7 +1497,7 @@ struct EmbeddedBlockWebViewProviderTests {
         let bed = EmbeddedBlockTestBed(resolution: .empty)
         bed.provider.start()
         bed.provider.stop()
-        bed.provider.apply(.empty, processingDuration: 0)
+        bed.provider.apply(bed.answer(.empty))
 
         bed.provider.start()
 
@@ -1510,7 +1511,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.stop()
         bed.page?.reportRendered(1)
         bed.resolver.resolution = .empty
-        bed.provider.apply(.empty, processingDuration: 0)
+        bed.provider.apply(bed.answer(.empty))
         var states: [EmbeddedBlockState] = []
         bed.provider.onStateChange = { states.append($0) }
 
@@ -1527,7 +1528,7 @@ struct EmbeddedBlockWebViewProviderTests {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
         bed.provider.abandonAttempt()
-        bed.provider.apply(.content(.other), processingDuration: 0)
+        bed.provider.apply(bed.answer(.content(.other)))
 
         bed.provider.reload()
         #expect(bed.pageFactory.contents.last == .stub)
@@ -1545,7 +1546,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.start()
         bed.provider.abandonAttempt()
 
-        bed.provider.apply(.content(.other), processingDuration: 0)
+        bed.provider.apply(bed.answer(.content(.other)))
         bed.provider.start()
 
         #expect(bed.resolver.resolveCount == 2)
@@ -1599,7 +1600,7 @@ struct EmbeddedBlockWebViewProviderTests {
                                             tags: EmbeddedBlockWebContent.stub.tags,
                                             params: ["stories": .array([.string("one")])])
         bed.resolver.resolution = .content(fresh)
-        bed.provider.apply(.content(fresh), processingDuration: 0)
+        bed.provider.apply(bed.answer(.content(fresh)))
 
         bed.provider.start()
 

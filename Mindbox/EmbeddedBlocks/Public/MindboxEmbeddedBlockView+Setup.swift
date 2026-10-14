@@ -78,6 +78,10 @@ extension MindboxEmbeddedBlockView {
         EmbeddedFormVariant.placeKey(placeSystemName)
     }
 
+    static func onTheNextMainPass(_ work: @escaping () -> Void) {
+        DispatchQueue.main.async(execute: work)
+    }
+
     /// The strategy plus the place's memory, and nothing else: `placeholder` and `hidden` do not
     /// look at the memory, `automatic` is decided by it.
     static func initialAppearance(for strategy: MindboxEmbeddedBlockLoadingStrategy,

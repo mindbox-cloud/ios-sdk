@@ -36,8 +36,16 @@ import MindboxLogger
 ///
 /// What exactly lives inside is decided by the SDK from the `placeSystemName`, not by the host. The
 /// block flow belongs to the SDK too: the container starts its content when it enters a window
-/// and stops it when it leaves. The host app observes the outcome through `delegate` and nothing
+/// and stops it once it has left — once it is still out of a window when the current pass of the
+/// main thread is over. A move within one pass, as a navigation transition makes with the screen it
+/// leaves, is not leaving. The host app observes the outcome through `delegate` and nothing
 /// else: the block is shown, the place is empty, or the block failed with a reason.
+///
+/// Shown content is not taken away under the user's eyes. When the place or the page has nothing to
+/// show any more, the block keeps what it shows until the user leaves it — going to the background
+/// is not leaving — and collapses then, out of the window: the delegate hears the empty or failed
+/// outcome at that moment. Only when the place answers an operation the app sends with nothing to
+/// show does the block collapse at once.
 public final class MindboxEmbeddedBlockView: UIView {
 
     // MARK: - Host API
@@ -148,9 +156,10 @@ public final class MindboxEmbeddedBlockView: UIView {
     /// spending its budget — on a screen nobody is looking at, and could collapse before the user
     /// ever got there. `true` by default, so a wrapper that says nothing behaves as before.
     ///
-    /// The semantics are exactly those of leaving and entering a window: a pause, not a reset. A
-    /// block hidden mid-load keeps the page it has and the remainder of its budget; shown again, it
-    /// counts that remainder down instead of starting the budget anew.
+    /// The semantics are those of leaving and entering a window — a pause, not a reset — except that
+    /// hiding takes effect at once rather than after the current pass of main. A block hidden mid-load
+    /// keeps the page it has and the remainder of its budget; shown again, it counts that remainder
+    /// down instead of starting the budget anew.
     @_spi(Internal)
     public func setHostVisible(_ isHostVisible: Bool) {
         guard self.isHostVisible != isHostVisible else { return }
@@ -212,6 +221,7 @@ public final class MindboxEmbeddedBlockView: UIView {
         let revealAnimation: EmbeddedBlockRevealAnimation
         let waitBudget: EmbeddedBlockWaitBudget
         let layers: EmbeddedBlockLayerHost
+        let afterMainPass: (@escaping () -> Void) -> Void
     }
 
     private var runtime: Runtime?
@@ -312,7 +322,8 @@ public final class MindboxEmbeddedBlockView: UIView {
          timeout: TimeInterval? = nil,
          animatesReveal: Bool = true,
          revealAnimation: EmbeddedBlockRevealAnimation = EmbeddedBlockRevealAnimation(),
-         makeWaitBudget: ((_ placeSystemName: String, _ duration: @escaping () -> TimeInterval) -> EmbeddedBlockWaitBudget)? = nil) {
+         makeWaitBudget: ((_ placeSystemName: String, _ duration: @escaping () -> TimeInterval) -> EmbeddedBlockWaitBudget)? = nil,
+         afterMainPass: @escaping (@escaping () -> Void) -> Void = MindboxEmbeddedBlockView.onTheNextMainPass) {
         self.setup = EmbeddedBlockSetup(placeSystemName: placeSystemName,
                                         loadingStrategy: loadingStrategy,
                                         timeout: Self.sanitizedTimeout(timeout, placeSystemName: placeSystemName),
@@ -326,14 +337,16 @@ public final class MindboxEmbeddedBlockView: UIView {
         build(contentProvider: contentProvider,
               placeMemory: placeMemory,
               revealAnimation: revealAnimation,
-              makeWaitBudget: makeWaitBudget)
+              makeWaitBudget: makeWaitBudget,
+              afterMainPass: afterMainPass)
     }
 
     /// The one place a block gets its dependencies. Once: a second call changes nothing.
     func build(contentProvider: EmbeddedBlockWebViewProvider,
                placeMemory: EmbeddedBlockPlaceRemembering,
                revealAnimation: EmbeddedBlockRevealAnimation,
-               makeWaitBudget: ((_ placeSystemName: String, _ duration: @escaping () -> TimeInterval) -> EmbeddedBlockWaitBudget)?) {
+               makeWaitBudget: ((_ placeSystemName: String, _ duration: @escaping () -> TimeInterval) -> EmbeddedBlockWaitBudget)?,
+               afterMainPass: @escaping (@escaping () -> Void) -> Void) {
         guard runtime == nil else { return }
 
         let answerTimeout = setup.timeout
@@ -347,7 +360,8 @@ public final class MindboxEmbeddedBlockView: UIView {
                               revealAnimation: revealAnimation,
                               waitBudget: makeWaitBudget?(placeSystemName, duration)
                                   ?? EmbeddedBlockWaitBudget(placeSystemName: placeSystemName, duration: duration),
-                              layers: EmbeddedBlockLayerHost(container: self, animation: revealAnimation))
+                              layers: EmbeddedBlockLayerHost(container: self, animation: revealAnimation),
+                              afterMainPass: afterMainPass)
         self.runtime = runtime
 
         // Decided synchronously, before the first layout pass: a wrapper reads the same answer
@@ -370,6 +384,9 @@ public final class MindboxEmbeddedBlockView: UIView {
     deinit {
         // A nib-loaded block let go before `awakeFromNib` has nothing to stop.
         runtime?.waitBudget.pause()
+        if let held = runtime?.contentProvider.heldCollapse {
+            updatePlaceMemory(for: held)
+        }
         runtime?.contentProvider.teardown()
     }
 
@@ -395,7 +412,7 @@ public final class MindboxEmbeddedBlockView: UIView {
 
         waitBudget.isNeeded = { [weak self, weak contentProvider] in
             guard let self, let contentProvider else { return false }
-            return self.isEffectivelyVisible && self.state == .loading && !contentProvider.isAwaitingDelayedContent
+            return self.isContentRunning && self.state == .loading && !contentProvider.isAwaitingDelayedContent
         }
         waitBudget.onExpire = { [weak self] in
             self?.handleTimeout()
@@ -434,7 +451,15 @@ public final class MindboxEmbeddedBlockView: UIView {
         if !isReleased {
             buildIfNeeded()
         }
-        updateContentActivity(reason: window == nil ? "left the window" : "entered the window")
+
+        guard window == nil else {
+            updateContentActivity(reason: "entered the window")
+            return
+        }
+
+        runtime?.afterMainPass { [weak self] in
+            self?.updateContentActivity(reason: "left the window")
+        }
     }
 
     private func updateContentActivity(reason: String) {
@@ -463,7 +488,7 @@ public final class MindboxEmbeddedBlockView: UIView {
     /// Internal and without a public wrapper: automatic reloads — on failure, on returning to the
     /// app — will be built on this method.
     func reload() {
-        guard let runtime, isEffectivelyVisible else {
+        guard let runtime, isContentRunning else {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' reload skipped: the block is not on screen",
                           category: .embeddedBlocks)
             return

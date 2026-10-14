@@ -37,9 +37,18 @@ final class EmbeddedBlockFailureReporter {
             return
         }
 
-        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': reporting \(failure.reason.rawValue) for in-app \(failure.inAppId)",
-                      level: .error, category: .embeddedBlocks)
-        report(failure.inAppId, failure.tags, failure.reason, failure.details)
+        send(failure)
+    }
+
+    func report(failureOf answer: EmbeddedBlockPlaceAnswer) {
+        switch answer.resolution {
+        case .failure(let failure):
+            send(failure)
+        case .configUnavailable:
+            reportUnansweredWaitOnce(answer.processingDuration)
+        case .content, .empty, .targetingUnavailable:
+            break
+        }
     }
 
     func flushHeld() {
@@ -54,6 +63,12 @@ final class EmbeddedBlockFailureReporter {
 
     func discardHeld() {
         held = nil
+    }
+
+    private func send(_ failure: EmbeddedBlockResolutionFailure) {
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': reporting \(failure.reason.rawValue) for in-app \(failure.inAppId)",
+                      level: .error, category: .embeddedBlocks)
+        report(failure.inAppId, failure.tags, failure.reason, failure.details)
     }
 
     func reportUnansweredWaitOnce(_ waited: TimeInterval) {

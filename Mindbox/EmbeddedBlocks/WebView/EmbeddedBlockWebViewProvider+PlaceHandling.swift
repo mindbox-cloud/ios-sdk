@@ -14,5 +14,5 @@ extension EmbeddedBlockWebViewProvider: EmbeddedBlockPlaceHandling {
 
     var isActive: Bool { isStarted }
 
-    var holdsAnAttempt: Bool { (isStarted || isPaused) && (isAttemptAlive || pendingResolution?.resolution.content != nil) }
+    var holdsAnAttempt: Bool { (isStarted || isPaused) && (isAttemptAlive || deferred.parksContent) }
 }

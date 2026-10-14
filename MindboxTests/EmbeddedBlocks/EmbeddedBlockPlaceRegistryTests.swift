@@ -18,13 +18,14 @@ struct EmbeddedBlockPlaceRegistryTests {
     private final class BlockFake: EmbeddedBlockPlaceHandling {
         var isActive = true
         var holdsAnAttempt = true
-        private(set) var applied: [EmbeddedBlockResolution] = []
-        private(set) var processingDurations: [TimeInterval] = []
+        private(set) var answers: [EmbeddedBlockPlaceAnswer] = []
         private(set) var delayedCount = 0
 
-        func apply(_ resolution: EmbeddedBlockResolution, processingDuration: TimeInterval) {
-            applied.append(resolution)
-            processingDurations.append(processingDuration)
+        var applied: [EmbeddedBlockResolution] { answers.map(\.resolution) }
+        var processingDurations: [TimeInterval] { answers.map(\.processingDuration) }
+
+        func apply(_ answer: EmbeddedBlockPlaceAnswer) {
+            answers.append(answer)
         }
 
         func contentIsDelayed() {

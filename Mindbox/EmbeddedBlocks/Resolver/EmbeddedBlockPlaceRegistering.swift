@@ -8,12 +8,36 @@
 
 import Foundation
 
+struct EmbeddedBlockPlaceAnswer {
+
+    let resolution: EmbeddedBlockResolution
+
+    let processingDuration: TimeInterval
+
+    let isOperationTriggered: Bool
+
+    func with(_ resolution: EmbeddedBlockResolution) -> EmbeddedBlockPlaceAnswer {
+        copy(resolution: resolution)
+    }
+
+    func replacing(_ waiting: EmbeddedBlockPlaceAnswer) -> EmbeddedBlockPlaceAnswer {
+        copy(processingDuration: waiting.processingDuration)
+    }
+
+    private func copy(resolution: EmbeddedBlockResolution? = nil,
+                      processingDuration: TimeInterval? = nil) -> EmbeddedBlockPlaceAnswer {
+        EmbeddedBlockPlaceAnswer(resolution: resolution ?? self.resolution,
+                                 processingDuration: processingDuration ?? self.processingDuration,
+                                 isOperationTriggered: isOperationTriggered)
+    }
+}
+
 protocol EmbeddedBlockPlaceHandling: AnyObject {
 
     var isActive: Bool { get }
 
-    /// The place's fresh answer, on the main thread, with how long the selection worked on it.
-    func apply(_ resolution: EmbeddedBlockResolution, processingDuration: TimeInterval)
+    /// The place's fresh answer, on the main thread.
+    func apply(_ answer: EmbeddedBlockPlaceAnswer)
 
     /// The place's answer is known and held back by its `delayTime`: content is coming, the SDK is not silent.
     func contentIsDelayed()

@@ -684,6 +684,12 @@ final class EmbeddedBlockTestBed {
         center.post(name: UIApplication.didBecomeActiveNotification, object: nil)
     }
 
+    func answer(_ resolution: EmbeddedBlockResolution) -> EmbeddedBlockPlaceAnswer {
+        EmbeddedBlockPlaceAnswer(resolution: resolution,
+                                 processingDuration: 0,
+                                 isOperationTriggered: false)
+    }
+
     func deliverSamePageWithNewData(_ marker: String = "fresh") {
         let fresh = EmbeddedBlockWebContent(inAppId: EmbeddedBlockWebContent.stub.inAppId,
                                             baseUrl: EmbeddedBlockWebContent.stub.baseUrl,
@@ -695,6 +701,7 @@ final class EmbeddedBlockTestBed {
         announceNewConfig()
     }
 
+    @discardableResult
     func announceOperation(_ name: String = "custom.operation") -> ApplicationEvent {
         let event = ApplicationEvent(name: name, model: nil)
         center.post(name: .inAppOperationOccurred, object: event)

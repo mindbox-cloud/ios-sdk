@@ -12,19 +12,28 @@ extension EmbeddedBlockPlaceRegistry {
 
     struct QueuedInvalidation {
         var trigger: ApplicationEvent?
+        var includesNonOperation: Bool
     }
 
     enum ResolveCause {
         case blockAppeared
         case newConfig
         case operation(ApplicationEvent)
-        case queued(ApplicationEvent?)
+        case queued(QueuedInvalidation)
 
         var trigger: ApplicationEvent? {
             switch self {
                 case .blockAppeared, .newConfig: return nil
                 case .operation(let event): return event
-                case .queued(let trigger): return trigger
+                case .queued(let queued): return queued.trigger
+            }
+        }
+
+        var includesNonOperation: Bool {
+            switch self {
+                case .blockAppeared, .newConfig: return true
+                case .queued(let queued): return queued.includesNonOperation
+                case .operation: return false
             }
         }
 
