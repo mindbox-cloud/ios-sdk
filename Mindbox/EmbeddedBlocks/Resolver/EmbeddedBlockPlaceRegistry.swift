@@ -296,15 +296,17 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
             return
         }
 
-        guard !keepsForTheSessionCheck(answer, at: place) else { return }
-
         let delay = TimeInterval.delay(fromTimeSpan: content.delayTime)
+        let isWaitingOutItsDelay = delay > 0 && delayedDelivery.isWaiting(place: place, for: content.inAppId)
+            && delayedDelivery.waitingAnswer(at: place)?.sessionEpoch == answer.sessionEpoch
+        if !isWaitingOutItsDelay { delayedDelivery.cancel(place: place) }
+
+        guard !keepsForTheSessionCheck(answer, at: place) else { return }
 
         // A fresh answer without a delay is not held back by the delay it used to have: nothing is
         // left to wait out, and the user waited for this very answer — it goes below, at once, with
         // its own selection time, as on Android.
-        if delay > 0, delayedDelivery.isWaiting(place: place, for: content.inAppId),
-           delayedDelivery.waitingAnswer(at: place)?.sessionEpoch == answer.sessionEpoch {
+        if isWaitingOutItsDelay {
             Logger.common(message: "[EmbeddedBlock] Place '\(place)': in-app \(content.inAppId) is still waiting out its delay",
                           category: .embeddedBlocks)
             // The fresh content, with the selection time of the answer that started the delay: this
@@ -316,8 +318,6 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
             announceDelay(at: place)
             return
         }
-
-        delayedDelivery.cancel(place: place)
 
         let served = ServedPlaceDelay(place: place, inappId: content.inAppId)
         guard delay > 0, !SessionTemporaryStorage.shared.ledger.servedPlaceDelays.contains(served) else {
