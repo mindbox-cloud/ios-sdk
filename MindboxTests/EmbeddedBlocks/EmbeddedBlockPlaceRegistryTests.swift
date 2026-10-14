@@ -755,6 +755,29 @@ struct EmbeddedBlockPlaceRegistryTests {
         #expect(rig.budget.reservations.count == reservations)
     }
 
+    @Test("A second block of the place, back on screen with an answer asked off screen, takes no new slot for the in-app the first one already shows")
+    func offScreenAnswerOfAnInappThePlaceShowsTakesNoNewSlot() throws {
+        let rig = Rig()
+        let first = BlockFake()
+        first.isActive = false
+        let second = BlockFake()
+        second.isActive = false
+        rig.registry.register(first, place: "stories")
+        rig.registry.register(second, place: "stories")
+        rig.expireSession()
+        rig.resolver.sessionEpoch = rig.currentSessionEpoch
+        rig.presence.finishSessionCheck(startsNewSession: true)
+        let parkedForFirst = try #require(first.answers.last)
+        let parkedForSecond = try #require(second.answers.last)
+
+        _ = rig.registry.bringOnScreen(parkedForFirst, at: "stories")
+        SessionTemporaryStorage.shared.$ledger.mutate { $0.placeShownInappId["stories"] = EmbeddedBlockWebContent.stub.inAppId }
+        let brought = rig.registry.bringOnScreen(parkedForSecond, at: "stories")
+
+        #expect(brought?.resolution == .content(.stub))
+        #expect(rig.budget.reservedOwners == [.place("stories")])
+    }
+
     @Test("Content answered between a return and the end of its session check reaches no block and takes no slot; once the check has ended the session, it is dropped and the session is asked anew")
     func contentInsideTheReturnOfAnEndedSessionIsDropped() {
         let rig = Rig()
@@ -809,6 +832,29 @@ struct EmbeddedBlockPlaceRegistryTests {
         rig.registry.blockAppeared("stories")
         rig.resolver.flush()
         rig.presence.finishSessionCheck()
+
+        #expect(block.applied == [.content(.other)])
+    }
+
+    @Test("Content kept for a check that ends while the app is not active stays kept until it is: a newer answer in between takes its place, and only that one arrives")
+    func newerContentBeforeTheAppIsActiveReplacesTheKeptContent() {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+        rig.presence.enterBackground()
+        rig.presence.returnToApp()
+        rig.resolver.flush()
+        rig.presence.applicationState = .inactive
+        rig.presence.finishSessionCheck()
+
+        rig.resolver.resolution = .content(.other)
+        rig.registry.blockAppeared("stories")
+        rig.resolver.flush()
+        #expect(block.applied.isEmpty)
+
+        rig.presence.becomeActive()
 
         #expect(block.applied == [.content(.other)])
     }

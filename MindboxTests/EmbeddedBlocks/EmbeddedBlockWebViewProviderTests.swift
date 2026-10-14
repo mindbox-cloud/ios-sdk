@@ -1218,6 +1218,20 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.accounting.sessionEpochs == [first + 1])
     }
 
+    @Test("A loading page owed the new session's data that draws after the user left is told once the block is back, not off screen")
+    func pageDrawnOffScreenIsPushedOnceTheBlockIsBack() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.announceNewSession()
+
+        bed.provider.stop()
+        bed.page?.reportRendered(1)
+        #expect(bed.page?.initDataPushes.isEmpty == true)
+
+        bed.provider.start()
+        #expect(bed.page?.initDataPushes == [EmbeddedBlockWebContent.stub.params])
+    }
+
     @Test("New data a new session brings for the same page while that page still loads is handed to it once it has drawn, and it is shown in that session once it draws again")
     func loadingPageGetsTheSessionsNewDataAfterItDraws() {
         let bed = EmbeddedBlockTestBed()
