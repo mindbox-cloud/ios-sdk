@@ -1808,6 +1808,55 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(show.timeToDisplay == 4)
     }
 
+    @Test("A block that comes back on screen while a return's session check runs asks its place once when that check starts a new session: the start at the check's end is the new session's ask, shown in that session and timed from that ask, whether the block was paused with its page or new",
+          arguments: [false, true])
+    func blockBackInsideAReturnThatStartsANewSessionAsksItsPlaceOnce(wasPaused: Bool) throws {
+        let bed = EmbeddedBlockTestBed()
+        let first = bed.resolver.sessionEpoch
+        if wasPaused {
+            bed.provider.start()
+            bed.page?.reportRendered(1)
+            bed.provider.stop()
+        }
+        let resolvesBefore = bed.resolver.resolveCount
+        bed.enterBackground()
+        bed.returnToApp()
+        bed.provider.start()
+        bed.resolver.isDeferred = true
+        bed.resolver.processingDuration = 2
+
+        bed.renewSession()
+        #expect(bed.resolver.resolveCount == resolvesBefore + 1)
+        bed.resolver.flush()
+        bed.clock.advance(0.5)
+        bed.resolver.flush()
+        #expect(bed.resolver.resolveCount == resolvesBefore + 1)
+        bed.page?.reportRendered(1)
+
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.accounting.sessionEpochs == (wasPaused ? [first, first + 1] : [first + 1]))
+        let show = try #require(bed.accounting.shows.last)
+        #expect(show.timeToDisplay == 2.5)
+    }
+
+    @Test("An operation held for a block that comes back on screen while a return's session check runs is still asked with its trigger after the start's pass when that check starts a new session")
+    func operationHeldForABlockBackInsideANewSessionsReturnIsAskedAfterTheStartsPass() {
+        let bed = EmbeddedBlockTestBed()
+        bed.enterBackground()
+        bed.returnToApp()
+        bed.provider.start()
+        let event = bed.announceOperation()
+        bed.resolver.isDeferred = true
+
+        bed.renewSession()
+        #expect(bed.resolver.triggers.count == 1)
+        bed.resolver.flush()
+
+        #expect(bed.resolver.resolveCount == 2)
+        let carried = bed.resolver.triggers.last ?? nil
+        #expect(carried === event)
+    }
+
     @Test("Content kept on screen for the end of a return's session check counts the wait in its timeToDisplay")
     func contentKeptForTheReturnCountsTheWait() {
         let bed = EmbeddedBlockTestBed()
@@ -2622,14 +2671,22 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.resolver.resolveCount == resolvesBefore)
     }
 
-    @Test("An operation's pass that the new session's config answers is that session's ask: a refusal it brings for a shown block is held until the user leaves, not collapsed at once")
-    func operationPassAnsweredByTheNewSessionHoldsItsRefusal() {
+    @Test("An operation's pass that the new session's config answers is that session's ask, asked before the session's reset or after it and before the new session is announced: a refusal it brings for a shown block is held until the user leaves, not collapsed at once",
+          arguments: [false, true])
+    func operationPassAnsweredByTheNewSessionHoldsItsRefusal(isAskedAfterTheReset: Bool) {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
         bed.page?.reportRendered(1)
         bed.resolver.isDeferred = true
-        bed.announceOperation()
-        bed.renewSession()
+        if isAskedAfterTheReset {
+            bed.expireSession()
+            bed.resolver.sessionEpoch = bed.currentSessionEpoch
+            bed.announceOperation()
+            bed.finishSessionCheck(startsNewSession: true)
+        } else {
+            bed.announceOperation()
+            bed.renewSession()
+        }
         var states: [EmbeddedBlockState] = []
         bed.provider.onStateChange = { states.append($0) }
         bed.resolver.resolution = .empty
