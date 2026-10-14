@@ -79,6 +79,8 @@ protocol EmbeddedBlockPlaceRegistering: AnyObject {
 
     func blockAttemptEnded(_ place: String)
 
+    func giveSlotBack(_ unseen: EmbeddedBlockPlaceAnswer, at place: String)
+
     func keepsContent(for place: String) -> Bool
 
     func bringOnScreen(_ answer: EmbeddedBlockPlaceAnswer, at place: String) -> EmbeddedBlockPlaceAnswer?

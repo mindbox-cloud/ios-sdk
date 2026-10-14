@@ -31,6 +31,8 @@ struct EmbeddedBlockDeferredAnswers {
 
     private var parkedTimeOnScreen: ForegroundStopwatch?
 
+    var contentAwaitingTheUser: EmbeddedBlockPlaceAnswer?
+
     var isStartAwaitingSessionCheck = false {
         didSet {
             if isStartAwaitingSessionCheck {
@@ -45,7 +47,9 @@ struct EmbeddedBlockDeferredAnswers {
 
     var isHoldingPlaceAnswer: Bool { heldAnswer != nil }
 
-    var held: HeldCollapse? { heldAnswer.map { .placeAnswer($0) } ?? (isPageEmpty ? .emptyPage : nil) }
+    var held: HeldCollapse? {
+        heldAnswer.map { .placeAnswer($0) } ?? (isPageEmpty && contentAwaitingTheUser == nil && !parksContent ? .emptyPage : nil)
+    }
 
     var parksContent: Bool { parked?.resolution.content != nil }
 
@@ -68,12 +72,23 @@ struct EmbeddedBlockDeferredAnswers {
     mutating func lift() {
         heldAnswer = nil
         isPageEmpty = false
+        contentAwaitingTheUser = nil
     }
 
     mutating func takeHeld() -> HeldCollapse? {
-        defer { lift() }
+        guard let held else { return nil }
 
+        lift()
         return held
+    }
+
+    mutating func parkContentAwaitingTheUser(ifAlive isAttemptAlive: Bool, timedBy makeStopwatch: () -> ForegroundStopwatch) -> EmbeddedBlockPlaceAnswer? {
+        defer { contentAwaitingTheUser = nil }
+
+        guard isAttemptAlive, let unseen = contentAwaitingTheUser else { return nil }
+
+        park(unseen.landedOffScreen(), overPageOf: nil, timedBy: makeStopwatch)
+        return unseen
     }
 
     mutating func park(_ answer: EmbeddedBlockPlaceAnswer, overPageOf pageSession: Int?, timedBy makeStopwatch: () -> ForegroundStopwatch) {

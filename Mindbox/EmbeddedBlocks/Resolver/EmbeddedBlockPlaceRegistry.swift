@@ -131,6 +131,10 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         onMain { $0.releaseSlotIfUnclaimed(place) }
     }
 
+    func giveSlotBack(_ unseen: EmbeddedBlockPlaceAnswer, at place: String) {
+        onMain { $0.releaseSlotOfUnseen(unseen, at: place) }
+    }
+
     func keepsContent(for place: String) -> Bool {
         contentAwaitingTheSessionCheck[place] != nil
     }
@@ -410,6 +414,17 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
                       category: .embeddedBlocks)
     }
 
+    private func releaseSlotOfUnseen(_ unseen: EmbeddedBlockPlaceAnswer, at place: String) {
+        prune(place)
+
+        guard let content = unseen.resolution.content, !hasBlocksOnScreen(place),
+              inItsSession(unseen, { $0.placeShownInappId[place] != content.inAppId }) == true else { return }
+
+        Logger.common(message: "[EmbeddedBlock] Place '\(place)': in-app \(content.inAppId), answered while the app was away, left the screen unshown — giving its slot back until a block brings it on screen",
+                      category: .embeddedBlocks)
+        budget.release(.place(place), inSession: unseen.sessionEpoch)
+    }
+
     private func releaseSlotIfUnclaimed(_ place: String) {
         prune(place)
 
@@ -460,9 +475,11 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
     }
 
     private func placesWithBlocksOnScreen() -> [String] {
-        blocksByPlace.keys.filter { place in
-            (blocksByPlace[place] ?? []).contains { $0.block?.isActive == true || $0.block?.isStartPending == true }
-        }
+        blocksByPlace.keys.filter { hasBlocksOnScreen($0) }
+    }
+
+    private func hasBlocksOnScreen(_ place: String) -> Bool {
+        (blocksByPlace[place] ?? []).contains { $0.block?.isActive == true || $0.block?.isStartPending == true }
     }
 
     private func prune(_ place: String) {

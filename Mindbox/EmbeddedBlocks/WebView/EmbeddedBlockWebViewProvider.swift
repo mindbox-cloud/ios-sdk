@@ -176,6 +176,7 @@ final class EmbeddedBlockWebViewProvider {
         dataPushWait.suspend()
         // The page stays alive off screen, so it has to be told that nobody is looking.
         page?.isUserPresent = false
+        if let unseen = deferred.parkContentAwaitingTheUser(ifAlive: isAttemptAlive, timedBy: makeStopwatch) { registry.giveSlotBack(unseen, at: placeSystemName) }
     }
 
     private func land(_ held: EmbeddedBlockDeferredAnswers.HeldCollapse) {
@@ -286,6 +287,7 @@ final class EmbeddedBlockWebViewProvider {
     }
 
     private func applyContent(_ fresh: EmbeddedBlockWebContent, of answer: EmbeddedBlockPlaceAnswer) {
+        defer { deferred.contentAwaitingTheUser = appPresence.isPresent ? nil : answer }
         // Only a block that shows something is talked to; one that shows nothing is rebuilt. A page
         // confirms a data push and stays exactly as it was, so a collapsed block told about its content
         // would sit waiting for a report that never comes. Rebuilding revives it, in sync with Android.
@@ -520,6 +522,7 @@ extension EmbeddedBlockWebViewProvider: EmbeddedBlockAppPresenceSubscribing {
 
         guard isStarted else { return }
 
+        deferred.contentAwaitingTheUser = nil
         dataPushWait.resumeIfSuspended()
         catchUpShownPage()
     }
