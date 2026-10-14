@@ -66,6 +66,8 @@ final class InappShowAccountingMock: InappShowAccounting {
 
     private(set) var sessionEpochs: [Int] = []
 
+    private(set) var recordedOnMainThread: [Bool] = []
+
     var shownIds: [String] { shows.map(\.inAppId) }
 
     var accountant: InappShowAccounting?
@@ -82,6 +84,7 @@ final class InappShowAccountingMock: InappShowAccounting {
         places.append(place)
         shows.append(show)
         sessionEpochs.append(sessionEpoch)
+        recordedOnMainThread.append(Thread.isMainThread)
         accountant?.recordBlockShow(show, at: place, sessionEpoch: sessionEpoch)
     }
 }

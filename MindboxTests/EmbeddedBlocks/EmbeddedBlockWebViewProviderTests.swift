@@ -2224,6 +2224,30 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.page?.initDataPushes == [EmbeddedBlockWebContent.stub.params])
     }
 
+    @Test("A show the return's session check holds back is recorded on the main thread, also when the check is announced from another thread")
+    func showHeldForTheReturnIsRecordedOnMain() async {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.enterBackground()
+        bed.page?.reportRendered(1)
+        bed.returnToApp()
+        #expect(bed.accounting.shows.isEmpty)
+
+        nonisolated(unsafe) let presenceBed = bed.presenceBed
+        let startedAt = bed.clock.now
+        await withCheckedContinuation { continuation in
+            DispatchQueue.global().async {
+                presenceBed.finishSessionCheck(startedAt: startedAt)
+                continuation.resume()
+            }
+        }
+        await withCheckedContinuation { continuation in
+            DispatchQueue.main.async { continuation.resume() }
+        }
+
+        #expect(bed.accounting.recordedOnMainThread == [true])
+    }
+
     @Test("A new session's show counts the session's first selection and the time on screen until the redraw; a later answer of that session restarts neither")
     func newSessionShowCountsTheFirstSelectionOfTheSession() {
         let bed = EmbeddedBlockTestBed()
