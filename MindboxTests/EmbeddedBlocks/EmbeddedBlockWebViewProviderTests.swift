@@ -1668,6 +1668,30 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.page?.isClosed == true)
     }
 
+    @Test("An answer that reaches a block back on screen between a return and the end of its session check takes no slot until the check ends, and takes it when the block starts then")
+    func answerForABlockBackInsideTheReturnTakesItsSlotAtTheCheckEnd() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.resolver.isDeferred = true
+        bed.resolver.resolution = .content(.other)
+        bed.announceNewConfig()
+        bed.provider.stop()
+        bed.enterBackground()
+        bed.returnToApp()
+        bed.provider.start()
+        let reservationsBefore = bed.budget.reservations.count
+
+        bed.resolver.flush()
+        #expect(bed.budget.reservations.count == reservationsBefore)
+        #expect(bed.pageFactory.pages.count == 1)
+
+        bed.finishSessionCheck()
+
+        #expect(bed.budget.reservations.map(\.inAppId).dropFirst(reservationsBefore) == [EmbeddedBlockWebContent.other.inAppId])
+        #expect(bed.pageFactory.contents.last == .other)
+    }
+
     @Test("A block that leaves the screen again before the return's session check ends does not start when it ends")
     func blockLeavingInsideTheReturnDoesNotStartAfterIt() {
         let bed = EmbeddedBlockTestBed()
@@ -2075,6 +2099,39 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.finishSessionCheck()
 
         #expect(bed.ackScheduler.scheduled.last?.delay == TimeInterval(Constants.EmbeddedBlock.readyTimeoutSeconds) - 2)
+    }
+
+    @Test("A page that confirms the new session's data and draws it long after, past the confirmation wait's budget, still sends that session's show and keeps its page")
+    func pageDrawingLongAfterTheConfirmedPushIsShown() {
+        let bed = EmbeddedBlockTestBed()
+        let first = bed.resolver.sessionEpoch
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.announceNewSession()
+        bed.page?.confirmInitData()
+
+        bed.clock.advance(TimeInterval(Constants.EmbeddedBlock.readyTimeoutSeconds) * 3)
+        bed.ackScheduler.fire()
+        bed.delayScheduler.fireAll()
+        bed.page?.reportRendered(1)
+
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.accounting.sessionEpochs == [first, first + 1])
+    }
+
+    @Test("A new session's data waits while the app is not active, as under Control Center or a system alert, and goes once it is active again")
+    func dataPushWaitsForTheAppToBeActive() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.applicationState = .inactive
+
+        bed.announceNewSession()
+        #expect(bed.page?.initDataPushes.isEmpty == true)
+
+        bed.becomeActive()
+
+        #expect(bed.page?.initDataPushes == [EmbeddedBlockWebContent.stub.params])
     }
 
     @Test("A new session's show counts the session's first selection and the time on screen until the redraw; a later answer of that session restarts neither")
@@ -2505,6 +2562,41 @@ struct EmbeddedBlockWebViewProviderTests {
 
         #expect(states == [.ready])
         #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.page?.isClosed == false)
+    }
+
+    @Test("A block whose held collapse landed as the user left holds no attempt, so a new session does not ask its place while it is off screen")
+    func blockCollapsedAsTheUserLeftIsNotAskedOffScreen() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.resolver.resolution = .empty
+        bed.announceNewConfig()
+        bed.provider.stop()
+        #expect(!bed.provider.holdsAnAttempt)
+        let resolvesBefore = bed.resolver.resolveCount
+
+        bed.renewSession()
+
+        #expect(bed.resolver.resolveCount == resolvesBefore)
+    }
+
+    @Test("An operation's pass that the new session's config answers is that session's ask: a refusal it brings for a shown block is held until the user leaves, not collapsed at once")
+    func operationPassAnsweredByTheNewSessionHoldsItsRefusal() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.resolver.isDeferred = true
+        bed.announceOperation()
+        bed.renewSession()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+        bed.resolver.resolution = .empty
+
+        bed.resolver.flush()
+
+        #expect(states.isEmpty)
+        #expect(bed.provider.heldCollapse == .empty)
         #expect(bed.page?.isClosed == false)
     }
 

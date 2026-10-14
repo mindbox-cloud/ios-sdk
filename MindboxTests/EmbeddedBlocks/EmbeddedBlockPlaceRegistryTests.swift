@@ -961,6 +961,26 @@ struct EmbeddedBlockPlaceRegistryTests {
         #expect(block.answers.map(\.isOperationTriggered) == [false])
     }
 
+    @Test("An operation that arrives after the return's session check has reset the session, before the check is announced, still rides the new session's ask")
+    func operationAfterTheResetInsideTheReturnRidesTheNewSessionsAsk() {
+        let rig = Rig()
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.presence.enterBackground()
+        rig.presence.returnToApp()
+        rig.expireSession()
+        rig.resolver.sessionEpoch = rig.currentSessionEpoch
+
+        let operation = rig.announceOperation()
+        #expect(rig.resolver.resolveCount == 0)
+
+        rig.presence.finishSessionCheck(startsNewSession: true)
+
+        #expect(rig.resolver.triggers == [operation])
+        #expect(block.answers.map(\.sessionEpoch) == [rig.currentSessionEpoch])
+        #expect(block.answers.map(\.isOperationTriggered) == [false])
+    }
+
     @Test("An operation between a return and the end of a session check that kept the session is asked as the operation it is once that check ends, not when a check from before the return ends")
     func operationInsideTheReturnOfAKeptSessionIsAskedAfterTheCheck() {
         let rig = Rig()
