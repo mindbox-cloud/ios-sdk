@@ -228,16 +228,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
                 return
             }
 
-            let queued = queuedInvalidations[place]
-            let newSessionAskedAt: TimeInterval?
-            if case .newSession = cause {
-                newSessionAskedAt = now()
-            } else {
-                newSessionAskedAt = cause.newSessionAskedAt
-            }
-            queuedInvalidations[place] = QueuedInvalidation(trigger: cause.trigger ?? queued?.trigger,
-                                                            includesNonOperation: cause.includesNonOperation || queued?.includesNonOperation == true,
-                                                            newSessionAskedAt: [queued?.newSessionAskedAt, newSessionAskedAt].compactMap { $0 }.min())
+            queuedInvalidations[place] = QueuedInvalidation(merging: cause, into: queuedInvalidations[place], now: now)
 
             Logger.common(message: "[EmbeddedBlock] Place '\(place)': \(cause.logDescription) landed mid-resolve — queued for the pass after",
                           category: .embeddedBlocks)

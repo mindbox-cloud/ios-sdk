@@ -78,3 +78,18 @@ extension EmbeddedBlockPlaceRegistry {
         }
     }
 }
+
+extension EmbeddedBlockPlaceRegistry.QueuedInvalidation {
+
+    init(merging cause: EmbeddedBlockPlaceRegistry.ResolveCause, into queued: Self?, now: () -> TimeInterval) {
+        let newSessionAskedAt: TimeInterval?
+        if case .newSession = cause {
+            newSessionAskedAt = now()
+        } else {
+            newSessionAskedAt = cause.newSessionAskedAt
+        }
+        self.init(trigger: cause.trigger ?? queued?.trigger,
+                  includesNonOperation: cause.includesNonOperation || queued?.includesNonOperation == true,
+                  newSessionAskedAt: [queued?.newSessionAskedAt, newSessionAskedAt].compactMap { $0 }.min())
+    }
+}
