@@ -643,6 +643,28 @@ struct EmbeddedBlockPlaceRegistryTests {
         #expect(rig.resolver.triggers == asked)
     }
 
+    @Test("An operation queued behind a pass that stood for the new session's ask and then read no config keeps the operation when that pass lands during a later return's session check for a block back on screen whose start waits for that check")
+    func operationBehindAStandInThatReadNoConfigIsKeptForABlockWhoseStartWaitsForTheSessionCheck() {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        rig.resolver.readsNoConfig = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.expireSession()
+        rig.resolver.sessionEpoch = rig.currentSessionEpoch
+        rig.registry.blockAppeared("stories")
+        rig.presence.finishSessionCheck(startsNewSession: true)
+        let operation = rig.announceOperation()
+        block.isActive = false
+        rig.presence.enterBackground()
+        rig.presence.returnToApp()
+        block.isStartPending = true
+
+        rig.resolver.flush()
+
+        #expect(rig.resolver.triggers == [nil, operation])
+    }
+
     @Test("A later new session's ask queued behind a pass that stood for an earlier one and then read no config keeps the operation it carries for a block that has left the screen holding its attempt")
     func laterNewSessionsAskBehindAStandInThatReadNoConfigKeepsItsOperation() {
         let rig = Rig()
