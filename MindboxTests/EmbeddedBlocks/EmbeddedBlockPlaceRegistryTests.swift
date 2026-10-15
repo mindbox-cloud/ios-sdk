@@ -621,6 +621,49 @@ struct EmbeddedBlockPlaceRegistryTests {
         #expect(block.answers.map(\.isOperationTriggered) == [false, false])
     }
 
+    @Test("An operation queued behind a pass that stood for the new session's ask and then read no config is asked without the operation when that pass lands for a block that has left the screen holding its attempt, as the ask would have been, and not for one holding none",
+          arguments: [true, false])
+    func operationBehindAStandInThatReadNoConfigIsAskedWithoutItOnlyForABlockThatMayTakeTheAnswer(holdsAnAttempt: Bool) {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        rig.resolver.readsNoConfig = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.expireSession()
+        rig.resolver.sessionEpoch = rig.currentSessionEpoch
+        rig.registry.blockAppeared("stories")
+        rig.presence.finishSessionCheck(startsNewSession: true)
+        rig.announceOperation()
+        block.isActive = false
+        block.holdsAnAttempt = holdsAnAttempt
+
+        rig.resolver.flush()
+
+        let asked: [ApplicationEvent?] = holdsAnAttempt ? [nil, nil] : [nil]
+        #expect(rig.resolver.triggers == asked)
+    }
+
+    @Test("A later new session's ask queued behind a pass that stood for an earlier one and then read no config keeps the operation it carries for a block that has left the screen holding its attempt")
+    func laterNewSessionsAskBehindAStandInThatReadNoConfigKeepsItsOperation() {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        rig.resolver.readsNoConfig = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.expireSession()
+        rig.resolver.sessionEpoch = rig.currentSessionEpoch
+        rig.registry.blockAppeared("stories")
+        rig.presence.finishSessionCheck(startsNewSession: true)
+        let operation = rig.announceOperation()
+        rig.expireSession()
+        rig.presence.finishSessionCheck(startsNewSession: true)
+        block.isActive = false
+
+        rig.resolver.flush()
+
+        #expect(rig.resolver.triggers == [nil, operation])
+    }
+
     @Test("A place answered from a config is not asked again when that config is announced again, and is when a newer one is")
     func answeredPlaceIsAskedAgainOnlyByANewerConfig() {
         let rig = Rig()
