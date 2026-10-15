@@ -570,7 +570,8 @@ public struct BridgeMessage: Codable {
         ///   ```
         case filterShowableInapps
 
-        /// JS reports how many items it actually rendered, exactly once per load.
+        /// JS reports how many items it actually rendered, once per load and once after every
+        /// ``initDataUpdated`` it applies.
         ///
         /// A count of zero is a legitimate "nothing to show", not a failure. A host that listens
         /// refuses a count that is not a whole non-negative number, and never rounds it.
