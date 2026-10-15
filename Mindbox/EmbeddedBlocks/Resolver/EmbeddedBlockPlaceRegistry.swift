@@ -167,7 +167,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         }
     }
 
-    private func sessionStarted(carrying operations: [String: [ResolveCause]]) {
+    private func sessionStarted(carrying operations: [String: [ApplicationEvent]]) {
         let sessionEpoch = SessionTemporaryStorage.shared.ledger.sessionEpoch
         for place in Array(blocksByPlace.keys) where hasActiveBlocks(place) || holdsAnAttempt(at: place) {
             guard operations[place] != nil || !isAnsweredInNewSession(place, sessionEpoch) else {
@@ -176,8 +176,8 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
                 continue
             }
 
-            requestResolve(place: place, cause: .newSession(operations[place]?.first?.trigger))
-            operations[place]?.dropFirst().forEach { requestResolve(place: place, cause: $0) }
+            requestResolve(place: place, cause: .newSession(operations[place]?.first))
+            operations[place]?.dropFirst().forEach { requestResolve(place: place, cause: .operation($0)) }
         }
     }
 
@@ -247,7 +247,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
             return
         }
 
-        guard !awaitingTheSessionCheck.merge(cause, intoTheFirstHeldOperationAt: place) else { return }
+        guard !awaitingTheSessionCheck.isAnsweredByTheHeldOperations(cause, at: place) else { return }
 
         let pass = PassInFlight(askedInSession: SessionTemporaryStorage.shared.ledger.sessionEpoch, isTriggered: cause.trigger != nil)
         resolvingPlaces[place] = pass
@@ -515,7 +515,7 @@ extension EmbeddedBlockPlaceRegistry: EmbeddedBlockAppPresenceSubscribing {
         let operations = awaitingTheSessionCheck.takeOperations()
 
         guard startsNewSession else {
-            operations.forEach { place, causes in causes.forEach { requestResolve(place: place, cause: $0) } }
+            operations.forEach { place, events in events.forEach { requestResolve(place: place, cause: .operation($0)) } }
             return
         }
 

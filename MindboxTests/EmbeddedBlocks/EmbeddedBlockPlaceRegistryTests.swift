@@ -1448,7 +1448,7 @@ struct EmbeddedBlockPlaceRegistryTests {
         #expect(block.answers.map(\.isOperationTriggered) == [!startsNewSession, true])
     }
 
-    @Test("A block appearing or a new config between a return and the end of its session check joins the first of two operations held for the place: both are asked in order, the first not as an operation and the second as one, whether the check keeps the session or starts a new one",
+    @Test("A block appearing or a new config between a return and the end of its session check joins the first of two operations held for the place: both are asked in order, the second as an operation and the first as the operation it is when the check keeps the session, or as the new session's ask when it starts a new one",
           arguments: [false, true], [false, true])
     func appearanceOrConfigInsideTheReturnJoinsTheFirstHeldOperation(isNewConfig: Bool, startsNewSession: Bool) {
         let rig = Rig()
@@ -1475,7 +1475,7 @@ struct EmbeddedBlockPlaceRegistryTests {
         rig.resolver.flush()
 
         #expect(rig.resolver.triggers == [first, second])
-        #expect(block.answers.map(\.isOperationTriggered) == [false, true])
+        #expect(block.answers.map(\.isOperationTriggered) == [!startsNewSession, true])
     }
 
     @Test("A block appearing between a return and the end of its session check asks its place at once when the operations held are for another place")

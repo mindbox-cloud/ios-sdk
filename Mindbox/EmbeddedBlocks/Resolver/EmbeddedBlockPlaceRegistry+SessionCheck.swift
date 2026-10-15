@@ -17,18 +17,17 @@ extension EmbeddedBlockPlaceRegistry {
 
         var content: [String: Kept] = [:]
 
-        private var operations: [String: [ResolveCause]] = [:]
+        private var operations: [String: [ApplicationEvent]] = [:]
 
         mutating func hold(_ operation: ApplicationEvent, at place: String) {
-            operations[place, default: []].append(.operation(operation))
+            operations[place, default: []].append(operation)
         }
 
-        mutating func merge(_ cause: ResolveCause, intoTheFirstHeldOperationAt place: String) -> Bool {
-            guard cause.joinsHeldOperations, let first = operations[place]?.first else { return false }
+        func isAnsweredByTheHeldOperations(_ cause: ResolveCause, at place: String) -> Bool {
+            guard cause.joinsHeldOperations, operations[place]?.isEmpty == false else { return false }
 
             Logger.common(message: "[EmbeddedBlock] Place '\(place)': \(cause.logDescription) while operations for it wait for the return's session check — asked with the first of them",
                           category: .embeddedBlocks)
-            operations[place]?[0] = .queued(QueuedInvalidation(trigger: first.trigger, includesNonOperation: true))
             return true
         }
 
@@ -41,7 +40,7 @@ extension EmbeddedBlockPlaceRegistry {
             }
         }
 
-        mutating func takeOperations() -> [String: [ResolveCause]] {
+        mutating func takeOperations() -> [String: [ApplicationEvent]] {
             let taken = operations
             operations = [:]
             return taken
