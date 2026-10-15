@@ -115,7 +115,9 @@ final class InappSessionManager: InappSessionManagerProtocol {
 
     private func hideInappIfInappSessionExpired() {
         Logger.common(message: "[InappSessionManager] Hide previous inapp because session expired.")
-        NotificationCenter.default.post(name: .shouldDiscardInapps, object: nil)
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: .shouldDiscardInapps, object: nil)
+        }
     }
     
     private func getConfigSession() -> Double? {
