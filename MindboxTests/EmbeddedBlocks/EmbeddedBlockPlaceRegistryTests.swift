@@ -891,6 +891,31 @@ struct EmbeddedBlockPlaceRegistryTests {
         #expect(block.applied == [.content(.other)])
     }
 
+    @Test("Content kept for the return's session check at several places takes their slots once the check ends in the order it was kept, and by place name when kept at the same time",
+          arguments: [1.0, 0.0])
+    func keptContentTakesTheSlotsInTheOrderItWasKept(timeBetweenKeeps: TimeInterval) {
+        let rig = Rig()
+        let places = ["stories", "promo", "hero", "footer", "feed", "banner"]
+        let blocks = places.map { place in
+            let block = BlockFake()
+            rig.registry.register(block, place: place)
+            return block
+        }
+        rig.presence.enterBackground()
+        rig.presence.returnToApp()
+        for place in places {
+            rig.registry.blockAppeared(place)
+            rig.presence.clock.advance(timeBetweenKeeps)
+        }
+        #expect(rig.budget.reservations.isEmpty)
+
+        rig.presence.finishSessionCheck()
+
+        let expectedOrder = timeBetweenKeeps > 0 ? places : places.sorted()
+        #expect(rig.budget.reservedOwners == expectedOrder.map(InappShowBudgetOwner.place))
+        #expect(blocks.allSatisfy { $0.applied == [.content(.stub)] })
+    }
+
     @Test("Content kept for a check that ends while the app is not active stays kept until it is: a newer answer in between takes its place, and only that one arrives")
     func newerContentBeforeTheAppIsActiveReplacesTheKeptContent() {
         let rig = Rig()
