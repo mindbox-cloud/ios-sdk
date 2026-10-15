@@ -10,8 +10,8 @@ import Foundation
 import QuartzCore
 import MindboxLogger
 
-/// The place map and the router between blocks and the selection — in sync with Android, where the
-/// same component carries the same name and rules.
+/// The place map and the router between blocks and the selection — the counterpart of Android's
+/// `EmbeddedBlocksRegistry`.
 final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
 
     typealias EmbeddedPlacesFetching = (@escaping ([String: Set<String>]?) -> Void) -> Void
@@ -182,7 +182,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
     }
 
     private func isAnsweredInNewSession(_ place: String, _ sessionEpoch: Int) -> Bool {
-        resolvingPlaces[place]?.standsInForTheAsk(of: sessionEpoch) ?? answeredPasses[place]?.standsForTheAsk(of: sessionEpoch) ?? false
+        resolvingPlaces[place]?.takeOverTheAsk(of: sessionEpoch) ?? answeredPasses[place]?.standsForTheAsk(of: sessionEpoch) ?? false
     }
 
     /// Gated twice, in sync with Android: the place must be in the config, and some in-app of the

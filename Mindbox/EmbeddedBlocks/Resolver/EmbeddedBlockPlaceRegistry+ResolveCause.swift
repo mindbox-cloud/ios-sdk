@@ -40,7 +40,7 @@ extension EmbeddedBlockPlaceRegistry {
             self.isTriggered = isTriggered
         }
 
-        func standsInForTheAsk(of sessionEpoch: Int) -> Bool {
+        func takeOverTheAsk(of sessionEpoch: Int) -> Bool {
             guard isOperationFreeAsk(of: sessionEpoch) else { return false }
 
             hasStoodInUnanswered = true
