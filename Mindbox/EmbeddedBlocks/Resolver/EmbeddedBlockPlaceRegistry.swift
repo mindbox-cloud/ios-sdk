@@ -244,8 +244,8 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
             return
         }
 
-        let askedInSession = SessionTemporaryStorage.shared.ledger.sessionEpoch
-        resolvingPlaces[place] = PassInFlight(askedInSession: askedInSession, isTriggered: cause.trigger != nil)
+        let pass = PassInFlight(askedInSession: SessionTemporaryStorage.shared.ledger.sessionEpoch, isTriggered: cause.trigger != nil)
+        resolvingPlaces[place] = pass
         let waitedForThePassInFlight = cause.newSessionAskedAt.map { now() - $0 } ?? 0
 
         resolver.resolve(place, trigger: cause.trigger) { [weak self] resolution, processingDuration, sessionEpoch in
@@ -257,7 +257,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
                                                   processingDuration: waitedForThePassInFlight + processingDuration,
                                                   sessionEpoch: sessionEpoch,
                                                   isOperationTriggered: !cause.includesNonOperation && !askedAgainMidResolve)
-            self.handle(self.asTheQueuedNewSessionAsk(answer, askedInSession: askedInSession, at: place) ?? answer, at: place)
+            self.handle(self.asTheQueuedNewSessionAsk(answer, of: pass, at: place) ?? answer, at: place)
 
             if let queued = self.queuedInvalidations.removeValue(forKey: place) {
                 self.requestResolve(place: place, cause: .queued(queued))
@@ -269,11 +269,12 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         }
     }
 
-    private func asTheQueuedNewSessionAsk(_ answer: EmbeddedBlockPlaceAnswer, askedInSession: Int, at place: String) -> EmbeddedBlockPlaceAnswer? {
-        guard answer.sessionEpoch > askedInSession, let queued = queuedInvalidations[place], let newSessionAskedAt = queued.newSessionAskedAt else {
+    private func asTheQueuedNewSessionAsk(_ answer: EmbeddedBlockPlaceAnswer, of pass: PassInFlight, at place: String) -> EmbeddedBlockPlaceAnswer? {
+        guard answer.sessionEpoch > pass.askedInSession, let queued = queuedInvalidations[place], let newSessionAskedAt = queued.newSessionAskedAt else {
             return nil
         }
 
+        if !pass.isTriggered && queued.trigger == nil && !SessionTemporaryStorage.shared.ledger.hasEnded(answer.sessionEpoch) { queuedInvalidations[place] = nil }
         return EmbeddedBlockPlaceAnswer(resolution: answer.resolution,
                                         processingDuration: now() - newSessionAskedAt,
                                         sessionEpoch: answer.sessionEpoch,
