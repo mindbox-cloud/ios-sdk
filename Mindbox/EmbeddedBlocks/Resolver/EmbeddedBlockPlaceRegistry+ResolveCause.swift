@@ -150,4 +150,11 @@ extension EmbeddedBlockPlaceRegistry.QueuedInvalidation {
                   includesNonOperation: cause.includesNonOperation || queued?.includesNonOperation == true,
                   newSessionAskedAt: [queued?.newSessionAskedAt, newSessionAskedAt].compactMap { $0 }.min())
     }
+
+    func askedAgain(asTheNewSessionsAskAt askedAt: TimeInterval?, isOnScreen: Bool) -> Self {
+        let isOperationUnseen = askedAt != nil && newSessionAskedAt == nil && !isOnScreen
+        return Self(trigger: isOperationUnseen ? nil : trigger,
+                    includesNonOperation: true,
+                    newSessionAskedAt: [newSessionAskedAt, askedAt].compactMap { $0 }.min())
+    }
 }

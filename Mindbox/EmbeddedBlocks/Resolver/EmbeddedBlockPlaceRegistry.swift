@@ -263,17 +263,17 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
                                                   isOperationTriggered: !cause.includesNonOperation && !pass.isAskedAgainMidResolve)
             let renamed = self.asTheQueuedNewSessionAsk(answer, of: pass, at: place)
             self.handle(renamed?.answer ?? answer, at: place, answeringTheQueuedAsk: renamed?.answersTheQueuedAsk == true, recording: pass.answered(from: configVersion))
-            let isAnsweredFromAnOlderConfig = pass.isAnsweredFromConfig(configVersion, olderThan: self.newestConfigVersion)
             let isNewSessionLeftUnanswered = pass.leavesNewSessionUnanswered(answeredFrom: configVersion)
-            let isAskedAgain = isAnsweredFromAnOlderConfig || isNewSessionLeftUnanswered
+            let isAskedAgain = isNewSessionLeftUnanswered || pass.isAnsweredFromConfig(configVersion, olderThan: self.newestConfigVersion)
+            let newSessionAskedAt = isNewSessionLeftUnanswered ? self.now() : nil
 
             if let queued = self.queuedInvalidations.removeValue(forKey: place) {
-                self.requestResolve(place: place, cause: .queued(isAskedAgain ? QueuedInvalidation(merging: .newConfig, into: queued, now: self.now) : queued))
+                self.requestResolve(place: place, cause: .queued(isAskedAgain ? queued.askedAgain(asTheNewSessionsAskAt: newSessionAskedAt, isOnScreen: self.hasActiveBlocks(place)) : queued))
             } else if isAskedAgain {
                 let reason = isNewSessionLeftUnanswered ? "its pass stood for the new session's ask and read no config"
                     : "answered from config \(configVersion?.description ?? "no config"), older than \(self.newestConfigVersion?.description ?? "none")"
                 Logger.common(message: "[EmbeddedBlock] Place '\(place)': \(reason) — asking again", category: .embeddedBlocks)
-                self.requestResolve(place: place, cause: .queued(QueuedInvalidation(trigger: nil, includesNonOperation: true, newSessionAskedAt: isNewSessionLeftUnanswered ? self.now() : nil)))
+                self.requestResolve(place: place, cause: .queued(QueuedInvalidation(trigger: nil, includesNonOperation: true, newSessionAskedAt: newSessionAskedAt)))
             }
         }
     }
