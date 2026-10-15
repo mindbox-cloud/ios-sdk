@@ -400,6 +400,12 @@ final class EmbeddedBlockResolverMock: EmbeddedBlockResolving {
 
     var sessionEpoch = SessionTemporaryStorage.shared.ledger.sessionEpoch
 
+    private(set) var configVersion = ConfigVersion(number: 1)
+
+    private(set) var configPublishedInSession = SessionTemporaryStorage.shared.ledger.sessionEpoch
+
+    var readsNoConfig = false
+
     /// `true` — the answer does not arrive until the test calls `flush()`: this is how a resolve
     /// that lands after the block was stopped or reloaded is checked.
     var isDeferred = false
@@ -408,9 +414,11 @@ final class EmbeddedBlockResolverMock: EmbeddedBlockResolving {
 
     private(set) var triggers: [ApplicationEvent?] = []
 
+    private(set) var resolvedOnMainThread: [Bool] = []
+
     var resolveCount: Int { resolvedPlaces.count }
 
-    private var pending: [(EmbeddedBlockResolution, TimeInterval, Int, ConfigVersion?) -> Void] = []
+    private var pending: [(configVersion: ConfigVersion?, completion: (EmbeddedBlockResolution, TimeInterval, Int, ConfigVersion?) -> Void)] = []
 
     init(resolution: EmbeddedBlockResolution = .content(.stub)) {
         self.resolution = resolution
@@ -421,18 +429,35 @@ final class EmbeddedBlockResolverMock: EmbeddedBlockResolving {
                  completion: @escaping (EmbeddedBlockResolution, TimeInterval, Int, ConfigVersion?) -> Void) {
         resolvedPlaces.append(place)
         triggers.append(trigger)
+        resolvedOnMainThread.append(Thread.isMainThread)
+        let configRead = readsNoConfig ? nil : configVersion
 
         if isDeferred {
-            pending.append(completion)
+            pending.append((configRead, completion))
         } else {
-            completion(resolution, processingDuration, sessionEpoch, nil)
+            completion(resolution, processingDuration, sessionEpoch, configRead)
         }
     }
 
+    @discardableResult
+    func publishConfig() -> ConfigVersion {
+        configVersion = configVersion.next
+        configPublishedInSession = SessionTemporaryStorage.shared.ledger.sessionEpoch
+        return configVersion
+    }
+
     func flush() {
-        let completions = pending
+        answerPending { $0 }
+    }
+
+    func flush(readingConfig version: ConfigVersion) {
+        answerPending { $0.map { max($0, version) } }
+    }
+
+    private func answerPending(reading configRead: (ConfigVersion?) -> ConfigVersion?) {
+        let answered = pending
         pending = []
-        completions.forEach { $0(resolution, processingDuration, sessionEpoch, nil) }
+        answered.forEach { $0.completion(resolution, processingDuration, sessionEpoch, configRead($0.configVersion)) }
     }
 }
 
@@ -720,10 +745,14 @@ extension EmbeddedBlockSessionRig {
         SessionTemporaryStorage.shared.erase()
     }
 
-    func announceNewConfig(sessionEpoch: Int? = nil) {
+    func announceNewConfig() {
+        announceConfig(resolver.publishConfig())
+    }
+
+    func announceConfig(_ version: ConfigVersion) {
         center.post(name: .mobileConfigDownloadConcluded,
                     object: nil,
-                    userInfo: [Constants.Notification.sessionEpoch: sessionEpoch ?? resolver.sessionEpoch])
+                    userInfo: [Constants.Notification.configVersion: version])
     }
 
     @discardableResult
@@ -834,12 +863,16 @@ final class EmbeddedBlockTestBed: EmbeddedBlockSessionRig {
 
     func concludeNewSessionDownload() {
         resolver.sessionEpoch = currentSessionEpoch
-        announceNewConfig()
+        if resolver.configPublishedInSession != currentSessionEpoch {
+            resolver.publishConfig()
+        }
+        announceConfig(resolver.configVersion)
     }
 
     func renewSession() {
         expireSession()
         resolver.sessionEpoch = currentSessionEpoch
+        resolver.publishConfig()
         finishSessionCheck(startsNewSession: true)
     }
 

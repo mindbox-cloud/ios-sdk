@@ -1718,14 +1718,15 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.resolver.resolveCount == 1)
         #expect(bed.pageFactory.pages.count == 1)
 
-        bed.expireSession()
-        bed.finishSessionCheck(startsNewSession: true)
+        bed.resolver.isDeferred = true
+        bed.renewSession()
         let carried = bed.resolver.triggers.last ?? nil
         #expect(carried === event)
         #expect(bed.pageFactory.pages.count == 1)
         #expect(bed.budget.reservations.map(\.inAppId) == [EmbeddedBlockWebContent.stub.inAppId])
 
         bed.concludeNewSessionDownload()
+        bed.resolver.flush()
 
         #expect(bed.pageFactory.pages.count == 2)
         #expect(bed.budget.reservations.map(\.inAppId) == [EmbeddedBlockWebContent.stub.inAppId, EmbeddedBlockWebContent.other.inAppId])
@@ -2286,7 +2287,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.renewSession()
         bed.clock.advance(0.25)
         bed.resolver.processingDuration = 3
-        bed.concludeNewSessionDownload()
+        bed.announceOperation()
         bed.clock.advance(0.25)
         bed.page?.reportRendered(1)
 

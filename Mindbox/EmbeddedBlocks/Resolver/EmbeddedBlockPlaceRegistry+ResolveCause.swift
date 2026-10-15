@@ -8,6 +8,18 @@
 
 import Foundation
 
+protocol EmbeddedBlockAskedPass {
+    var askedInSession: Int { get }
+    var isTriggered: Bool { get }
+}
+
+extension EmbeddedBlockAskedPass {
+
+    func isOperationFreeAsk(of sessionEpoch: Int) -> Bool {
+        askedInSession == sessionEpoch && !isTriggered
+    }
+}
+
 extension EmbeddedBlockPlaceRegistry {
 
     struct QueuedInvalidation {
@@ -16,19 +28,32 @@ extension EmbeddedBlockPlaceRegistry {
         var newSessionAskedAt: TimeInterval?
     }
 
-    final class PassInFlight {
+    final class PassInFlight: EmbeddedBlockAskedPass {
         let askedInSession: Int
         let isTriggered: Bool
         var isAskedAgainMidResolve = false
+        var isConfigAnnouncedMidResolve = false
 
         init(askedInSession: Int, isTriggered: Bool) {
             self.askedInSession = askedInSession
             self.isTriggered = isTriggered
         }
 
-        func isOperationFreeAsk(of sessionEpoch: Int) -> Bool {
-            askedInSession == sessionEpoch && !isTriggered
+        func answered(from configVersion: ConfigVersion?) -> AnsweredPass {
+            AnsweredPass(askedInSession: askedInSession, isTriggered: isTriggered, configVersion: configVersion)
         }
+
+        func isAnsweredFromConfig(_ configVersion: ConfigVersion?, olderThan newest: ConfigVersion?) -> Bool {
+            guard isConfigAnnouncedMidResolve, let newest else { return false }
+
+            return configVersion.map { $0 < newest } ?? true
+        }
+    }
+
+    struct AnsweredPass: EmbeddedBlockAskedPass {
+        let askedInSession: Int
+        let isTriggered: Bool
+        let configVersion: ConfigVersion?
     }
 
     enum ResolveCause {

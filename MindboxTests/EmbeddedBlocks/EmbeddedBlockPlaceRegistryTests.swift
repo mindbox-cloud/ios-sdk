@@ -144,7 +144,7 @@ struct EmbeddedBlockPlaceRegistryTests {
 
     // MARK: - The queue and its trigger
 
-    @Test("An invalidation mid-resolve runs one more pass after delivery")
+    @Test("A newer config announced mid-resolve asks the place again once the pass that read the older one lands")
     func invalidationMidResolveRunsAfter() {
         let rig = Rig()
         rig.resolver.isDeferred = true
@@ -403,18 +403,18 @@ struct EmbeddedBlockPlaceRegistryTests {
     func conclusionOffMainDoesNotWaitForMain() {
         let rig = Rig()
         let center = rig.center
-        let sessionEpoch = rig.currentSessionEpoch
+        let version = rig.resolver.publishConfig()
         let posted = DispatchSemaphore(value: 0)
 
         DispatchQueue.global().async {
-            center.post(name: .mobileConfigDownloadConcluded, object: nil, userInfo: [Constants.Notification.sessionEpoch: sessionEpoch])
+            center.post(name: .mobileConfigDownloadConcluded, object: nil, userInfo: [Constants.Notification.configVersion: version])
             posted.signal()
         }
 
         #expect(posted.wait(timeout: .now() + 2) == .success)
     }
 
-    @Test("A new session asks every place a block shows at once, before its config arrives, and the config's pass queues behind")
+    @Test("A new session asks every place a block shows at once, before its config arrives, and the config that pass waits for asks the place nothing more")
     func newSessionAsksTheShownPlacesAtOnce() {
         let rig = Rig()
         rig.resolver.isDeferred = true
@@ -430,15 +430,15 @@ struct EmbeddedBlockPlaceRegistryTests {
         #expect(rig.resolver.resolvedPlaces == ["stories"])
         #expect(rig.resolver.triggers.compactMap { $0 }.isEmpty)
 
-        rig.announceNewConfig(sessionEpoch: rig.currentSessionEpoch)
+        rig.announceNewConfig()
         #expect(rig.resolver.resolveCount == 1)
 
         rig.resolver.sessionEpoch = rig.currentSessionEpoch
-        rig.resolver.flush()
+        rig.resolver.flush(readingConfig: rig.resolver.configVersion)
 
         #expect(shown.answers.map(\.sessionEpoch) == [rig.currentSessionEpoch])
         #expect(shown.answers.map(\.isOperationTriggered) == [false])
-        #expect(rig.resolver.resolveCount == 2)
+        #expect(rig.resolver.resolveCount == 1)
     }
 
     @Test("A session check that started no new session asks no place")
@@ -477,7 +477,7 @@ struct EmbeddedBlockPlaceRegistryTests {
 
         block.isActive = false
         rig.expireSession()
-        rig.announceNewConfig(sessionEpoch: rig.currentSessionEpoch)
+        rig.announceNewConfig()
         block.isActive = true
         rig.registry.blockAppeared("stories")
         rig.resolver.flush()
@@ -717,7 +717,7 @@ struct EmbeddedBlockPlaceRegistryTests {
         #expect(rig.budget.reservedOwners == [.place("stories")])
     }
 
-    @Test("A new session's delayed winner the config's pass re-selects mid-delay keeps the new session's ask: the delay running out after its block left takes no slot")
+    @Test("A new session's delayed winner that another ask of the session re-selects mid-delay keeps the new session's ask: the delay running out after its block left takes no slot")
     func newSessionWinnerReselectedMidDelayTakesNoSlotOffScreen() throws {
         let rig = Rig()
         rig.resolver.resolution = .content(.delayed())
@@ -728,7 +728,7 @@ struct EmbeddedBlockPlaceRegistryTests {
         rig.resolver.sessionEpoch = rig.currentSessionEpoch
         rig.presence.finishSessionCheck(startsNewSession: true)
         rig.resolver.processingDuration = 1
-        rig.announceNewConfig()
+        rig.registry.blockAppeared("stories")
 
         block.isActive = false
         rig.delayScheduler.fireAll()
@@ -739,9 +739,9 @@ struct EmbeddedBlockPlaceRegistryTests {
         #expect(rig.budget.reservations.isEmpty)
     }
 
-    @Test("A new session's ask queued behind a pass while its block was off screen counts its selection from the reset, the wait behind that pass included, when the block comes back before the ask runs, even with a config's pass queued after the return",
+    @Test("A new session's ask queued behind a pass while its block was off screen counts its selection from the reset, the wait behind that pass included, when the block comes back before the ask runs, even with a config announced after the return",
           arguments: [false, true])
-    func newSessionQueuedOffScreenCountsItsSelectionFromTheReset(configQueuedAfterTheReturn: Bool) {
+    func newSessionQueuedOffScreenCountsItsSelectionFromTheReset(configAnnouncedAfterTheReturn: Bool) {
         let rig = Rig()
         rig.resolver.isDeferred = true
         let block = BlockFake()
@@ -754,8 +754,8 @@ struct EmbeddedBlockPlaceRegistryTests {
 
         block.isActive = true
         rig.registry.blockAppeared("stories")
-        if configQueuedAfterTheReturn {
-            rig.announceNewConfig(sessionEpoch: rig.currentSessionEpoch)
+        if configAnnouncedAfterTheReturn {
+            rig.announceNewConfig()
         }
         rig.resolver.flush()
         rig.resolver.sessionEpoch = rig.currentSessionEpoch
@@ -766,7 +766,7 @@ struct EmbeddedBlockPlaceRegistryTests {
         #expect(block.processingDurations == [30.5])
     }
 
-    @Test("A config's pass queued behind one in flight does not ask a place its block has left by the time it runs")
+    @Test("A newer config announced while a pass flies does not ask again a place its block has left by the time the pass lands")
     func queuedConfigPassStaysOnScreen() {
         let rig = Rig()
         rig.resolver.isDeferred = true
@@ -983,7 +983,7 @@ struct EmbeddedBlockPlaceRegistryTests {
 
         rig.presence.clock.advance(1)
         rig.resolver.processingDuration = 0.5
-        rig.announceNewConfig()
+        rig.registry.blockAppeared("stories")
         rig.resolver.flush()
         rig.presence.clock.advance(0.5)
         rig.presence.finishSessionCheck()

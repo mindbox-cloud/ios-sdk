@@ -22,13 +22,14 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
 
     private var blocksByPlace: [String: [WeakBlock]] = [:]
     private var resolvingPlaces: [String: PassInFlight] = [:]
+    private var answeredPasses: [String: AnsweredPass] = [:]
     private var queuedInvalidations: [String: QueuedInvalidation] = [:]
 
     /// `nil` until a config has been seen: gating on an empty map before that would silently drop
     /// operations whose resolve would simply have waited for the config.
     private var embeddedPlacesInConfig: [String: Set<String>]?
 
-    private var concludedSessionEpoch: Int?
+    private var newestConfigVersion: ConfigVersion?
 
     private var awaitingTheSessionCheck = AwaitingTheSessionCheck()
 
@@ -66,8 +67,9 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         observers.append(notificationCenter.addObserver(forName: .mobileConfigDownloadConcluded,
                                                         object: nil,
                                                         queue: nil) { [weak self] notification in
-            let sessionEpoch = notification.userInfo?[Constants.Notification.sessionEpoch] as? Int
-            self?.onMain { $0.configConcluded(sessionEpoch: sessionEpoch) }
+            guard let version = notification.userInfo?[Constants.Notification.configVersion] as? ConfigVersion else { return }
+
+            self?.onMain { $0.configConcluded(version) }
         })
 
         observers.append(notificationCenter.addObserver(forName: .inAppOperationOccurred,
@@ -147,20 +149,30 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
 
     // MARK: - Channels
 
-    private func configConcluded(sessionEpoch: Int?) {
-        concludedSessionEpoch = sessionEpoch
+    private func configConcluded(_ version: ConfigVersion) {
+        newestConfigVersion = max(newestConfigVersion ?? version, version)
         refreshEmbeddedPlaces()
+        resolvingPlaces.values.forEach { $0.isConfigAnnouncedMidResolve = true }
 
         for place in placesWithActiveBlocks() {
-            requestResolve(place: place, cause: .newConfig)
+            if resolvingPlaces[place] != nil {
+                Logger.common(message: "[EmbeddedBlock] Place '\(place)': config \(version) arrived while its pass is in flight — that pass answers from it or is asked again when it lands",
+                              category: .embeddedBlocks)
+            } else if let answeredFrom = answeredPasses[place]?.configVersion, answeredFrom >= version {
+                Logger.common(message: "[EmbeddedBlock] Place '\(place)': already answered from config \(version) — not asking again",
+                              category: .embeddedBlocks)
+            } else {
+                requestResolve(place: place, cause: .newConfig)
+            }
         }
     }
 
     private func sessionStarted(carrying operations: [String: ApplicationEvent]) {
         let sessionEpoch = SessionTemporaryStorage.shared.ledger.sessionEpoch
         for place in Array(blocksByPlace.keys) where hasActiveBlocks(place) || holdsAnAttempt(at: place) {
-            guard operations[place] != nil || resolvingPlaces[place]?.isOperationFreeAsk(of: sessionEpoch) != true else {
-                Logger.common(message: "[EmbeddedBlock] Place '\(place)': a new session, and the pass in flight was asked in it with no operation — its answer is the new session's",
+            let lastAsked: EmbeddedBlockAskedPass? = resolvingPlaces[place] ?? answeredPasses[place]
+            guard operations[place] != nil || lastAsked?.isOperationFreeAsk(of: sessionEpoch) != true else {
+                Logger.common(message: "[EmbeddedBlock] Place '\(place)': a new session, and its pass in flight or its last answer was asked in it with no operation — its answer is the new session's",
                               category: .embeddedBlocks)
                 continue
             }
@@ -235,7 +247,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         resolvingPlaces[place] = pass
         let waitedForThePassInFlight = cause.newSessionAskedAt.map { now() - $0 } ?? 0
 
-        resolver.resolve(place, trigger: cause.trigger) { [weak self] resolution, processingDuration, sessionEpoch, _ in
+        resolver.resolve(place, trigger: cause.trigger) { [weak self] resolution, processingDuration, sessionEpoch, configVersion in
             guard let self else { return }
 
             self.resolvingPlaces[place] = nil
@@ -244,12 +256,13 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
                                                   sessionEpoch: sessionEpoch,
                                                   isOperationTriggered: !cause.includesNonOperation && !pass.isAskedAgainMidResolve)
             let renamed = self.asTheQueuedNewSessionAsk(answer, of: pass, at: place)
-            self.handle(renamed?.answer ?? answer, at: place, answeringTheQueuedAsk: renamed?.answersTheQueuedAsk == true)
+            self.handle(renamed?.answer ?? answer, at: place, answeringTheQueuedAsk: renamed?.answersTheQueuedAsk == true, recording: pass.answered(from: configVersion))
+            let isAnsweredFromAnOlderConfig = pass.isAnsweredFromConfig(configVersion, olderThan: self.newestConfigVersion)
 
             if let queued = self.queuedInvalidations.removeValue(forKey: place) {
-                self.requestResolve(place: place, cause: .queued(queued))
-            } else if let concluded = self.concludedSessionEpoch, sessionEpoch < concluded {
-                Logger.common(message: "[EmbeddedBlock] Place '\(place)': answered from an earlier session's config — asking again",
+                self.requestResolve(place: place, cause: .queued(isAnsweredFromAnOlderConfig ? QueuedInvalidation(merging: .newConfig, into: queued, now: self.now) : queued))
+            } else if isAnsweredFromAnOlderConfig, let newest = self.newestConfigVersion {
+                Logger.common(message: "[EmbeddedBlock] Place '\(place)': answered from config \(configVersion?.description ?? "no config"), older than \(newest) — asking again",
                               category: .embeddedBlocks)
                 self.requestResolve(place: place, cause: .queued(QueuedInvalidation(trigger: nil, includesNonOperation: true)))
             }
@@ -270,13 +283,14 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
 
     /// A winner with `delayTime` waits like an overlay in the schedule queue and the blocks stand their wait
     /// budget down. A delay served once in the session is not waited again: a block coming back gets the content at once.
-    private func handle(_ answer: EmbeddedBlockPlaceAnswer, at place: String, answeringTheQueuedAsk: Bool = false) {
+    private func handle(_ answer: EmbeddedBlockPlaceAnswer, at place: String, answeringTheQueuedAsk: Bool = false, recording answered: AnsweredPass? = nil) {
         guard !SessionTemporaryStorage.shared.ledger.hasEnded(answer.sessionEpoch) else {
             dropStale(answer, at: place)
             return
         }
 
         if answeringTheQueuedAsk { queuedInvalidations[place] = nil }
+        if let answered { answeredPasses[place] = answered }
 
         guard let content = answer.resolution.content else {
             awaitingTheSessionCheck.content[place] = nil
@@ -474,6 +488,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         let alive = (blocksByPlace[place] ?? []).filter { $0.block != nil }
         if alive.isEmpty {
             blocksByPlace.removeValue(forKey: place)
+            answeredPasses.removeValue(forKey: place)
         } else {
             blocksByPlace[place] = alive
         }
