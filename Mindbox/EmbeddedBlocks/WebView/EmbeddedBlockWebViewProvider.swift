@@ -157,10 +157,6 @@ final class EmbeddedBlockWebViewProvider {
             dataPushWait.resumeIfSuspended()
         }
 
-        askThePlaceAgain()
-    }
-
-    private func askThePlaceAgain() {
         registry.blockAppeared(placeSystemName)
     }
 
@@ -216,8 +212,10 @@ final class EmbeddedBlockWebViewProvider {
         loadGeneration += 1
         isStarted = false
         isPaused = false
+        outcome = .loading
 
         start()
+        if isStartPending { onStateChange?(.loading) }
     }
 
     private func beginAttempt() {
