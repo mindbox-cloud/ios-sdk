@@ -235,7 +235,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         resolvingPlaces[place] = pass
         let waitedForThePassInFlight = cause.newSessionAskedAt.map { now() - $0 } ?? 0
 
-        resolver.resolve(place, trigger: cause.trigger) { [weak self] resolution, processingDuration, sessionEpoch in
+        resolver.resolve(place, trigger: cause.trigger) { [weak self] resolution, processingDuration, sessionEpoch, _ in
             guard let self else { return }
 
             self.resolvingPlaces[place] = nil

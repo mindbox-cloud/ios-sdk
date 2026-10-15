@@ -43,7 +43,7 @@ protocol InAppConfigurationManagerProtocol: AnyObject {
     /// counts from the moment it asked for content (in sync with Android).
     func selectInappForPlace(_ place: String,
                              trigger: ApplicationEvent?,
-                             _ completion: @escaping (EmbeddedPlaceSelection, _ processingDuration: TimeInterval, _ sessionEpoch: Int) -> Void)
+                             _ completion: @escaping (EmbeddedPlaceSelection, _ processingDuration: TimeInterval, _ sessionEpoch: Int, _ configVersion: ConfigVersion?) -> Void)
     func getShowableInappIds(_ ids: [String], askedBy requesterInappId: String, _ completion: @escaping ([String]) -> Void)
     func getInAppToShowById(_ id: String, params: [String: JSONValue], _ completion: @escaping (InAppFormData?) -> Void)
     func getEmbeddedPlaces(_ completion: @escaping ([String: Set<String>]?) -> Void)
@@ -62,11 +62,12 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     private struct ConfigEntry {
         let candidates: ConfigCandidates?
         let sessionEpoch: Int
+        let version: ConfigVersion
     }
 
     /// Written, and checked before a wait, only on `queue`; locked only so a page's operation and `hasConfig`
     /// can read it synchronously from the main thread.
-    @Locked private var configEntry = ConfigEntry(candidates: nil, sessionEpoch: 0)
+    @Locked private var configEntry = ConfigEntry(candidates: nil, sessionEpoch: 0, version: ConfigVersion(number: 0))
 
     var hasConfig: Bool {
         let entry = configEntry
@@ -79,7 +80,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
 
     /// Confined to `queue`, like `configResponse`. Keyed so a waiter that gave up leaves the set
     /// instead of sitting in it until some download completes.
-    private var configWaiters: [Int: (ConfigCandidates?, _ sessionEpoch: Int) -> Void] = [:]
+    private var configWaiters: [Int: (ConfigCandidates?, _ sessionEpoch: Int, _ version: ConfigVersion) -> Void] = [:]
 
     private func isOfAnEarlierSession(_ entry: ConfigEntry) -> Bool {
         entry.sessionEpoch < SessionTemporaryStorage.shared.ledger.sessionEpoch
@@ -158,28 +159,28 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     /// show": the place gets `configUnavailable` instead of an empty pass, in sync with Android.
     func selectInappForPlace(_ place: String,
                              trigger: ApplicationEvent?,
-                             _ completion: @escaping (EmbeddedPlaceSelection, _ processingDuration: TimeInterval, _ sessionEpoch: Int) -> Void) {
+                             _ completion: @escaping (EmbeddedPlaceSelection, _ processingDuration: TimeInterval, _ sessionEpoch: Int, _ configVersion: ConfigVersion?) -> Void) {
         let requestedAt = now()
-        awaitConfig("place '\(place)'", givingUpAfter: nil, ofCurrentSession: true) { [weak self] candidates, sessionEpoch in
+        awaitConfig("place '\(place)'", givingUpAfter: nil, ofCurrentSession: true) { [weak self] candidates, sessionEpoch, version in
             guard let self = self, let inappMapper = self.inappMapper else {
-                completion(.decided(nil), 0, sessionEpoch)
+                completion(.decided(nil), 0, sessionEpoch, nil)
                 return
             }
 
             guard let candidates = candidates else {
-                completion(.configUnavailable, self.now() - requestedAt, sessionEpoch)
+                completion(.configUnavailable, self.now() - requestedAt, sessionEpoch, version)
                 return
             }
 
             inappMapper.selectInappForPlace(place, trigger: trigger, candidates) { [now] selection in
-                completion(selection, now() - requestedAt, sessionEpoch)
+                completion(selection, now() - requestedAt, sessionEpoch, version)
             }
         }
     }
 
     func getShowableInappIds(_ ids: [String], askedBy requesterInappId: String, _ completion: @escaping ([String]) -> Void) {
         let requestedAt = now()
-        awaitConfig("a page asking about \(ids.count) in-app(s)", givingUpAfter: configWaitBudget) { [weak self] candidates, _ in
+        awaitConfig("a page asking about \(ids.count) in-app(s)", givingUpAfter: configWaitBudget) { [weak self] candidates, _, _ in
             guard let self = self, let inappMapper = self.inappMapper, let candidates = candidates else {
                 completion([])
                 return
@@ -195,7 +196,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     }
 
     func getInAppToShowById(_ id: String, params: [String: JSONValue], _ completion: @escaping (InAppFormData?) -> Void) {
-        awaitConfig("showing in-app \(id)", givingUpAfter: configWaitBudget) { [weak self] candidates, _ in
+        awaitConfig("showing in-app \(id)", givingUpAfter: configWaitBudget) { [weak self] candidates, _, _ in
             guard let self = self, let inappMapper = self.inappMapper, let candidates = candidates else {
                 completion(nil)
                 return
@@ -261,20 +262,20 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     private func awaitConfig(_ what: String,
                              givingUpAfter cap: TimeInterval?,
                              ofCurrentSession: Bool = false,
-                             _ completion: @escaping (ConfigCandidates?, _ sessionEpoch: Int) -> Void) {
+                             _ completion: @escaping (ConfigCandidates?, _ sessionEpoch: Int, _ version: ConfigVersion) -> Void) {
         queue.async {
             let entry = self.configEntry
             let isOfAnEarlierSession = ofCurrentSession && self.isOfAnEarlierSession(entry)
 
             if !isOfAnEarlierSession, let candidates = entry.candidates {
-                completion(candidates, entry.sessionEpoch)
+                completion(candidates, entry.sessionEpoch, entry.version)
                 return
             }
 
             if !isOfAnEarlierSession, self.hasConcludedDownload {
                 Logger.common(message: "[InAppConfigurationManager] The session's config download already finished with nothing, \(what) gets nothing",
                               level: .error, category: .inAppMessages)
-                completion(nil, entry.sessionEpoch)
+                completion(nil, entry.sessionEpoch, entry.version)
                 return
             }
 
@@ -293,7 +294,8 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
 
                 Logger.common(message: "[InAppConfigurationManager] Gave up waiting \(cap)s for a config, \(what) gets nothing",
                               level: .error, category: .inAppMessages)
-                waiter(nil, self.configEntry.sessionEpoch)
+                let entry = self.configEntry
+                waiter(nil, entry.sessionEpoch, entry.version)
             }
         }
     }
@@ -351,12 +353,16 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             applySessionStorageSettings(settings)
         }
 
-        configEntry = ConfigEntry(candidates: configResponse.map { inappFilterService.candidates(from: $0) }, sessionEpoch: sessionEpoch)
+        let candidates = configResponse.map { inappFilterService.candidates(from: $0) }
+        let entry = $configEntry.mutate { entry -> ConfigEntry in
+            entry = ConfigEntry(candidates: candidates, sessionEpoch: sessionEpoch, version: entry.version.next)
+            return entry
+        }
         hasConcludedDownload = true
 
         let waiters = configWaiters
         configWaiters = [:]
-        waiters.sorted { $0.key < $1.key }.forEach { $0.value(configEntry.candidates, sessionEpoch) }
+        waiters.sorted { $0.key < $1.key }.forEach { $0.value(entry.candidates, entry.sessionEpoch, entry.version) }
 
         // Prewarm stage 2: warm what the config's webview in-apps need (or release the
         // warm instance when the config proves there are none).
@@ -367,7 +373,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         sendNotification(with: configResponse?.settings?.slidingExpiration?.pushTokenKeepalive)
         notificationCenter.post(name: .mobileConfigDownloadConcluded,
                                 object: nil,
-                                userInfo: [Constants.Notification.sessionEpoch: sessionEpoch])
+                                userInfo: [Constants.Notification.sessionEpoch: sessionEpoch, Constants.Notification.configVersion: entry.version])
     }
 
     private func applyDownloadedConfig(_ config: ConfigResponse, rawData: Data) {

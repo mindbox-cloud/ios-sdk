@@ -371,6 +371,7 @@
 		9B4F9DF228D088A0002C9CF0 /* InAppsCheckRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B4F9DF028D088A0002C9CF0 /* InAppsCheckRequest.swift */; };
 		9B4F9DF328D088A0002C9CF0 /* InAppFormData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B4F9DF128D088A0002C9CF0 /* InAppFormData.swift */; };
 		9B4F9DF928D088A9002C9CF0 /* InAppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B4F9DF628D088A9002C9CF0 /* InAppConfig.swift */; };
+		1C84D414A3BC0DAEF312E803 /* ConfigVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A075C447346F0C45DDE1F1 /* ConfigVersion.swift */; };
 		9B4F9E0528D0945F002C9CF0 /* InAppCoreManagerMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B4F9E0428D0945F002C9CF0 /* InAppCoreManagerMock.swift */; };
 		9B52570728D1AF880029B1BC /* InAppPresentationManagerMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B52570628D1AF880029B1BC /* InAppPresentationManagerMock.swift */; };
 		9B8670F8E39535C1264CC855 /* OperationResponseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CBD02CEBA456777876ACF8 /* OperationResponseTests.swift */; };
@@ -1157,6 +1158,7 @@
 		9B4F9DF028D088A0002C9CF0 /* InAppsCheckRequest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InAppsCheckRequest.swift; sourceTree = "<group>"; };
 		9B4F9DF128D088A0002C9CF0 /* InAppFormData.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InAppFormData.swift; sourceTree = "<group>"; };
 		9B4F9DF628D088A9002C9CF0 /* InAppConfig.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InAppConfig.swift; sourceTree = "<group>"; };
+		73A075C447346F0C45DDE1F1 /* ConfigVersion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigVersion.swift; sourceTree = "<group>"; };
 		9B4F9E0428D0945F002C9CF0 /* InAppCoreManagerMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppCoreManagerMock.swift; sourceTree = "<group>"; };
 		9B52570628D1AF880029B1BC /* InAppPresentationManagerMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppPresentationManagerMock.swift; sourceTree = "<group>"; };
 		9B9C952F2921116F00BB29DA /* UUIDDebugService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UUIDDebugService.swift; sourceTree = "<group>"; };
@@ -2760,6 +2762,7 @@
 			children = (
 				F315503D2BBB24D60072A071 /* Services */,
 				9BC24E7128F6953D00C2619C /* API */,
+				73A075C447346F0C45DDE1F1 /* ConfigVersion.swift */,
 				9B4F9DF628D088A9002C9CF0 /* InAppConfig.swift */,
 				9B24FAB028C74BD200F10B5D /* InAppConfigurationManager.swift */,
 				9B24FAAB28C74B8300F10B5D /* InAppConfigurationRepository.swift */,
@@ -4757,6 +4760,7 @@
 				3337E6A52660D878006949EB /* OperationResponse.swift in Sources */,
 				B3F4F98E268EEB4B0092EC3C /* LimitBenefitsResponse.swift in Sources */,
 				9B4F9DF928D088A9002C9CF0 /* InAppConfig.swift in Sources */,
+				1C84D414A3BC0DAEF312E803 /* ConfigVersion.swift in Sources */,
 				33C81EA4264145CD00863380 /* TimerManager.swift in Sources */,
 				B3F4F981268EEAC90092EC3C /* AmountBenefisTypeResponse.swift in Sources */,
 				A11FBE8929DD76BF00F5FB7B /* InAppMessagesEventSender.swift in Sources */,

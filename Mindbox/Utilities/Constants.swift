@@ -29,6 +29,7 @@ enum Constants {
         static let mindBoxIdentifireKey = "uniqueKey"
         static let pushTokenKeepalive = "pushTokenKeepalive"
         static let sessionEpoch = "sessionEpoch"
+        static let configVersion = "configVersion"
         static let sessionCheckStartedAt = "sessionCheckStartedAt"
         static let startsNewSession = "startsNewSession"
     }

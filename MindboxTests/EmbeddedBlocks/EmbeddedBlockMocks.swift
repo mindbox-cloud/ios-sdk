@@ -410,7 +410,7 @@ final class EmbeddedBlockResolverMock: EmbeddedBlockResolving {
 
     var resolveCount: Int { resolvedPlaces.count }
 
-    private var pending: [(EmbeddedBlockResolution, TimeInterval, Int) -> Void] = []
+    private var pending: [(EmbeddedBlockResolution, TimeInterval, Int, ConfigVersion?) -> Void] = []
 
     init(resolution: EmbeddedBlockResolution = .content(.stub)) {
         self.resolution = resolution
@@ -418,21 +418,21 @@ final class EmbeddedBlockResolverMock: EmbeddedBlockResolving {
 
     func resolve(_ place: String,
                  trigger: ApplicationEvent?,
-                 completion: @escaping (EmbeddedBlockResolution, TimeInterval, Int) -> Void) {
+                 completion: @escaping (EmbeddedBlockResolution, TimeInterval, Int, ConfigVersion?) -> Void) {
         resolvedPlaces.append(place)
         triggers.append(trigger)
 
         if isDeferred {
             pending.append(completion)
         } else {
-            completion(resolution, processingDuration, sessionEpoch)
+            completion(resolution, processingDuration, sessionEpoch, nil)
         }
     }
 
     func flush() {
         let completions = pending
         pending = []
-        completions.forEach { $0(resolution, processingDuration, sessionEpoch) }
+        completions.forEach { $0(resolution, processingDuration, sessionEpoch, nil) }
     }
 }
 
@@ -495,8 +495,8 @@ final class InAppConfigurationManagerStub: InAppConfigurationManagerProtocol {
     }
     func selectInappForPlace(_ place: String,
                              trigger: ApplicationEvent?,
-                             _ completion: @escaping (EmbeddedPlaceSelection, TimeInterval, Int) -> Void) {
-        completion(.decided(nil), 0, 0)
+                             _ completion: @escaping (EmbeddedPlaceSelection, TimeInterval, Int, ConfigVersion?) -> Void) {
+        completion(.decided(nil), 0, 0, nil)
     }
     func getShowableInappIds(_ ids: [String], askedBy requesterInappId: String, _ completion: @escaping ([String]) -> Void) {
         completion([])
@@ -1028,7 +1028,7 @@ final class EmbeddedBlockViewDelegateMock: MindboxEmbeddedBlockViewDelegate {
 
 extension EmbeddedBlockResolving {
 
-    func resolve(_ place: String, completion: @escaping (EmbeddedBlockResolution, TimeInterval, Int) -> Void) {
+    func resolve(_ place: String, completion: @escaping (EmbeddedBlockResolution, TimeInterval, Int, ConfigVersion?) -> Void) {
         resolve(place, trigger: nil, completion: completion)
     }
 }

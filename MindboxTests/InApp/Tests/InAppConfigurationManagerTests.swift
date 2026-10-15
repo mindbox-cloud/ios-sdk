@@ -400,7 +400,7 @@ struct InAppConfigurationManagerTests {
         try await waitUntil(api.isFetchPending)
 
         let answers = Answers<EmbeddedPlaceSelection>()
-        slowBudgetManager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, _ in answers.append(answer) }
+        slowBudgetManager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, _, _ in answers.append(answer) }
         api.deliver(.error(MindboxError.connectionError))
 
         try await waitUntil(!answers.isEmpty)
@@ -415,7 +415,7 @@ struct InAppConfigurationManagerTests {
         api.deliver(.error(MindboxError.connectionError))
 
         let answers = Answers<EmbeddedPlaceSelection>()
-        slowBudgetManager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, _ in answers.append(answer) }
+        slowBudgetManager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, _, _ in answers.append(answer) }
 
         try await waitUntil(!answers.isEmpty)
         #expect(answers.all == [.configUnavailable])
@@ -429,7 +429,7 @@ struct InAppConfigurationManagerTests {
         try await waitUntil(api.isFetchPending)
 
         let answers = Answers<(selection: EmbeddedPlaceSelection, duration: TimeInterval)>()
-        patientManager.selectInappForPlace("stories-list-container", trigger: nil) { answer, processingDuration, _ in
+        patientManager.selectInappForPlace("stories-list-container", trigger: nil) { answer, processingDuration, _, _ in
             answers.append((answer, processingDuration))
         }
         clock.advance(12.5)
@@ -448,7 +448,7 @@ struct InAppConfigurationManagerTests {
         api.deliver(.empty)
 
         let answers = Answers<EmbeddedPlaceSelection>()
-        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, _ in answers.append(answer) }
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, _, _ in answers.append(answer) }
 
         try await waitUntil(!answers.isEmpty)
         #expect(answers.all == [.decided(nil)])
@@ -464,7 +464,7 @@ struct InAppConfigurationManagerTests {
         api.deliver(.data(try fixtureData()))
 
         let answers = Answers<EmbeddedPlaceSelection>()
-        manager.selectInappForPlace("no-such-place", trigger: nil) { answer, _, _ in answers.append(answer) }
+        manager.selectInappForPlace("no-such-place", trigger: nil) { answer, _, _, _ in answers.append(answer) }
 
         try await waitUntil(!answers.isEmpty)
         #expect(answers.all == [.targetingUnavailable])
@@ -476,7 +476,7 @@ struct InAppConfigurationManagerTests {
         try await waitUntil(api.isFetchPending)
 
         let answers = Answers<InAppTransitionData?>()
-        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, _ in answers.append(answer.inapp) }
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, _, _ in answers.append(answer.inapp) }
         api.deliver(.data(try fixtureData()))
 
         try await waitUntil(!answers.isEmpty)
@@ -489,7 +489,7 @@ struct InAppConfigurationManagerTests {
         try await waitUntil(api.isFetchPending)
 
         let answers = Answers<InAppTransitionData?>()
-        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, _ in answers.append(answer.inapp) }
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, _, _ in answers.append(answer.inapp) }
 
         try await Task.sleep(nanoseconds: 600_000_000)
         #expect(answers.isEmpty, "the config wait budget must not answer a place — the block owns the give-up")
@@ -508,7 +508,7 @@ struct InAppConfigurationManagerTests {
         try await waitUntil(api.isFetchPending)
 
         let answers = Answers<(inapp: InAppTransitionData?, duration: TimeInterval)>()
-        patientManager.selectInappForPlace("stories-list-container", trigger: nil) { answer, processingDuration, _ in
+        patientManager.selectInappForPlace("stories-list-container", trigger: nil) { answer, processingDuration, _, _ in
             answers.append((answer.inapp, processingDuration))
         }
         clock.advance(12.5)
@@ -532,9 +532,9 @@ struct InAppConfigurationManagerTests {
         let pages = Answers<[String]>()
         let places = Answers<InAppTransitionData?>()
         manager.getShowableInappIds([Constants.liveStoryId], askedBy: "a-block") { pages.append($0) }
-        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, _ in places.append(answer.inapp) }
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, _, _ in places.append(answer.inapp) }
         manager.getShowableInappIds([Constants.liveStoryId], askedBy: "a-block") { pages.append($0) }
-        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, _ in places.append(answer.inapp) }
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, _, _ in places.append(answer.inapp) }
 
         try await waitUntil(pages.all.count == 2 && places.all.count == 2)
         #expect(counting.prepareCount == 1)
@@ -614,7 +614,7 @@ struct InAppConfigurationManagerTests {
         api.deliver(.data(try fixtureDataWithOtherCasePlace()))
 
         let answers = Answers<InAppTransitionData?>()
-        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, _ in answers.append(answer.inapp) }
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, _, _ in answers.append(answer.inapp) }
 
         try await waitUntil(!answers.isEmpty)
         #expect((answers.first ?? nil)?.inAppId == "11111111-1111-1111-1111-111111111111")
@@ -642,7 +642,7 @@ struct InAppConfigurationManagerTests {
         api.deliver(.data(try fixtureData()))
 
         let withBlock = Answers<InAppTransitionData?>()
-        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, _ in withBlock.append(answer.inapp) }
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, _, _ in withBlock.append(answer.inapp) }
         try await waitUntil(!withBlock.isEmpty)
         #expect((withBlock.first ?? nil)?.inAppId == "11111111-1111-1111-1111-111111111111")
 
@@ -651,7 +651,7 @@ struct InAppConfigurationManagerTests {
         api.deliver(.empty)
 
         let withoutBlock = Answers<InAppTransitionData?>()
-        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, _ in withoutBlock.append(answer.inapp) }
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, _, _ in withoutBlock.append(answer.inapp) }
         try await waitUntil(!withoutBlock.isEmpty)
         #expect((withoutBlock.first ?? nil)?.inAppId == nil)
     }
@@ -678,7 +678,7 @@ struct InAppConfigurationManagerTests {
         try await waitUntil(api.isFetchPending)
 
         let sessions = Answers<Int>()
-        manager.selectInappForPlace("stories-list-container", trigger: nil) { _, _, sessionEpoch in sessions.append(sessionEpoch) }
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { _, _, sessionEpoch, _ in sessions.append(sessionEpoch) }
         SessionTemporaryStorage.shared.erase()
         api.deliver(.data(try fixtureData()))
 
@@ -696,7 +696,7 @@ struct InAppConfigurationManagerTests {
         let current = SessionTemporaryStorage.shared.ledger.sessionEpoch
 
         let answers = Answers<(inappId: String?, sessionEpoch: Int)>()
-        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, sessionEpoch in
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, sessionEpoch, _ in
             answers.append((answer.inapp?.inAppId, sessionEpoch))
         }
         try await Task.sleep(nanoseconds: 300_000_000)
@@ -727,7 +727,7 @@ struct InAppConfigurationManagerTests {
         let current = SessionTemporaryStorage.shared.ledger.sessionEpoch
 
         let answers = Answers<(selection: EmbeddedPlaceSelection, sessionEpoch: Int)>()
-        offlineManager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, sessionEpoch in
+        offlineManager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, sessionEpoch, _ in
             answers.append((answer, sessionEpoch))
         }
         offlineManager.prepareConfiguration()
@@ -753,7 +753,7 @@ struct InAppConfigurationManagerTests {
         storage.erase()
 
         let answers = Answers<EmbeddedPlaceSelection>()
-        offlineManager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, _ in answers.append(answer) }
+        offlineManager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, _, _ in answers.append(answer) }
         offlineManager.prepareConfiguration()
         try await waitUntil(api.isFetchPending)
         api.deliver(failure.result)
@@ -792,7 +792,7 @@ struct InAppConfigurationManagerTests {
         api.deliver(.error(MindboxError.connectionError))
 
         let place = Answers<(inappId: String?, sessionEpoch: Int)>()
-        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, sessionEpoch in
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, sessionEpoch, _ in
             place.append((answer.inapp?.inAppId, sessionEpoch))
         }
         let page = Answers<[String]>()
@@ -815,7 +815,7 @@ struct InAppConfigurationManagerTests {
         storage.erase()
 
         let answers = Answers<EmbeddedPlaceSelection>()
-        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, _ in answers.append(answer) }
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, _, _ in answers.append(answer) }
         manager.prepareConfiguration()
         try await waitUntil(api.isFetchPending)
         api.deliver(.error(MindboxError.connectionError))
@@ -843,7 +843,7 @@ struct InAppConfigurationManagerTests {
         try await waitUntil(api.pendingFetches == 0)
 
         let answers = Answers<(inappId: String?, sessionEpoch: Int)>()
-        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, sessionEpoch in
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, sessionEpoch, _ in
             answers.append((answer.inapp?.inAppId, sessionEpoch))
         }
         try await waitUntil(!answers.isEmpty)
@@ -863,7 +863,7 @@ struct InAppConfigurationManagerTests {
         try await waitUntil(api.pendingFetches == 2)
 
         let answers = Answers<(selection: EmbeddedPlaceSelection, sessionEpoch: Int)>()
-        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, sessionEpoch in
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, sessionEpoch, _ in
             answers.append((answer, sessionEpoch))
         }
         api.deliver(.data(try fixtureData()))
