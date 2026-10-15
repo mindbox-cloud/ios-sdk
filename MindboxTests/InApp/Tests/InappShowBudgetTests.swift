@@ -34,11 +34,11 @@ struct InappShowBudgetTests {
     }
 
     private var reservations: [InappShowBudgetOwner: InappShowReservation] {
-        SessionTemporaryStorage.shared.showBudget.reservations
+        SessionTemporaryStorage.shared.ledger.showBudget.reservations
     }
 
     private var shownInSession: [String] {
-        SessionTemporaryStorage.shared.showBudget.shownInSession
+        SessionTemporaryStorage.shared.ledger.showBudget.shownInSession
     }
 
     private func setLimits(session: Int? = nil, day: Int? = nil, interval: String? = nil) {
@@ -268,13 +268,6 @@ struct InappShowBudgetTests {
         #expect(reservations.isEmpty)
     }
 
-    @Test("The reset stamps the budget with the ledger's new session")
-    func resetStampsTheBudgetWithTheNewSession() {
-        SessionTemporaryStorage.shared.erase()
-
-        #expect(SessionTemporaryStorage.shared.showBudget.sessionEpoch == SessionTemporaryStorage.shared.ledger.sessionEpoch)
-    }
-
     @Test("A place's reservation of a session that has ended is refused as stale and takes no slot of the current one")
     func reservationOfAnEndedSessionTakesNothing() {
         let ended = SessionTemporaryStorage.shared.ledger.sessionEpoch
@@ -286,15 +279,12 @@ struct InappShowBudgetTests {
         #expect(reservations.isEmpty)
     }
 
-    @Test("A place's reservation while a check is ending its session is refused as stale and takes no slot, also once the check has reset the ledger and not yet the budget",
-          arguments: [false, true])
-    func reservationOfAnEndingSessionTakesNothing(isLedgerReset: Bool) {
+    @Test("A place's reservation while a check is ending its session is refused as stale and takes no slot")
+    func reservationOfAnEndingSessionTakesNothing() {
         let ending = SessionTemporaryStorage.shared.ledger.sessionEpoch
         let ledger = SessionTemporaryStorage.shared.ledger
         defer { SessionTemporaryStorage.shared.ledger = ledger }
-        SessionTemporaryStorage.shared.ledger = isLedgerReset
-            ? InappSessionLedger(sessionEpoch: ending + 1)
-            : InappSessionLedger(sessionEpoch: ending, isSessionEnding: true)
+        SessionTemporaryStorage.shared.ledger = InappSessionLedger(sessionEpoch: ending, isSessionEnding: true)
 
         let outcome = budget.reserve(.place("stories"), inAppId: "a", isPriority: false, frequency: restricted, inSession: ending)
 

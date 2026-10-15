@@ -126,12 +126,12 @@ final class InappShowBudgetMock: InappShowBudgeting {
         return refusedInAppIds.contains(inAppId) ? .refused : .granted
     }
 
-    func commit(_ owner: InappShowBudgetOwner, inAppId: String, frequency: InappFrequency?, inSession sessionEpoch: Int?) {
+    func commit(_ owner: InappShowBudgetOwner, inAppId: String, frequency: InappFrequency?, inSession sessionEpoch: Int?, to ledger: inout InappSessionLedger) {
         callSessions.append(sessionEpoch)
         commits.append(Commit(owner: owner, inAppId: inAppId, frequency: frequency))
     }
 
-    func release(_ owner: InappShowBudgetOwner, inSession sessionEpoch: Int?) {
+    func release(_ owner: InappShowBudgetOwner, inSession sessionEpoch: Int?, from ledger: inout InappSessionLedger) {
         callSessions.append(sessionEpoch)
         releases.append(owner)
         releasedOnMainThread.append(Thread.isMainThread)

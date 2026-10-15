@@ -60,6 +60,8 @@ struct InappSessionLedger: Equatable {
 
     var reportedFailures: Set<ReportedFailure> = []
 
+    var showBudget = InappShowBudgetState()
+
     var isSessionEnding = false
 
     func hasEnded(_ sessionEpoch: Int) -> Bool {

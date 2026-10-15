@@ -47,14 +47,22 @@ final class InappShowAccountant: InappShowAccounting {
 
     func recordBlockShow(_ show: InappShow, at place: String, sessionEpoch: Int) {
         let owner = InappShowBudgetOwner.place(place)
-        switch SessionTemporaryStorage.shared.$ledger.mutate({ $0.recordShow(show.inAppId, at: place, sessionEpoch: sessionEpoch) }) {
+        let record = SessionTemporaryStorage.shared.$ledger.mutate { ledger -> BlockShowRecord in
+            let record = ledger.recordShow(show.inAppId, at: place, sessionEpoch: sessionEpoch)
+            if record == .new {
+                budget.commit(owner, inAppId: show.inAppId, frequency: show.frequency, inSession: sessionEpoch, to: &ledger)
+            } else if record == .repeated {
+                budget.release(owner, inSession: sessionEpoch, from: &ledger)
+            }
+            return record
+        }
+
+        switch record {
         case .new:
-            budget.commit(owner, inAppId: show.inAppId, frequency: show.frequency, inSession: sessionEpoch)
             track(show)
         case .repeated:
             Logger.common(message: "[InappShowAccountant] Place '\(place)' shows in-app \(show.inAppId) again — nothing new to account for",
                           level: .debug, category: .inAppMessages)
-            budget.release(owner, inSession: sessionEpoch)
         case .stale:
             Logger.common(message: "[InappShowAccountant] Place '\(place)' shows in-app \(show.inAppId) from an earlier session's answer — this session accounts it when the place confirms it",
                           level: .debug, category: .inAppMessages)

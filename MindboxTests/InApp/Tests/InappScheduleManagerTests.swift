@@ -915,14 +915,14 @@ struct InappScheduleManagerTests {
         manager.queue.sync {}
         await awaitMainQueue()
         #expect(display.onScreen == "trigger")
-        #expect(SessionTemporaryStorage.shared.showBudget.reservations[.overlay("trigger")] != nil)
+        #expect(SessionTemporaryStorage.shared.ledger.showBudget.reservations[.overlay("trigger")] != nil)
 
         manager.showInAppNow(createInAppFormData(id: "story", isPriority: false, delayTime: nil), processingDuration: 0, proceedIf: { true }) { _ in }
         await awaitMainQueue(turns: 2)
 
         #expect(display.onScreen == "story")
         #expect(delegate.dismissedIds == ["trigger"])
-        #expect(SessionTemporaryStorage.shared.showBudget.reservations[.overlay("trigger")] == nil)
+        #expect(SessionTemporaryStorage.shared.ledger.showBudget.reservations[.overlay("trigger")] == nil)
         await closeWhatIsOnScreen(display)
     }
 
@@ -981,7 +981,7 @@ struct InappScheduleManagerTests {
         await showScheduled(createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02"))
 
         #expect(presentationManagerMock.presentCallsCount == 0)
-        #expect(SessionTemporaryStorage.shared.showBudget.reservations.isEmpty)
+        #expect(SessionTemporaryStorage.shared.ledger.showBudget.reservations.isEmpty)
     }
 
     @Test("A presented in-app holds its slot until the window reports itself", .tags(.inAppSchedule))
@@ -989,11 +989,11 @@ struct InappScheduleManagerTests {
         await showScheduled(createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02"))
 
         #expect(presentationManagerMock.presentCallsCount == 1)
-        #expect(SessionTemporaryStorage.shared.showBudget.reservations[.overlay("1")]?.inAppId == "1")
+        #expect(SessionTemporaryStorage.shared.ledger.showBudget.reservations[.overlay("1")]?.inAppId == "1")
 
         presentationManagerMock.receivedOnPresent?()
 
-        #expect(SessionTemporaryStorage.shared.showBudget.reservations.isEmpty)
+        #expect(SessionTemporaryStorage.shared.ledger.showBudget.reservations.isEmpty)
         #expect(SessionTemporaryStorage.shared.sessionShownInApps == ["1"])
     }
 
@@ -1003,7 +1003,7 @@ struct InappScheduleManagerTests {
 
         presentationManagerMock.receivedOnError?(.failed("no window"))
 
-        #expect(SessionTemporaryStorage.shared.showBudget.reservations.isEmpty)
+        #expect(SessionTemporaryStorage.shared.ledger.showBudget.reservations.isEmpty)
         #expect(SessionTemporaryStorage.shared.sessionShownInApps.isEmpty)
     }
 
@@ -1013,7 +1013,7 @@ struct InappScheduleManagerTests {
 
         presentationManagerMock.receivedOnPresentationCompleted?(false)
 
-        #expect(SessionTemporaryStorage.shared.showBudget.reservations.isEmpty)
+        #expect(SessionTemporaryStorage.shared.ledger.showBudget.reservations.isEmpty)
         #expect(SessionTemporaryStorage.shared.sessionShownInApps.isEmpty)
         #expect(trackingServiceMock.saveInappStateChangeCallCount == 0)
     }
@@ -1021,12 +1021,12 @@ struct InappScheduleManagerTests {
     @Test("A show on request that closes a loading show gives that show's slot back", .tags(.inAppSchedule))
     func showInAppNow_closingALoadingShow_givesItsSlotBack() async {
         await showScheduled(createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02"))
-        #expect(SessionTemporaryStorage.shared.showBudget.reservations[.overlay("1")] != nil)
+        #expect(SessionTemporaryStorage.shared.ledger.showBudget.reservations[.overlay("1")] != nil)
 
         await showNowAndAwaitMainQueue(scheduleManager, createInAppFormData(id: "2", isPriority: false, delayTime: nil))
         presentationManagerMock.receivedOnPresent?()
 
-        #expect(SessionTemporaryStorage.shared.showBudget.reservations.isEmpty)
+        #expect(SessionTemporaryStorage.shared.ledger.showBudget.reservations.isEmpty)
         #expect(SessionTemporaryStorage.shared.sessionShownInApps == ["2"])
     }
 
@@ -1037,7 +1037,7 @@ struct InappScheduleManagerTests {
         await showScheduled(createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:02"))
 
         #expect(presentationManagerMock.presentCallsCount == 0)
-        #expect(SessionTemporaryStorage.shared.showBudget.reservations.isEmpty)
+        #expect(SessionTemporaryStorage.shared.ledger.showBudget.reservations.isEmpty)
     }
 
     @Test("A scheduled show is decided and presented on the main queue", .tags(.inAppSchedule))
@@ -1050,7 +1050,7 @@ struct InappScheduleManagerTests {
     // MARK: - A slot taken in the background
 
     private var reservations: [InappShowBudgetOwner: InappShowReservation] {
-        SessionTemporaryStorage.shared.showBudget.reservations
+        SessionTemporaryStorage.shared.ledger.showBudget.reservations
     }
 
     private var scheduledCount: Int {
