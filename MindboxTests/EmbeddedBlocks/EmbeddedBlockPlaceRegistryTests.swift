@@ -1428,6 +1428,58 @@ struct EmbeddedBlockPlaceRegistryTests {
         #expect(block.answers.map(\.isOperationTriggered) == [!startsNewSession, true])
     }
 
+    @Test("A block appearing or a new config between a return and the end of its session check joins the first of two operations held for the place: both are asked in order, the first not as an operation and the second as one, whether the check keeps the session or starts a new one",
+          arguments: [false, true], [false, true])
+    func appearanceOrConfigInsideTheReturnJoinsTheFirstHeldOperation(isNewConfig: Bool, startsNewSession: Bool) {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.presence.enterBackground()
+        rig.presence.returnToApp()
+        let first = rig.announceOperation("first.operation")
+        let second = rig.announceOperation("second.operation")
+        if isNewConfig {
+            rig.announceNewConfig()
+        } else {
+            rig.registry.blockAppeared("stories")
+        }
+        #expect(rig.resolver.resolveCount == 0)
+
+        if startsNewSession {
+            rig.expireSession()
+            rig.resolver.sessionEpoch = rig.currentSessionEpoch
+        }
+        rig.presence.finishSessionCheck(startsNewSession: startsNewSession)
+        rig.resolver.flush()
+        rig.resolver.flush()
+
+        #expect(rig.resolver.triggers == [first, second])
+        #expect(block.answers.map(\.isOperationTriggered) == [false, true])
+    }
+
+    @Test("A block appearing between a return and the end of its session check asks its place at once when the operations held are for another place")
+    func appearanceInsideTheReturnAsksAtOnceWhenTheHeldOperationsAreForAnotherPlace() {
+        let rig = Rig()
+        let promo = BlockFake()
+        rig.registry.register(promo, place: "promo")
+        rig.presence.enterBackground()
+        rig.presence.returnToApp()
+        let operation = rig.announceOperation()
+        let stories = BlockFake()
+        rig.registry.register(stories, place: "stories")
+
+        rig.registry.blockAppeared("stories")
+        #expect(rig.resolver.resolvedPlaces == ["stories"])
+
+        rig.presence.finishSessionCheck()
+
+        #expect(rig.resolver.resolvedPlaces == ["stories", "promo"])
+        #expect(rig.resolver.triggers == [nil, operation])
+        #expect(stories.answers.map(\.isOperationTriggered) == [false])
+        #expect(promo.answers.map(\.isOperationTriggered) == [true])
+    }
+
     @Test("Of two operations between a return and the end of a session check that kept the session, only the second is asked when a pass of their place is in flight as the check ends")
     func ofTwoOperationsInsideTheReturnOfAKeptSessionOnlyTheSecondIsAskedBehindAPass() {
         let rig = Rig()
