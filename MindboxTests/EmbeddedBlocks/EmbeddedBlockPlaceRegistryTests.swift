@@ -508,7 +508,7 @@ struct EmbeddedBlockPlaceRegistryTests {
         #expect(block.processingDurations == [3.5])
     }
 
-    @Test("A pass asked before a reset that the new session's config answers is the new session's ask: its selection counts from the reset, not from the time away, and it takes no slot while the place's blocks are off screen",
+    @Test("A pass asked before a reset that the new session's config answers is the new session's ask, so the place is not asked again: its selection counts from the reset, not from the time away, and it takes no slot while the place's blocks are off screen",
           arguments: [false, true])
     func passFromBeforeTheResetAnsweredByTheNewSessionCountsFromTheReset(isOffScreen: Bool) {
         let rig = Rig()
@@ -528,6 +528,63 @@ struct EmbeddedBlockPlaceRegistryTests {
 
         #expect(block.processingDurations == [0.5])
         #expect(rig.budget.reservations.isEmpty == isOffScreen)
+        #expect(rig.resolver.resolveCount == 1)
+    }
+
+    @Test("An operation's pass asked before a reset that the new session's config answers does not stand for that session's own ask, which follows it with no trigger")
+    func operationPassFromBeforeTheResetLeavesTheNewSessionsAsk() {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        let operation = rig.announceOperation()
+
+        rig.expireSession()
+        rig.presence.finishSessionCheck(startsNewSession: true)
+        rig.resolver.sessionEpoch = rig.currentSessionEpoch
+        rig.resolver.flush()
+
+        #expect(rig.resolver.triggers == [operation, nil])
+    }
+
+    @Test("A new session's ask carrying an operation held for the return's session check still runs after a pass asked before the reset that the new session's config answers")
+    func newSessionsAskWithAHeldOperationFollowsAPassFromBeforeTheReset() {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+        rig.presence.enterBackground()
+        rig.presence.returnToApp()
+        let operation = rig.announceOperation()
+
+        rig.expireSession()
+        rig.presence.finishSessionCheck(startsNewSession: true)
+        rig.resolver.sessionEpoch = rig.currentSessionEpoch
+        rig.resolver.flush()
+
+        #expect(rig.resolver.triggers == [nil, operation])
+    }
+
+    @Test("A pass asked before two resets that the first new session's config answers does not stand for the latest session's ask, which follows it")
+    func passFromBeforeTwoResetsLeavesTheLatestSessionsAsk() {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+        rig.expireSession()
+        rig.presence.finishSessionCheck(startsNewSession: true)
+        rig.expireSession()
+        rig.presence.finishSessionCheck(startsNewSession: true)
+
+        rig.resolver.sessionEpoch = rig.currentSessionEpoch - 1
+        rig.resolver.flush()
+        rig.resolver.sessionEpoch = rig.currentSessionEpoch
+        rig.resolver.flush()
+
+        #expect(rig.resolver.resolveCount == 2)
+        #expect(block.answers.map(\.sessionEpoch) == [rig.currentSessionEpoch])
     }
 
     @Test("A new session also asks a place whose blocks are all off screen while one still holds an attempt, and hands it the content without taking a slot; a block bringing it on screen takes the slot, keeping its selection time")
