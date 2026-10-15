@@ -373,7 +373,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         sendNotification(with: configResponse?.settings?.slidingExpiration?.pushTokenKeepalive)
         notificationCenter.post(name: .mobileConfigDownloadConcluded,
                                 object: nil,
-                                userInfo: [Constants.Notification.sessionEpoch: sessionEpoch, Constants.Notification.configVersion: entry.version])
+                                userInfo: [Constants.Notification.configVersion: entry.version])
     }
 
     private func applyDownloadedConfig(_ config: ConfigResponse, rawData: Data) {

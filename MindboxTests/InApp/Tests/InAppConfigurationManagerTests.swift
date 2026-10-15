@@ -12,7 +12,6 @@ import QuartzCore
 import class MindboxLogger.Locked
 @testable import Mindbox
 
-private let sessionEpochKey = Constants.Notification.sessionEpoch
 private let configVersionKey = Constants.Notification.configVersion
 
 @Suite("In-app configuration manager", .tags(.embeddedBlocks))
@@ -38,13 +37,11 @@ struct InAppConfigurationManagerTests {
 
     private final class ConclusionLog {
         let center = NotificationCenter()
-        let announced = Answers<Int?>()
         let announcedVersions = Answers<ConfigVersion?>()
         private var observer: NSObjectProtocol?
 
         init() {
-            observer = center.addObserver(forName: .mobileConfigDownloadConcluded, object: nil, queue: nil) { [announced, announcedVersions] in
-                announced.append($0.userInfo?[sessionEpochKey] as? Int)
+            observer = center.addObserver(forName: .mobileConfigDownloadConcluded, object: nil, queue: nil) { [announcedVersions] in
                 announcedVersions.append($0.userInfo?[configVersionKey] as? ConfigVersion)
             }
         }
@@ -659,19 +656,17 @@ struct InAppConfigurationManagerTests {
         #expect((withoutBlock.first ?? nil)?.inAppId == nil)
     }
 
-    @Test("Every download announces it concluded, stamped with the session it started in", arguments: DownloadOutcome.allCases)
+    @Test("Every download announces it concluded, with the version of the config it published", arguments: DownloadOutcome.allCases)
     func everyDownloadAnnouncesItsConclusion(_ outcome: DownloadOutcome) async throws {
         let log = ConclusionLog()
         let manager = Self.makeManager(api: api, configWaitBudget: 0.2, notificationCenter: log.center)
-        let startedIn = SessionTemporaryStorage.shared.ledger.sessionEpoch
 
         manager.prepareConfiguration()
         try await waitUntil(api.isFetchPending)
-        SessionTemporaryStorage.shared.erase()
         api.deliver(try result(outcome))
 
-        try await waitUntil(!log.announced.isEmpty)
-        #expect(log.announced.all == [startedIn])
+        try await waitUntil(!log.announcedVersions.isEmpty)
+        #expect(log.announcedVersions.all == [ConfigVersion(number: 1)])
     }
 
     @Test("A place waiting for a download is answered with the version of the config its conclusion announces, a newer one at every download, whatever the download brought",
@@ -866,7 +861,7 @@ struct InAppConfigurationManagerTests {
         try await waitUntil(api.pendingFetches == 2)
 
         api.deliverToNewest(.data(try fixtureData()))
-        try await waitUntil(!log.announced.isEmpty)
+        try await waitUntil(!log.announcedVersions.isEmpty)
         api.deliver(.empty)
         try await waitUntil(api.pendingFetches == 0)
 
@@ -878,7 +873,7 @@ struct InAppConfigurationManagerTests {
         let answer = try #require(answers.first)
         #expect(answer.inappId == "11111111-1111-1111-1111-111111111111")
         #expect(answer.sessionEpoch == later)
-        #expect(log.announced.all == [later])
+        #expect(log.announcedVersions.all == [ConfigVersion(number: 1)])
     }
 
     @Test("A download a later one superseded leaves its waiters to the later one when it lands first")
