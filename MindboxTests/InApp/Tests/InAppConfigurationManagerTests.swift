@@ -19,6 +19,7 @@ struct InAppConfigurationManagerTests {
 
     private enum Constants {
         static let liveStoryId = "55555555-5555-5555-5555-555555555555"
+        static let fixtureLimits = Settings.InAppSettings(maxInappsPerSession: 3, maxInappsPerDay: 50, minIntervalBetweenShows: "00:00:10")
     }
 
     /// Answers land on the manager's queue while the test polls from its own thread — the box keeps that race-free.
@@ -223,6 +224,28 @@ struct InAppConfigurationManagerTests {
         let otherCase = json.replacingOccurrences(of: "\"stories-list-container\"", with: "\"Stories-List-Container\"")
         try #require(otherCase != json, "the fixture is expected to address the place in lowercase")
         return Data(otherCase.utf8)
+    }
+
+    private func fixtureDataWithProductOperations() throws -> Data {
+        var root = try #require(try JSONSerialization.jsonObject(with: fixtureData()) as? [String: Any])
+        var settings = try #require(root["settings"] as? [String: Any])
+        settings["operations"] = ["viewProduct": ["systemName": "ViewProduct"], "viewCategory": ["systemName": "ViewCategory"]]
+        root["settings"] = settings
+        return try JSONSerialization.data(withJSONObject: root)
+    }
+
+    enum FailedDownload: CaseIterable {
+        case connectionFailure
+        case undecodableConfig
+
+        var result: InAppConfigurationAPIResult {
+            switch self {
+            case .connectionFailure:
+                return .error(MindboxError.connectionError)
+            case .undecodableConfig:
+                return .data(Data("not a config".utf8))
+            }
+        }
     }
 
     enum DownloadOutcome: CaseIterable {
@@ -699,6 +722,30 @@ struct InAppConfigurationManagerTests {
         #expect(answer.sessionEpoch == current)
     }
 
+    @Test("A download that fails or does not decode applies the in-app limits and product operations of the config an earlier launch cached: at launch, and again in a new session",
+          arguments: FailedDownload.allCases)
+    func failedDownloadAppliesTheCachedConfigsLimits(_ failure: FailedDownload) async throws {
+        let storage = SessionTemporaryStorage.shared
+        let offlineManager = Self.makeManager(api: api, configWaitBudget: 60, repository: InMemoryConfigRepository(cached: try fixtureDataWithProductOperations()))
+        offlineManager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(failure.result)
+        try await waitUntil(storage.inAppSettings != nil)
+        #expect(storage.inAppSettings == Constants.fixtureLimits)
+        storage.erase()
+
+        let answers = Answers<EmbeddedPlaceSelection>()
+        offlineManager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, _ in answers.append(answer) }
+        offlineManager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(failure.result)
+
+        try await waitUntil(!answers.isEmpty)
+        #expect(storage.inAppSettings == Constants.fixtureLimits)
+        #expect(storage.viewProductOperation == "viewproduct")
+        #expect(storage.viewCategoryOperation == "viewcategory")
+    }
+
     @Test("A page asked with an earlier session's config in hand is answered from it at once")
     func pageIsAnsweredFromAnEarlierSessionsConfig() async throws {
         manager.prepareConfiguration()
@@ -738,6 +785,27 @@ struct InAppConfigurationManagerTests {
         #expect(answer.inappId == "11111111-1111-1111-1111-111111111111")
         #expect(answer.sessionEpoch == current)
         #expect(page.all == [[Constants.liveStoryId]])
+    }
+
+    @Test("A download that fails with nothing cached keeps the in-app limits and product operations of the config an earlier download brought, in a new session too")
+    func failedDownloadWithoutCacheKeepsTheEarlierConfigsLimits() async throws {
+        let storage = SessionTemporaryStorage.shared
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.data(try fixtureDataWithProductOperations()))
+        try await waitUntil(manager.hasConfig)
+        storage.erase()
+
+        let answers = Answers<EmbeddedPlaceSelection>()
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, _ in answers.append(answer) }
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.error(MindboxError.connectionError))
+
+        try await waitUntil(!answers.isEmpty)
+        #expect(storage.inAppSettings == Constants.fixtureLimits)
+        #expect(storage.viewProductOperation == "viewproduct")
+        #expect(storage.viewCategoryOperation == "viewcategory")
     }
 
     @Test("A download a later one superseded leaves the later one's config and conclusion in place when it lands last")
