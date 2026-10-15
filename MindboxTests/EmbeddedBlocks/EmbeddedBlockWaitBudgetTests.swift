@@ -188,6 +188,25 @@ struct EmbeddedBlockWaitBudgetTests {
         #expect(bed.scheduler.lastDelay == nil)
     }
 
+    @Test("A budget asked to arm in the background counts from the return")
+    func armingInTheBackgroundCountsFromTheReturn() {
+        let bed = BudgetBed()
+
+        bed.enterBackground()
+        bed.budget.armIfNeeded()
+
+        #expect(bed.budget.isRunning == false)
+
+        bed.scheduler.fireAll()
+
+        #expect(bed.expirations == 0)
+
+        bed.enterForeground()
+
+        #expect(bed.budget.isRunning)
+        #expect(bed.scheduler.lastDelay == budgetSeconds)
+    }
+
     // MARK: - Arming
 
     @Test("Arming twice runs a single countdown")

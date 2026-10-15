@@ -1539,6 +1539,36 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.waitBudgetBed.scheduler.lastDelay == block.waitBudgetBed.duration)
     }
 
+    @Test("A block started by the end of a return's session check that lands in the background spends no wait budget there and counts it from the next return")
+    func blockStartedInTheBackgroundCountsItsBudgetFromTheReturn() async {
+        let block = BlockFixture()
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.bed.resolver.isDeferred = true
+        block.goToTheBackgroundAndBack()
+        block.attachToWindow()
+        block.goToTheBackground()
+
+        block.bed.finishSessionCheck()
+
+        #expect(block.bed.provider.isActive)
+        #expect(!block.waitBudgetBed.budget.isRunning)
+
+        block.expireTimeout()
+        block.returnFromTheBackground()
+
+        #expect(block.waitBudgetBed.budget.isRunning)
+        #expect(block.waitBudgetBed.scheduler.lastDelay == block.waitBudgetBed.duration)
+
+        block.bed.finishSessionCheck()
+        block.bed.resolver.flush()
+        block.page?.reportRendered(1)
+        await mainQueueTurn()
+
+        #expect(delegate.events == [.loaded])
+        #expect(block.bed.failureReporter.unansweredWaits.isEmpty)
+    }
+
     @Test("A loading block whose answer is kept for the return's session check spends no wait budget until the content arrives, through another return or the app inactive after the check",
           arguments: [true, false])
     func keptAnswerStandsTheBudgetDown(isActiveWhenTheCheckEnds: Bool) async {
@@ -2672,6 +2702,10 @@ private final class BlockFixture {
 
     func goToTheBackgroundAndBack(isActiveOnReturn: Bool = true) {
         goToTheBackground()
+        returnFromTheBackground(isActiveOnReturn: isActiveOnReturn)
+    }
+
+    func returnFromTheBackground(isActiveOnReturn: Bool = true) {
         bed.center.post(name: UIApplication.willEnterForegroundNotification, object: nil)
         enterForeground()
         if isActiveOnReturn {
