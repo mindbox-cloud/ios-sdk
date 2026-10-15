@@ -47,7 +47,7 @@ struct EmbeddedBlockPlaceRegistryTests {
         let presence: AppPresenceBed
         let registry: EmbeddedBlockPlaceRegistry
 
-        init() {
+        init(onClockRead: @escaping () -> Void = {}) {
             // Served delays and shown slots live on the shared session singleton — reset, or rigs would see each other's.
             SessionTemporaryStorage.shared.$ledger.mutate {
                 $0.servedPlaceDelays = []
@@ -71,7 +71,10 @@ struct EmbeddedBlockPlaceRegistryTests {
                                                   presence: presence.presence,
                                                   delayedDelivery: EmbeddedBlockDelayedDelivery(presence: presence.presence,
                                                                                                 schedule: { delayScheduler.schedule($0, $1) }),
-                                                  now: { presence.clock.now })
+                                                  now: {
+                                                      onClockRead()
+                                                      return presence.clock.now
+                                                  })
         }
     }
 
@@ -585,6 +588,31 @@ struct EmbeddedBlockPlaceRegistryTests {
 
         #expect(rig.resolver.resolveCount == 2)
         #expect(block.answers.map(\.sessionEpoch) == [rig.currentSessionEpoch])
+    }
+
+    @Test("A pass asked before a reset whose answer lands as the new session starts ending is dropped and leaves that session's ask to run")
+    func passFromBeforeTheResetLandingAsTheSessionEndsLeavesTheNewSessionsAsk() {
+        var endsTheSessionOnTheNextClockRead = false
+        let rig = Rig(onClockRead: {
+            guard endsTheSessionOnTheNextClockRead else { return }
+
+            endsTheSessionOnTheNextClockRead = false
+            SessionTemporaryStorage.shared.$ledger.mutate { $0.isSessionEnding = true }
+        })
+        defer { SessionTemporaryStorage.shared.$ledger.mutate { $0.isSessionEnding = false } }
+        rig.resolver.isDeferred = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+
+        rig.expireSession()
+        rig.presence.finishSessionCheck(startsNewSession: true)
+        rig.resolver.sessionEpoch = rig.currentSessionEpoch
+        endsTheSessionOnTheNextClockRead = true
+        rig.resolver.flush()
+
+        #expect(block.answers.isEmpty)
+        #expect(rig.resolver.resolveCount == 2)
     }
 
     @Test("A new session also asks a place whose blocks are all off screen while one still holds an attempt, and hands it the content without taking a slot; a block bringing it on screen takes the slot, keeping its selection time")
