@@ -545,6 +545,62 @@ struct EmbeddedBlockPlaceRegistryTests {
         #expect(block.answers.map(\.sessionEpoch) == [rig.currentSessionEpoch])
     }
 
+    @Test("A new session asks a place whose last answer was asked in it with no operation but read no config")
+    func newSessionAsksAPlaceWhoseAnswerInItReadNoConfig() {
+        let rig = Rig()
+        rig.resolver.readsNoConfig = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.expireSession()
+        rig.resolver.sessionEpoch = rig.currentSessionEpoch
+        rig.registry.blockAppeared("stories")
+
+        rig.presence.finishSessionCheck(startsNewSession: true)
+
+        #expect(rig.resolver.resolveCount == 2)
+        #expect(block.answers.map(\.sessionEpoch) == [rig.currentSessionEpoch, rig.currentSessionEpoch])
+    }
+
+    @Test("A pass asked in the new session with no operation that stood for the session's ask and then read no config asks its place once more when it lands")
+    func standInThatReadNoConfigAsksItsPlaceOnceMore() {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        rig.resolver.readsNoConfig = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.expireSession()
+        rig.resolver.sessionEpoch = rig.currentSessionEpoch
+        rig.registry.blockAppeared("stories")
+        rig.presence.finishSessionCheck(startsNewSession: true)
+        #expect(rig.resolver.resolveCount == 1)
+
+        rig.resolver.flush()
+        rig.resolver.flush()
+
+        #expect(rig.resolver.resolveCount == 2)
+        #expect(block.answers.map(\.sessionEpoch) == [rig.currentSessionEpoch, rig.currentSessionEpoch])
+    }
+
+    @Test("An operation queued behind a pass that stood for the new session's ask and then read no config is answered as the new session's pass")
+    func operationBehindAStandInThatReadNoConfigIsTheNewSessionsPass() {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        rig.resolver.readsNoConfig = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.expireSession()
+        rig.resolver.sessionEpoch = rig.currentSessionEpoch
+        rig.registry.blockAppeared("stories")
+        rig.presence.finishSessionCheck(startsNewSession: true)
+        let operation = rig.announceOperation()
+
+        rig.resolver.flush()
+        rig.resolver.flush()
+
+        #expect(rig.resolver.triggers == [nil, operation])
+        #expect(block.answers.map(\.isOperationTriggered) == [false, false])
+    }
+
     @Test("A place answered from a config is not asked again when that config is announced again, and is when a newer one is")
     func answeredPlaceIsAskedAgainOnlyByANewerConfig() {
         let rig = Rig()
