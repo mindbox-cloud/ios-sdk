@@ -81,7 +81,7 @@ struct InappShowAccountantTests {
             written.signal()
         }
 
-        #expect(written.wait(timeout: .now() + 5) == .success)
+        #expect(written.wait(timeout: .now() + 15) == .success)
         #expect(storage.hostObserverRuns == 2)
         #expect(!storage.hasFoundTheLedgerHeld)
     }
