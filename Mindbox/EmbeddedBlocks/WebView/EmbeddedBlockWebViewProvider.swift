@@ -39,7 +39,7 @@ final class EmbeddedBlockWebViewProvider {
 
     var isAwaitingKeptContent: Bool { page == nil && registry.keepsContent(for: placeSystemName) }
 
-    var heldCollapse: EmbeddedBlockState? { deferred.held?.state }
+    var heldCollapse: EmbeddedBlockState? { deferred.heldOutcome?.state }
 
     let placeSystemName: String
     private let registry: EmbeddedBlockPlaceRegistering
@@ -397,7 +397,7 @@ final class EmbeddedBlockWebViewProvider {
         dataPushWait.arm { [weak self] in
             guard let self, let content = self.content, let pageShow = self.pageShow else { return }
 
-            guard !self.deferred.isHolding else {
+            guard !self.deferred.isShowWithheld else {
                 self.pageShow?.requireRefresh()
                 return
             }
@@ -506,7 +506,7 @@ final class EmbeddedBlockWebViewProvider {
     }
 
     private func accountForShow() {
-        guard isStarted, isReady, !deferred.isHolding, appPresence.isPresent, let content,
+        guard isStarted, isReady, !deferred.isShowWithheld, appPresence.isPresent, let content,
               let due = pageShow?.takeDueShow() else { return }
 
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': in-app \(content.inAppId) is shown in session \(due.sessionEpoch), timeToDisplay=\(due.timeToDisplay.toTimeSpan())",

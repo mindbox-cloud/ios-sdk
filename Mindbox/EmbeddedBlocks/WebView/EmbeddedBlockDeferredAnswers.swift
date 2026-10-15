@@ -43,11 +43,11 @@ struct EmbeddedBlockDeferredAnswers {
         }
     }
 
-    var isHolding: Bool { heldAnswer != nil || isPageEmpty }
+    var isShowWithheld: Bool { heldAnswer != nil || isPageEmpty }
 
     var isHoldingPlaceAnswer: Bool { heldAnswer != nil }
 
-    var held: HeldCollapse? {
+    var heldOutcome: HeldCollapse? {
         heldAnswer.map { .placeAnswer($0) } ?? (isPageEmpty && contentAwaitingTheUser == nil && !parksContent ? .emptyPage : nil)
     }
 
@@ -76,10 +76,10 @@ struct EmbeddedBlockDeferredAnswers {
     }
 
     mutating func takeHeld() -> HeldCollapse? {
-        guard let held else { return nil }
+        guard let heldOutcome else { return nil }
 
         lift()
-        return held
+        return heldOutcome
     }
 
     mutating func parkContentAwaitingTheUser(ifAlive isAttemptAlive: Bool, timedBy makeStopwatch: () -> ForegroundStopwatch) -> EmbeddedBlockPlaceAnswer? {
