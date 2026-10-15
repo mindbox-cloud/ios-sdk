@@ -1863,6 +1863,28 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(carried === event)
     }
 
+    @Test("Of two operations held for a block that comes back on screen while a return's session check runs, only the second is asked, after the start's pass, whether the check keeps the session or starts a new one",
+          arguments: [false, true])
+    func ofTwoOperationsHeldForABlockBackInsideTheReturnOnlyTheSecondIsAskedAfterTheStartsPass(startsNewSession: Bool) {
+        let bed = EmbeddedBlockTestBed()
+        bed.enterBackground()
+        bed.returnToApp()
+        bed.provider.start()
+        bed.announceOperation("first.operation")
+        let second = bed.announceOperation("second.operation")
+        bed.resolver.isDeferred = true
+
+        if startsNewSession {
+            bed.renewSession()
+        } else {
+            bed.finishSessionCheck()
+        }
+        #expect(bed.resolver.triggers == [nil])
+        bed.resolver.flush()
+
+        #expect(bed.resolver.triggers == [nil, second])
+    }
+
     @Test("Content kept on screen for the end of a return's session check counts the wait in its timeToDisplay")
     func contentKeptForTheReturnCountsTheWait() {
         let bed = EmbeddedBlockTestBed()

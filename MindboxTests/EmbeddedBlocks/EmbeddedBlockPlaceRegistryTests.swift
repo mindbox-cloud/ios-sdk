@@ -1428,6 +1428,49 @@ struct EmbeddedBlockPlaceRegistryTests {
         #expect(block.answers.map(\.isOperationTriggered) == [!startsNewSession, true])
     }
 
+    @Test("Of two operations between a return and the end of a session check that kept the session, only the second is asked when a pass of their place is in flight as the check ends")
+    func ofTwoOperationsInsideTheReturnOfAKeptSessionOnlyTheSecondIsAskedBehindAPass() {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.presence.enterBackground()
+        rig.presence.returnToApp()
+        rig.announceOperation("first.operation")
+        let second = rig.announceOperation("second.operation")
+        rig.registry.blockAppeared("stories")
+
+        rig.presence.finishSessionCheck()
+        rig.resolver.flush()
+        rig.resolver.flush()
+
+        #expect(rig.resolver.triggers == [nil, second])
+        #expect(block.answers.map(\.isOperationTriggered) == [false, true])
+    }
+
+    @Test("Of two operations between a return and the end of a session check that starts a new session, only the second rides the new session's ask when a pass of their place is in flight as the check ends")
+    func ofTwoOperationsInsideTheReturnOnlyTheSecondRidesTheNewSessionsAskBehindAPass() {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.presence.enterBackground()
+        rig.presence.returnToApp()
+        rig.announceOperation("first.operation")
+        let second = rig.announceOperation("second.operation")
+        rig.registry.blockAppeared("stories")
+
+        rig.expireSession()
+        rig.presence.finishSessionCheck(startsNewSession: true)
+        rig.resolver.flush()
+        rig.resolver.sessionEpoch = rig.currentSessionEpoch
+        rig.resolver.flush()
+
+        #expect(rig.resolver.triggers == [nil, second])
+        #expect(block.answers.map(\.sessionEpoch) == [rig.currentSessionEpoch])
+        #expect(block.answers.map(\.isOperationTriggered) == [false])
+    }
+
     @Test("An answer of the session a check is ending reaches no block and touches no slot", arguments: SlotAnswer.allCases)
     func answerOfAnEndingSessionIsDropped(_ answer: SlotAnswer) {
         let rig = Rig()
