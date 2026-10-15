@@ -167,7 +167,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         }
     }
 
-    private func sessionStarted(carrying operations: [String: ApplicationEvent]) {
+    private func sessionStarted(carrying operations: [String: [ApplicationEvent]]) {
         let sessionEpoch = SessionTemporaryStorage.shared.ledger.sessionEpoch
         for place in Array(blocksByPlace.keys) where hasActiveBlocks(place) || holdsAnAttempt(at: place) {
             guard operations[place] != nil || !isAnsweredInNewSession(place, sessionEpoch) else {
@@ -176,7 +176,8 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
                 continue
             }
 
-            requestResolve(place: place, cause: .newSession(operations[place]))
+            requestResolve(place: place, cause: .newSession(operations[place]?.first))
+            operations[place]?.dropFirst().forEach { requestResolve(place: place, cause: .operation($0)) }
         }
     }
 
@@ -207,7 +208,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
             guard !presence.isAwaitingSessionCheck else {
                 Logger.common(message: "[EmbeddedBlock] Operation '\(event.name)' arrived during the return's session check — held for place '\(place)' and asked with it once the check ends, if a block is still there",
                               category: .embeddedBlocks)
-                awaitingTheSessionCheck.operations[place] = event
+                awaitingTheSessionCheck.hold(event, at: place)
                 continue
             }
 
@@ -512,7 +513,7 @@ extension EmbeddedBlockPlaceRegistry: EmbeddedBlockAppPresenceSubscribing {
         let operations = awaitingTheSessionCheck.takeOperations()
 
         guard startsNewSession else {
-            operations.forEach { place, event in requestResolve(place: place, cause: .operation(event)) }
+            operations.forEach { place, events in events.forEach { requestResolve(place: place, cause: .operation($0)) } }
             return
         }
 

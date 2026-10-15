@@ -16,7 +16,11 @@ extension EmbeddedBlockPlaceRegistry {
 
         var content: [String: Kept] = [:]
 
-        var operations: [String: ApplicationEvent] = [:]
+        private var operations: [String: [ApplicationEvent]] = [:]
+
+        mutating func hold(_ operation: ApplicationEvent, at place: String) {
+            operations[place, default: []].append(operation)
+        }
 
         mutating func keep(_ answer: EmbeddedBlockPlaceAnswer, at place: String, now: () -> TimeInterval) {
             if let kept = content[place], kept.answer.sessionEpoch == answer.sessionEpoch,
@@ -27,7 +31,7 @@ extension EmbeddedBlockPlaceRegistry {
             }
         }
 
-        mutating func takeOperations() -> [String: ApplicationEvent] {
+        mutating func takeOperations() -> [String: [ApplicationEvent]] {
             let taken = operations
             operations = [:]
             return taken
