@@ -524,7 +524,7 @@ extension EmbeddedBlockPlaceRegistry: EmbeddedBlockAppPresenceSubscribing {
     func userDidBecomePresent() {
         let kept = contentAwaitingTheSessionCheck
         contentAwaitingTheSessionCheck = [:]
-        kept.forEach { place, kept in
+        kept.sorted { ($0.value.keptAt, $0.key) < ($1.value.keptAt, $1.key) }.forEach { place, kept in
             handle(kept.answer.with(processingDuration: kept.answer.processingDuration + now() - kept.keptAt), at: place)
             blocksByPlace[place]?.forEach { $0.block?.keptContentIsReleased() }
         }
