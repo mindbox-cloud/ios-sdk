@@ -68,7 +68,7 @@ struct InappShowAccountantTests {
         #expect(budget.commits == [.init(owner: .place("place"), inAppId: "inapp-1", frequency: .unlimited)])
     }
 
-    @Test("A block's show reaches the storage after the session ledger's hold, so a UserDefaults observer that reads the ledger returns")
+    @Test("A block's show reaches the storage after the session ledger's hold, so a UserDefaults observer that reads the ledger finds it free")
     func blockShowHistoryIsWrittenOutsideTheLedgersLock() throws {
         let storage = try #require(HostObservedHistoryStorage())
         let accountant = InappShowAccountant(tracker: tracker, budget: InappShowBudget(persistenceStorage: storage, trackingService: InAppTrackingService()))
@@ -83,6 +83,7 @@ struct InappShowAccountantTests {
 
         #expect(written.wait(timeout: .now() + 5) == .success)
         #expect(storage.hostObserverRuns == 2)
+        #expect(!storage.hasFoundTheLedgerHeld)
     }
 
     @Test("The same in-app at a place is accounted once and gives the slot back")

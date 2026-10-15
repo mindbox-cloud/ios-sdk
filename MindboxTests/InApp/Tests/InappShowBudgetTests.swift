@@ -259,7 +259,7 @@ struct InappShowBudgetTests {
         #expect(trackingService.saveInappStateChangeCallCount == 1)
     }
 
-    @Test("A show's history reaches the storage after the session ledger's hold, so a UserDefaults observer that reads the ledger returns")
+    @Test("A show's history reaches the storage after the session ledger's hold, so a UserDefaults observer that reads the ledger finds it free")
     func showHistoryIsWrittenOutsideTheLedgersLock() throws {
         let storage = try #require(HostObservedHistoryStorage())
         let budget = InappShowBudget(persistenceStorage: storage, trackingService: InAppTrackingService())
@@ -272,9 +272,10 @@ struct InappShowBudgetTests {
 
         #expect(written.wait(timeout: .now() + 5) == .success)
         #expect(storage.hostObserverRuns == 2)
+        #expect(!storage.hasFoundTheLedgerHeld)
     }
 
-    @Test("A cooldown reaches the storage after the session ledger's hold, so a UserDefaults observer that reads the ledger returns")
+    @Test("A cooldown reaches the storage after the session ledger's hold, so a UserDefaults observer that reads the ledger finds it free")
     func cooldownIsWrittenOutsideTheLedgersLock() throws {
         let storage = try #require(HostObservedHistoryStorage())
         let budget = InappShowBudget(persistenceStorage: storage, trackingService: InAppTrackingService())
@@ -287,6 +288,7 @@ struct InappShowBudgetTests {
 
         #expect(written.wait(timeout: .now() + 5) == .success)
         #expect(storage.hostObserverRuns == 1)
+        #expect(!storage.hasFoundTheLedgerHeld)
     }
 
     @Test("A reservation made while a show's history is on its way to the storage counts that show")

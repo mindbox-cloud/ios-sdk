@@ -147,6 +147,7 @@ class MockPersistenceStorage: PersistenceStorage {
 final class HostObservedHistoryStorage: MockPersistenceStorage {
 
     @Locked private(set) var hostObserverRuns = 0
+    @Locked private(set) var hasFoundTheLedgerHeld = false
     var shownDatesWillBeWritten: () -> Void = {}
     private let suiteName: String
     private let defaults: UserDefaults
@@ -161,7 +162,14 @@ final class HostObservedHistoryStorage: MockPersistenceStorage {
         super.init()
         shownDatesByInApp = [:]
         observer = NotificationCenter.default.addObserver(forName: UserDefaults.didChangeNotification, object: defaults, queue: nil) { [weak self] _ in
-            _ = SessionTemporaryStorage.shared.ledger.sessionEpoch
+            let isLedgerRead = DispatchSemaphore(value: 0)
+            Thread.detachNewThread {
+                _ = SessionTemporaryStorage.shared.ledger.sessionEpoch
+                isLedgerRead.signal()
+            }
+            if isLedgerRead.wait(timeout: .now() + 1) == .timedOut {
+                self?.hasFoundTheLedgerHeld = true
+            }
             self?.$hostObserverRuns.mutate { $0 += 1 }
         }
     }
