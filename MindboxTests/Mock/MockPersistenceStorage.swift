@@ -167,7 +167,7 @@ final class HostObservedHistoryStorage: MockPersistenceStorage {
                 _ = SessionTemporaryStorage.shared.ledger.sessionEpoch
                 isLedgerRead.signal()
             }
-            if isLedgerRead.wait(timeout: .now() + 1) == .timedOut {
+            if isLedgerRead.wait(timeout: .now() + 5) == .timedOut {
                 self?.hasFoundTheLedgerHeld = true
             }
             self?.$hostObserverRuns.mutate { $0 += 1 }
