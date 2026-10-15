@@ -173,7 +173,7 @@ struct EmbeddedBlockWaitBudgetTests {
         bed.enterBackground()
         bed.clock.advance(budgetSeconds)
 
-        bed.budget.armIfNeeded()
+        bed.enterForeground()
 
         #expect(bed.scheduler.lastDelay == budgetSeconds)
     }

@@ -38,6 +38,8 @@ final class EmbeddedBlockWaitBudget {
 
     private var resumedAt: TimeInterval?
 
+    private var isInBackground = false
+
     private var remaining: TimeInterval { max(0, duration() - consumed) }
 
     init(placeSystemName: String,
@@ -69,7 +71,8 @@ final class EmbeddedBlockWaitBudget {
     }
 
     func armIfNeeded() {
-        guard workItem == nil, isNeeded() else { return }
+        assert(Thread.isMainThread)
+        guard workItem == nil, !isInBackground, isNeeded() else { return }
 
         let work = DispatchWorkItem { [weak self] in
             guard let self else { return }
@@ -114,6 +117,7 @@ final class EmbeddedBlockWaitBudget {
 
     @objc
     private func applicationDidEnterBackground() {
+        isInBackground = true
         guard isRunning else { return }
 
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' went to the background while loading, pausing the timeout",
@@ -123,6 +127,7 @@ final class EmbeddedBlockWaitBudget {
 
     @objc
     private func applicationWillEnterForeground() {
+        isInBackground = false
         armIfNeeded()
     }
 }
