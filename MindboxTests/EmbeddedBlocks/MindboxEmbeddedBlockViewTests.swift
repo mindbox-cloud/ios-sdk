@@ -920,6 +920,36 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.bed.page?.isUserPresent == false)
     }
 
+    @Test("A reload in the pass of main the block left its window in runs as on screen: the end of the pass stops it, its answer waits without a slot or a show, and the block builds its page once it is back")
+    func reloadInThePassTheBlockLeftInWaitsForItsReturn() {
+        let block = BlockFixture()
+        block.attachToWindow()
+        block.page?.failLoad()
+        block.bed.resolver.isDeferred = true
+        let resolves = block.bed.resolver.resolveCount
+        let reservationsBefore = block.bed.budget.reservations.count
+
+        block.view.removeFromSuperview()
+        block.view.reload()
+
+        #expect(block.bed.resolver.resolveCount == resolves + 1)
+        #expect(block.waitBudgetBed.budget.isRunning)
+
+        block.mainPass.fireAll()
+
+        #expect(!block.bed.provider.isActive)
+        #expect(!block.waitBudgetBed.budget.isRunning)
+
+        block.bed.resolver.flush()
+
+        #expect(block.bed.accounting.shows.isEmpty)
+        #expect(block.bed.budget.reservations.count == reservationsBefore)
+
+        block.attachToWindow()
+
+        #expect(block.bed.pageFactory.pages.count == 2)
+    }
+
     @Test("An answer landing while the block is moved within one pass of main arms the wait budget for its page")
     func answerDuringAMoveWithinOnePassArmsTheBudget() async {
         let block = BlockFixture()
