@@ -59,12 +59,18 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     private let queue = DispatchQueue(label: "com.Mindbox.configurationManager")
     private var configResponse: ConfigResponse?
 
+    private struct ConfigEntry {
+        let candidates: ConfigCandidates?
+        let sessionEpoch: Int
+    }
+
     /// Written, and checked before a wait, only on `queue`; locked only so a page's operation and `hasConfig`
     /// can read it synchronously from the main thread.
-    @Locked private var configCandidates: ConfigCandidates?
+    @Locked private var configEntry = ConfigEntry(candidates: nil, sessionEpoch: 0)
 
     var hasConfig: Bool {
-        configCandidates != nil && !candidatesAreOfAnEarlierSession
+        let entry = configEntry
+        return entry.candidates != nil && !isOfAnEarlierSession(entry)
     }
 
     private static let defaultConfigWaitBudget: TimeInterval = 30
@@ -75,10 +81,8 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     /// instead of sitting in it until some download completes.
     private var configWaiters: [Int: (ConfigCandidates?, _ sessionEpoch: Int) -> Void] = [:]
 
-    @Locked private var candidatesSessionEpoch = 0
-
-    private var candidatesAreOfAnEarlierSession: Bool {
-        candidatesSessionEpoch < SessionTemporaryStorage.shared.ledger.sessionEpoch
+    private func isOfAnEarlierSession(_ entry: ConfigEntry) -> Bool {
+        entry.sessionEpoch < SessionTemporaryStorage.shared.ledger.sessionEpoch
     }
 
     /// Confined to `queue`, like `configResponse`.
@@ -137,7 +141,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     
     func handleInapps(event: ApplicationEvent? = nil, _ completion: @escaping (InAppFormData?) -> Void) {
         queue.async {
-            guard let inappMapper = self.inappMapper, let candidates = self.configCandidates else {
+            guard let inappMapper = self.inappMapper, let candidates = self.configEntry.candidates else {
                 completion(nil)
                 return
             }
@@ -202,7 +206,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     }
 
     func inappInCurrentConfig(withId id: String) -> InApp? {
-        configCandidates?.renderable.first { $0.id == id }
+        configEntry.candidates?.renderable.first { $0.id == id }
     }
 
     /// A raw scan, not the selection: unvalidated variants count in on purpose — the resolve applies
@@ -259,17 +263,18 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
                              ofCurrentSession: Bool = false,
                              _ completion: @escaping (ConfigCandidates?, _ sessionEpoch: Int) -> Void) {
         queue.async {
-            let isOfAnEarlierSession = ofCurrentSession && self.candidatesAreOfAnEarlierSession
+            let entry = self.configEntry
+            let isOfAnEarlierSession = ofCurrentSession && self.isOfAnEarlierSession(entry)
 
-            if !isOfAnEarlierSession, let candidates = self.configCandidates {
-                completion(candidates, self.candidatesSessionEpoch)
+            if !isOfAnEarlierSession, let candidates = entry.candidates {
+                completion(candidates, entry.sessionEpoch)
                 return
             }
 
             if !isOfAnEarlierSession, self.hasConcludedDownload {
                 Logger.common(message: "[InAppConfigurationManager] The session's config download already finished with nothing, \(what) gets nothing",
                               level: .error, category: .inAppMessages)
-                completion(nil, self.candidatesSessionEpoch)
+                completion(nil, entry.sessionEpoch)
                 return
             }
 
@@ -288,7 +293,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
 
                 Logger.common(message: "[InAppConfigurationManager] Gave up waiting \(cap)s for a config, \(what) gets nothing",
                               level: .error, category: .inAppMessages)
-                waiter(nil, self.candidatesSessionEpoch)
+                waiter(nil, self.configEntry.sessionEpoch)
             }
         }
     }
@@ -346,13 +351,12 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             applySessionStorageSettings(settings)
         }
 
-        configCandidates = configResponse.map { inappFilterService.candidates(from: $0) }
-        candidatesSessionEpoch = sessionEpoch
+        configEntry = ConfigEntry(candidates: configResponse.map { inappFilterService.candidates(from: $0) }, sessionEpoch: sessionEpoch)
         hasConcludedDownload = true
 
         let waiters = configWaiters
         configWaiters = [:]
-        waiters.sorted { $0.key < $1.key }.forEach { $0.value(configCandidates, sessionEpoch) }
+        waiters.sorted { $0.key < $1.key }.forEach { $0.value(configEntry.candidates, sessionEpoch) }
 
         // Prewarm stage 2: warm what the config's webview in-apps need (or release the
         // warm instance when the config proves there are none).
