@@ -33,10 +33,22 @@ extension EmbeddedBlockPlaceRegistry {
         let isTriggered: Bool
         var isAskedAgainMidResolve = false
         var isConfigAnnouncedMidResolve = false
+        private var hasStoodInUnanswered = false
 
         init(askedInSession: Int, isTriggered: Bool) {
             self.askedInSession = askedInSession
             self.isTriggered = isTriggered
+        }
+
+        func standsInForTheAsk(of sessionEpoch: Int) -> Bool {
+            guard isOperationFreeAsk(of: sessionEpoch) else { return false }
+
+            hasStoodInUnanswered = true
+            return true
+        }
+
+        func leavesNewSessionUnanswered(answeredFrom configVersion: ConfigVersion?) -> Bool {
+            hasStoodInUnanswered && configVersion == nil
         }
 
         func answered(from configVersion: ConfigVersion?) -> AnsweredPass {
@@ -54,6 +66,10 @@ extension EmbeddedBlockPlaceRegistry {
         let askedInSession: Int
         let isTriggered: Bool
         let configVersion: ConfigVersion?
+
+        func standsForTheAsk(of sessionEpoch: Int) -> Bool {
+            configVersion != nil && isOperationFreeAsk(of: sessionEpoch)
+        }
     }
 
     enum ResolveCause {

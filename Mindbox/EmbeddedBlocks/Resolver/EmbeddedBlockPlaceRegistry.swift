@@ -170,8 +170,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
     private func sessionStarted(carrying operations: [String: ApplicationEvent]) {
         let sessionEpoch = SessionTemporaryStorage.shared.ledger.sessionEpoch
         for place in Array(blocksByPlace.keys) where hasActiveBlocks(place) || holdsAnAttempt(at: place) {
-            let lastAsked: EmbeddedBlockAskedPass? = resolvingPlaces[place] ?? answeredPasses[place]
-            guard operations[place] != nil || lastAsked?.isOperationFreeAsk(of: sessionEpoch) != true else {
+            guard operations[place] != nil || !isAnsweredInNewSession(place, sessionEpoch) else {
                 Logger.common(message: "[EmbeddedBlock] Place '\(place)': a new session, and its pass in flight or its last answer was asked in it with no operation — its answer is the new session's",
                               category: .embeddedBlocks)
                 continue
@@ -179,6 +178,10 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
 
             requestResolve(place: place, cause: .newSession(operations[place]))
         }
+    }
+
+    private func isAnsweredInNewSession(_ place: String, _ sessionEpoch: Int) -> Bool {
+        resolvingPlaces[place]?.standsInForTheAsk(of: sessionEpoch) ?? answeredPasses[place]?.standsForTheAsk(of: sessionEpoch) ?? false
     }
 
     /// Gated twice, in sync with Android: the place must be in the config, and some in-app of the
@@ -258,12 +261,15 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
             let renamed = self.asTheQueuedNewSessionAsk(answer, of: pass, at: place)
             self.handle(renamed?.answer ?? answer, at: place, answeringTheQueuedAsk: renamed?.answersTheQueuedAsk == true, recording: pass.answered(from: configVersion))
             let isAnsweredFromAnOlderConfig = pass.isAnsweredFromConfig(configVersion, olderThan: self.newestConfigVersion)
+            let isNewSessionLeftUnanswered = pass.leavesNewSessionUnanswered(answeredFrom: configVersion)
+            let isAskedAgain = isAnsweredFromAnOlderConfig || isNewSessionLeftUnanswered
 
             if let queued = self.queuedInvalidations.removeValue(forKey: place) {
-                self.requestResolve(place: place, cause: .queued(isAnsweredFromAnOlderConfig ? QueuedInvalidation(merging: .newConfig, into: queued, now: self.now) : queued))
-            } else if isAnsweredFromAnOlderConfig, let newest = self.newestConfigVersion {
-                Logger.common(message: "[EmbeddedBlock] Place '\(place)': answered from config \(configVersion?.description ?? "no config"), older than \(newest) — asking again",
-                              category: .embeddedBlocks)
+                self.requestResolve(place: place, cause: .queued(isAskedAgain ? QueuedInvalidation(merging: .newConfig, into: queued, now: self.now) : queued))
+            } else if isAskedAgain {
+                let reason = isNewSessionLeftUnanswered ? "its pass stood for the new session's ask and read no config"
+                    : "answered from config \(configVersion?.description ?? "no config"), older than \(self.newestConfigVersion?.description ?? "none")"
+                Logger.common(message: "[EmbeddedBlock] Place '\(place)': \(reason) — asking again", category: .embeddedBlocks)
                 self.requestResolve(place: place, cause: .queued(QueuedInvalidation(trigger: nil, includesNonOperation: true)))
             }
         }
