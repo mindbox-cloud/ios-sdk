@@ -34,7 +34,7 @@ enum EmbeddedPlaceSelection: Equatable {
 protocol InAppConfigurationManagerProtocol: AnyObject {
     var delegate: InAppConfigurationDelegate? { get set }
 
-    /// Whether a config is in hand: what a caller still waiting for an answer is stuck on otherwise.
+    /// Whether a config of the current session is in hand: what a place still waiting for an answer is stuck on otherwise.
     var hasConfig: Bool { get }
 
     func prepareConfiguration()
@@ -59,11 +59,13 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     private let queue = DispatchQueue(label: "com.Mindbox.configurationManager")
     private var configResponse: ConfigResponse?
 
-    /// Written, and checked before a wait, only on `queue`; locked only so a page's operation can read it
-    /// synchronously from the main thread.
+    /// Written, and checked before a wait, only on `queue`; locked only so a page's operation and `hasConfig`
+    /// can read it synchronously from the main thread.
     @Locked private var configCandidates: ConfigCandidates?
 
-    @Locked private(set) var hasConfig = false
+    var hasConfig: Bool {
+        configCandidates != nil && !candidatesAreOfAnEarlierSession
+    }
 
     private static let defaultConfigWaitBudget: TimeInterval = 30
 
@@ -73,7 +75,11 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     /// instead of sitting in it until some download completes.
     private var configWaiters: [Int: (ConfigCandidates?, _ sessionEpoch: Int) -> Void] = [:]
 
-    private var candidatesSessionEpoch = 0
+    @Locked private var candidatesSessionEpoch = 0
+
+    private var candidatesAreOfAnEarlierSession: Bool {
+        candidatesSessionEpoch < SessionTemporaryStorage.shared.ledger.sessionEpoch
+    }
 
     /// Confined to `queue`, like `configResponse`.
     private var nextConfigWaiterToken = 0
@@ -253,8 +259,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
                              ofCurrentSession: Bool = false,
                              _ completion: @escaping (ConfigCandidates?, _ sessionEpoch: Int) -> Void) {
         queue.async {
-            let isOfAnEarlierSession = ofCurrentSession
-                && self.candidatesSessionEpoch < SessionTemporaryStorage.shared.ledger.sessionEpoch
+            let isOfAnEarlierSession = ofCurrentSession && self.candidatesAreOfAnEarlierSession
 
             if !isOfAnEarlierSession, let candidates = self.configCandidates {
                 completion(candidates, self.candidatesSessionEpoch)
@@ -343,7 +348,6 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
 
         configCandidates = configResponse.map { inappFilterService.candidates(from: $0) }
         candidatesSessionEpoch = sessionEpoch
-        hasConfig = configCandidates != nil
         hasConcludedDownload = true
 
         let waiters = configWaiters
