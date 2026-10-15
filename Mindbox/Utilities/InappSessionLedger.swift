@@ -36,7 +36,7 @@ enum BlockShowRecord: Equatable {
 }
 
 /// What this session already told the funnel and served to places, kept so nothing is repeated.
-/// Reset as one with the session.
+/// Reset as one with the session; a show history not yet saved outlives the reset.
 struct InappSessionLedger: Equatable {
 
     var sessionEpoch = 0
@@ -63,6 +63,8 @@ struct InappSessionLedger: Equatable {
     var showBudget = InappShowBudgetState()
 
     var isSessionEnding = false
+
+    var unsavedShowHistory: InappUnsavedShowHistory?
 
     func hasEnded(_ sessionEpoch: Int) -> Bool {
         sessionEpoch != self.sessionEpoch || isSessionEnding
@@ -104,6 +106,29 @@ extension InappSessionLedger {
 
     mutating func recordFailure(_ inappId: String, reason: String) -> Bool {
         reportedFailures.insert(ReportedFailure(inappId: inappId, reason: reason)).inserted
+    }
+
+    mutating func changeShowHistory(persisted: () -> InappShowHistory, _ change: (inout InappShowHistory) -> Void) {
+        var unsaved = unsavedShowHistory ?? InappUnsavedShowHistory(history: persisted())
+        change(&unsaved.history)
+        unsaved.revision += 1
+        unsavedShowHistory = unsaved
+    }
+
+    mutating func takeShowHistoryToSave() -> InappUnsavedShowHistory? {
+        guard let unsaved = unsavedShowHistory, !unsaved.isBeingSaved else { return nil }
+
+        unsavedShowHistory?.isBeingSaved = true
+        return unsaved
+    }
+
+    mutating func showHistorySaved(_ saved: InappUnsavedShowHistory) -> InappUnsavedShowHistory? {
+        guard let unsaved = unsavedShowHistory, unsaved.revision != saved.revision else {
+            unsavedShowHistory = nil
+            return nil
+        }
+
+        return unsaved
     }
 }
 

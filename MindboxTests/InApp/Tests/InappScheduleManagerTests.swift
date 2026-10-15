@@ -1243,12 +1243,12 @@ class InAppTrackingServiceMock: InAppTrackingServiceProtocol {
     var saveInappStateChangeCallCount = 0
     var lastTrackedInAppId: String?
     
-    func trackInAppShown(id: String) {
+    func trackInAppShown(id: String, in history: inout InappShowHistory) {
         trackInAppShownCallCount += 1
         lastTrackedInAppId = id
     }
     
-    func saveInappStateChange() {
+    func saveInappStateChange(in history: inout InappShowHistory) {
         saveInappStateChangeCallCount += 1
     }
 }

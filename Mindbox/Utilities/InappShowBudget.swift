@@ -32,6 +32,17 @@ struct InappShowBudgetState: Equatable {
     var reservations: [InappShowBudgetOwner: InappShowReservation] = [:]
 }
 
+struct InappShowHistory: Equatable {
+    var shownDatesByInApp: [String: [Date]]?
+    var lastStateChangeDate: Date?
+}
+
+struct InappUnsavedShowHistory: Equatable {
+    var history: InappShowHistory
+    var revision = 0
+    var isBeingSaved = false
+}
+
 protocol InappShowBudgeting: AnyObject {
 
     func reserve(_ owner: InappShowBudgetOwner, inAppId: String, isPriority: Bool, frequency: InappFrequency?, inSession sessionEpoch: Int?) -> InappShowReservationOutcome?
@@ -42,6 +53,8 @@ protocol InappShowBudgeting: AnyObject {
 
     /// The moment `minIntervalBetweenShows` counts from — written when the frequency counts shows.
     func recordCooldown(frequency: InappFrequency?)
+
+    func saveShowHistory()
 }
 
 extension InappShowBudgeting {
@@ -52,6 +65,7 @@ extension InappShowBudgeting {
 
     func commit(_ owner: InappShowBudgetOwner, inAppId: String, frequency: InappFrequency?, inSession sessionEpoch: Int? = nil) {
         SessionTemporaryStorage.shared.$ledger.mutate { commit(owner, inAppId: inAppId, frequency: frequency, inSession: sessionEpoch, to: &$0) }
+        saveShowHistory()
     }
 
     func release(_ owner: InappShowBudgetOwner, inSession sessionEpoch: Int? = nil) {
@@ -77,7 +91,7 @@ final class InappShowBudget: InappShowBudgeting {
 
     func reserve(_ owner: InappShowBudgetOwner, inAppId: String, isPriority: Bool, frequency: InappFrequency?, inSession sessionEpoch: Int?) -> InappShowReservationOutcome? {
         SessionTemporaryStorage.shared.$ledger.withinLiveSession(sessionEpoch) { ledger in
-            reserve(owner, inAppId: inAppId, isPriority: isPriority, frequency: frequency, in: &ledger.showBudget)
+            reserve(owner, inAppId: inAppId, isPriority: isPriority, frequency: frequency, in: &ledger)
         }
     }
 
@@ -98,8 +112,10 @@ final class InappShowBudget: InappShowBudgeting {
         if isOfThisSession {
             ledger.showBudget.shownInSession.append(inAppId)
         }
-        trackingService.trackInAppShown(id: inAppId)
-        trackingService.saveInappStateChange()
+        ledger.changeShowHistory(persisted: persistedShowHistory) { history in
+            trackingService.trackInAppShown(id: inAppId, in: &history)
+            trackingService.saveInappStateChange(in: &history)
+        }
     }
 
     func release(_ owner: InappShowBudgetOwner, inSession sessionEpoch: Int?, from ledger: inout InappSessionLedger) {
@@ -111,19 +127,42 @@ final class InappShowBudget: InappShowBudgeting {
     func recordCooldown(frequency: InappFrequency?) {
         guard InappFrequency.countsShows(frequency) else { return }
 
-        SessionTemporaryStorage.shared.$ledger.mutate { _ in
-            trackingService.saveInappStateChange()
+        SessionTemporaryStorage.shared.$ledger.mutate { ledger in
+            ledger.changeShowHistory(persisted: persistedShowHistory) { trackingService.saveInappStateChange(in: &$0) }
+        }
+        saveShowHistory()
+    }
+
+    func saveShowHistory() {
+        var next = SessionTemporaryStorage.shared.$ledger.mutate { $0.takeShowHistoryToSave() }
+        while let unsaved = next {
+            save(unsaved.history)
+            next = SessionTemporaryStorage.shared.$ledger.mutate { $0.showHistorySaved(unsaved) }
         }
     }
 
-    private func reserve(_ owner: InappShowBudgetOwner, inAppId: String, isPriority: Bool, frequency: InappFrequency?, in state: inout InappShowBudgetState) -> InappShowReservationOutcome {
-        if state.reservations[owner]?.inAppId == inAppId {
+    private func save(_ history: InappShowHistory) {
+        if persistenceStorage.shownDatesByInApp != history.shownDatesByInApp {
+            persistenceStorage.shownDatesByInApp = history.shownDatesByInApp
+        }
+        if persistenceStorage.lastInappStateChangeDate != history.lastStateChangeDate {
+            persistenceStorage.lastInappStateChangeDate = history.lastStateChangeDate
+        }
+    }
+
+    private func persistedShowHistory() -> InappShowHistory {
+        InappShowHistory(shownDatesByInApp: persistenceStorage.shownDatesByInApp, lastStateChangeDate: persistenceStorage.lastInappStateChangeDate)
+    }
+
+    private func reserve(_ owner: InappShowBudgetOwner, inAppId: String, isPriority: Bool, frequency: InappFrequency?, in ledger: inout InappSessionLedger) -> InappShowReservationOutcome {
+        if ledger.showBudget.reservations[owner]?.inAppId == inAppId {
             return .notNeeded
         }
-        state.reservations.removeValue(forKey: owner)
+        ledger.showBudget.reservations.removeValue(forKey: owner)
 
+        let history = ledger.unsavedShowHistory?.history ?? persistedShowHistory()
         let frequencyValidator = InappFrequencyValidator(persistenceStorage: persistenceStorage)
-        guard frequencyValidator.isValid(frequency: frequency, id: inAppId, shownInSession: state.shownInSession) else {
+        guard frequencyValidator.isValid(frequency: frequency, id: inAppId, shownInSession: ledger.showBudget.shownInSession, shownDatesByInApp: history.shownDatesByInApp) else {
             return .refused
         }
 
@@ -133,11 +172,11 @@ final class InappShowBudget: InappShowBudgeting {
             return .notNeeded
         }
 
-        guard isUnderSessionLimit(state), isUnderDailyLimit(state), hasElapsedMinimumInterval(state) else {
+        guard isUnderSessionLimit(ledger.showBudget), isUnderDailyLimit(ledger.showBudget, history), hasElapsedMinimumInterval(ledger.showBudget, history) else {
             return .refused
         }
 
-        state.reservations[owner] = InappShowReservation(inAppId: inAppId, reservedAt: now())
+        ledger.showBudget.reservations[owner] = InappShowReservation(inAppId: inAppId, reservedAt: now())
         return .granted
     }
 
@@ -154,19 +193,19 @@ final class InappShowBudget: InappShowBudgeting {
         return isAllowed
     }
 
-    private func isUnderDailyLimit(_ state: InappShowBudgetState) -> Bool {
+    private func isUnderDailyLimit(_ state: InappShowBudgetState, _ history: InappShowHistory) -> Bool {
         guard let limit = positiveLimit(SessionTemporaryStorage.shared.inAppSettings?.maxInappsPerDay, named: "Daily") else {
             return true
         }
 
-        let shownToday = shownTodayCount()
+        let shownToday = shownTodayCount(history)
         let isAllowed = limit > shownToday + state.reservations.count
         Logger.common(message: "[ShowBudget] [Daily] shown today: \(shownToday), reserved: \(state.reservations.count), limit: \(limit), allowed: \(isAllowed)",
                       level: .info, category: .inAppMessages)
         return isAllowed
     }
 
-    private func hasElapsedMinimumInterval(_ state: InappShowBudgetState) -> Bool {
+    private func hasElapsedMinimumInterval(_ state: InappShowBudgetState, _ history: InappShowHistory) -> Bool {
         guard let minIntervalString = SessionTemporaryStorage.shared.inAppSettings?.minIntervalBetweenShows,
               let minIntervalMillis = try? minIntervalString.parseTimeSpanToMillis(),
               minIntervalMillis > 0 else {
@@ -176,7 +215,7 @@ final class InappShowBudget: InappShowBudgeting {
         }
 
         let lastReservation = state.reservations.values.map(\.reservedAt).max()
-        guard let lastChange = [persistenceStorage.lastInappStateChangeDate, lastReservation].compactMap({ $0 }).max() else {
+        guard let lastChange = [history.lastStateChangeDate, lastReservation].compactMap({ $0 }).max() else {
             Logger.common(message: "[ShowBudget] [minInterval] nothing shown or reserved yet, allowing", level: .info, category: .inAppMessages)
             return true
         }
@@ -202,8 +241,8 @@ final class InappShowBudget: InappShowBudgeting {
         return limit
     }
 
-    private func shownTodayCount() -> Int {
-        guard let dates = persistenceStorage.shownDatesByInApp, !dates.isEmpty else { return 0 }
+    private func shownTodayCount(_ history: InappShowHistory) -> Int {
+        guard let dates = history.shownDatesByInApp, !dates.isEmpty else { return 0 }
 
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: now())

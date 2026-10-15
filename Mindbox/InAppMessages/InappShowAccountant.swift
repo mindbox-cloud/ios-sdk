@@ -59,6 +59,7 @@ final class InappShowAccountant: InappShowAccounting {
 
         switch record {
         case .new:
+            budget.saveShowHistory()
             track(show)
         case .repeated:
             Logger.common(message: "[InappShowAccountant] Place '\(place)' shows in-app \(show.inAppId) again — nothing new to account for",

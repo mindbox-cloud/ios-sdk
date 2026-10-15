@@ -55,7 +55,7 @@ final class SessionTemporaryStorage {
     }
 
     func erase() {
-        $ledger.mutate { $0 = InappSessionLedger(sessionEpoch: $0.sessionEpoch + 1) }
+        $ledger.mutate { $0 = InappSessionLedger(sessionEpoch: $0.sessionEpoch + 1, unsavedShowHistory: $0.unsavedShowHistory) }
         observedCustomOperations = []
         viewProductOperation = nil
         viewCategoryOperation = nil

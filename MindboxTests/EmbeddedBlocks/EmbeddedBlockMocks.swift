@@ -140,6 +140,8 @@ final class InappShowBudgetMock: InappShowBudgeting {
     func recordCooldown(frequency: InappFrequency?) {
         cooldowns.append(frequency)
     }
+
+    func saveShowHistory() {}
 }
 
 final class EmbeddedBlockFailureReporterMock {
