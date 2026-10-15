@@ -1938,6 +1938,30 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.presence.isPresent)
     }
 
+    @Test("A presence created off the main thread reads whether the app is in the background on the main thread")
+    func presenceCreatedOffTheMainThreadReadsTheStateOnIt() async {
+        final class Reads {
+            var onMainThread: [Bool] = []
+        }
+        let reads = Reads()
+        let center = NotificationCenter()
+
+        let presence: EmbeddedBlockAppPresence = await withCheckedContinuation { continuation in
+            DispatchQueue.global().async {
+                continuation.resume(returning: EmbeddedBlockAppPresence(applicationState: {
+                    reads.onMainThread.append(Thread.isMainThread)
+                    return .background
+                }, isSDKInitialized: { true }, notificationCenter: center))
+            }
+        }
+        await withCheckedContinuation { continuation in
+            DispatchQueue.main.async { continuation.resume() }
+        }
+
+        #expect(reads.onMainThread == [true])
+        #expect(presence.isInBackground)
+    }
+
     @Test("A return and the session check that answers it are compared on the monotonic clock the check stamps itself with")
     func returnAndItsCheckShareTheMonotonicClock() {
         let center = NotificationCenter()

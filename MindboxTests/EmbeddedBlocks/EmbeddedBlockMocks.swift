@@ -605,11 +605,23 @@ final class EmbeddedBlockWaitBudgetBed {
         self.scheduler = scheduler
         self.center = center
         self.presenceBed = presenceBed
-        budget = EmbeddedBlockWaitBudget(placeSystemName: placeSystemName,
-                                            duration: { duration },
-                                            now: { clock.now },
-                                            presence: presenceBed.presence,
-                                            schedule: { scheduler.schedule($0, $1) })
+        budget = Self.makeBudget(placeSystemName: placeSystemName, duration: duration, clock: clock, scheduler: scheduler, presence: presenceBed.presence)
+    }
+
+    func makeBudget(placeSystemName: String = "block-id") -> EmbeddedBlockWaitBudget {
+        Self.makeBudget(placeSystemName: placeSystemName, duration: duration, clock: clock, scheduler: scheduler, presence: presenceBed.presence)
+    }
+
+    private static func makeBudget(placeSystemName: String,
+                                   duration: TimeInterval,
+                                   clock: TestClock,
+                                   scheduler: TestScheduler,
+                                   presence: EmbeddedBlockAppPresence) -> EmbeddedBlockWaitBudget {
+        EmbeddedBlockWaitBudget(placeSystemName: placeSystemName,
+                                duration: { duration },
+                                now: { clock.now },
+                                presence: presence,
+                                schedule: { scheduler.schedule($0, $1) })
     }
 
     func enterBackground() {
