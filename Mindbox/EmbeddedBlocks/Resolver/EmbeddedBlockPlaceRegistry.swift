@@ -268,7 +268,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
             let newSessionAskedAt = isNewSessionLeftUnanswered ? self.now() : nil
 
             if let queued = self.queuedInvalidations.removeValue(forKey: place) {
-                self.requestResolve(place: place, cause: .queued(isAskedAgain ? queued.askedAgain(asTheNewSessionsAskAt: newSessionAskedAt, isOnScreen: self.hasActiveBlocks(place)) : queued))
+                self.requestResolve(place: place, cause: .queued(isAskedAgain ? queued.askedAgain(asTheNewSessionsAskAt: newSessionAskedAt, isOnScreen: self.hasBlocksOnScreen(place)) : queued))
             } else if isAskedAgain {
                 let reason = isNewSessionLeftUnanswered ? "its pass stood for the new session's ask and read no config"
                     : "answered from config \(configVersion?.description ?? "no config"), older than \(self.newestConfigVersion?.description ?? "none")"
