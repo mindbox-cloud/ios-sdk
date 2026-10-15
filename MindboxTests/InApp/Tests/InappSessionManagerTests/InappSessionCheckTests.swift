@@ -21,12 +21,14 @@ struct InappSessionCheckTests {
         @Locked private(set) var startEvents = 0
 
         var onDiscard: (() -> Void)?
+        var onStart: (() -> Void)?
 
         func start() {}
 
         func sendEvent(_ event: InAppMessageTriggerEvent) {
             if case .start = event {
                 $startEvents.mutate { $0 += 1 }
+                onStart?()
             }
         }
 
@@ -155,6 +157,49 @@ struct InappSessionCheckTests {
         #expect(secondCheckedMidReset == false)
         #expect(spy.announcements.map(\.sessionEpoch) == [sessionEpoch + 1, sessionEpoch + 1])
         #expect(spy.announcements.map(\.startsNewSession) == [true, false])
+    }
+
+    @Test("An observer of an expired session's discard can wait for a session check of its own: the check never makes its observers run inside its lock")
+    func discardObserverCanWaitForASessionCheck() {
+        manager.lastTrackVisitTimestamp = Date().addingTimeInterval(-2400)
+        let manager = manager
+        let checkedAgain = DispatchSemaphore(value: 0)
+        var checkedAgainInTime: Bool?
+        let observer = NotificationCenter.default.addObserver(forName: .shouldDiscardInapps, object: nil, queue: nil) { _ in
+            DispatchQueue.global().async {
+                manager.checkInappSession()
+                checkedAgain.signal()
+            }
+            checkedAgainInTime = checkedAgain.wait(timeout: .now() + 1) == .success
+        }
+        defer { NotificationCenter.default.removeObserver(observer) }
+
+        manager.checkInappSession()
+        waitForMain()
+        if checkedAgainInTime == false {
+            _ = checkedAgain.wait(timeout: .now() + 2)
+        }
+        waitForMain()
+
+        #expect(checkedAgainInTime == true)
+    }
+
+    @Test("An expired session's discard is heard on main before anything the new session's start puts on main")
+    func expiredSessionsDiscardIsHeardBeforeTheNewSessionReachesMain() {
+        manager.lastTrackVisitTimestamp = Date().addingTimeInterval(-2400)
+        var heard: [String] = []
+        coreManager.onStart = {
+            DispatchQueue.main.async { heard.append("new session") }
+        }
+        let observer = NotificationCenter.default.addObserver(forName: .shouldDiscardInapps, object: nil, queue: nil) { _ in
+            heard.append("discard")
+        }
+        defer { NotificationCenter.default.removeObserver(observer) }
+
+        manager.checkInappSession()
+        waitForMain()
+
+        #expect(heard == ["discard", "new session"])
     }
 
     @Test("A check before initialization starts no session")
