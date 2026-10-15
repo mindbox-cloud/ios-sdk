@@ -68,6 +68,23 @@ struct InappShowAccountantTests {
         #expect(budget.commits == [.init(owner: .place("place"), inAppId: "inapp-1", frequency: .unlimited)])
     }
 
+    @Test("A block's show reaches the storage after the session ledger's hold, so a UserDefaults observer that reads the ledger returns")
+    func blockShowHistoryIsWrittenOutsideTheLedgersLock() throws {
+        let storage = try #require(HostObservedHistoryStorage())
+        let accountant = InappShowAccountant(tracker: tracker, budget: InappShowBudget(persistenceStorage: storage, trackingService: InAppTrackingService()))
+        let shown = show(.once(OnceFrequency(kind: .session)))
+        let sessionEpoch = sessionEpoch
+        let written = DispatchSemaphore(value: 0)
+
+        DispatchQueue.global().async {
+            accountant.recordBlockShow(shown, at: "place", sessionEpoch: sessionEpoch)
+            written.signal()
+        }
+
+        #expect(written.wait(timeout: .now() + 5) == .success)
+        #expect(storage.hostObserverRuns == 2)
+    }
+
     @Test("The same in-app at a place is accounted once and gives the slot back")
     func sameInappAtPlaceIsAccountedOnce() {
         accountant.recordBlockShow(show(.unlimited), at: "place", sessionEpoch: sessionEpoch)

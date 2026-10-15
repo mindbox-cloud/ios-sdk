@@ -259,6 +259,86 @@ struct InappShowBudgetTests {
         #expect(trackingService.saveInappStateChangeCallCount == 1)
     }
 
+    @Test("A show's history reaches the storage after the session ledger's hold, so a UserDefaults observer that reads the ledger returns")
+    func showHistoryIsWrittenOutsideTheLedgersLock() throws {
+        let storage = try #require(HostObservedHistoryStorage())
+        let budget = InappShowBudget(persistenceStorage: storage, trackingService: InAppTrackingService())
+        let written = DispatchSemaphore(value: 0)
+
+        DispatchQueue.global().async {
+            budget.commit(.overlay("a"), inAppId: "a", frequency: restricted)
+            written.signal()
+        }
+
+        #expect(written.wait(timeout: .now() + 5) == .success)
+        #expect(storage.hostObserverRuns == 2)
+    }
+
+    @Test("A cooldown reaches the storage after the session ledger's hold, so a UserDefaults observer that reads the ledger returns")
+    func cooldownIsWrittenOutsideTheLedgersLock() throws {
+        let storage = try #require(HostObservedHistoryStorage())
+        let budget = InappShowBudget(persistenceStorage: storage, trackingService: InAppTrackingService())
+        let written = DispatchSemaphore(value: 0)
+
+        DispatchQueue.global().async {
+            budget.recordCooldown(frequency: restricted)
+            written.signal()
+        }
+
+        #expect(written.wait(timeout: .now() + 5) == .success)
+        #expect(storage.hostObserverRuns == 1)
+    }
+
+    @Test("A reservation made while a show's history is on its way to the storage counts that show")
+    func reservationDuringTheSaveCountsTheShow() throws {
+        setLimits(day: 1)
+        let storage = try #require(HostObservedHistoryStorage())
+        let budget = InappShowBudget(persistenceStorage: storage, trackingService: InAppTrackingService(), now: { [clock] in clock.now })
+        var reservedDuringTheSave: InappShowReservationOutcome?
+        storage.shownDatesWillBeWritten = { [weak budget] in
+            reservedDuringTheSave = budget?.reserve(.overlay("b"), inAppId: "b", isPriority: false, frequency: restricted)
+        }
+
+        budget.commit(.overlay("a"), inAppId: "a", frequency: restricted)
+
+        #expect(reservedDuringTheSave == .refused)
+        #expect(storage.shownDatesByInApp?["a"]?.count == 1)
+    }
+
+    @Test("A reservation in a session that began while a show's history was on its way to the storage counts that show")
+    func reservationOfTheNextSessionDuringTheSaveCountsTheShow() throws {
+        let storage = try #require(HostObservedHistoryStorage())
+        let budget = InappShowBudget(persistenceStorage: storage, trackingService: InAppTrackingService(), now: { [clock] in clock.now })
+        var reservedDuringTheSave: InappShowReservationOutcome?
+        storage.shownDatesWillBeWritten = { [weak budget] in
+            SessionTemporaryStorage.shared.erase()
+            setLimits(day: 1)
+            reservedDuringTheSave = budget?.reserve(.overlay("b"), inAppId: "b", isPriority: false, frequency: restricted)
+        }
+
+        budget.commit(.overlay("a"), inAppId: "a", frequency: restricted)
+
+        #expect(reservedDuringTheSave == .refused)
+        #expect(storage.shownDatesByInApp?["a"]?.count == 1)
+    }
+
+    @Test("A show committed while another show's history is being written to the storage lands there too")
+    func showCommittedDuringAnotherSaveIsSavedToo() throws {
+        let storage = try #require(HostObservedHistoryStorage())
+        let budget = InappShowBudget(persistenceStorage: storage, trackingService: InAppTrackingService())
+        var isCommittedDuringTheSave = false
+        storage.shownDatesWillBeWritten = { [weak budget] in
+            guard !isCommittedDuringTheSave else { return }
+
+            isCommittedDuringTheSave = true
+            budget?.commit(.overlay("b"), inAppId: "b", frequency: restricted)
+        }
+
+        budget.commit(.overlay("a"), inAppId: "a", frequency: restricted)
+
+        #expect(storage.shownDatesByInApp?.keys.sorted() == ["a", "b"])
+    }
+
     @Test("A new session drops every reservation")
     func newSessionDropsReservations() {
         #expect(reserve(.place("stories"), "a"))

@@ -143,3 +143,40 @@ class MockPersistenceStorage: PersistenceStorage {
         }
     }
 }
+
+final class HostObservedHistoryStorage: MockPersistenceStorage {
+
+    @Locked private(set) var hostObserverRuns = 0
+    var shownDatesWillBeWritten: () -> Void = {}
+    private let suiteName: String
+    private let defaults: UserDefaults
+    private var observer: NSObjectProtocol?
+
+    init?(suiteId: UUID = UUID()) {
+        let suiteName = "MindboxTests.HostObservedHistoryStorage.\(suiteId.uuidString)"
+        guard let defaults = UserDefaults(suiteName: suiteName) else { return nil }
+
+        self.suiteName = suiteName
+        self.defaults = defaults
+        super.init()
+        shownDatesByInApp = [:]
+        observer = NotificationCenter.default.addObserver(forName: UserDefaults.didChangeNotification, object: defaults, queue: nil) { [weak self] _ in
+            _ = SessionTemporaryStorage.shared.ledger.sessionEpoch
+            self?.$hostObserverRuns.mutate { $0 += 1 }
+        }
+    }
+
+    deinit {
+        observer.map(NotificationCenter.default.removeObserver)
+        defaults.removePersistentDomain(forName: suiteName)
+    }
+
+    override var shownDatesByInApp: [String: [Date]]? {
+        willSet { shownDatesWillBeWritten() }
+        didSet { defaults.set(shownDatesByInApp, forKey: "shownDatesByInApp") }
+    }
+
+    override var lastInappStateChangeDate: Date? {
+        didSet { defaults.set(lastInappStateChangeDate, forKey: "lastInappStateChangeDate") }
+    }
+}
