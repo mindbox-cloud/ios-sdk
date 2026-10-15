@@ -16,9 +16,19 @@ extension EmbeddedBlockPlaceRegistry {
         var newSessionAskedAt: TimeInterval?
     }
 
-    struct PassInFlight: Equatable {
+    final class PassInFlight {
         let askedInSession: Int
         let isTriggered: Bool
+        var isAskedAgainMidResolve = false
+
+        init(askedInSession: Int, isTriggered: Bool) {
+            self.askedInSession = askedInSession
+            self.isTriggered = isTriggered
+        }
+
+        func isOperationFreeAsk(of sessionEpoch: Int) -> Bool {
+            askedInSession == sessionEpoch && !isTriggered
+        }
     }
 
     enum ResolveCause {

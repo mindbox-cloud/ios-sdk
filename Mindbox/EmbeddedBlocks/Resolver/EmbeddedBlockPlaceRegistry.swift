@@ -24,8 +24,6 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
     private var resolvingPlaces: [String: PassInFlight] = [:]
     private var queuedInvalidations: [String: QueuedInvalidation] = [:]
 
-    private var placesAskedAgainMidResolve: Set<String> = []
-
     /// `nil` until a config has been seen: gating on an empty map before that would silently drop
     /// operations whose resolve would simply have waited for the config.
     private var embeddedPlacesInConfig: [String: Set<String>]?
@@ -159,9 +157,9 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
     }
 
     private func sessionStarted(carrying operations: [String: ApplicationEvent]) {
-        let theNewSessionsAsk = PassInFlight(askedInSession: SessionTemporaryStorage.shared.ledger.sessionEpoch, isTriggered: false)
+        let sessionEpoch = SessionTemporaryStorage.shared.ledger.sessionEpoch
         for place in Array(blocksByPlace.keys) where hasActiveBlocks(place) || holdsAnAttempt(at: place) {
-            guard operations[place] != nil || resolvingPlaces[place] != theNewSessionsAsk else {
+            guard operations[place] != nil || resolvingPlaces[place]?.isOperationFreeAsk(of: sessionEpoch) != true else {
                 Logger.common(message: "[EmbeddedBlock] Place '\(place)': a new session, and the pass in flight was asked in it with no operation — its answer is the new session's",
                               category: .embeddedBlocks)
                 continue
@@ -218,9 +216,9 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
             return
         }
 
-        guard resolvingPlaces[place] == nil else {
+        if let passInFlight = resolvingPlaces[place] {
             guard cause.queuesWhenBusy else {
-                placesAskedAgainMidResolve.insert(place)
+                passInFlight.isAskedAgainMidResolve = true
                 Logger.common(message: "[EmbeddedBlock] Place '\(place)': \(cause.logDescription) while a resolve is in flight — its answer covers this too",
                               category: .embeddedBlocks)
                 return
@@ -241,11 +239,10 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
             guard let self else { return }
 
             self.resolvingPlaces[place] = nil
-            let askedAgainMidResolve = self.placesAskedAgainMidResolve.remove(place) != nil
             let answer = EmbeddedBlockPlaceAnswer(resolution: resolution,
                                                   processingDuration: waitedForThePassInFlight + processingDuration,
                                                   sessionEpoch: sessionEpoch,
-                                                  isOperationTriggered: !cause.includesNonOperation && !askedAgainMidResolve)
+                                                  isOperationTriggered: !cause.includesNonOperation && !pass.isAskedAgainMidResolve)
             let renamed = self.asTheQueuedNewSessionAsk(answer, of: pass, at: place)
             self.handle(renamed?.answer ?? answer, at: place, answeringTheQueuedAsk: renamed?.answersTheQueuedAsk == true)
 
