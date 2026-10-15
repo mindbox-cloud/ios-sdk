@@ -1937,6 +1937,25 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.bed.resolver.resolveCount == 2)
     }
 
+    @Test("A block holding a collapse that its wrapper hides collapses at once and the host hears the place is empty")
+    func hostHidingABlockHoldingACollapseTellsTheHost() async {
+        let block = BlockFixture()
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.attachToWindow()
+        block.page?.reportRendered(1)
+        block.bed.resolver.resolution = .empty
+        block.bed.announceNewConfig()
+        await mainQueueTurn()
+        #expect(delegate.events == [.loaded])
+
+        block.view.setHostVisible(false)
+
+        #expect(block.view.intrinsicContentSize.height == 0)
+        await mainQueueTurn()
+        #expect(delegate.events == [.loaded, .empty])
+    }
+
     @Test("Reload on a host-hidden block does nothing")
     func reloadOnHostHiddenBlockDoesNothing() {
         let block = BlockFixture()
@@ -1993,6 +2012,38 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.view.delegate == nil)
         #expect(delegate.events == [.loaded])
         #expect(appearance.values.count == reportsBeforeRelease)
+    }
+
+    @Test("A block holding a collapse that its wrapper releases tells the host before it lets go, in the window or within the pass of main it left the window in",
+          arguments: [false, true], [false, true])
+    func releasedBlockTellsTheHostTheCollapseItHeld(placeCannotBeChecked: Bool, leftTheWindowFirst: Bool) async {
+        let memory = EmbeddedBlockPlaceMemoryMock()
+        let block = BlockFixture(memory: memory)
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.attachToWindow()
+        block.page?.reportRendered(1)
+        block.bed.resolver.resolution = placeCannotBeChecked ? .targetingUnavailable : .empty
+        block.bed.announceNewConfig()
+        await mainQueueTurn()
+        #expect(delegate.events == [.loaded])
+        if leftTheWindowFirst {
+            block.view.removeFromSuperview()
+        }
+
+        block.view.release()
+
+        let heard: EmbeddedBlockViewDelegateMock.Event = placeCannotBeChecked ? .failed(.networkError) : .empty
+        let shownPlaces: Set<String> = placeCannotBeChecked ? ["block-id"] : []
+        let forgotten: [String] = placeCannotBeChecked ? [] : ["block-id"]
+        #expect(delegate.events == [.loaded, heard])
+        #expect(block.view.delegate == nil)
+        #expect(memory.shownPlaces == shownPlaces)
+        #expect(memory.forgotten == forgotten)
+
+        block.mainPass.fireAll()
+        await mainQueueTurn()
+        #expect(delegate.events == [.loaded, heard])
     }
 
     @Test("Repeated release changes nothing")
