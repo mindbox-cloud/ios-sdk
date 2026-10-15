@@ -169,15 +169,18 @@ public final class MindboxEmbeddedBlockView: UIView {
                                                    : "was hidden by the host wrapper")
     }
 
-    /// Stops the block for good: the content stops, the wrapper's callbacks are dropped, and the
-    /// block does not start again even while it stays in a window.
+    /// Stops the block for good: the content stops, and the block does not start again even while
+    /// it stays in a window. An outcome the delegate has not heard yet — the empty or failed one the
+    /// block held until the user leaves among them — reaches it at once, inside this call; after that
+    /// the wrapper's callbacks are dropped.
     ///
     /// The container stops the same things in `deinit`, so a wrapper that simply lets the view go is
-    /// already correct. This is for wrappers that cannot promise that: a platform-view factory holds
-    /// the view for as long as the platform sees fit, and the block should stop when the screen is
-    /// gone rather than when the last reference is. What the container holds — the page among it —
-    /// still goes away with the container itself, so a released block is meant to be let go right
-    /// after, not kept around.
+    /// already correct, save for the delegate: it hears nothing from `deinit`, where an outcome held
+    /// until the user leaves only updates the place's memory. This is for wrappers that cannot
+    /// promise that: a platform-view factory holds the view for as long as the platform sees fit,
+    /// and the block should stop when the screen is gone rather than when the last reference is.
+    /// What the container holds — the page among it — still goes away with the container itself,
+    /// so a released block is meant to be let go right after, not kept around.
     @_spi(Internal)
     public func release() {
         guard !isReleased else { return }
@@ -185,9 +188,10 @@ public final class MindboxEmbeddedBlockView: UIView {
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' was released by the host wrapper",
                       category: .embeddedBlocks)
         isReleased = true
-        delegate = nil
         appearanceObserver = nil
         updateContentActivity(reason: "was released by the host wrapper")
+        if isDeliveryScheduled { deliverPendingEvent() }
+        delegate = nil
         // A decoded block that was never built has no content to tear down.
         runtime?.contentProvider.teardown()
     }
