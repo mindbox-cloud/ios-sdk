@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 /// One in-app a page was allowed to draw — what `Inapp.Targeting` for a page's question is
 /// deduplicated by: once per session, per requesting in-app and in-app.
@@ -62,7 +63,7 @@ struct InappSessionLedger: Equatable {
     var isSessionEnding = false
 
     func hasEnded(_ sessionEpoch: Int) -> Bool {
-        sessionEpoch < self.sessionEpoch || isSessionEnding
+        sessionEpoch != self.sessionEpoch || isSessionEnding
     }
 }
 
@@ -88,7 +89,7 @@ extension InappSessionLedger {
     }
 
     mutating func recordShow(_ inappId: String, at place: String, sessionEpoch: Int) -> BlockShowRecord {
-        guard sessionEpoch == self.sessionEpoch, !hasEnded(sessionEpoch) else { return .stale }
+        guard !hasEnded(sessionEpoch) else { return .stale }
         guard placeShownInappId[place] != inappId else { return .repeated }
 
         placeShownInappId[place] = inappId
@@ -101,5 +102,18 @@ extension InappSessionLedger {
 
     mutating func recordFailure(_ inappId: String, reason: String) -> Bool {
         reportedFailures.insert(ReportedFailure(inappId: inappId, reason: reason)).inserted
+    }
+}
+
+extension Locked where Value == InappSessionLedger {
+
+    func withinLiveSession<Result>(_ sessionEpoch: Int?, _ body: (inout InappSessionLedger) -> Result) -> Result? {
+        mutate { ledger in
+            if let sessionEpoch, ledger.hasEnded(sessionEpoch) {
+                return nil
+            }
+
+            return body(&ledger)
+        }
     }
 }

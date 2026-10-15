@@ -140,7 +140,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
     func bringOnScreen(_ answer: EmbeddedBlockPlaceAnswer, at place: String) -> EmbeddedBlockPlaceAnswer? {
         guard let content = answer.resolution.content else { return answer }
 
-        switch inItsSession(answer, { $0.placeShownInappId[place] == content.inAppId }) {
+        switch SessionTemporaryStorage.shared.$ledger.withinLiveSession(answer.sessionEpoch, { $0.placeShownInappId[place] == content.inAppId }) {
         case nil: return nil
         case true?: return answer
         case false?: return slotted(content, of: answer, at: place)
@@ -345,7 +345,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
                                 of answer: EmbeddedBlockPlaceAnswer,
                                 at place: String,
                                 servingDelay served: ServedPlaceDelay? = nil) {
-        let isShownAlready = inItsSession(answer) { ledger -> Bool in
+        let isShownAlready = SessionTemporaryStorage.shared.$ledger.withinLiveSession(answer.sessionEpoch) { ledger -> Bool in
             if let served {
                 ledger.servedPlaceDelays.insert(served)
             }
@@ -393,12 +393,6 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         }
     }
 
-    private func inItsSession<Value>(_ answer: EmbeddedBlockPlaceAnswer, _ work: (inout InappSessionLedger) -> Value) -> Value? {
-        SessionTemporaryStorage.shared.$ledger.mutate { ledger in
-            ledger.hasEnded(answer.sessionEpoch) ? nil : work(&ledger)
-        }
-    }
-
     private func keepsForTheSessionCheck(_ answer: EmbeddedBlockPlaceAnswer, at place: String) -> Bool {
         guard awaitingTheSessionCheck.content[place] != nil || (presence.isAwaitingSessionCheck && hasActiveBlocks(place)) else {
             return false
@@ -420,7 +414,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         prune(place)
 
         guard let content = unseen.resolution.content, !hasBlocksOnScreen(place),
-              inItsSession(unseen, { $0.placeShownInappId[place] != content.inAppId }) == true else { return }
+              SessionTemporaryStorage.shared.$ledger.withinLiveSession(unseen.sessionEpoch, { $0.placeShownInappId[place] != content.inAppId }) == true else { return }
 
         Logger.common(message: "[EmbeddedBlock] Place '\(place)': in-app \(content.inAppId), answered while the app was away, left the screen unshown — giving its slot back until a block brings it on screen",
                       category: .embeddedBlocks)

@@ -72,13 +72,7 @@ final class EmbeddedBlockFailureReporter {
     }
 
     func reportUnansweredWaitOnce(_ waited: TimeInterval, inSession sessionEpoch: Int? = nil) {
-        let isFirst = SessionTemporaryStorage.shared.$ledger.mutate { ledger -> Bool? in
-            if let sessionEpoch, ledger.hasEnded(sessionEpoch) {
-                return nil
-            }
-
-            return ledger.recordUnanswered(placeSystemName)
-        }
+        let isFirst = SessionTemporaryStorage.shared.$ledger.withinLiveSession(sessionEpoch) { $0.recordUnanswered(placeSystemName) }
 
         guard let isFirst else {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': no config to answer with in a session that has ended — not reported",

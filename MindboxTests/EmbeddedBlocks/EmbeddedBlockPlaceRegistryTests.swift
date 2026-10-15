@@ -1351,12 +1351,15 @@ struct EmbeddedBlockPlaceRegistryTests {
     func slotIsTakenInTheAnswersSession(_ answer: SlotAnswer) {
         let rig = Rig()
         rig.resolver.resolution = answer.resolution
-        let answersSession = rig.currentSessionEpoch + 1
-        rig.resolver.sessionEpoch = answersSession
+        rig.resolver.isDeferred = true
         let block = BlockFake()
         rig.registry.register(block, place: "stories")
-
         rig.registry.blockAppeared("stories")
+        rig.expireSession()
+        let answersSession = rig.currentSessionEpoch
+        rig.resolver.sessionEpoch = answersSession
+
+        rig.resolver.flush()
 
         #expect(rig.budget.callSessions == [answersSession])
         #expect(block.answers.count == 1)
