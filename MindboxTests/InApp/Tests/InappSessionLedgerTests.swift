@@ -112,6 +112,19 @@ struct InappSessionLedgerTests {
         #expect(ledger.hasEnded(3) == isEnding)
     }
 
+    @Test("An epoch other than the ledger's has ended, a later one as well as an earlier one, and its show records nothing")
+    func everyOtherEpochHasEnded() {
+        var ledger = InappSessionLedger(sessionEpoch: 3)
+
+        let later = ledger.recordShow("inapp-1", at: "place", sessionEpoch: 4)
+
+        #expect(ledger.hasEnded(2))
+        #expect(ledger.hasEnded(4))
+        #expect(!ledger.hasEnded(3))
+        #expect(later == .stale)
+        #expect(ledger.placeShownInappId.isEmpty)
+    }
+
     @Test("A silent place is reported once per session")
     func unansweredPlaceIsReportedOnce() {
         var ledger = InappSessionLedger()
