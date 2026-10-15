@@ -256,6 +256,27 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(oldContent.superview == nil)
     }
 
+    @Test("A reload inside the return's session check detaches the dropped page at once and asks the place once the check ends")
+    func reloadInsideTheReturnDetachesTheDroppedPageAndAsksOnceTheCheckEnds() throws {
+        let block = BlockFixture()
+        block.attachToWindow()
+        block.page?.reportRendered(1)
+        let oldContent = try #require(block.page?.view)
+        block.goToTheBackgroundAndBack()
+        let resolves = block.bed.resolver.resolveCount
+
+        block.view.reload()
+
+        #expect(oldContent.superview == nil)
+        #expect(block.view.intrinsicContentSize.height == 120)
+        #expect(block.bed.resolver.resolveCount == resolves)
+
+        block.bed.finishSessionCheck()
+
+        #expect(block.bed.resolver.resolveCount == resolves + 1)
+        #expect(block.bed.pageFactory.pages.count == 2)
+    }
+
     // MARK: - Events
 
     @Test("Loading is silent: the delegate hears only outcomes")
