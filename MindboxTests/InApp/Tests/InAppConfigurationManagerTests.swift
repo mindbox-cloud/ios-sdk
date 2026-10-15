@@ -332,6 +332,24 @@ struct InAppConfigurationManagerTests {
         try await waitUntil(manager.hasConfig)
     }
 
+    @Test("An earlier session's config is not in hand: a new session has one only once its own download concludes")
+    func hasConfigFollowsTheSessionsDownload() async throws {
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.data(try fixtureData()))
+        try await waitUntil(manager.hasConfig)
+
+        SessionTemporaryStorage.shared.erase()
+        #expect(!manager.hasConfig)
+
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        #expect(!manager.hasConfig)
+        api.deliver(.data(try fixtureData()))
+
+        try await waitUntil(manager.hasConfig)
+    }
+
     @Test("A failed download with no cache answers with nothing at once")
     func failedDownloadAnswersWithoutWaitingOutTheBudget() async throws {
         let slowBudgetManager = Self.makeManager(api: api, configWaitBudget: 60)
