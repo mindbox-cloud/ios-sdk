@@ -246,7 +246,8 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
                                                   processingDuration: waitedForThePassInFlight + processingDuration,
                                                   sessionEpoch: sessionEpoch,
                                                   isOperationTriggered: !cause.includesNonOperation && !askedAgainMidResolve)
-            self.handle(self.asTheQueuedNewSessionAsk(answer, of: pass, at: place) ?? answer, at: place)
+            let renamed = self.asTheQueuedNewSessionAsk(answer, of: pass, at: place)
+            self.handle(renamed?.answer ?? answer, at: place, answeringTheQueuedAsk: renamed?.answersTheQueuedAsk == true)
 
             if let queued = self.queuedInvalidations.removeValue(forKey: place) {
                 self.requestResolve(place: place, cause: .queued(queued))
@@ -258,25 +259,27 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         }
     }
 
-    private func asTheQueuedNewSessionAsk(_ answer: EmbeddedBlockPlaceAnswer, of pass: PassInFlight, at place: String) -> EmbeddedBlockPlaceAnswer? {
+    private func asTheQueuedNewSessionAsk(_ answer: EmbeddedBlockPlaceAnswer, of pass: PassInFlight, at place: String) -> (answer: EmbeddedBlockPlaceAnswer, answersTheQueuedAsk: Bool)? {
         guard answer.sessionEpoch > pass.askedInSession, let queued = queuedInvalidations[place], let newSessionAskedAt = queued.newSessionAskedAt else {
             return nil
         }
 
-        if !pass.isTriggered && queued.trigger == nil && !SessionTemporaryStorage.shared.ledger.hasEnded(answer.sessionEpoch) { queuedInvalidations[place] = nil }
-        return EmbeddedBlockPlaceAnswer(resolution: answer.resolution,
-                                        processingDuration: now() - newSessionAskedAt,
-                                        sessionEpoch: answer.sessionEpoch,
-                                        isOperationTriggered: false)
+        return (EmbeddedBlockPlaceAnswer(resolution: answer.resolution,
+                                         processingDuration: now() - newSessionAskedAt,
+                                         sessionEpoch: answer.sessionEpoch,
+                                         isOperationTriggered: false),
+                !pass.isTriggered && queued.trigger == nil)
     }
 
     /// A winner with `delayTime` waits like an overlay in the schedule queue and the blocks stand their wait
     /// budget down. A delay served once in the session is not waited again: a block coming back gets the content at once.
-    private func handle(_ answer: EmbeddedBlockPlaceAnswer, at place: String) {
+    private func handle(_ answer: EmbeddedBlockPlaceAnswer, at place: String, answeringTheQueuedAsk: Bool = false) {
         guard !SessionTemporaryStorage.shared.ledger.hasEnded(answer.sessionEpoch) else {
             dropStale(answer, at: place)
             return
         }
+
+        if answeringTheQueuedAsk { queuedInvalidations[place] = nil }
 
         guard let content = answer.resolution.content else {
             awaitingTheSessionCheck.content[place] = nil
