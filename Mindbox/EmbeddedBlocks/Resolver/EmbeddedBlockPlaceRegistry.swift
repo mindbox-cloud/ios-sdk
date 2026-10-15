@@ -273,7 +273,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
                 let reason = isNewSessionLeftUnanswered ? "its pass stood for the new session's ask and read no config"
                     : "answered from config \(configVersion?.description ?? "no config"), older than \(self.newestConfigVersion?.description ?? "none")"
                 Logger.common(message: "[EmbeddedBlock] Place '\(place)': \(reason) — asking again", category: .embeddedBlocks)
-                self.requestResolve(place: place, cause: .queued(QueuedInvalidation(trigger: nil, includesNonOperation: true)))
+                self.requestResolve(place: place, cause: .queued(QueuedInvalidation(trigger: nil, includesNonOperation: true, newSessionAskedAt: isNewSessionLeftUnanswered ? self.now() : nil)))
             }
         }
     }
