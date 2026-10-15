@@ -78,7 +78,7 @@ struct InappSessionCheckTests {
         SessionTemporaryStorage.shared.expiredConfigSession = "0.00:30:00.0000000"
 
         manager = InappSessionManager(inappCoreManager: coreManager,
-                                      inappConfigManager: DI.injectOrFail(InAppConfigurationManagerProtocol.self),
+                                      inappConfigManager: InAppConfigurationManagerStub(),
                                       targetingChecker: DI.injectOrFail(InAppTargetingCheckerProtocol.self),
                                       userVisitManager: DI.injectOrFail(UserVisitManagerProtocol.self))
     }

@@ -337,6 +337,10 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             Logger.common(message: "Failed to download InApp configuration. Error: \(error.localizedDescription)", level: .error, category: .inAppMessages)
         }
 
+        if let settings = configResponse?.settings {
+            applySessionStorageSettings(settings)
+        }
+
         configCandidates = configResponse.map { inappFilterService.candidates(from: $0) }
         candidatesSessionEpoch = sessionEpoch
         hasConfig = configCandidates != nil
@@ -414,7 +418,6 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             return
         }
 
-        applySessionStorageSettings(settings)
         featureToggleManager.applyFeatureToggles(settings.featureToggles)
         persistOperationsDomain(from: settings.baseAddresses)
         saveConfigSessionToCache(settings.slidingExpiration?.config)

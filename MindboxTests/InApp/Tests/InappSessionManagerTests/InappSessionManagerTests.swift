@@ -18,10 +18,13 @@ final class InappSessionManagerTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
-        manager = DI.injectOrFail(InappSessionManagerProtocol.self) as? InappSessionManager
         coreManagerMock = DI.injectOrFail(InAppCoreManagerProtocol.self) as? InAppCoreManagerMock
         persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
+        manager = InappSessionManager(inappCoreManager: coreManagerMock,
+                                      inappConfigManager: InAppConfigurationManagerStub(),
+                                      targetingChecker: targetingChecker,
+                                      userVisitManager: DI.injectOrFail(UserVisitManagerProtocol.self))
         SessionTemporaryStorage.shared.expiredConfigSession = ""
         SessionTemporaryStorage.shared.isInitializationCalled = true
         EmbeddedBlockAppPresence.shared.reset()

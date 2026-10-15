@@ -485,6 +485,32 @@ final class InappRequestServiceMock: InappRequestServing {
     }
 }
 
+final class InAppConfigurationManagerStub: InAppConfigurationManagerProtocol {
+    weak var delegate: InAppConfigurationDelegate?
+    var hasConfig = false
+
+    func prepareConfiguration() {}
+    func handleInapps(event: ApplicationEvent?, _ completion: @escaping (InAppFormData?) -> Void) {
+        completion(nil)
+    }
+    func selectInappForPlace(_ place: String,
+                             trigger: ApplicationEvent?,
+                             _ completion: @escaping (EmbeddedPlaceSelection, TimeInterval, Int) -> Void) {
+        completion(.decided(nil), 0, 0)
+    }
+    func getShowableInappIds(_ ids: [String], askedBy requesterInappId: String, _ completion: @escaping ([String]) -> Void) {
+        completion([])
+    }
+    func getInAppToShowById(_ id: String, params: [String: JSONValue], _ completion: @escaping (InAppFormData?) -> Void) {
+        completion(nil)
+    }
+    func getEmbeddedPlaces(_ completion: @escaping ([String: Set<String>]?) -> Void) {
+        completion(nil)
+    }
+    func resetInappManager() {}
+    func inappInCurrentConfig(withId id: String) -> InApp? { nil }
+}
+
 /// A clock that moves only when asked to. Monotonic seconds, matching the timeout's clock seam;
 /// a negative `advance` models the backward jump a monotonic clock never makes.
 final class TestClock {
