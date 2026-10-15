@@ -1478,6 +1478,34 @@ struct EmbeddedBlockPlaceRegistryTests {
         #expect(block.answers.map(\.isOperationTriggered) == [!startsNewSession, true])
     }
 
+    @Test("A block appearing or a new config between a return and the end of its session check joins the one operation held for the place: the place is asked once, as the operation it is when the check keeps the session, or as the new session's ask when it starts a new one",
+          arguments: [false, true], [false, true])
+    func appearanceOrConfigInsideTheReturnJoinsTheOneHeldOperation(isNewConfig: Bool, startsNewSession: Bool) {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.presence.enterBackground()
+        rig.presence.returnToApp()
+        let operation = rig.announceOperation()
+        if isNewConfig {
+            rig.announceNewConfig()
+        } else {
+            rig.registry.blockAppeared("stories")
+        }
+        #expect(rig.resolver.resolveCount == 0)
+
+        if startsNewSession {
+            rig.expireSession()
+            rig.resolver.sessionEpoch = rig.currentSessionEpoch
+        }
+        rig.presence.finishSessionCheck(startsNewSession: startsNewSession)
+        rig.resolver.flush()
+
+        #expect(rig.resolver.triggers == [operation])
+        #expect(block.answers.map(\.isOperationTriggered) == [!startsNewSession])
+    }
+
     @Test("A block appearing between a return and the end of its session check asks its place at once when the operations held are for another place")
     func appearanceInsideTheReturnAsksAtOnceWhenTheHeldOperationsAreForAnotherPlace() {
         let rig = Rig()
