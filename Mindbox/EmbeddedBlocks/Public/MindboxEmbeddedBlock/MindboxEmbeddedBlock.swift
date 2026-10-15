@@ -33,7 +33,10 @@ import UIKit
 ///
 /// The outcome arrives through three closures: `onLoad` when the content is shown, `onEmpty` when
 /// there is nothing to show at the place, and `onFail` with a reason when the block could not be
-/// shown.
+/// shown. An empty or failed outcome the block holds back while it keeps shown content on screen —
+/// see `MindboxEmbeddedBlockView` — arrives when the user leaves. When leaving removes the block from
+/// the view tree, that call comes on a later turn of the main queue, after SwiftUI has removed the
+/// block — never inside SwiftUI's update.
 ///
 /// ```swift
 /// MindboxEmbeddedBlock(placeSystemName: "stories", height: 104,
@@ -277,8 +280,8 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
 
     static func dismantleUIView(_ uiView: MindboxEmbeddedBlockView, coordinator: Coordinator) {
         uiView.setAppearanceObserver(nil)
-        uiView.delegate = nil
         coordinator.detach()
+        uiView.release()
     }
 
     func syncStandIns(in blockView: MindboxEmbeddedBlockView) {
@@ -360,16 +363,26 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
         }
 
         func mindboxEmbeddedBlockViewDidLoad(_ blockView: MindboxEmbeddedBlockView) {
-            onLoad?()
+            forward(onLoad)
         }
 
         func mindboxEmbeddedBlockViewDidBecomeEmpty(_ blockView: MindboxEmbeddedBlockView) {
-            onEmpty?()
+            forward(onEmpty)
         }
 
         func mindboxEmbeddedBlockViewDidFail(_ blockView: MindboxEmbeddedBlockView,
                                              reason: MindboxEmbeddedBlockFailReason) {
-            onFail?(reason)
+            forward(onFail.map { fail in { fail(reason) } })
+        }
+
+        private func forward(_ outcome: (() -> Void)?) {
+            guard let outcome else { return }
+
+            if isDetached {
+                schedule(outcome)
+            } else {
+                outcome()
+            }
         }
     }
 }
