@@ -441,6 +441,182 @@ struct EmbeddedBlockPlaceRegistryTests {
         #expect(rig.resolver.resolveCount == 1)
     }
 
+    @Test("A place waiting for its config, at a cold start or in a new session, is selected once, whichever of the config's announcement and the pass's answer reaches main first",
+          arguments: [false, true], [true, false])
+    func placeWaitingForItsConfigIsSelectedOnce(isNewSession: Bool, isAnnouncedFirst: Bool) {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        if isNewSession {
+            rig.expireSession()
+            rig.presence.finishSessionCheck(startsNewSession: true)
+            rig.resolver.sessionEpoch = rig.currentSessionEpoch
+        } else {
+            rig.registry.blockAppeared("stories")
+        }
+
+        let config = rig.resolver.publishConfig()
+        if isAnnouncedFirst {
+            rig.announceConfig(config)
+            rig.resolver.flush(readingConfig: config)
+        } else {
+            rig.resolver.flush(readingConfig: config)
+            rig.announceConfig(config)
+        }
+
+        #expect(rig.resolver.resolveCount == 1)
+        #expect(block.answers.map(\.sessionEpoch) == [rig.currentSessionEpoch])
+    }
+
+    @Test("An operation carried into a new session's ask is the session's one selection, whichever of the session's config announcement and the pass's answer reaches main first",
+          arguments: [true, false])
+    func operationCarriedIntoTheNewSessionsAskIsItsOneSelection(isAnnouncedFirst: Bool) {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.presence.enterBackground()
+        rig.presence.returnToApp()
+        let operation = rig.announceOperation()
+
+        rig.expireSession()
+        rig.presence.finishSessionCheck(startsNewSession: true)
+        rig.resolver.sessionEpoch = rig.currentSessionEpoch
+        let config = rig.resolver.publishConfig()
+        if isAnnouncedFirst {
+            rig.announceConfig(config)
+            rig.resolver.flush(readingConfig: config)
+        } else {
+            rig.resolver.flush(readingConfig: config)
+            rig.announceConfig(config)
+        }
+
+        #expect(rig.resolver.triggers == [operation])
+        #expect(block.answers.map(\.sessionEpoch) == [rig.currentSessionEpoch])
+    }
+
+    @Test("An operation that reaches a place whose pass waits for its config, at a cold start or in a new session, before or after the config is announced, is answered by its own operation pass",
+          arguments: [false, true], [true, false])
+    func operationBehindAPassWaitingForItsConfigIsAnOperationPass(isNewSession: Bool, isOperationFirst: Bool) {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        if isNewSession {
+            rig.expireSession()
+            rig.presence.finishSessionCheck(startsNewSession: true)
+            rig.resolver.sessionEpoch = rig.currentSessionEpoch
+        } else {
+            rig.registry.blockAppeared("stories")
+        }
+
+        let config = rig.resolver.publishConfig()
+        let operation: ApplicationEvent
+        if isOperationFirst {
+            operation = rig.announceOperation()
+            rig.announceConfig(config)
+        } else {
+            rig.announceConfig(config)
+            operation = rig.announceOperation()
+        }
+        rig.resolver.flush(readingConfig: config)
+        rig.resolver.flush()
+
+        #expect(rig.resolver.triggers == [nil, operation])
+        #expect(block.answers.map(\.isOperationTriggered) == [false, true])
+    }
+
+    @Test("A new session does not ask again a place whose pass was asked in it with no operation before the new session was announced, whether that pass is still in flight or has answered",
+          arguments: [false, true])
+    func newSessionDoesNotAskAPlaceAskedInItBeforeItsAnnouncement(hasAnswered: Bool) {
+        let rig = Rig()
+        rig.resolver.isDeferred = !hasAnswered
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.expireSession()
+        rig.resolver.sessionEpoch = rig.currentSessionEpoch
+        rig.registry.blockAppeared("stories")
+
+        rig.presence.finishSessionCheck(startsNewSession: true)
+        rig.resolver.flush()
+
+        #expect(rig.resolver.resolveCount == 1)
+        #expect(block.answers.map(\.sessionEpoch) == [rig.currentSessionEpoch])
+    }
+
+    @Test("A place answered from a config is not asked again when that config is announced again, and is when a newer one is")
+    func answeredPlaceIsAskedAgainOnlyByANewerConfig() {
+        let rig = Rig()
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+
+        rig.announceConfig(rig.resolver.configVersion)
+        #expect(rig.resolver.resolveCount == 1)
+
+        rig.announceNewConfig()
+        #expect(rig.resolver.resolveCount == 2)
+    }
+
+    @Test("A pass asked after a config was published, before its announcement reached main, is not asked again by that announcement")
+    func passThatReadTheAnnouncedConfigIsNotAskedAgain() {
+        let rig = Rig()
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+        rig.resolver.isDeferred = true
+
+        let config = rig.resolver.publishConfig()
+        rig.registry.blockAppeared("stories")
+        rig.announceConfig(config)
+        rig.resolver.flush()
+
+        #expect(rig.resolver.resolveCount == 2)
+        #expect(block.answers.count == 2)
+    }
+
+    @Test("A pass that read no config is asked again once when a newer config is announced while it flies, and not at all when none is",
+          arguments: [true, false])
+    func passThatReadNoConfigIsAskedAgainOnlyForAConfigAnnouncedWhileItFlies(isConfigAnnounced: Bool) {
+        let rig = Rig()
+        rig.announceNewConfig()
+        rig.resolver.isDeferred = true
+        rig.resolver.readsNoConfig = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.registry.blockAppeared("stories")
+        if isConfigAnnounced {
+            rig.announceNewConfig()
+        }
+
+        rig.resolver.flush()
+        rig.resolver.flush()
+
+        #expect(rig.resolver.resolveCount == (isConfigAnnounced ? 2 : 1))
+    }
+
+    @Test("A config announced off the main thread asks its places on the main thread")
+    func conclusionOffMainAsksOnMain() async {
+        let rig = Rig()
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        let center = rig.center
+        let version = rig.resolver.publishConfig()
+
+        await withCheckedContinuation { continuation in
+            DispatchQueue.global().async {
+                center.post(name: .mobileConfigDownloadConcluded, object: nil, userInfo: [Constants.Notification.configVersion: version])
+                continuation.resume()
+            }
+        }
+        await withCheckedContinuation { continuation in
+            DispatchQueue.main.async { continuation.resume() }
+        }
+
+        #expect(rig.resolver.resolvedOnMainThread == [true])
+    }
+
     @Test("A session check that started no new session asks no place")
     func sessionCheckWithinTheSessionAsksNothing() {
         let rig = Rig()

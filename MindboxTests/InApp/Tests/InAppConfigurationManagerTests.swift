@@ -13,6 +13,7 @@ import class MindboxLogger.Locked
 @testable import Mindbox
 
 private let sessionEpochKey = Constants.Notification.sessionEpoch
+private let configVersionKey = Constants.Notification.configVersion
 
 @Suite("In-app configuration manager", .tags(.embeddedBlocks))
 struct InAppConfigurationManagerTests {
@@ -38,11 +39,13 @@ struct InAppConfigurationManagerTests {
     private final class ConclusionLog {
         let center = NotificationCenter()
         let announced = Answers<Int?>()
+        let announcedVersions = Answers<ConfigVersion?>()
         private var observer: NSObjectProtocol?
 
         init() {
-            observer = center.addObserver(forName: .mobileConfigDownloadConcluded, object: nil, queue: nil) { [announced] in
+            observer = center.addObserver(forName: .mobileConfigDownloadConcluded, object: nil, queue: nil) { [announced, announcedVersions] in
                 announced.append($0.userInfo?[sessionEpochKey] as? Int)
+                announcedVersions.append($0.userInfo?[configVersionKey] as? ConfigVersion)
             }
         }
 
@@ -669,6 +672,31 @@ struct InAppConfigurationManagerTests {
 
         try await waitUntil(!log.announced.isEmpty)
         #expect(log.announced.all == [startedIn])
+    }
+
+    @Test("A place waiting for a download is answered with the version of the config its conclusion announces, a newer one at every download, whatever the download brought",
+          arguments: DownloadOutcome.allCases)
+    func placeAnswerCarriesTheVersionItsDownloadAnnounces(_ outcome: DownloadOutcome) async throws {
+        let log = ConclusionLog()
+        let manager = Self.makeManager(api: api, configWaitBudget: 0.2, notificationCenter: log.center)
+        var answered: [ConfigVersion?] = []
+
+        for _ in 0..<2 {
+            SessionTemporaryStorage.shared.erase()
+            let versions = Answers<ConfigVersion?>()
+            manager.selectInappForPlace("stories-list-container", trigger: nil) { _, _, _, version in versions.append(version) }
+            manager.prepareConfiguration()
+            try await waitUntil(api.isFetchPending)
+            api.deliver(try result(outcome))
+            try await waitUntil(!versions.isEmpty)
+            answered.append(versions.first ?? nil)
+        }
+
+        try await waitUntil(log.announcedVersions.all.count == 2)
+        #expect(log.announcedVersions.all == answered)
+        let first = try #require(answered.first ?? nil)
+        let second = try #require(answered.last ?? nil)
+        #expect(first < second)
     }
 
     @Test("A place waiting for a download is answered with the session the download started in, not the one it lands in")

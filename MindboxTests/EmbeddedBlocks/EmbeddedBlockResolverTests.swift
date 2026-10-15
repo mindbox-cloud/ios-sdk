@@ -86,26 +86,28 @@ struct EmbeddedBlockResolverTests {
         #expect(answer == .empty)
     }
 
-    @Test("The session the selection was made in reaches the block as the loader stamped it, whether the answer comes from a background thread or from main",
+    @Test("The session the selection was made in and the version of the config it read reach the block as the loader stamped them, whether the answer comes from a background thread or from main",
           arguments: [true, false])
     func selectionsSessionTravelsToTheBlock(answersFromTheBackground: Bool) async {
         let stamped = SessionTemporaryStorage.shared.ledger.sessionEpoch + 1
+        let configRead = ConfigVersion(number: 7)
         let resolver = EmbeddedBlockResolver(load: { _, _, completion in
             guard answersFromTheBackground else {
-                completion(.content(.stub), 0, stamped, nil)
+                completion(.content(.stub), 0, stamped, configRead)
                 return
             }
 
-            DispatchQueue.global().async { completion(.content(.stub), 0, stamped, nil) }
+            DispatchQueue.global().async { completion(.content(.stub), 0, stamped, configRead) }
         })
 
-        let delivered: Int = await withCheckedContinuation { continuation in
-            resolver.resolve("promo") { _, _, sessionEpoch, _ in
-                continuation.resume(returning: sessionEpoch)
+        let delivered: (sessionEpoch: Int, configVersion: ConfigVersion?) = await withCheckedContinuation { continuation in
+            resolver.resolve("promo") { _, _, sessionEpoch, configVersion in
+                continuation.resume(returning: (sessionEpoch, configVersion))
             }
         }
 
-        #expect(delivered == stamped)
+        #expect(delivered.sessionEpoch == stamped)
+        #expect(delivered.configVersion == configRead)
     }
 
     // MARK: - What the selection's answer becomes
