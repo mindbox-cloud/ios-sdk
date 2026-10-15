@@ -1362,6 +1362,72 @@ struct EmbeddedBlockPlaceRegistryTests {
         #expect(block.answers.map(\.isOperationTriggered) == [false])
     }
 
+    @Test("Two operations between a return and the end of a session check that kept the session are both asked once the check ends, in the order they arrived")
+    func twoOperationsInsideTheReturnOfAKeptSessionAreAskedInOrder() {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.presence.enterBackground()
+        rig.presence.returnToApp()
+        let first = rig.announceOperation("first.operation")
+        let second = rig.announceOperation("second.operation")
+
+        rig.presence.finishSessionCheck()
+        rig.resolver.flush()
+        rig.resolver.flush()
+
+        #expect(rig.resolver.triggers == [first, second])
+        #expect(block.answers.map(\.isOperationTriggered) == [true, true])
+    }
+
+    @Test("Of two operations between a return and the end of a session check that starts a new session, the first rides the new session's ask and the second follows it as an operation")
+    func ofTwoOperationsInsideTheReturnTheFirstRidesTheNewSessionsAsk() {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.presence.enterBackground()
+        rig.presence.returnToApp()
+        let first = rig.announceOperation("first.operation")
+        let second = rig.announceOperation("second.operation")
+
+        rig.expireSession()
+        rig.resolver.sessionEpoch = rig.currentSessionEpoch
+        rig.presence.finishSessionCheck(startsNewSession: true)
+        rig.resolver.flush()
+        rig.resolver.flush()
+
+        #expect(rig.resolver.triggers == [first, second])
+        #expect(block.answers.map(\.sessionEpoch) == [rig.currentSessionEpoch, rig.currentSessionEpoch])
+        #expect(block.answers.map(\.isOperationTriggered) == [false, true])
+    }
+
+    @Test("Of three operations between a return and the end of its session check, the first and the last are asked, whether the check keeps the session or starts a new one",
+          arguments: [false, true])
+    func ofThreeOperationsInsideTheReturnTheFirstAndTheLastAreAsked(startsNewSession: Bool) {
+        let rig = Rig()
+        rig.resolver.isDeferred = true
+        let block = BlockFake()
+        rig.registry.register(block, place: "stories")
+        rig.presence.enterBackground()
+        rig.presence.returnToApp()
+        let first = rig.announceOperation("first.operation")
+        rig.announceOperation("second.operation")
+        let third = rig.announceOperation("third.operation")
+
+        if startsNewSession {
+            rig.expireSession()
+            rig.resolver.sessionEpoch = rig.currentSessionEpoch
+        }
+        rig.presence.finishSessionCheck(startsNewSession: startsNewSession)
+        rig.resolver.flush()
+        rig.resolver.flush()
+
+        #expect(rig.resolver.triggers == [first, third])
+        #expect(block.answers.map(\.isOperationTriggered) == [!startsNewSession, true])
+    }
+
     @Test("An answer of the session a check is ending reaches no block and touches no slot", arguments: SlotAnswer.allCases)
     func answerOfAnEndingSessionIsDropped(_ answer: SlotAnswer) {
         let rig = Rig()
