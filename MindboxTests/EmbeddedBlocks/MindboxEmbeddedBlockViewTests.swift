@@ -2858,7 +2858,7 @@ private final class OwnBudgetBlockFixture {
                                                  EmbeddedBlockWaitBudget(placeSystemName: place,
                                                                          duration: duration,
                                                                          now: { bed.clock.now },
-                                                                         notificationCenter: bed.center,
+                                                                         presence: bed.presenceBed.presence,
                                                                          schedule: { scheduler.schedule($0, $1) })
                                              })
     }

@@ -14,6 +14,8 @@ protocol EmbeddedBlockAppPresenceSubscribing: AnyObject {
 
     func appDidEnterBackground()
 
+    func appWillEnterForeground()
+
     func userDidBecomePresent()
 
     func sessionCheckEndedWhileNotActive()
@@ -26,6 +28,8 @@ protocol EmbeddedBlockAppPresenceSubscribing: AnyObject {
 extension EmbeddedBlockAppPresenceSubscribing {
 
     func appDidEnterBackground() {}
+
+    func appWillEnterForeground() {}
 
     func userDidBecomePresent() {}
 
@@ -43,6 +47,8 @@ final class EmbeddedBlockAppPresence {
     var isPresent: Bool { applicationState() == .active && !isAwaitingSessionCheck }
 
     var isAwaitingSessionCheck: Bool { returnedAt != nil }
+
+    private(set) var isInBackground = false
 
     private var returnedAt: TimeInterval?
 
@@ -77,12 +83,15 @@ final class EmbeddedBlockAppPresence {
 
         observe(UIApplication.didEnterBackgroundNotification) { presence, _ in
             presence.hasBeenInBackground = true
+            presence.isInBackground = true
             presence.notify { $0.appDidEnterBackground() }
         }
         observe(UIApplication.willEnterForegroundNotification) { presence, _ in
             presence.returned()
+            presence.leftTheBackground()
         }
         observe(UIApplication.didBecomeActiveNotification) { presence, _ in
+            presence.leftTheBackground()
             presence.becamePresentIfSo()
             presence.announceTheReturnIfPresent()
         }
@@ -93,6 +102,7 @@ final class EmbeddedBlockAppPresence {
             presence.notify { $0.sessionChecked(startedAt: startedAt, startsNewSession: startsNewSession) }
             presence.announceTheReturnIfPresent()
         }
+        readTheBackgroundAtBirth()
     }
 
     deinit {
@@ -129,6 +139,22 @@ final class EmbeddedBlockAppPresence {
         returnedAt = nil
         hasBeenInBackground = false
         isReturnUnannounced = false
+    }
+
+    private func readTheBackgroundAtBirth() {
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async { [weak self] in self?.readTheBackgroundAtBirth() }
+            return
+        }
+
+        isInBackground = applicationState() == .background
+    }
+
+    private func leftTheBackground() {
+        guard isInBackground else { return }
+
+        isInBackground = false
+        notify { $0.appWillEnterForeground() }
     }
 
     private func returned() {

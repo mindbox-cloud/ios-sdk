@@ -591,20 +591,24 @@ final class EmbeddedBlockWaitBudgetBed {
     /// One per bed: the background and the return from it must reach only this budget.
     let center: NotificationCenter
 
+    let presenceBed: AppPresenceBed
+
     let budget: EmbeddedBlockWaitBudget
 
-    init(placeSystemName: String = "block-id", duration: TimeInterval = 5) {
+    init(placeSystemName: String = "block-id", duration: TimeInterval = 5, applicationState: UIApplication.State = .active) {
         self.duration = duration
         let clock = TestClock()
         let scheduler = TestScheduler()
         let center = NotificationCenter()
+        let presenceBed = AppPresenceBed(center: center, clock: clock, applicationState: applicationState)
         self.clock = clock
         self.scheduler = scheduler
         self.center = center
+        self.presenceBed = presenceBed
         budget = EmbeddedBlockWaitBudget(placeSystemName: placeSystemName,
                                             duration: { duration },
                                             now: { clock.now },
-                                            notificationCenter: center,
+                                            presence: presenceBed.presence,
                                             schedule: { scheduler.schedule($0, $1) })
     }
 
