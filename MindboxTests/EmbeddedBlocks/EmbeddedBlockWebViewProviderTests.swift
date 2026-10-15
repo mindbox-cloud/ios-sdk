@@ -1719,15 +1719,20 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.pageFactory.pages.count == 1)
 
         bed.resolver.isDeferred = true
+        let ending = bed.currentSessionEpoch
         bed.renewSession()
         let carried = bed.resolver.triggers.last ?? nil
         #expect(carried === event)
+
+        bed.resolver.sessionEpoch = ending
+        bed.resolver.flush()
         #expect(bed.pageFactory.pages.count == 1)
         #expect(bed.budget.reservations.map(\.inAppId) == [EmbeddedBlockWebContent.stub.inAppId])
 
         bed.concludeNewSessionDownload()
         bed.resolver.flush()
 
+        #expect(bed.resolver.resolveCount == 3)
         #expect(bed.pageFactory.pages.count == 2)
         #expect(bed.budget.reservations.map(\.inAppId) == [EmbeddedBlockWebContent.stub.inAppId, EmbeddedBlockWebContent.other.inAppId])
     }
