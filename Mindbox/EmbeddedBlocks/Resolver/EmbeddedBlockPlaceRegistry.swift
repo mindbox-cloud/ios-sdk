@@ -32,9 +32,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
 
     private var concludedSessionEpoch: Int?
 
-    private var contentAwaitingTheSessionCheck: [String: (answer: EmbeddedBlockPlaceAnswer, keptAt: TimeInterval)] = [:]
-
-    private var operationsAwaitingTheSessionCheck: [String: ApplicationEvent] = [:]
+    private var awaitingTheSessionCheck = AwaitingTheSessionCheck()
 
     private let resolver: EmbeddedBlockResolving
     private let budget: InappShowBudgeting
@@ -136,7 +134,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
     }
 
     func keepsContent(for place: String) -> Bool {
-        contentAwaitingTheSessionCheck[place] != nil
+        awaitingTheSessionCheck.content[place] != nil
     }
 
     func bringOnScreen(_ answer: EmbeddedBlockPlaceAnswer, at place: String) -> EmbeddedBlockPlaceAnswer? {
@@ -196,7 +194,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
             guard !presence.isAwaitingSessionCheck else {
                 Logger.common(message: "[EmbeddedBlock] Operation '\(event.name)' arrived during the return's session check — held for place '\(place)' and asked with it once the check ends, if a block is still there",
                               category: .embeddedBlocks)
-                operationsAwaitingTheSessionCheck[place] = event
+                awaitingTheSessionCheck.operations[place] = event
                 continue
             }
 
@@ -281,7 +279,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         }
 
         guard let content = answer.resolution.content else {
-            contentAwaitingTheSessionCheck[place] = nil
+            awaitingTheSessionCheck.content[place] = nil
             budget.release(.place(place), inSession: answer.sessionEpoch)
             delayedDelivery.cancel(place: place)
             deliver(answer, at: place)
@@ -388,18 +386,13 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
     }
 
     private func keepsForTheSessionCheck(_ answer: EmbeddedBlockPlaceAnswer, at place: String) -> Bool {
-        guard contentAwaitingTheSessionCheck[place] != nil || (presence.isAwaitingSessionCheck && hasActiveBlocks(place)) else {
+        guard awaitingTheSessionCheck.content[place] != nil || (presence.isAwaitingSessionCheck && hasActiveBlocks(place)) else {
             return false
         }
 
         Logger.common(message: "[EmbeddedBlock] Place '\(place)': content kept until the return is over — its session check has ended and the app is active",
                       category: .embeddedBlocks)
-        if let kept = contentAwaitingTheSessionCheck[place], kept.answer.sessionEpoch == answer.sessionEpoch,
-           kept.answer.resolution.content?.inAppId == answer.resolution.content?.inAppId {
-            contentAwaitingTheSessionCheck[place] = (answer.replacing(kept.answer), kept.keptAt)
-        } else {
-            contentAwaitingTheSessionCheck[place] = (answer, now())
-        }
+        awaitingTheSessionCheck.keep(answer, at: place, now: now)
         blocksByPlace[place]?.forEach { $0.block?.contentIsKept() }
         return true
     }
@@ -501,8 +494,7 @@ extension EmbeddedBlockPlaceRegistry: EmbeddedBlockAppPresenceSubscribing {
     func sessionChecked(startedAt: TimeInterval?, startsNewSession: Bool) {
         guard startsNewSession || presence.answersTheReturn(checkStartedAt: startedAt) else { return }
 
-        let operations = operationsAwaitingTheSessionCheck
-        operationsAwaitingTheSessionCheck = [:]
+        let operations = awaitingTheSessionCheck.takeOperations()
 
         guard startsNewSession else {
             operations.forEach { place, event in requestResolve(place: place, cause: .operation(event)) }
@@ -513,9 +505,7 @@ extension EmbeddedBlockPlaceRegistry: EmbeddedBlockAppPresenceSubscribing {
     }
 
     func userDidBecomePresent() {
-        let kept = contentAwaitingTheSessionCheck
-        contentAwaitingTheSessionCheck = [:]
-        kept.sorted { ($0.value.keptAt, $0.key) < ($1.value.keptAt, $1.key) }.forEach { place, kept in
+        awaitingTheSessionCheck.takeContentInKeptOrder().forEach { place, kept in
             handle(kept.answer.with(processingDuration: kept.answer.processingDuration + now() - kept.keptAt), at: place)
             blocksByPlace[place]?.forEach { $0.block?.keptContentIsReleased() }
         }
