@@ -1845,8 +1845,8 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(show.timeToDisplay == 2.5)
     }
 
-    @Test("An operation held for a block that comes back on screen while a return's session check runs is still asked with its trigger after the start's pass when that check starts a new session")
-    func operationHeldForABlockBackInsideANewSessionsReturnIsAskedAfterTheStartsPass() {
+    @Test("An operation held for a block that comes back on screen while a return's session check runs is asked with its trigger by the new session's ask that the start joins when that check starts a new session")
+    func operationHeldForABlockBackInsideANewSessionsReturnRidesTheAskTheStartJoins() {
         let bed = EmbeddedBlockTestBed()
         bed.enterBackground()
         bed.returnToApp()
@@ -1858,19 +1858,19 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.resolver.triggers.count == 1)
         bed.resolver.flush()
 
-        #expect(bed.resolver.resolveCount == 2)
+        #expect(bed.resolver.resolveCount == 1)
         let carried = bed.resolver.triggers.last ?? nil
         #expect(carried === event)
     }
 
-    @Test("Of two operations held for a block that comes back on screen while a return's session check runs, only the second is asked, after the start's pass, whether the check keeps the session or starts a new one",
+    @Test("Of two operations held for a block that comes back on screen while a return's session check runs, both are asked in order, the start joining the first, whether the check keeps the session or starts a new one",
           arguments: [false, true])
-    func ofTwoOperationsHeldForABlockBackInsideTheReturnOnlyTheSecondIsAskedAfterTheStartsPass(startsNewSession: Bool) {
+    func ofTwoOperationsHeldForABlockBackInsideTheReturnBothAreAskedWithTheStartJoiningTheFirst(startsNewSession: Bool) {
         let bed = EmbeddedBlockTestBed()
         bed.enterBackground()
         bed.returnToApp()
         bed.provider.start()
-        bed.announceOperation("first.operation")
+        let first = bed.announceOperation("first.operation")
         let second = bed.announceOperation("second.operation")
         bed.resolver.isDeferred = true
 
@@ -1879,10 +1879,10 @@ struct EmbeddedBlockWebViewProviderTests {
         } else {
             bed.finishSessionCheck()
         }
-        #expect(bed.resolver.triggers == [nil])
+        #expect(bed.resolver.triggers == [first])
         bed.resolver.flush()
 
-        #expect(bed.resolver.triggers == [nil, second])
+        #expect(bed.resolver.triggers == [first, second])
     }
 
     @Test("Content kept on screen for the end of a return's session check counts the wait in its timeToDisplay")

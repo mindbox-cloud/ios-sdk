@@ -1436,9 +1436,9 @@ struct EmbeddedBlockPlaceRegistryTests {
         rig.registry.register(block, place: "stories")
         rig.presence.enterBackground()
         rig.presence.returnToApp()
+        rig.registry.blockAppeared("stories")
         rig.announceOperation("first.operation")
         let second = rig.announceOperation("second.operation")
-        rig.registry.blockAppeared("stories")
 
         rig.presence.finishSessionCheck()
         rig.resolver.flush()
@@ -1456,9 +1456,9 @@ struct EmbeddedBlockPlaceRegistryTests {
         rig.registry.register(block, place: "stories")
         rig.presence.enterBackground()
         rig.presence.returnToApp()
+        rig.registry.blockAppeared("stories")
         rig.announceOperation("first.operation")
         let second = rig.announceOperation("second.operation")
-        rig.registry.blockAppeared("stories")
 
         rig.expireSession()
         rig.presence.finishSessionCheck(startsNewSession: true)

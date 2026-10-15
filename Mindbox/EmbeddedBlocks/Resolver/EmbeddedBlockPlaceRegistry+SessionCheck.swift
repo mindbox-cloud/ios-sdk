@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 extension EmbeddedBlockPlaceRegistry {
 
@@ -16,10 +17,19 @@ extension EmbeddedBlockPlaceRegistry {
 
         var content: [String: Kept] = [:]
 
-        private var operations: [String: [ApplicationEvent]] = [:]
+        private var operations: [String: [ResolveCause]] = [:]
 
         mutating func hold(_ operation: ApplicationEvent, at place: String) {
-            operations[place, default: []].append(operation)
+            operations[place, default: []].append(.operation(operation))
+        }
+
+        mutating func merge(_ cause: ResolveCause, intoTheFirstHeldOperationAt place: String) -> Bool {
+            guard cause.joinsHeldOperations, let first = operations[place]?.first else { return false }
+
+            Logger.common(message: "[EmbeddedBlock] Place '\(place)': \(cause.logDescription) while operations for it wait for the return's session check — asked with the first of them",
+                          category: .embeddedBlocks)
+            operations[place]?[0] = .queued(QueuedInvalidation(trigger: first.trigger, includesNonOperation: true))
+            return true
         }
 
         mutating func keep(_ answer: EmbeddedBlockPlaceAnswer, at place: String, now: () -> TimeInterval) {
@@ -31,7 +41,7 @@ extension EmbeddedBlockPlaceRegistry {
             }
         }
 
-        mutating func takeOperations() -> [String: [ApplicationEvent]] {
+        mutating func takeOperations() -> [String: [ResolveCause]] {
             let taken = operations
             operations = [:]
             return taken

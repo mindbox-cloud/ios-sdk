@@ -118,6 +118,13 @@ extension EmbeddedBlockPlaceRegistry {
             return true
         }
 
+        var joinsHeldOperations: Bool {
+            switch self {
+                case .blockAppeared, .newConfig: return true
+                case .newSession, .operation, .queued: return false
+            }
+        }
+
         var logDescription: String {
             switch self {
                 case .blockAppeared: return "the block appeared"
