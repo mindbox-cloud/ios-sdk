@@ -181,7 +181,7 @@ final class EmbeddedBlockWebViewProvider {
     }
 
     private func land(_ held: EmbeddedBlockDeferredAnswers.HeldCollapse) {
-        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the user left a block kept on screen with nothing to show — landing the outcome held back", category: .embeddedBlocks)
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the user left, applying the held answer", category: .embeddedBlocks)
         guard case .placeAnswer(let answer) = held else {
             dropPage()
             settle(.empty, isUserLeaving: true)
@@ -253,7 +253,7 @@ final class EmbeddedBlockWebViewProvider {
         isAwaitingDelayedContent = false
 
         if answer.resolution.content == nil, !isParked, isReady, !answer.isOperationTriggered {
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': its place no longer shows this content — keeping it on screen until the user leaves",
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the place answered without content — keeping what is shown until the user leaves",
                           category: .embeddedBlocks)
             failures.report(failureOf: answer)
             deferred.hold(answer)
@@ -327,7 +327,7 @@ final class EmbeddedBlockWebViewProvider {
             return
         }
 
-        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': same page, new data — telling the page",
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': same in-app — updating the page in place",
                       category: .embeddedBlocks)
         pageShow?.refreshSent()
         didReportShownContent = false
