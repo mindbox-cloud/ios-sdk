@@ -118,13 +118,14 @@ public final class MindboxWebViewFacade: InappWebViewFacadeProtocol {
     }
 
     deinit {
-        // The fetch completion holds only a weak self, so a pending request can outlive
-        // the facade; cancel it so it can never resume work against a reused webView.
+        // The fetch completion does not hold the facade, so a pending request can outlive it;
+        // cancel it so it can never resume work against a reused webView.
         fetchTask?.cancel()
         // An owned web view goes with the facade, but its user content controller keeps the
         // script handlers — and the bridge with them — past the web view itself: the bridge is
-        // taken off here. A borrowed warm instance keeps its handlers for the prewarm's monitor;
-        // the next show's bridge replaces them.
+        // taken off here. A borrowed warm instance had its handlers taken off by the prewarm when
+        // it was returned, and may already be lent to the next show: detaching by name here would
+        // take that show's handlers off.
         if warmWebViewLender == nil {
             bridge.detach()
         }
@@ -296,28 +297,30 @@ extension MindboxWebViewFacade {
 
         log("Fetching HTML from \(url.absoluteString)")
 
-        let task = session.dataTask(with: request) { [weak self] data, response, error in
+        // The loggers, not the facade: the completion runs on URLSession's queue, a cancelled task's
+        // too, and a facade held there for a moment could be let go there — off the main thread.
+        let task = session.dataTask(with: request) { [log, logError] data, response, error in
             if let error {
-                self?.logError("Error fetching HTML: \(error.localizedDescription)")
+                logError("Error fetching HTML: \(error.localizedDescription)")
                 completion(nil)
                 return
             }
 
             guard let httpResponse = response as? HTTPURLResponse,
                   (200...299).contains(httpResponse.statusCode) else {
-                self?.logError("Incorrect HTTP response")
+                logError("Incorrect HTTP response")
                 completion(nil)
                 return
             }
 
             guard let data,
                   let htmlString = String(data: data, encoding: .utf8) else {
-                self?.logError("Failed to decode HTML data")
+                logError("Failed to decode HTML data")
                 completion(nil)
                 return
             }
 
-            self?.log("HTML loaded successfully (\(htmlString.count) chars)")
+            log("HTML loaded successfully (\(htmlString.count) chars)")
             completion(htmlString)
         }
 

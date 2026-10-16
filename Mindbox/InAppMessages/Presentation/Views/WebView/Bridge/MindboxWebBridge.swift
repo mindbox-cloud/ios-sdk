@@ -81,9 +81,11 @@ public final class MindboxWebBridge: NSObject {
     ///
     /// The user content controller retains its handlers and outlives the web view itself, so a
     /// bridge left on it stays registered — and alive — after the page is gone. The owner of the
-    /// web view calls this when it lets the web view go; a borrowed warm instance is not
-    /// detached, its handlers are the next show's to replace.
+    /// web view calls this when it lets the web view go. A borrowed warm instance is not detached
+    /// here: the prewarm takes every handler off when it is returned, and by the time this bridge
+    /// goes the instance may be lent again — these names would take the next show's handlers off.
     func detach() {
+        assert(Thread.isMainThread)
         guard let webView else { return }
 
         let controller = webView.configuration.userContentController
