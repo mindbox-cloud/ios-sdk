@@ -34,11 +34,11 @@ struct InappShowBudgetTests {
     }
 
     private var reservations: [InappShowBudgetOwner: InappShowReservation] {
-        SessionTemporaryStorage.shared.showBudget.reservations
+        SessionTemporaryStorage.shared.ledger.showBudget.reservations
     }
 
     private var shownInSession: [String] {
-        SessionTemporaryStorage.shared.showBudget.shownInSession
+        SessionTemporaryStorage.shared.ledger.showBudget.shownInSession
     }
 
     private func setLimits(session: Int? = nil, day: Int? = nil, interval: String? = nil) {
@@ -259,6 +259,88 @@ struct InappShowBudgetTests {
         #expect(trackingService.saveInappStateChangeCallCount == 1)
     }
 
+    @Test("A show's history reaches the storage after the session ledger's hold, so a UserDefaults observer that reads the ledger finds it free")
+    func showHistoryIsWrittenOutsideTheLedgersLock() throws {
+        let storage = try #require(HostObservedHistoryStorage())
+        let budget = InappShowBudget(persistenceStorage: storage, trackingService: InAppTrackingService())
+        let written = DispatchSemaphore(value: 0)
+
+        DispatchQueue.global().async {
+            budget.commit(.overlay("a"), inAppId: "a", frequency: restricted)
+            written.signal()
+        }
+
+        #expect(written.wait(timeout: .now() + 15) == .success)
+        #expect(storage.hostObserverRuns == 2)
+        #expect(!storage.hasFoundTheLedgerHeld)
+    }
+
+    @Test("A cooldown reaches the storage after the session ledger's hold, so a UserDefaults observer that reads the ledger finds it free")
+    func cooldownIsWrittenOutsideTheLedgersLock() throws {
+        let storage = try #require(HostObservedHistoryStorage())
+        let budget = InappShowBudget(persistenceStorage: storage, trackingService: InAppTrackingService())
+        let written = DispatchSemaphore(value: 0)
+
+        DispatchQueue.global().async {
+            budget.recordCooldown(frequency: restricted)
+            written.signal()
+        }
+
+        #expect(written.wait(timeout: .now() + 15) == .success)
+        #expect(storage.hostObserverRuns == 1)
+        #expect(!storage.hasFoundTheLedgerHeld)
+    }
+
+    @Test("A reservation made while a show's history is on its way to the storage counts that show")
+    func reservationDuringTheSaveCountsTheShow() throws {
+        setLimits(day: 1)
+        let storage = try #require(HostObservedHistoryStorage())
+        let budget = InappShowBudget(persistenceStorage: storage, trackingService: InAppTrackingService(), now: { [clock] in clock.now })
+        var reservedDuringTheSave: InappShowReservationOutcome?
+        storage.shownDatesWillBeWritten = { [weak budget] in
+            reservedDuringTheSave = budget?.reserve(.overlay("b"), inAppId: "b", isPriority: false, frequency: restricted)
+        }
+
+        budget.commit(.overlay("a"), inAppId: "a", frequency: restricted)
+
+        #expect(reservedDuringTheSave == .refused)
+        #expect(storage.shownDatesByInApp?["a"]?.count == 1)
+    }
+
+    @Test("A reservation in a session that began while a show's history was on its way to the storage counts that show")
+    func reservationOfTheNextSessionDuringTheSaveCountsTheShow() throws {
+        let storage = try #require(HostObservedHistoryStorage())
+        let budget = InappShowBudget(persistenceStorage: storage, trackingService: InAppTrackingService(), now: { [clock] in clock.now })
+        var reservedDuringTheSave: InappShowReservationOutcome?
+        storage.shownDatesWillBeWritten = { [weak budget] in
+            SessionTemporaryStorage.shared.erase()
+            setLimits(day: 1)
+            reservedDuringTheSave = budget?.reserve(.overlay("b"), inAppId: "b", isPriority: false, frequency: restricted)
+        }
+
+        budget.commit(.overlay("a"), inAppId: "a", frequency: restricted)
+
+        #expect(reservedDuringTheSave == .refused)
+        #expect(storage.shownDatesByInApp?["a"]?.count == 1)
+    }
+
+    @Test("A show committed while another show's history is being written to the storage lands there too")
+    func showCommittedDuringAnotherSaveIsSavedToo() throws {
+        let storage = try #require(HostObservedHistoryStorage())
+        let budget = InappShowBudget(persistenceStorage: storage, trackingService: InAppTrackingService())
+        var isCommittedDuringTheSave = false
+        storage.shownDatesWillBeWritten = { [weak budget] in
+            guard !isCommittedDuringTheSave else { return }
+
+            isCommittedDuringTheSave = true
+            budget?.commit(.overlay("b"), inAppId: "b", frequency: restricted)
+        }
+
+        budget.commit(.overlay("a"), inAppId: "a", frequency: restricted)
+
+        #expect(storage.shownDatesByInApp?.keys.sorted() == ["a", "b"])
+    }
+
     @Test("A new session drops every reservation")
     func newSessionDropsReservations() {
         #expect(reserve(.place("stories"), "a"))
@@ -266,6 +348,46 @@ struct InappShowBudgetTests {
         SessionTemporaryStorage.shared.erase()
 
         #expect(reservations.isEmpty)
+    }
+
+    @Test("A place's reservation of a session that has ended is refused as stale and takes no slot of the current one")
+    func reservationOfAnEndedSessionTakesNothing() {
+        let ended = SessionTemporaryStorage.shared.ledger.sessionEpoch
+        SessionTemporaryStorage.shared.erase()
+
+        let outcome = budget.reserve(.place("stories"), inAppId: "a", isPriority: false, frequency: restricted, inSession: ended)
+
+        #expect(outcome == nil)
+        #expect(reservations.isEmpty)
+    }
+
+    @Test("A place's reservation while a check is ending its session is refused as stale and takes no slot")
+    func reservationOfAnEndingSessionTakesNothing() {
+        let ending = SessionTemporaryStorage.shared.ledger.sessionEpoch
+        let ledger = SessionTemporaryStorage.shared.ledger
+        defer { SessionTemporaryStorage.shared.ledger = ledger }
+        SessionTemporaryStorage.shared.ledger = InappSessionLedger(sessionEpoch: ending, isSessionEnding: true)
+
+        let outcome = budget.reserve(.place("stories"), inAppId: "a", isPriority: false, frequency: restricted, inSession: ending)
+
+        #expect(outcome == nil)
+        #expect(reservations.isEmpty)
+    }
+
+    @Test("A place's show of a session that has ended is written to the frequency history only, and a release of it frees nothing")
+    func showOfAnEndedSessionKeepsTheCurrentSessionsCounts() {
+        let ended = SessionTemporaryStorage.shared.ledger.sessionEpoch
+        SessionTemporaryStorage.shared.erase()
+        let current = SessionTemporaryStorage.shared.ledger.sessionEpoch
+        #expect(budget.reserve(.place("stories"), inAppId: "b", isPriority: false, frequency: restricted, inSession: current) == .granted)
+
+        budget.commit(.place("stories"), inAppId: "a", frequency: restricted, inSession: ended)
+        budget.release(.place("stories"), inSession: ended)
+
+        #expect(shownInSession.isEmpty)
+        #expect(reservations[.place("stories")]?.inAppId == "b")
+        #expect(trackingService.trackInAppShownCallCount == 1)
+        #expect(trackingService.saveInappStateChangeCallCount == 1)
     }
 
     // MARK: - The budget rules

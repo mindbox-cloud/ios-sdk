@@ -13,35 +13,6 @@ import Testing
 @Suite("In-app core manager operation announcement", .tags(.embeddedBlocks))
 struct InAppCoreManagerTests {
 
-    private final class ConfigManagerStub: InAppConfigurationManagerProtocol {
-        weak var delegate: InAppConfigurationDelegate?
-        var hasConfig = false
-
-        func prepareConfiguration() {}
-        func handleInapps(event: ApplicationEvent?, _ completion: @escaping (InAppFormData?) -> Void) {
-            completion(nil)
-        }
-        func selectInappForPlace(_ place: String,
-                                 trigger: ApplicationEvent?,
-                                 _ completion: @escaping (EmbeddedPlaceSelection, TimeInterval) -> Void) {
-            completion(.decided(nil), 0)
-        }
-        func getInAppById(_ id: String, _ completion: @escaping (InAppTransitionData?) -> Void) {
-            completion(nil)
-        }
-        func getShowableInappIds(_ ids: [String], askedBy requesterInappId: String, _ completion: @escaping ([String]) -> Void) {
-            completion([])
-        }
-        func getInAppToShowById(_ id: String, params: [String: JSONValue], _ completion: @escaping (InAppFormData?) -> Void) {
-            completion(nil)
-        }
-        func getEmbeddedPlaces(_ completion: @escaping ([String: Set<String>]?) -> Void) {
-            completion(nil)
-        }
-        func resetInappManager() {}
-        func inappInCurrentConfig(withId id: String) -> InApp? { nil }
-    }
-
     private final class SchedulerStub: InappScheduleManagerProtocol {
         weak var delegate: InAppMessagesDelegate?
 
@@ -59,7 +30,7 @@ struct InAppCoreManagerTests {
         TestConfiguration.configure()
         SessionTemporaryStorage.shared.erase()
 
-        coreManager = InAppCoreManager(configManager: ConfigManagerStub(),
+        coreManager = InAppCoreManager(configManager: InAppConfigurationManagerStub(),
                                        inappScheduler: SchedulerStub(),
                                        serialQueue: queue)
         coreManager.didPreparedConfiguration()

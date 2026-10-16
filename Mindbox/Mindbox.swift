@@ -621,6 +621,7 @@ public class Mindbox: NSObject {
         inAppMessagesDelegate = self
         coreController = DI.injectOrFail(CoreController.self)
         trackVisitManager = DI.injectOrFail(TrackVisitManagerProtocol.self)
+        _ = EmbeddedBlockAppPresence.shared
     }
 
     private func sendCustomEventInapps(_ operationSystemName: String, jsonString: String?) {

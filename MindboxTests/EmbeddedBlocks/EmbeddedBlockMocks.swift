@@ -64,7 +64,13 @@ final class InappShowAccountingMock: InappShowAccounting {
 
     private(set) var places: [String] = []
 
+    private(set) var sessionEpochs: [Int] = []
+
+    private(set) var recordedOnMainThread: [Bool] = []
+
     var shownIds: [String] { shows.map(\.inAppId) }
+
+    var accountant: InappShowAccounting?
 
     func recordShow(_ show: InappShow) {
         shows.append(show)
@@ -74,9 +80,12 @@ final class InappShowAccountingMock: InappShowAccounting {
         cooldowns.append(frequency)
     }
 
-    func recordBlockShow(_ show: InappShow, at place: String) {
+    func recordBlockShow(_ show: InappShow, at place: String, sessionEpoch: Int) {
         places.append(place)
         shows.append(show)
+        sessionEpochs.append(sessionEpoch)
+        recordedOnMainThread.append(Thread.isMainThread)
+        accountant?.recordBlockShow(show, at: place, sessionEpoch: sessionEpoch)
     }
 }
 
@@ -97,6 +106,10 @@ final class InappShowBudgetMock: InappShowBudgeting {
 
     var refusedInAppIds: Set<String> = []
 
+    var isOfAnEndedSession = false
+
+    private(set) var callSessions: [Int?] = []
+
     private(set) var reservations: [Reservation] = []
     private(set) var commits: [Commit] = []
     private(set) var releases: [InappShowBudgetOwner] = []
@@ -105,16 +118,21 @@ final class InappShowBudgetMock: InappShowBudgeting {
 
     var reservedOwners: [InappShowBudgetOwner] { reservations.map(\.owner) }
 
-    func reserve(_ owner: InappShowBudgetOwner, inAppId: String, isPriority: Bool, frequency: InappFrequency?) -> InappShowReservationOutcome {
+    func reserve(_ owner: InappShowBudgetOwner, inAppId: String, isPriority: Bool, frequency: InappFrequency?, inSession sessionEpoch: Int?) -> InappShowReservationOutcome? {
+        callSessions.append(sessionEpoch)
+        guard !isOfAnEndedSession else { return nil }
+
         reservations.append(Reservation(owner: owner, inAppId: inAppId, isPriority: isPriority, frequency: frequency))
         return refusedInAppIds.contains(inAppId) ? .refused : .granted
     }
 
-    func commit(_ owner: InappShowBudgetOwner, inAppId: String, frequency: InappFrequency?) {
+    func commit(_ owner: InappShowBudgetOwner, inAppId: String, frequency: InappFrequency?, inSession sessionEpoch: Int?, to ledger: inout InappSessionLedger) {
+        callSessions.append(sessionEpoch)
         commits.append(Commit(owner: owner, inAppId: inAppId, frequency: frequency))
     }
 
-    func release(_ owner: InappShowBudgetOwner) {
+    func release(_ owner: InappShowBudgetOwner, inSession sessionEpoch: Int?, from ledger: inout InappSessionLedger) {
+        callSessions.append(sessionEpoch)
         releases.append(owner)
         releasedOnMainThread.append(Thread.isMainThread)
     }
@@ -122,6 +140,8 @@ final class InappShowBudgetMock: InappShowBudgeting {
     func recordCooldown(frequency: InappFrequency?) {
         cooldowns.append(frequency)
     }
+
+    func saveShowHistory() {}
 }
 
 final class EmbeddedBlockFailureReporterMock {
@@ -380,6 +400,14 @@ final class EmbeddedBlockResolverMock: EmbeddedBlockResolving {
 
     var processingDuration: TimeInterval = 0
 
+    var sessionEpoch = SessionTemporaryStorage.shared.ledger.sessionEpoch
+
+    private(set) var configVersion = ConfigVersion(number: 1)
+
+    private(set) var configPublishedInSession = SessionTemporaryStorage.shared.ledger.sessionEpoch
+
+    var readsNoConfig = false
+
     /// `true` — the answer does not arrive until the test calls `flush()`: this is how a resolve
     /// that lands after the block was stopped or reloaded is checked.
     var isDeferred = false
@@ -388,9 +416,11 @@ final class EmbeddedBlockResolverMock: EmbeddedBlockResolving {
 
     private(set) var triggers: [ApplicationEvent?] = []
 
+    private(set) var resolvedOnMainThread: [Bool] = []
+
     var resolveCount: Int { resolvedPlaces.count }
 
-    private var pending: [(EmbeddedBlockResolution, TimeInterval) -> Void] = []
+    private var pending: [(configVersion: ConfigVersion?, completion: (EmbeddedBlockResolution, TimeInterval, Int, ConfigVersion?) -> Void)] = []
 
     init(resolution: EmbeddedBlockResolution = .content(.stub)) {
         self.resolution = resolution
@@ -398,21 +428,38 @@ final class EmbeddedBlockResolverMock: EmbeddedBlockResolving {
 
     func resolve(_ place: String,
                  trigger: ApplicationEvent?,
-                 completion: @escaping (EmbeddedBlockResolution, TimeInterval) -> Void) {
+                 completion: @escaping (EmbeddedBlockResolution, TimeInterval, Int, ConfigVersion?) -> Void) {
         resolvedPlaces.append(place)
         triggers.append(trigger)
+        resolvedOnMainThread.append(Thread.isMainThread)
+        let configRead = readsNoConfig ? nil : configVersion
 
         if isDeferred {
-            pending.append(completion)
+            pending.append((configRead, completion))
         } else {
-            completion(resolution, processingDuration)
+            completion(resolution, processingDuration, sessionEpoch, configRead)
         }
     }
 
+    @discardableResult
+    func publishConfig() -> ConfigVersion {
+        configVersion = configVersion.next
+        configPublishedInSession = SessionTemporaryStorage.shared.ledger.sessionEpoch
+        return configVersion
+    }
+
     func flush() {
-        let completions = pending
+        answerPending { $0 }
+    }
+
+    func flush(readingConfig version: ConfigVersion) {
+        answerPending { $0.map { max($0, version) } }
+    }
+
+    private func answerPending(reading configRead: (ConfigVersion?) -> ConfigVersion?) {
+        let answered = pending
         pending = []
-        completions.forEach { $0(resolution, processingDuration) }
+        answered.forEach { $0.completion(resolution, processingDuration, sessionEpoch, configRead($0.configVersion)) }
     }
 }
 
@@ -463,6 +510,32 @@ final class InappRequestServiceMock: InappRequestServing {
         pending = []
         completions.forEach { $0(allowed) }
     }
+}
+
+final class InAppConfigurationManagerStub: InAppConfigurationManagerProtocol {
+    weak var delegate: InAppConfigurationDelegate?
+    var hasConfig = false
+
+    func prepareConfiguration() {}
+    func handleInapps(event: ApplicationEvent?, _ completion: @escaping (InAppFormData?) -> Void) {
+        completion(nil)
+    }
+    func selectInappForPlace(_ place: String,
+                             trigger: ApplicationEvent?,
+                             _ completion: @escaping (EmbeddedPlaceSelection, TimeInterval, Int, ConfigVersion?) -> Void) {
+        completion(.decided(nil), 0, 0, nil)
+    }
+    func getShowableInappIds(_ ids: [String], askedBy requesterInappId: String, _ completion: @escaping ([String]) -> Void) {
+        completion([])
+    }
+    func getInAppToShowById(_ id: String, params: [String: JSONValue], _ completion: @escaping (InAppFormData?) -> Void) {
+        completion(nil)
+    }
+    func getEmbeddedPlaces(_ completion: @escaping ([String: Set<String>]?) -> Void) {
+        completion(nil)
+    }
+    func resetInappManager() {}
+    func inappInCurrentConfig(withId id: String) -> InApp? { nil }
 }
 
 /// A clock that moves only when asked to. Monotonic seconds, matching the timeout's clock seam;
@@ -520,21 +593,37 @@ final class EmbeddedBlockWaitBudgetBed {
     /// One per bed: the background and the return from it must reach only this budget.
     let center: NotificationCenter
 
+    let presenceBed: AppPresenceBed
+
     let budget: EmbeddedBlockWaitBudget
 
-    init(placeSystemName: String = "block-id", duration: TimeInterval = 5) {
+    init(placeSystemName: String = "block-id", duration: TimeInterval = 5, applicationState: UIApplication.State = .active) {
         self.duration = duration
         let clock = TestClock()
         let scheduler = TestScheduler()
         let center = NotificationCenter()
+        let presenceBed = AppPresenceBed(center: center, clock: clock, applicationState: applicationState)
         self.clock = clock
         self.scheduler = scheduler
         self.center = center
-        budget = EmbeddedBlockWaitBudget(placeSystemName: placeSystemName,
-                                            duration: { duration },
-                                            now: { clock.now },
-                                            notificationCenter: center,
-                                            schedule: { scheduler.schedule($0, $1) })
+        self.presenceBed = presenceBed
+        budget = Self.makeBudget(placeSystemName: placeSystemName, duration: duration, clock: clock, scheduler: scheduler, presence: presenceBed.presence)
+    }
+
+    func makeBudget(placeSystemName: String = "block-id") -> EmbeddedBlockWaitBudget {
+        Self.makeBudget(placeSystemName: placeSystemName, duration: duration, clock: clock, scheduler: scheduler, presence: presenceBed.presence)
+    }
+
+    private static func makeBudget(placeSystemName: String,
+                                   duration: TimeInterval,
+                                   clock: TestClock,
+                                   scheduler: TestScheduler,
+                                   presence: EmbeddedBlockAppPresence) -> EmbeddedBlockWaitBudget {
+        EmbeddedBlockWaitBudget(placeSystemName: placeSystemName,
+                                duration: { duration },
+                                now: { clock.now },
+                                presence: presence,
+                                schedule: { scheduler.schedule($0, $1) })
     }
 
     func enterBackground() {
@@ -543,6 +632,63 @@ final class EmbeddedBlockWaitBudgetBed {
 
     func enterForeground() {
         center.post(name: UIApplication.willEnterForegroundNotification, object: nil)
+    }
+}
+
+final class AppPresenceBed {
+
+    var applicationState: UIApplication.State
+
+    var isSDKInitialized = true
+
+    let clock: TestClock
+
+    let center: NotificationCenter
+
+    private(set) var presence: EmbeddedBlockAppPresence!
+
+    init(center: NotificationCenter = NotificationCenter(), clock: TestClock = TestClock(), applicationState: UIApplication.State = .active) {
+        self.center = center
+        self.clock = clock
+        self.applicationState = applicationState
+        presence = EmbeddedBlockAppPresence(applicationState: { [weak self] in self?.applicationState ?? .active },
+                                            isSDKInitialized: { [weak self] in self?.isSDKInitialized ?? true },
+                                            now: { clock.now },
+                                            notificationCenter: center)
+    }
+
+    func enterBackground() {
+        applicationState = .background
+        center.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
+    }
+
+    func returnToApp() {
+        center.post(name: UIApplication.willEnterForegroundNotification, object: nil)
+        becomeActive()
+    }
+
+    func enterForegroundAtLaunch() {
+        applicationState = .inactive
+        center.post(name: UIApplication.willEnterForegroundNotification, object: nil)
+    }
+
+    func returnToAppWithNoSessionCheck() {
+        let wasInitialized = isSDKInitialized
+        isSDKInitialized = false
+        returnToApp()
+        isSDKInitialized = wasInitialized
+    }
+
+    func becomeActive() {
+        applicationState = .active
+        center.post(name: UIApplication.didBecomeActiveNotification, object: nil)
+    }
+
+    func finishSessionCheck(startedAt: TimeInterval? = nil, startsNewSession: Bool = false) {
+        center.post(name: .inappSessionChecked,
+                    object: nil,
+                    userInfo: [Constants.Notification.sessionCheckStartedAt: startedAt ?? clock.now,
+                               Constants.Notification.startsNewSession: startsNewSession])
     }
 }
 
@@ -602,7 +748,40 @@ final class EmbeddedBlockContentProviderFactoryMock: EmbeddedBlockContentProvide
     }
 }
 
-final class EmbeddedBlockTestBed {
+protocol EmbeddedBlockSessionRig: AnyObject {
+
+    var center: NotificationCenter { get }
+
+    var resolver: EmbeddedBlockResolverMock { get }
+}
+
+extension EmbeddedBlockSessionRig {
+
+    var currentSessionEpoch: Int { SessionTemporaryStorage.shared.ledger.sessionEpoch }
+
+    func expireSession() {
+        SessionTemporaryStorage.shared.erase()
+    }
+
+    func announceNewConfig() {
+        announceConfig(resolver.publishConfig())
+    }
+
+    func announceConfig(_ version: ConfigVersion) {
+        center.post(name: .mobileConfigDownloadConcluded,
+                    object: nil,
+                    userInfo: [Constants.Notification.configVersion: version])
+    }
+
+    @discardableResult
+    func announceOperation(_ name: String = "custom.operation") -> ApplicationEvent {
+        let event = ApplicationEvent(name: name, model: nil)
+        center.post(name: .inAppOperationOccurred, object: event)
+        return event
+    }
+}
+
+final class EmbeddedBlockTestBed: EmbeddedBlockSessionRig {
 
     let resolver: EmbeddedBlockResolverMock
     let inappService: InappRequestServiceMock
@@ -612,22 +791,33 @@ final class EmbeddedBlockTestBed {
     let budget = InappShowBudgetMock()
     let failureReporter: EmbeddedBlockFailureReporterMock
     let ackScheduler: EmbeddedBlockAckSchedulerMock
+    let delayScheduler: TestScheduler
 
     /// One per bed: a new config must reach only this provider.
     let center: NotificationCenter
 
-    /// The application state a stopwatch reads at birth; the notifications below keep it in step.
-    let appState = ApplicationStateStub()
-
-    /// One clock for both seams: the page's rendering time (the block's part of `timeToDisplay`) and the ack wait.
     let clock: TestClock
+
+    let presenceBed: AppPresenceBed
+
+    var applicationState: UIApplication.State {
+        get { presenceBed.applicationState }
+        set { presenceBed.applicationState = newValue }
+    }
 
     var page: EmbeddedBlockPageMock? { pageFactory.page }
 
+    private let providerAt: (String) -> EmbeddedBlockWebViewProvider
+
     init(placeSystemName: String = "block-id",
-         resolution: EmbeddedBlockResolution = .content(.stub)) {
+         resolution: EmbeddedBlockResolution = .content(.stub),
+         applicationState: UIApplication.State = .active) {
         // Once-per-session state lives on the shared singleton — reset, or beds would see each other's silence.
-        SessionTemporaryStorage.shared.$ledger.mutate { $0.placesReportedUnanswered = [] }
+        SessionTemporaryStorage.shared.$ledger.mutate {
+            $0.placesReportedUnanswered = []
+            $0.servedPlaceDelays = []
+            $0.placeShownInappId = [:]
+        }
 
         let clock = TestClock()
         let resolver = EmbeddedBlockResolverMock(resolution: resolution)
@@ -638,50 +828,101 @@ final class EmbeddedBlockTestBed {
         let accounting = InappShowAccountingMock()
         let failureReporter = EmbeddedBlockFailureReporterMock()
         let ackScheduler = EmbeddedBlockAckSchedulerMock()
+        let delayScheduler = TestScheduler()
+        let presenceBed = AppPresenceBed(center: center, clock: clock, applicationState: applicationState)
         let registry = EmbeddedBlockPlaceRegistry(resolver: resolver,
                                                   budget: budget,
                                                   notificationCenter: center,
-                                                  fetchEmbeddedPlaces: { embeddedPlaces.fetch($0) })
+                                                  fetchEmbeddedPlaces: { embeddedPlaces.fetch($0) },
+                                                  presence: presenceBed.presence,
+                                                  delayedDelivery: EmbeddedBlockDelayedDelivery(presence: presenceBed.presence,
+                                                                                                schedule: { delayScheduler.schedule($0, $1) }),
+                                                  now: { clock.now })
+        let providerAt = { (place: String) in
+            EmbeddedBlockWebViewProvider(placeSystemName: place,
+                                         registry: registry,
+                                         inappService: inappService,
+                                         makePage: { pageFactory.make($0) },
+                                         accounting: accounting,
+                                         reportFailure: { failureReporter.report($0, $1, $2, $3) },
+                                         reportUnansweredWait: { failureReporter.reportUnansweredWait($0) },
+                                         scheduleAckTimeout: { ackScheduler.schedule($0, $1) },
+                                         makeStopwatch: {
+                                             ForegroundStopwatch(notificationCenter: center,
+                                                                 now: { clock.now },
+                                                                 isInBackground: { presenceBed.applicationState == .background })
+                                         },
+                                         now: { clock.now },
+                                         appPresence: presenceBed.presence)
+        }
 
         self.clock = clock
         self.accounting = accounting
         self.ackScheduler = ackScheduler
+        self.delayScheduler = delayScheduler
         self.failureReporter = failureReporter
         self.center = center
         self.resolver = resolver
         self.inappService = inappService
         self.pageFactory = pageFactory
-        self.provider = EmbeddedBlockWebViewProvider(placeSystemName: placeSystemName,
-                                                     registry: registry,
-                                                     inappService: inappService,
-                                                     makePage: { pageFactory.make($0) },
-                                                     accounting: accounting,
-                                                     reportFailure: { failureReporter.report($0, $1, $2, $3) },
-                                                     reportUnansweredWait: { failureReporter.reportUnansweredWait($0) },
-                                                     scheduleAckTimeout: { ackScheduler.schedule($0, $1) },
-                                                     makeStopwatch: { [appState] in
-                                                         ForegroundStopwatch(notificationCenter: center,
-                                                                             now: { clock.now },
-                                                                             isInBackground: { appState.isInBackground })
-                                                     },
-                                                     now: { clock.now })
+        self.presenceBed = presenceBed
+        self.providerAt = providerAt
+        self.provider = providerAt(placeSystemName)
     }
 
-    func announceNewConfig() {
-        center.post(name: .mobileConfigDownloaded, object: nil)
+    func makeProvider(placeSystemName: String) -> EmbeddedBlockWebViewProvider {
+        providerAt(placeSystemName)
+    }
+
+    func announceNewSession() {
+        expireSession()
+        concludeNewSessionDownload()
+    }
+
+    func concludeNewSessionDownload() {
+        resolver.sessionEpoch = currentSessionEpoch
+        if resolver.configPublishedInSession != currentSessionEpoch {
+            resolver.publishConfig()
+        }
+        announceConfig(resolver.configVersion)
+    }
+
+    func renewSession() {
+        expireSession()
+        resolver.sessionEpoch = currentSessionEpoch
+        resolver.publishConfig()
+        finishSessionCheck(startsNewSession: true)
     }
 
     func enterBackground() {
-        appState.isInBackground = true
-        center.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
+        presenceBed.enterBackground()
     }
 
-    /// UIKit's order: the foreground notification goes out while the state still reads the
-    /// background; the state flips after it, and `didBecomeActive` follows.
+    func returnToApp() {
+        presenceBed.returnToApp()
+    }
+
+    func enterForegroundAtLaunch() {
+        presenceBed.enterForegroundAtLaunch()
+    }
+
     func enterForeground() {
-        center.post(name: UIApplication.willEnterForegroundNotification, object: nil)
-        appState.isInBackground = false
-        center.post(name: UIApplication.didBecomeActiveNotification, object: nil)
+        presenceBed.returnToAppWithNoSessionCheck()
+    }
+
+    func becomeActive() {
+        presenceBed.becomeActive()
+    }
+
+    func finishSessionCheck(startedAt: TimeInterval? = nil, startsNewSession: Bool = false) {
+        presenceBed.finishSessionCheck(startedAt: startedAt, startsNewSession: startsNewSession)
+    }
+
+    func answer(_ resolution: EmbeddedBlockResolution) -> EmbeddedBlockPlaceAnswer {
+        EmbeddedBlockPlaceAnswer(resolution: resolution,
+                                 processingDuration: 0,
+                                 sessionEpoch: resolver.sessionEpoch,
+                                 isOperationTriggered: false)
     }
 
     func deliverSamePageWithNewData(_ marker: String = "fresh") {
@@ -695,15 +936,6 @@ final class EmbeddedBlockTestBed {
         announceNewConfig()
     }
 
-    func announceOperation(_ name: String = "custom.operation") -> ApplicationEvent {
-        let event = ApplicationEvent(name: name, model: nil)
-        center.post(name: .inAppOperationOccurred, object: event)
-        return event
-    }
-}
-
-final class ApplicationStateStub {
-    var isInBackground = false
 }
 
 /// The place's memory across launches, kept in memory: a fixture built over the same mock is the
@@ -847,7 +1079,7 @@ final class EmbeddedBlockViewDelegateMock: MindboxEmbeddedBlockViewDelegate {
 
 extension EmbeddedBlockResolving {
 
-    func resolve(_ place: String, completion: @escaping (EmbeddedBlockResolution, TimeInterval) -> Void) {
+    func resolve(_ place: String, completion: @escaping (EmbeddedBlockResolution, TimeInterval, Int, ConfigVersion?) -> Void) {
         resolve(place, trigger: nil, completion: completion)
     }
 }

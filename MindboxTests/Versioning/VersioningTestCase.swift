@@ -29,6 +29,7 @@ class VersioningTestCase: XCTestCase {
 
         guaranteedDeliveryManager = DI.injectOrFail(GuaranteedDeliveryManager.self)
         Mindbox.shared.assembly()
+        EmbeddedBlockAppPresence.shared.reset()
         let timer = DI.injectOrFail(TimerManager.self)
         timer.invalidate()
 

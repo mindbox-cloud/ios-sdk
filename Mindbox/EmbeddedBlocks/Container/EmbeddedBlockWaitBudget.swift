@@ -6,11 +6,11 @@
 //  Copyright © 2026 Mindbox. All rights reserved.
 //
 
-import UIKit
+import Foundation
 import QuartzCore
 import MindboxLogger
 
-final class EmbeddedBlockWaitBudget {
+final class EmbeddedBlockWaitBudget: EmbeddedBlockAppPresenceSubscribing {
 
     var isNeeded: () -> Bool = { false }
 
@@ -27,7 +27,7 @@ final class EmbeddedBlockWaitBudget {
     /// negative and stretch the wait past its budget.
     private let now: () -> TimeInterval
 
-    private let notificationCenter: NotificationCenter
+    private let presence: EmbeddedBlockAppPresence
 
     private let schedule: EmbeddedBlockWaitScheduling
 
@@ -43,33 +43,26 @@ final class EmbeddedBlockWaitBudget {
     init(placeSystemName: String,
          duration: @escaping () -> TimeInterval,
          now: @escaping () -> TimeInterval = { CACurrentMediaTime() },
-         notificationCenter: NotificationCenter = .default,
+         presence: EmbeddedBlockAppPresence = .shared,
          schedule: @escaping EmbeddedBlockWaitScheduling = { delay, work in
              DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
          }) {
         self.placeSystemName = placeSystemName
         self.duration = duration
         self.now = now
-        self.notificationCenter = notificationCenter
+        self.presence = presence
         self.schedule = schedule
 
-        notificationCenter.addObserver(self,
-                                       selector: #selector(applicationDidEnterBackground),
-                                       name: UIApplication.didEnterBackgroundNotification,
-                                       object: nil)
-        notificationCenter.addObserver(self,
-                                       selector: #selector(applicationWillEnterForeground),
-                                       name: UIApplication.willEnterForegroundNotification,
-                                       object: nil)
+        presence.subscribe(self)
     }
 
     deinit {
-        notificationCenter.removeObserver(self)
         workItem?.cancel()
     }
 
     func armIfNeeded() {
-        guard workItem == nil, isNeeded() else { return }
+        assert(Thread.isMainThread)
+        guard workItem == nil, !presence.isInBackground, isNeeded() else { return }
 
         let work = DispatchWorkItem { [weak self] in
             guard let self else { return }
@@ -104,8 +97,15 @@ final class EmbeddedBlockWaitBudget {
         consumed = 0
     }
 
-    @objc
-    private func applicationDidEnterBackground() {
+    func refresh() {
+        if isNeeded() {
+            armIfNeeded()
+        } else {
+            pause()
+        }
+    }
+
+    func appDidEnterBackground() {
         guard isRunning else { return }
 
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' went to the background while loading, pausing the timeout",
@@ -113,8 +113,7 @@ final class EmbeddedBlockWaitBudget {
         pause()
     }
 
-    @objc
-    private func applicationWillEnterForeground() {
+    func appWillEnterForeground() {
         armIfNeeded()
     }
 }

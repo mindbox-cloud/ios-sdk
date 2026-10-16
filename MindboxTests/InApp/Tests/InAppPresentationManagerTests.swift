@@ -36,6 +36,19 @@ struct InAppPresentationManagerTests {
         withExtendedLifetime(manager) {}
     }
 
+    @Test("A discard heard on main closes the show before the post returns, ahead of anything queued behind it on main")
+    func discardHeardOnMainClosesTheShowAtOnce() {
+        let display = PresentationDisplaySpy()
+        let manager = InAppPresentationManager(displayUseCase: display)
+
+        present(on: manager, id: "on-screen")
+        NotificationCenter.default.post(name: .shouldDiscardInapps, object: nil)
+
+        #expect(display.dismissCount == 1)
+        #expect(display.onScreen == nil)
+        withExtendedLifetime(manager) {}
+    }
+
     @Test("A close from the page completes the show as a close, not a discard")
     func pageCloseCompletesTheShowAsAClose() async {
         let display = PresentationDisplaySpy()

@@ -27,6 +27,7 @@ struct MindboxOperationsTests {
         databaseRepository = DI.injectOrFail(DatabaseRepositoryProtocol.self)
         try databaseRepository.erase()
         Mindbox.shared.assembly()
+        EmbeddedBlockAppPresence.shared.reset()
         // Keep GuaranteedDeliveryManager from consuming (deleting) the events these
         // tests assert on — an earlier test may have enabled scheduling.
         DI.injectOrFail(GuaranteedDeliveryManager.self).canScheduleOperations = false
@@ -169,7 +170,7 @@ struct MindboxOperationsTests {
     // as the (private) flag, so it stands in for it.
     @Test("track(.universalLink) applies its effects before returning (stays synchronous)")
     func trackAppliesEffectsSynchronously() {
-        SessionTemporaryStorage.shared.erase()
+        SessionTemporaryStorage.shared.lastTrackVisit = nil
         let activity = NSUserActivity(activityType: NSUserActivityTypeBrowsingWeb)
         activity.webpageURL = URL(string: "https://test-site.s.mindbox.ru")
 

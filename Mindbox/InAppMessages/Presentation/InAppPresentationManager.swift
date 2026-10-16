@@ -113,9 +113,12 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
             object: nil,
             queue: nil
         ) { [weak self] _ in
-            DispatchQueue.main.async {
-                self?.discardActiveInApp()
+            guard Thread.isMainThread else {
+                DispatchQueue.main.async { self?.discardActiveInApp() }
+                return
             }
+
+            self?.discardActiveInApp()
         }
     }
 

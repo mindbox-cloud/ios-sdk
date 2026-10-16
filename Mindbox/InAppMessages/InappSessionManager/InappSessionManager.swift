@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import QuartzCore
 import MindboxLogger
 
 protocol InappSessionManagerProtocol {
@@ -18,6 +19,8 @@ final class InappSessionManager: InappSessionManagerProtocol {
     // @Locked: checks arrive from the controller queue (direct visits) and synchronously from the
     // host's thread (push/link visits), each a read-then-write of this timestamp.
     @Locked var lastTrackVisitTimestamp: Date?
+
+    private let sessionCheck = NSLock()
     
     private let inappCoreManager: InAppCoreManagerProtocol
     private let inappConfigManager: InAppConfigurationManagerProtocol
@@ -37,44 +40,60 @@ final class InappSessionManager: InappSessionManagerProtocol {
     }
 
     func checkInappSession() {
-        let isSDKInitialized = SessionTemporaryStorage.shared.isInitializationCalled
-        if !isSDKInitialized {
-            return
+        sessionCheck.lock()
+        defer { sessionCheck.unlock() }
+
+        let check = decideOnTheSession()
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: .inappSessionChecked,
+                                            object: nil,
+                                            userInfo: [Constants.Notification.sessionCheckStartedAt: check.startedAt,
+                                                       Constants.Notification.startsNewSession: check.startsNewSession])
+        }
+    }
+
+    private func decideOnTheSession() -> (startedAt: TimeInterval, startsNewSession: Bool) {
+        let startedAt = CACurrentMediaTime()
+        guard SessionTemporaryStorage.shared.isInitializationCalled else {
+            return (startedAt, false)
         }
         
         let now = Date()
-        var updatingInappSession = false
-        
+        let sessionTime = getConfigSession().flatMap { $0 > 0 ? $0 : nil }
+        let visit = SessionTemporaryStorage.shared.$ledger.mutate { ledger -> (previous: Date?, isExpired: Bool) in
+            guard let previous = $lastTrackVisitTimestamp.exchange(now) else { return (nil, false) }
+            guard let sessionTime, now.timeIntervalSince(previous) > sessionTime else { return (previous, false) }
+
+            ledger.isSessionEnding = true
+            return (previous, true)
+        }
+        Logger.common(message: "[InappSessionManager] Updating lastTrackVisitTimestamp to \(now.asDateTimeWithSeconds).")
+
         defer {
-            if isSDKInitialized {
-                lastTrackVisitTimestamp = now
-                Logger.common(message: "[InappSessionManager] Updating lastTrackVisitTimestamp to \(now.asDateTimeWithSeconds).")
-                
-                if !updatingInappSession {
-                    logNearestInappSessionExpirationTime()
-                }
+            if !visit.isExpired {
+                logNearestInappSessionExpirationTime()
             }
         }
 
-        guard let lastTimestamp = lastTrackVisitTimestamp else {
+        guard visit.previous != nil else {
             Logger.common(message: "[InappSessionManager] lastTrackVisitTimestamp is nil — skip session expiration check.")
-            return
+            return (startedAt, false)
         }
         
-        guard let sessionTimeInSeconds = getConfigSession(), sessionTimeInSeconds > 0 else {
+        guard sessionTime != nil else {
             Logger.common(message: "[InappSessionManager] expiredInappTime is nil/invalid or <= 0 — skip session expiration check.")
-            return
+            return (startedAt, false)
         }
 
-        let timeBetweenVisitsSeconds = now.timeIntervalSince(lastTimestamp)
-        if timeBetweenVisitsSeconds > Double(sessionTimeInSeconds) {
-            updatingInappSession = true
+        if visit.isExpired {
             Logger.common(message: "──────────────── [New session] ────────────────", level: .info, category: .general)
             Logger.common(message: "[InappSessionManager] Session expired. Need to update session...")
             updateInappSession()
         } else {
             Logger.common(message: "[InappSessionManager] Session not expired.")
         }
+
+        return (startedAt, visit.isExpired)
     }
 
     private func updateInappSession() {
@@ -96,7 +115,9 @@ final class InappSessionManager: InappSessionManagerProtocol {
 
     private func hideInappIfInappSessionExpired() {
         Logger.common(message: "[InappSessionManager] Hide previous inapp because session expired.")
-        NotificationCenter.default.post(name: .shouldDiscardInapps, object: nil)
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: .shouldDiscardInapps, object: nil)
+        }
     }
     
     private func getConfigSession() -> Double? {

@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 /// One in-app a page was allowed to draw — what `Inapp.Targeting` for a page's question is
 /// deduplicated by: once per session, per requesting in-app and in-app.
@@ -28,9 +29,17 @@ struct ReportedFailure: Hashable {
     let reason: String
 }
 
+enum BlockShowRecord: Equatable {
+    case new
+    case repeated
+    case stale
+}
+
 /// What this session already told the funnel and served to places, kept so nothing is repeated.
-/// Reset as one with the session.
+/// Reset as one with the session; a show history not yet saved outlives the reset.
 struct InappSessionLedger: Equatable {
+
+    var sessionEpoch = 0
 
     /// In-apps vouched for once per session — the losers at a place.
     var vouchedInappIds: Set<String> = []
@@ -50,6 +59,16 @@ struct InappSessionLedger: Equatable {
     var placeShownInappId: [String: String] = [:]
 
     var reportedFailures: Set<ReportedFailure> = []
+
+    var showBudget = InappShowBudgetState()
+
+    var isSessionEnding = false
+
+    var unsavedShowHistory: InappUnsavedShowHistory?
+
+    func hasEnded(_ sessionEpoch: Int) -> Bool {
+        sessionEpoch != self.sessionEpoch || isSessionEnding
+    }
 }
 
 // Ask-and-record in one step, each meant to run inside a single `$ledger.mutate`: callers live on
@@ -73,12 +92,12 @@ extension InappSessionLedger {
         vouchedPageOffers.insert(offer).inserted
     }
 
-    /// True when the place shows something other than what it showed last.
-    mutating func recordShow(_ inappId: String, at place: String) -> Bool {
-        guard placeShownInappId[place] != inappId else { return false }
+    mutating func recordShow(_ inappId: String, at place: String, sessionEpoch: Int) -> BlockShowRecord {
+        guard !hasEnded(sessionEpoch) else { return .stale }
+        guard placeShownInappId[place] != inappId else { return .repeated }
 
         placeShownInappId[place] = inappId
-        return true
+        return .new
     }
 
     mutating func recordUnanswered(_ place: String) -> Bool {
@@ -87,5 +106,41 @@ extension InappSessionLedger {
 
     mutating func recordFailure(_ inappId: String, reason: String) -> Bool {
         reportedFailures.insert(ReportedFailure(inappId: inappId, reason: reason)).inserted
+    }
+
+    mutating func changeShowHistory(persisted: () -> InappShowHistory, _ change: (inout InappShowHistory) -> Void) {
+        var unsaved = unsavedShowHistory ?? InappUnsavedShowHistory(history: persisted())
+        change(&unsaved.history)
+        unsaved.revision += 1
+        unsavedShowHistory = unsaved
+    }
+
+    mutating func takeShowHistoryToSave() -> InappUnsavedShowHistory? {
+        guard let unsaved = unsavedShowHistory, !unsaved.isBeingSaved else { return nil }
+
+        unsavedShowHistory?.isBeingSaved = true
+        return unsaved
+    }
+
+    mutating func showHistorySaved(_ saved: InappUnsavedShowHistory) -> InappUnsavedShowHistory? {
+        guard let unsaved = unsavedShowHistory, unsaved.revision != saved.revision else {
+            unsavedShowHistory = nil
+            return nil
+        }
+
+        return unsaved
+    }
+}
+
+extension Locked where Value == InappSessionLedger {
+
+    func withinLiveSession<Result>(_ sessionEpoch: Int?, _ body: (inout InappSessionLedger) -> Result) -> Result? {
+        mutate { ledger in
+            if let sessionEpoch, ledger.hasEnded(sessionEpoch) {
+                return nil
+            }
+
+            return body(&ledger)
+        }
     }
 }

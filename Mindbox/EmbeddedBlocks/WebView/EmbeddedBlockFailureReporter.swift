@@ -31,15 +31,24 @@ final class EmbeddedBlockFailureReporter {
 
     func report(_ failure: EmbeddedBlockResolutionFailure, isBlockOnScreen: Bool) {
         guard isBlockOnScreen else {
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': \(failure.reason.rawValue) for in-app \(failure.inAppId) happened off screen — held until the block is looked at",
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': \(failure.reason.rawValue) for in-app \(failure.inAppId) happened while the block was not started — held until it starts",
                           category: .embeddedBlocks)
             held = failure
             return
         }
 
-        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': reporting \(failure.reason.rawValue) for in-app \(failure.inAppId)",
-                      level: .error, category: .embeddedBlocks)
-        report(failure.inAppId, failure.tags, failure.reason, failure.details)
+        send(failure)
+    }
+
+    func report(failureOf answer: EmbeddedBlockPlaceAnswer) {
+        switch answer.resolution {
+        case .failure(let failure):
+            send(failure)
+        case .configUnavailable:
+            reportUnansweredWaitOnce(answer.processingDuration, inSession: answer.sessionEpoch)
+        case .content, .empty, .targetingUnavailable:
+            break
+        }
     }
 
     func flushHeld() {
@@ -56,8 +65,22 @@ final class EmbeddedBlockFailureReporter {
         held = nil
     }
 
-    func reportUnansweredWaitOnce(_ waited: TimeInterval) {
-        guard SessionTemporaryStorage.shared.$ledger.mutate({ $0.recordUnanswered(placeSystemName) }) else {
+    private func send(_ failure: EmbeddedBlockResolutionFailure) {
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': reporting \(failure.reason.rawValue) for in-app \(failure.inAppId)",
+                      level: .error, category: .embeddedBlocks)
+        report(failure.inAppId, failure.tags, failure.reason, failure.details)
+    }
+
+    func reportUnansweredWaitOnce(_ waited: TimeInterval, inSession sessionEpoch: Int? = nil) {
+        let isFirst = SessionTemporaryStorage.shared.$ledger.withinLiveSession(sessionEpoch) { $0.recordUnanswered(placeSystemName) }
+
+        guard let isFirst else {
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': no config to answer with in a session that has ended — not reported",
+                          category: .embeddedBlocks)
+            return
+        }
+
+        guard isFirst else {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the SDK stayed silent again this session — already reported",
                           category: .embeddedBlocks)
             return

@@ -12,7 +12,7 @@ import MindboxLogger
 
 protocol InappRequestServing: AnyObject {
 
-    /// Whether a config is in hand — what a never-answered block reports it was waiting on.
+    /// Whether a config of the current session is in hand — what a never-answered block reports it was waiting on.
     var hasConfig: Bool { get }
 
     /// Which of `ids` the page of in-app `requesterInappId` may draw, targeting checked and fetched like a place

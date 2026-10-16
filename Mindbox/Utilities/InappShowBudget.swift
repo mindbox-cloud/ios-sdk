@@ -32,19 +32,48 @@ struct InappShowBudgetState: Equatable {
     var reservations: [InappShowBudgetOwner: InappShowReservation] = [:]
 }
 
+struct InappShowHistory: Equatable {
+    var shownDatesByInApp: [String: [Date]]?
+    var lastStateChangeDate: Date?
+}
+
+struct InappUnsavedShowHistory: Equatable {
+    var history: InappShowHistory
+    var revision = 0
+    var isBeingSaved = false
+}
+
 protocol InappShowBudgeting: AnyObject {
 
-    func reserve(_ owner: InappShowBudgetOwner, inAppId: String, isPriority: Bool, frequency: InappFrequency?) -> InappShowReservationOutcome
+    func reserve(_ owner: InappShowBudgetOwner, inAppId: String, isPriority: Bool, frequency: InappFrequency?, inSession sessionEpoch: Int?) -> InappShowReservationOutcome?
 
-    func commit(_ owner: InappShowBudgetOwner, inAppId: String, frequency: InappFrequency?)
+    func commit(_ owner: InappShowBudgetOwner, inAppId: String, frequency: InappFrequency?, inSession sessionEpoch: Int?, to ledger: inout InappSessionLedger)
 
-    func release(_ owner: InappShowBudgetOwner)
+    func release(_ owner: InappShowBudgetOwner, inSession sessionEpoch: Int?, from ledger: inout InappSessionLedger)
 
     /// The moment `minIntervalBetweenShows` counts from — written when the frequency counts shows.
     func recordCooldown(frequency: InappFrequency?)
+
+    func saveShowHistory()
 }
 
-/// Every budget read and write goes through one `$showBudget.mutate`: the check and the slot it
+extension InappShowBudgeting {
+
+    func reserve(_ owner: InappShowBudgetOwner, inAppId: String, isPriority: Bool, frequency: InappFrequency?) -> InappShowReservationOutcome {
+        reserve(owner, inAppId: inAppId, isPriority: isPriority, frequency: frequency, inSession: nil) ?? .refused
+    }
+
+    func commit(_ owner: InappShowBudgetOwner, inAppId: String, frequency: InappFrequency?, inSession sessionEpoch: Int? = nil) {
+        SessionTemporaryStorage.shared.$ledger.mutate { commit(owner, inAppId: inAppId, frequency: frequency, inSession: sessionEpoch, to: &$0) }
+        saveShowHistory()
+    }
+
+    func release(_ owner: InappShowBudgetOwner, inSession sessionEpoch: Int? = nil) {
+        SessionTemporaryStorage.shared.$ledger.mutate { release(owner, inSession: sessionEpoch, from: &$0) }
+    }
+}
+
+/// Every budget read and write goes through one `$ledger.mutate`: the check and the slot it
 /// takes must see the same counts, and a reset must not land between them.
 final class InappShowBudget: InappShowBudgeting {
 
@@ -60,71 +89,102 @@ final class InappShowBudget: InappShowBudgeting {
         self.now = now
     }
 
-    func reserve(_ owner: InappShowBudgetOwner, inAppId: String, isPriority: Bool, frequency: InappFrequency?) -> InappShowReservationOutcome {
-        SessionTemporaryStorage.shared.$showBudget.mutate { state in
-            if state.reservations[owner]?.inAppId == inAppId {
-                return .notNeeded
-            }
-            state.reservations.removeValue(forKey: owner)
-
-            let frequencyValidator = InappFrequencyValidator(persistenceStorage: persistenceStorage)
-            guard frequencyValidator.isValid(frequency: frequency, id: inAppId, shownInSession: state.shownInSession) else {
-                return .refused
-            }
-
-            if isPriority || !InappFrequency.countsShows(frequency) {
-                Logger.common(message: "[ShowBudget] In-app \(inAppId) \(isPriority ? "is priority" : "has unlimited frequency"), limits not checked",
-                              level: .debug, category: .inAppMessages)
-                return .notNeeded
-            }
-
-            guard isUnderSessionLimit(state), isUnderDailyLimit(state), hasElapsedMinimumInterval(state) else {
-                Logger.common(message: "[ShowBudget] In-app \(inAppId) refused by show limits", level: .info, category: .inAppMessages)
-                return .refused
-            }
-
-            state.reservations[owner] = InappShowReservation(inAppId: inAppId, reservedAt: now())
-            return .granted
+    func reserve(_ owner: InappShowBudgetOwner, inAppId: String, isPriority: Bool, frequency: InappFrequency?, inSession sessionEpoch: Int?) -> InappShowReservationOutcome? {
+        SessionTemporaryStorage.shared.$ledger.withinLiveSession(sessionEpoch) { ledger in
+            reserve(owner, inAppId: inAppId, isPriority: isPriority, frequency: frequency, in: &ledger)
         }
     }
 
-    func commit(_ owner: InappShowBudgetOwner, inAppId: String, frequency: InappFrequency?) {
-        SessionTemporaryStorage.shared.$showBudget.mutate { state in
-            if let held = state.reservations[owner], held.inAppId != inAppId {
-                Logger.common(message: "[ShowBudget] \(owner) now holds a slot for in-app \(held.inAppId), the show of \(inAppId) leaves it in place",
-                              level: .debug, category: .inAppMessages)
-            } else {
-                state.reservations.removeValue(forKey: owner)
-            }
+    func commit(_ owner: InappShowBudgetOwner, inAppId: String, frequency: InappFrequency?, inSession sessionEpoch: Int?, to ledger: inout InappSessionLedger) {
+        let isOfThisSession = ledger.budgetCounts(sessionEpoch)
+        if !isOfThisSession {
+            Logger.common(message: "[ShowBudget] The show of \(inAppId) belongs to a session that has ended — only the frequency history records it",
+                          level: .debug, category: .inAppMessages)
+        } else if let held = ledger.showBudget.reservations[owner], held.inAppId != inAppId {
+            Logger.common(message: "[ShowBudget] \(owner) now holds a slot for in-app \(held.inAppId), the show of \(inAppId) leaves it in place",
+                          level: .debug, category: .inAppMessages)
+        } else {
+            ledger.showBudget.reservations.removeValue(forKey: owner)
+        }
 
-            guard InappFrequency.countsShows(frequency) else {
-                Logger.common(message: "[ShowBudget] In-app \(inAppId) has unlimited frequency, show not counted", level: .debug, category: .inAppMessages)
-                return
-            }
+        guard InappFrequency.countsShows(frequency) else {
+            Logger.common(message: "[ShowBudget] In-app \(inAppId) has unlimited frequency, show not counted", level: .debug, category: .inAppMessages)
+            return
+        }
 
-            state.shownInSession.append(inAppId)
-            trackingService.trackInAppShown(id: inAppId)
-            trackingService.saveInappStateChange()
+        if isOfThisSession {
+            ledger.showBudget.shownInSession.append(inAppId)
+        }
+        ledger.changeShowHistory(persisted: persistedShowHistory) { history in
+            trackingService.trackInAppShown(id: inAppId, in: &history)
+            trackingService.saveInappStateChange(in: &history)
         }
     }
 
-    func release(_ owner: InappShowBudgetOwner) {
-        SessionTemporaryStorage.shared.$showBudget.mutate { state in
-            state.reservations.removeValue(forKey: owner)
-        }
+    func release(_ owner: InappShowBudgetOwner, inSession sessionEpoch: Int?, from ledger: inout InappSessionLedger) {
+        guard ledger.budgetCounts(sessionEpoch) else { return }
+
+        ledger.showBudget.reservations.removeValue(forKey: owner)
     }
 
     func recordCooldown(frequency: InappFrequency?) {
         guard InappFrequency.countsShows(frequency) else { return }
 
-        SessionTemporaryStorage.shared.$showBudget.mutate { _ in
-            trackingService.saveInappStateChange()
+        SessionTemporaryStorage.shared.$ledger.mutate { ledger in
+            ledger.changeShowHistory(persisted: persistedShowHistory) { trackingService.saveInappStateChange(in: &$0) }
+        }
+        saveShowHistory()
+    }
+
+    func saveShowHistory() {
+        var next = SessionTemporaryStorage.shared.$ledger.mutate { $0.takeShowHistoryToSave() }
+        while let unsaved = next {
+            save(unsaved.history)
+            next = SessionTemporaryStorage.shared.$ledger.mutate { $0.showHistorySaved(unsaved) }
         }
     }
 
-    // MARK: - The budget rules
+    private func save(_ history: InappShowHistory) {
+        if persistenceStorage.shownDatesByInApp != history.shownDatesByInApp {
+            persistenceStorage.shownDatesByInApp = history.shownDatesByInApp
+        }
+        if persistenceStorage.lastInappStateChangeDate != history.lastStateChangeDate {
+            persistenceStorage.lastInappStateChangeDate = history.lastStateChangeDate
+        }
+    }
 
-    // "Counted" in the lines below: an in-app with unlimited frequency (a story) is never counted, see `commit`.
+    private func persistedShowHistory() -> InappShowHistory {
+        InappShowHistory(shownDatesByInApp: persistenceStorage.shownDatesByInApp, lastStateChangeDate: persistenceStorage.lastInappStateChangeDate)
+    }
+
+    private func reserve(_ owner: InappShowBudgetOwner, inAppId: String, isPriority: Bool, frequency: InappFrequency?, in ledger: inout InappSessionLedger) -> InappShowReservationOutcome {
+        if ledger.showBudget.reservations[owner]?.inAppId == inAppId {
+            return .notNeeded
+        }
+        ledger.showBudget.reservations.removeValue(forKey: owner)
+
+        let history = ledger.unsavedShowHistory?.history ?? persistedShowHistory()
+        let frequencyValidator = InappFrequencyValidator(persistenceStorage: persistenceStorage)
+        guard frequencyValidator.isValid(frequency: frequency, id: inAppId, shownInSession: ledger.showBudget.shownInSession, shownDatesByInApp: history.shownDatesByInApp) else {
+            return .refused
+        }
+
+        if isPriority || !InappFrequency.countsShows(frequency) {
+            Logger.common(message: "[ShowBudget] In-app \(inAppId) \(isPriority ? "is priority" : "has unlimited frequency"), limits not checked",
+                          level: .debug, category: .inAppMessages)
+            return .notNeeded
+        }
+
+        guard isUnderSessionLimit(ledger.showBudget), isUnderDailyLimit(ledger.showBudget, history), hasElapsedMinimumInterval(ledger.showBudget, history) else {
+            Logger.common(message: "[ShowBudget] In-app \(inAppId) refused by show limits", level: .info, category: .inAppMessages)
+            return .refused
+        }
+
+        ledger.showBudget.reservations[owner] = InappShowReservation(inAppId: inAppId, reservedAt: now())
+        return .granted
+    }
+
+    // MARK: - The budget rules
 
     private func isUnderSessionLimit(_ state: InappShowBudgetState) -> Bool {
         guard let limit = positiveLimit(SessionTemporaryStorage.shared.inAppSettings?.maxInappsPerSession, named: "Session") else {
@@ -137,19 +197,19 @@ final class InappShowBudget: InappShowBudgeting {
         return isAllowed
     }
 
-    private func isUnderDailyLimit(_ state: InappShowBudgetState) -> Bool {
+    private func isUnderDailyLimit(_ state: InappShowBudgetState, _ history: InappShowHistory) -> Bool {
         guard let limit = positiveLimit(SessionTemporaryStorage.shared.inAppSettings?.maxInappsPerDay, named: "Daily") else {
             return true
         }
 
-        let shownToday = shownTodayCount()
+        let shownToday = shownTodayCount(history)
         let isAllowed = limit > shownToday + state.reservations.count
         Logger.common(message: "[ShowBudget] [Daily] counted today: \(shownToday), reserved: \(state.reservations.count), limit: \(limit), allowed: \(isAllowed)",
                       level: .info, category: .inAppMessages)
         return isAllowed
     }
 
-    private func hasElapsedMinimumInterval(_ state: InappShowBudgetState) -> Bool {
+    private func hasElapsedMinimumInterval(_ state: InappShowBudgetState, _ history: InappShowHistory) -> Bool {
         guard let minIntervalString = SessionTemporaryStorage.shared.inAppSettings?.minIntervalBetweenShows,
               let minIntervalMillis = try? minIntervalString.parseTimeSpanToMillis(),
               minIntervalMillis > 0 else {
@@ -159,7 +219,7 @@ final class InappShowBudget: InappShowBudgeting {
         }
 
         let lastReservation = state.reservations.values.map(\.reservedAt).max()
-        guard let lastChange = [persistenceStorage.lastInappStateChangeDate, lastReservation].compactMap({ $0 }).max() else {
+        guard let lastChange = [history.lastStateChangeDate, lastReservation].compactMap({ $0 }).max() else {
             Logger.common(message: "[ShowBudget] [minInterval] no counted shows or reservations yet, allowing", level: .info, category: .inAppMessages)
             return true
         }
@@ -185,13 +245,20 @@ final class InappShowBudget: InappShowBudgeting {
         return limit
     }
 
-    private func shownTodayCount() -> Int {
-        guard let dates = persistenceStorage.shownDatesByInApp, !dates.isEmpty else { return 0 }
+    private func shownTodayCount(_ history: InappShowHistory) -> Int {
+        guard let dates = history.shownDatesByInApp, !dates.isEmpty else { return 0 }
 
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: now())
         return dates.values.reduce(0) { count, dates in
             count + dates.filter { calendar.isDate($0, inSameDayAs: today) }.count
         }
+    }
+}
+
+private extension InappSessionLedger {
+
+    func budgetCounts(_ sessionEpoch: Int?) -> Bool {
+        sessionEpoch.map { $0 == self.sessionEpoch } ?? true
     }
 }

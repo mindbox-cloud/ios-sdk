@@ -17,21 +17,22 @@ class InappFrequencyValidator {
     }
 
     func isValid(frequency: InappFrequency?, id: String) -> Bool {
-        isValid(frequency: frequency, id: id, shownInSession: SessionTemporaryStorage.shared.sessionShownInApps)
+        isValid(frequency: frequency,
+                id: id,
+                shownInSession: SessionTemporaryStorage.shared.sessionShownInApps,
+                shownDatesByInApp: persistenceStorage.shownDatesByInApp)
     }
 
-    func isValid(frequency: InappFrequency?, id: String, shownInSession: [String]) -> Bool {
+    func isValid(frequency: InappFrequency?, id: String, shownInSession: [String], shownDatesByInApp: [String: [Date]]?) -> Bool {
         guard let frequency = frequency else {
             return false
         }
 
         switch frequency {
             case .periodic(let periodicFrequency):
-                let validator = PeriodicFrequencyValidator(persistenceStorage: persistenceStorage)
-                return validator.isValid(item: periodicFrequency, id: id)
+                return PeriodicFrequencyValidator().isValid(item: periodicFrequency, id: id, shownDatesByInApp: shownDatesByInApp)
             case .once(let onceFrequency):
-                let validator = OnceFrequencyValidator(persistenceStorage: persistenceStorage)
-                return validator.isValid(item: onceFrequency, id: id, shownInSession: shownInSession)
+                return OnceFrequencyValidator().isValid(item: onceFrequency, id: id, shownInSession: shownInSession, shownDatesByInApp: shownDatesByInApp)
             case .unlimited:
                 Logger.common(message: "[Inapp frequency] Current frequency is [unlimited]. Valid = true. Inapp ID: \(id)",
                               level: .debug, category: .inAppMessages)
@@ -43,18 +44,12 @@ class InappFrequencyValidator {
 }
 
 class OnceFrequencyValidator {
-    let persistenceStorage: PersistenceStorage
 
-    init(persistenceStorage: PersistenceStorage) {
-        self.persistenceStorage = persistenceStorage
-    }
-
-    func isValid(item: OnceFrequency, id: String, shownInSession: [String]) -> Bool {
-        let shownDatesByInApp = persistenceStorage.shownDatesByInApp ?? [:]
+    func isValid(item: OnceFrequency, id: String, shownInSession: [String], shownDatesByInApp: [String: [Date]]?) -> Bool {
         var result = false
         switch item.kind {
             case .lifetime:
-                result = shownDatesByInApp[id] == nil
+                result = shownDatesByInApp?[id] == nil
             case .session:
                 if shownInSession.contains(id) {
                     Logger.common(message: "[Inapp frequency] Inapp ID \(id) is already shown in this session. Skip this in-app.",
@@ -72,15 +67,10 @@ class OnceFrequencyValidator {
 }
 
 class PeriodicFrequencyValidator {
-    let persistenceStorage: PersistenceStorage
 
-    init(persistenceStorage: PersistenceStorage) {
-        self.persistenceStorage = persistenceStorage
-    }
-
-    func isValid(item: PeriodicFrequency, id: String) -> Bool {
+    func isValid(item: PeriodicFrequency, id: String, shownDatesByInApp: [String: [Date]]?) -> Bool {
         let currentDate = Date()
-        guard let inappsDict = persistenceStorage.shownDatesByInApp else {
+        guard let inappsDict = shownDatesByInApp else {
             Logger.common(message: "shownDatesByInApp not exists. Inapp ID \(id) is not valid.", level: .error, category: .inAppMessages)
             return false
         }

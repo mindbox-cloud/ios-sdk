@@ -98,6 +98,46 @@ struct EmbeddedBlockCoordinatorTests {
         #expect(heard == ["load", "empty", "fail:networkError"])
     }
 
+    @Test("A block holding a collapse that SwiftUI dismantles tells the host on the scheduled turn, not inside the update",
+          arguments: [false, true])
+    @MainActor
+    func dismantledBlockTellsTheHostTheHeldCollapseOnTheScheduledTurn(placeCannotBeChecked: Bool) async throws {
+        guard #available(iOS 13.0, *) else { return }
+
+        var heard: [String] = []
+        var scheduled = [() -> Void]()
+        var coordinator: EmbeddedBlockRepresentable.Coordinator? = EmbeddedBlockRepresentable.Coordinator(
+            appearance: .constant(.placeholder),
+            onLoad: { heard.append("load") },
+            onEmpty: { heard.append("empty") },
+            onFail: { heard.append("fail:\($0.rawValue)") },
+            schedule: { scheduled.append($0) }
+        )
+        let bed = EmbeddedBlockTestBed()
+        let view = MindboxEmbeddedBlockView(placeSystemName: "block-id",
+                                            height: 104,
+                                            contentProvider: bed.provider,
+                                            placeMemory: EmbeddedBlockPlaceMemoryMock(),
+                                            loadingStrategy: .placeholder)
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 320, height: 480))
+        view.delegate = coordinator
+        window.addSubview(view)
+        bed.page?.reportRendered(1)
+        bed.resolver.resolution = placeCannotBeChecked ? .targetingUnavailable : .empty
+        bed.announceNewConfig()
+        await withCheckedContinuation { continuation in
+            DispatchQueue.main.async { continuation.resume() }
+        }
+        #expect(heard == ["load"])
+
+        try EmbeddedBlockRepresentable.dismantleUIView(view, coordinator: #require(coordinator))
+
+        #expect(heard == ["load"])
+        coordinator = nil
+        scheduled.forEach { $0() }
+        #expect(heard == ["load", placeCannotBeChecked ? "fail:networkError" : "empty"])
+    }
+
     @Test("A look the container calls the reveal is written under the animation")
     func revealIsWrittenUnderTheAnimation() {
         guard #available(iOS 13.0, *) else { return }
