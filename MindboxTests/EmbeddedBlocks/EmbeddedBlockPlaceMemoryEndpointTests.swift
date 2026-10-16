@@ -9,11 +9,12 @@
 import Testing
 @testable import Mindbox
 
-// MARK: - Embedded block place memory across endpoints
+// MARK: - Embedded block place memory across configurations
 
-/// The memory of places belongs to the endpoint whose config named them: a new endpoint starts
-/// every place hidden, a new domain on the same endpoint keeps what was remembered.
-@Suite("Embedded block place memory across endpoints", .tags(.embeddedBlocks), .serialized)
+/// The memory of places outlives the configuration: neither a new endpoint nor a new domain starts
+/// a place hidden again, the same as on Android. A stale record corrects itself — the place answers
+/// with nothing, `onEmpty` forgets it.
+@Suite("Embedded block place memory across configurations", .tags(.embeddedBlocks), .serialized)
 @MainActor
 struct EmbeddedBlockPlaceMemoryEndpointTests {
 
@@ -32,28 +33,26 @@ struct EmbeddedBlockPlaceMemoryEndpointTests {
         EmbeddedBlockAppPresence.shared.reset()
     }
 
-    @Test("A new endpoint forgets every remembered place")
-    func endpointChangeForgetsPlaces() async throws {
+    @Test("A new endpoint keeps the remembered places")
+    func endpointChangeKeepsPlaces() async throws {
         try await initialize(endpoint: "shop-app", domain: "api.mindbox.ru")
         rememberPlaces()
 
         try await initialize(endpoint: "shop-app-staging", domain: "api.mindbox.ru")
 
-        #expect(storage.embeddedBlockPlaceRecords == nil)
+        #expect(storage.embeddedBlockPlaceRecords?.keys.sorted() == ["banner", "stories"])
         cleanup()
     }
 
-    @Test("The reset is visible as soon as initialization returns, before the controller queue runs")
-    func resetIsVisibleBeforeInitializationFinishes() async throws {
+    @Test("Switching back to the first endpoint keeps the remembered places too")
+    func endpointChangeBackKeepsPlaces() async throws {
         try await initialize(endpoint: "shop-app", domain: "api.mindbox.ru")
         rememberPlaces()
+        try await initialize(endpoint: "shop-app-staging", domain: "api.mindbox.ru")
 
-        // A block created right after this line reads the memory on the main thread: it must not see
-        // the old endpoint's places.
-        coreController.initialization(configuration: try MBConfiguration(endpoint: "shop-app-staging", domain: "api.mindbox.ru"))
-        #expect(storage.embeddedBlockPlaceRecords == nil)
+        try await initialize(endpoint: "shop-app", domain: "api.mindbox.ru")
 
-        await waitForInitializationFinished()
+        #expect(storage.embeddedBlockPlaceRecords?.keys.sorted() == ["banner", "stories"])
         cleanup()
     }
 

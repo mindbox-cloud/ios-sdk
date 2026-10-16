@@ -18,9 +18,11 @@ struct EmbeddedBlockPlaceRecord: Codable, Equatable {
     let rememberedAt: Date
 }
 
-/// Safe from any thread: blocks read and write on the main thread, the endpoint reset comes from
-/// wherever the host called `initialization`, and each call holds the memory's lock for its whole
-/// read-modify-write.
+/// The memory outlives the configuration: a change of endpoint or domain keeps every record, the same
+/// as on Android. A record that no longer fits corrects itself — the place answers with nothing to
+/// show and is forgotten.
+///
+/// Safe from any thread: each call holds the memory's lock for its whole read-modify-write.
 protocol EmbeddedBlockPlaceRemembering: AnyObject {
 
     /// Whether content was shown at the place on this device — what an `automatic` block starts from.
@@ -31,9 +33,6 @@ protocol EmbeddedBlockPlaceRemembering: AnyObject {
 
     /// The place answered with nothing to show: the next block there starts as if it were new.
     func forgetPlace(_ place: String)
-
-    /// Every place starts as new: the records described another endpoint's places.
-    func forgetAllPlaces()
 }
 
 final class EmbeddedBlockPlaceMemory: EmbeddedBlockPlaceRemembering {
@@ -42,8 +41,8 @@ final class EmbeddedBlockPlaceMemory: EmbeddedBlockPlaceRemembering {
 
     private let now: () -> Date
 
-    /// Every call reads the whole dictionary, changes it and writes it back: without the lock a
-    /// remember on the main thread could resurrect what an endpoint reset had just dropped.
+    /// Every call reads the whole dictionary, changes it and writes it back: without the lock two
+    /// calls from different threads would overwrite each other's records.
     private let lock = NSLock()
 
     private let encoder: JSONEncoder = {
@@ -98,19 +97,6 @@ final class EmbeddedBlockPlaceMemory: EmbeddedBlockPlaceRemembering {
             persistenceStorage.embeddedBlockPlaceRecords = records
 
             Logger.common(message: "[EmbeddedBlock] Place '\(place)' has nothing to show — forgotten, the next launch starts it hidden",
-                          category: .embeddedBlocks)
-        }
-    }
-
-    /// Place names are scoped by the endpoint: the same name on another endpoint is another place, so a
-    /// change of endpoint drops every record rather than let a stale one reserve space.
-    func forgetAllPlaces() {
-        lock.withLock {
-            guard let records = persistenceStorage.embeddedBlockPlaceRecords, !records.isEmpty else { return }
-
-            persistenceStorage.embeddedBlockPlaceRecords = nil
-
-            Logger.common(message: "[EmbeddedBlock] Forgot \(records.count) place(s) — the next launch starts every place hidden",
                           category: .embeddedBlocks)
         }
     }
