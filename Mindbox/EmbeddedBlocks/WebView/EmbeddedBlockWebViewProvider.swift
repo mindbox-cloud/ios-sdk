@@ -492,7 +492,6 @@ final class EmbeddedBlockWebViewProvider {
         didReportShownContent = true
         pageShow?.pageRendered()
         settle(.ready)
-        if !isStarted { Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': rendered off screen, shown when back on screen", category: .embeddedBlocks) }
         catchUpShownPage()
     }
 
