@@ -38,6 +38,7 @@ struct EmbeddedBlockReleaseTests {
         await chain.exercise { block in
             block.attach()
             await block.waitUntilLoaded()
+            #expect(chain.pagesInRegistry == 1, "a booted page joins the registry")
         }
 
         chain.expectReleased()
@@ -115,8 +116,7 @@ struct EmbeddedBlockReleaseTests {
         await chain.exercise { block in
             block.attach()
             await block.waitUntilLoaded()
-            chain.pushNewData()
-            await settle(0.5)
+            await chain.pushNewData()
         }
 
         chain.expectReleased()
@@ -163,13 +163,27 @@ struct EmbeddedBlockReleaseTests {
 @MainActor
 private final class Chain {
 
-    private struct Held {
+    private struct HeldBlock {
         weak var view: MindboxEmbeddedBlockView?
         weak var provider: EmbeddedBlockWebViewProvider?
+    }
+
+    /// Taken as each page is built: a page dropped by a reload must go as well as the last one.
+    private struct HeldPage {
         weak var page: EmbeddedBlockWebViewPage?
         weak var facade: MindboxWebViewFacade?
         weak var webView: WKWebView?
         weak var bridge: MindboxWebBridge?
+
+        init(_ page: EmbeddedBlockWebViewPage) {
+            self.page = page
+            let facade = page.facade as? MindboxWebViewFacade
+            self.facade = facade
+            webView = facade?.makeView() as? WKWebView
+            bridge = facade?.bridge
+        }
+
+        var isReleased: Bool { page == nil && facade == nil && webView == nil && bridge == nil }
     }
 
     @MainActor
@@ -178,18 +192,14 @@ private final class Chain {
         let outcomes = EmbeddedBlockViewDelegateMock()
         let waitBudget: EmbeddedBlockWaitBudgetBed
         private let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 320, height: 480))
-        private unowned let chain: Chain
 
-        init(view: MindboxEmbeddedBlockView, waitBudget: EmbeddedBlockWaitBudgetBed, chain: Chain) {
+        init(view: MindboxEmbeddedBlockView, waitBudget: EmbeddedBlockWaitBudgetBed) {
             self.view = view
             self.waitBudget = waitBudget
-            self.chain = chain
             view.delegate = outcomes
         }
 
-        /// The resolve runs inside: the answer must carry the session the block is asking in.
         func reload() {
-            chain.syncSession()
             view.reload()
         }
 
@@ -198,10 +208,10 @@ private final class Chain {
             window.addSubview(view)
         }
 
-        /// Up to 10 s: the first page of a run waits for WebKit's content process to start, over 2 s
+        /// Up to 20 s: the first page of a run waits for WebKit's content process to start, over 2 s
         /// on a laptop and past 3 s on CI.
         func waitUntilLoaded() async {
-            for _ in 0..<200 where outcomes.events.isEmpty {
+            for _ in 0..<400 where outcomes.events.isEmpty {
                 await settle(0.05)
             }
             #expect(outcomes.events == [.loaded])
@@ -218,12 +228,14 @@ private final class Chain {
     /// The registry's own center: a new config is announced here, nothing else hears it.
     let center = NotificationCenter()
     /// The app's presence as this chain sees it: the shared one would carry the background round
-    /// trip of one test into every block built after it, in this suite and in the ones alongside.
+    /// trip of one test into every block built after it.
     let presenceBed: AppPresenceBed
     private let placeRegistry: EmbeddedBlockPlaceRegistry
     private var lastPage: EmbeddedBlockWebViewPage?
     private(set) var pagesBuilt = 0
-    private var held: [Held] = []
+    var pagesInRegistry: Int { pageRegistry.count }
+    private var heldBlocks: [HeldBlock] = []
+    private var heldPages: [HeldPage] = []
 
     /// `reports: false` — a page that never says anything, for the timeout.
     init(reports: Bool = true) {
@@ -240,7 +252,7 @@ private final class Chain {
     /// Builds a block, hands it to `body`, lets it go and waits for WebKit to catch up.
     func exercise(_ body: (Block) async -> Void) async {
         let waitBudget = EmbeddedBlockWaitBudgetBed()
-        var snapshot = Held()
+        var held = HeldBlock()
 
         do {
             let provider = EmbeddedBlockWebViewProvider(placeSystemName: "release-test",
@@ -250,6 +262,7 @@ private final class Chain {
                                                             let page = EmbeddedBlockWebViewPage(content: content,
                                                                                                 registry: pageRegistry)
                                                             pagesBuilt += 1
+                                                            heldPages.append(HeldPage(page))
                                                             lastPage = page
                                                             return page
                                                         },
@@ -263,71 +276,93 @@ private final class Chain {
                                                 placeMemory: EmbeddedBlockPlaceMemoryMock(),
                                                 loadingStrategy: .placeholder,
                                                 makeWaitBudget: { _, _ in waitBudget.budget })
-            let block = Block(view: view, waitBudget: waitBudget, chain: self)
-            syncSession()
+            let block = Block(view: view, waitBudget: waitBudget)
             await body(block)
 
-            snapshot.view = view
-            snapshot.provider = provider
-            if let page = lastPage {
-                snapshot.page = page
-                let facade = page.facade as? MindboxWebViewFacade
-                snapshot.facade = facade
-                snapshot.webView = facade?.makeView() as? WKWebView
-                snapshot.bridge = facade?.bridge
-            }
+            held.view = view
+            held.provider = provider
             lastPage = nil
             block.detach()
         }
 
-        held.append(snapshot)
-        await settle(0.3)
+        heldBlocks.append(held)
+        await waitForRelease()
+    }
+
+    /// WebKit lets its objects go on later turns of the main queue; up to 5 s for it to catch up.
+    private func waitForRelease() async {
+        for _ in 0..<100 where !isReleased {
+            await settle(0.05)
+        }
+    }
+
+    private var isReleased: Bool {
+        heldBlocks.allSatisfy { $0.view == nil && $0.provider == nil } && heldPages.allSatisfy(\.isReleased)
     }
 
     func expectReleased() {
-        for (index, chain) in held.enumerated() {
-            #expect(chain.view == nil, "block \(index): container alive")
-            #expect(chain.provider == nil, "block \(index): provider alive")
-            #expect(chain.page == nil, "block \(index): page alive")
-            #expect(chain.facade == nil, "block \(index): facade alive")
-            #expect(chain.webView == nil, "block \(index): WKWebView alive")
-            #expect(chain.bridge == nil, "block \(index): bridge alive")
+        for (index, block) in heldBlocks.enumerated() {
+            #expect(block.view == nil, "block \(index): container alive")
+            #expect(block.provider == nil, "block \(index): provider alive")
         }
-        let pagesLeft = pageRegistry.count
-        #expect(pagesLeft == 0, "pages left in the registry")
+        for (index, page) in heldPages.enumerated() {
+            #expect(page.page == nil, "page \(index): page alive")
+            #expect(page.facade == nil, "page \(index): facade alive")
+            #expect(page.webView == nil, "page \(index): WKWebView alive")
+            #expect(page.bridge == nil, "page \(index): bridge alive")
+        }
+        #expect(pagesInRegistry == 0, "pages left in the registry")
     }
 
-    /// Other suites run alongside and may start a new in-app session: an answer stamped with an
-    /// earlier session is one the registry drops as ended, so the stamp is read right before the ask.
-    func syncSession() {
-        resolver.sessionEpoch = SessionTemporaryStorage.shared.ledger.sessionEpoch
+    /// The same page with new params, announced as a new config: what a changed config pushes into
+    /// a live page. Waits until the page hears of it — it never confirms.
+    func pushNewData() async {
+        let content = Self.content(reports: true)
+        resolver.resolution = .content(EmbeddedBlockWebContent(inAppId: content.inAppId,
+                                                               baseUrl: content.baseUrl,
+                                                               contentUrl: content.contentUrl,
+                                                               frequency: content.frequency,
+                                                               tags: content.tags,
+                                                               params: ["pushed": .bool(true)]))
+        center.post(name: .mobileConfigDownloadConcluded,
+                    object: nil,
+                    userInfo: [Constants.Notification.configVersion: resolver.publishConfig()])
+
+        var heard: [String] = []
+        for _ in 0..<100 where !heard.contains(BridgeMessage.Action.initDataUpdated.rawValue) {
+            await settle(0.05)
+            heard = await actionsHeardByLastPage()
+        }
+        #expect(heard.contains(BridgeMessage.Action.initDataUpdated.rawValue))
     }
 
-    /// The same page with new params: what a changed config pushes into a live page.
-    func pushNewData() {
-        syncSession()
-        var content = Self.content(reports: true)
-        content = EmbeddedBlockWebContent(inAppId: content.inAppId,
-                                          baseUrl: content.baseUrl,
-                                          contentUrl: content.contentUrl,
-                                          frequency: content.frequency,
-                                          tags: content.tags,
-                                          params: ["pushed": .bool(true)])
-        resolver.resolution = .content(content)
-        center.post(name: .mobileConfigDownloaded, object: nil)
+    private func actionsHeardByLastPage() async -> [String] {
+        guard let facade = lastPage?.facade else { return [] }
+
+        return await withCheckedContinuation { continuation in
+            facade.evaluateJavaScript("window.heard || []") { result in
+                continuation.resume(returning: (try? result.get()) as? [String] ?? [])
+            }
+        }
     }
 
-    /// A page served from a `data:` URL that reports one rendered item on its own, or nothing.
+    /// A page served from a `data:` URL that boots, writes down every action the SDK sends it and
+    /// reports one rendered item on its own — or a page that says nothing at all.
     static func content(reports: Bool) -> EmbeddedBlockWebContent {
-        let report = """
+        let handler = "window.webkit.messageHandlers.\(Constants.WebViewBridgeJS.handlerName)"
+        let script = """
         <script>
-        var message = {version: 1, type: "request", action: "contentRendered",
-                       payload: JSON.stringify({count: 1}),
-                       id: "6F9619FF-8B86-D011-B42D-00C04FC964FF", timestamp: Date.now()};
-        window.webkit.messageHandlers.\(Constants.WebViewBridgeJS.handlerName).postMessage(JSON.stringify(message));
+        window.heard = [];
+        window.bridgeMessagesHandlers = {emit: function (json) { window.heard.push(JSON.parse(json).action); }};
+        function request(action, payload, id) {
+            \(handler).postMessage(JSON.stringify({version: 1, type: "request", action: action,
+                                                  payload: JSON.stringify(payload), id: id, timestamp: Date.now()}));
+        }
+        request("ready", {}, "6F9619FF-8B86-D011-B42D-00C04FC964FE");
+        request("contentRendered", {count: 1}, "6F9619FF-8B86-D011-B42D-00C04FC964FF");
         </script>
         """
-        let html = "<!doctype html><html><body>release test\(reports ? report : "")</body></html>"
+        let html = "<!doctype html><html><body>release test\(reports ? script : "")</body></html>"
         let encoded = Data(html.utf8).base64EncodedString()
         return EmbeddedBlockWebContent(inAppId: "release-inapp",
                                        baseUrl: "https://inapp.local/release",
