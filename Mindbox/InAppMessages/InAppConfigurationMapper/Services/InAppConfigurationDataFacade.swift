@@ -22,7 +22,11 @@ protocol InAppConfigurationDataFacadeProtocol {
     @discardableResult
     func collectTargetingFailures(forFailedTargetingInappIds failedTargetingInappIds: Set<String>, tagsByInappId: [String: [String: String]]) -> Bool
 
-    func downloadImage(withUrl url: String, inappId: String, tags: [String: String]?, completion: @escaping (Result<UIImage, MindboxError>) -> Void)
+    func downloadImage(withUrl url: String,
+                       inappId: String,
+                       tags: [String: String]?,
+                       failureReport: ImageFailureReport,
+                       completion: @escaping (Result<UIImage, MindboxError>) -> Void)
     func trackTargeting(id: String?, tags: [String: String]?)
 
     /// Sends what the pass buffered — targeting and image failures alike — as one `Inapp.ShowFailure`.
@@ -30,6 +34,11 @@ protocol InAppConfigurationDataFacadeProtocol {
 
     /// Drops what the pass buffered: it picked something to show, so there is no "why nothing was shown".
     func discardCollectedFailures()
+}
+
+enum ImageFailureReport {
+    case bufferedForThePass
+    case atOnce
 }
 
 extension InAppConfigurationDataFacadeProtocol {
@@ -106,18 +115,22 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
         return uncheckable.contains { !failedTargetingInappIds.isDisjoint(with: inappIds(for: $0)) }
     }
 
-    func downloadImage(withUrl url: String, inappId: String, tags: [String: String]?, completion: @escaping (Result<UIImage, MindboxError>) -> Void) {
+    func downloadImage(withUrl url: String,
+                       inappId: String,
+                       tags: [String: String]?,
+                       failureReport: ImageFailureReport,
+                       completion: @escaping (Result<UIImage, MindboxError>) -> Void) {
         imageService.downloadImage(withUrl: url) { result in
             if case .failure(let error) = result {
                 switch error {
                 case .serverError, .protocolError, .unknown:
                     let details = "Image URL: \(url) | \(error.localizedDescription)"
-                    self.failureManager.addFailure(
-                        inappId: inappId,
-                        reason: .imageDownloadFailed,
-                        details: details,
-                        tags: tags
-                    )
+                    switch failureReport {
+                    case .bufferedForThePass:
+                        self.failureManager.addFailure(inappId: inappId, reason: .imageDownloadFailed, details: details, tags: tags)
+                    case .atOnce:
+                        self.failureManager.sendBlockFailure(inappId: inappId, reason: .imageDownloadFailed, details: details, tags: tags)
+                    }
                 default:
                     break
                 }
