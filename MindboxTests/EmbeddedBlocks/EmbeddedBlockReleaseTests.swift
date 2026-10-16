@@ -50,7 +50,7 @@ struct EmbeddedBlockReleaseTests {
         await chain.exercise { block in
             block.attach()
             await block.waitUntilLoaded()
-            block.view.reload()
+            block.reload()
             await settle(0.1)
         }
 
@@ -67,7 +67,7 @@ struct EmbeddedBlockReleaseTests {
             await settle(0.3)
             block.waitBudget.scheduler.fireAll()
             await settle(0.1)
-            #expect(block.delegate.events == [.failed(.internalError)])
+            #expect(block.outcomes.events == [.failed(.internalError)])
         }
 
         chain.expectReleased()
@@ -98,7 +98,7 @@ struct EmbeddedBlockReleaseTests {
             block.attach()
             await block.waitUntilLoaded()
             for _ in 0..<10 {
-                block.view.reload()
+                block.reload()
                 await settle(0.05)
             }
             await settle(0.5)
@@ -131,10 +131,10 @@ struct EmbeddedBlockReleaseTests {
         await chain.exercise { block in
             block.attach()
             await block.waitUntilLoaded()
-            NotificationCenter.default.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
+            chain.presenceBed.enterBackground()
             await settle(0.2)
-            NotificationCenter.default.post(name: UIApplication.willEnterForegroundNotification, object: nil)
-            NotificationCenter.default.post(name: UIApplication.didBecomeActiveNotification, object: nil)
+            chain.presenceBed.returnToApp()
+            chain.presenceBed.finishSessionCheck()
             await settle(0.2)
         }
 
@@ -175,14 +175,22 @@ private final class Chain {
     @MainActor
     final class Block {
         let view: MindboxEmbeddedBlockView
-        let delegate = EmbeddedBlockViewDelegateMock()
+        let outcomes = EmbeddedBlockViewDelegateMock()
         let waitBudget: EmbeddedBlockWaitBudgetBed
         private let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 320, height: 480))
+        private unowned let chain: Chain
 
-        init(view: MindboxEmbeddedBlockView, waitBudget: EmbeddedBlockWaitBudgetBed) {
+        init(view: MindboxEmbeddedBlockView, waitBudget: EmbeddedBlockWaitBudgetBed, chain: Chain) {
             self.view = view
             self.waitBudget = waitBudget
-            view.delegate = delegate
+            self.chain = chain
+            view.delegate = outcomes
+        }
+
+        /// The resolve runs inside: the answer must carry the session the block is asking in.
+        func reload() {
+            chain.syncSession()
+            view.reload()
         }
 
         func attach() {
@@ -191,10 +199,10 @@ private final class Chain {
         }
 
         func waitUntilLoaded() async {
-            for _ in 0..<60 where delegate.events.isEmpty {
+            for _ in 0..<60 where outcomes.events.isEmpty {
                 await settle(0.05)
             }
-            #expect(delegate.events == [.loaded])
+            #expect(outcomes.events == [.loaded])
         }
 
         func detach() {
@@ -207,6 +215,9 @@ private final class Chain {
     let resolver: EmbeddedBlockResolverMock
     /// The registry's own center: a new config is announced here, nothing else hears it.
     let center = NotificationCenter()
+    /// The app's presence as this chain sees it: the shared one would carry the background round
+    /// trip of one test into every block built after it, in this suite and in the ones alongside.
+    let presenceBed: AppPresenceBed
     private let placeRegistry: EmbeddedBlockPlaceRegistry
     private var lastPage: EmbeddedBlockWebViewPage?
     private(set) var pagesBuilt = 0
@@ -216,10 +227,12 @@ private final class Chain {
     init(reports: Bool = true) {
         TestConfiguration.configure()
         resolver = EmbeddedBlockResolverMock(resolution: .content(Self.content(reports: reports)))
+        presenceBed = AppPresenceBed(center: center)
         placeRegistry = EmbeddedBlockPlaceRegistry(resolver: resolver,
                                                    budget: InappShowBudgetMock(),
                                                    notificationCenter: center,
-                                                   fetchEmbeddedPlaces: { $0(nil) })
+                                                   fetchEmbeddedPlaces: { $0(nil) },
+                                                   presence: presenceBed.presence)
     }
 
     /// Builds a block, hands it to `body`, lets it go and waits for WebKit to catch up.
@@ -240,14 +253,16 @@ private final class Chain {
                                                         },
                                                         accounting: InappShowAccountingMock(),
                                                         reportFailure: { _, _, _, _ in },
-                                                        reportUnansweredWait: { _ in })
+                                                        reportUnansweredWait: { _ in },
+                                                        appPresence: presenceBed.presence)
             let view = MindboxEmbeddedBlockView(placeSystemName: "release-test",
                                                 height: 120,
                                                 contentProvider: provider,
                                                 placeMemory: EmbeddedBlockPlaceMemoryMock(),
                                                 loadingStrategy: .placeholder,
                                                 makeWaitBudget: { _, _ in waitBudget.budget })
-            let block = Block(view: view, waitBudget: waitBudget)
+            let block = Block(view: view, waitBudget: waitBudget, chain: self)
+            syncSession()
             await body(block)
 
             snapshot.view = view
@@ -276,11 +291,19 @@ private final class Chain {
             #expect(chain.webView == nil, "block \(index): WKWebView alive")
             #expect(chain.bridge == nil, "block \(index): bridge alive")
         }
-        #expect(pageRegistry.count == 0)
+        let pagesLeft = pageRegistry.count
+        #expect(pagesLeft == 0, "pages left in the registry")
+    }
+
+    /// Other suites run alongside and may start a new in-app session: an answer stamped with an
+    /// earlier session is one the registry drops as ended, so the stamp is read right before the ask.
+    func syncSession() {
+        resolver.sessionEpoch = SessionTemporaryStorage.shared.ledger.sessionEpoch
     }
 
     /// The same page with new params: what a changed config pushes into a live page.
     func pushNewData() {
+        syncSession()
         var content = Self.content(reports: true)
         content = EmbeddedBlockWebContent(inAppId: content.inAppId,
                                           baseUrl: content.baseUrl,
