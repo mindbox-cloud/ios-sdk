@@ -198,8 +198,10 @@ private final class Chain {
             window.addSubview(view)
         }
 
+        /// Up to 10 s: the first page of a run waits for WebKit's content process to start, over 2 s
+        /// on a laptop and past 3 s on CI.
         func waitUntilLoaded() async {
-            for _ in 0..<60 where outcomes.events.isEmpty {
+            for _ in 0..<200 where outcomes.events.isEmpty {
                 await settle(0.05)
             }
             #expect(outcomes.events == [.loaded])
