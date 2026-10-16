@@ -11,6 +11,47 @@ import UIKit
 import WebKit
 @_spi(Internal) @testable import Mindbox
 
+/// The user content controller retains its script message handlers and outlives the web view, so
+/// a bridge is released only once it is taken off the web view it was put on.
+@Suite("MindboxWebBridge release", .tags(.webView))
+@MainActor
+struct MindboxWebBridgeReleaseTests {
+
+    @Test("A detached bridge is released and leaves the web view without a delegate")
+    func detachedBridgeIsReleased() {
+        let webView = WKWebView(frame: .zero, configuration: WKWebViewConfiguration())
+        weak var released: MindboxWebBridge?
+
+        autoreleasepool {
+            let bridge = MindboxWebBridge(webView: webView)
+            released = bridge
+            bridge.detach()
+        }
+
+        #expect(released == nil)
+        #expect(webView.navigationDelegate == nil)
+    }
+
+    @Test("A facade that owns its web view takes the bridge off it when it goes")
+    func facadeTakesItsBridgeOffTheWebView() {
+        TestConfiguration.configure()
+        weak var released: MindboxWebBridge?
+
+        autoreleasepool {
+            let facade = MindboxWebViewFacade(params: nil,
+                                              operation: nil,
+                                              userAgent: "qa",
+                                              inAppId: "block",
+                                              prewarmService: nil,
+                                              log: { _ in },
+                                              logError: { _ in })
+            released = facade.bridge
+        }
+
+        #expect(released == nil)
+    }
+}
+
 /// A reused (pre-warmed) WebView delivers navigation callbacks from previous owners'
 /// loads; leftovers must never reach the show's delegate.
 @Suite("MindboxWebBridge navigation staleness", .tags(.webView))
