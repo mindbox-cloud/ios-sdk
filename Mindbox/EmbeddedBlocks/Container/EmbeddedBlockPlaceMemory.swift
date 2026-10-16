@@ -78,7 +78,7 @@ final class EmbeddedBlockPlaceMemory: EmbeddedBlockPlaceRemembering {
             guard records[place] == nil else { return }
 
             guard let data = try? encoder.encode(EmbeddedBlockPlaceRecord(rememberedAt: now())) else {
-                Logger.common(message: "[EmbeddedBlock] Place '\(place)': could not encode its record — the next launch starts it hidden again",
+                Logger.common(message: "[EmbeddedBlock] Place '\(place)': could not encode its record — new automatic blocks here start hidden",
                               level: .error, category: .embeddedBlocks)
                 return
             }
@@ -86,7 +86,7 @@ final class EmbeddedBlockPlaceMemory: EmbeddedBlockPlaceRemembering {
             records[place] = data
             persistenceStorage.embeddedBlockPlaceRecords = records
 
-            Logger.common(message: "[EmbeddedBlock] Place '\(place)' showed content — remembered, the next launch starts it with a placeholder",
+            Logger.common(message: "[EmbeddedBlock] Place '\(place)' showed content — remembered, new automatic blocks here start with a placeholder",
                           category: .embeddedBlocks)
         }
     }
@@ -97,7 +97,7 @@ final class EmbeddedBlockPlaceMemory: EmbeddedBlockPlaceRemembering {
 
             persistenceStorage.embeddedBlockPlaceRecords = records
 
-            Logger.common(message: "[EmbeddedBlock] Place '\(place)' has nothing to show — forgotten, the next launch starts it hidden",
+            Logger.common(message: "[EmbeddedBlock] Place '\(place)' came out empty — forgotten, new automatic blocks here start hidden",
                           category: .embeddedBlocks)
         }
     }
@@ -110,7 +110,7 @@ final class EmbeddedBlockPlaceMemory: EmbeddedBlockPlaceRemembering {
 
             persistenceStorage.embeddedBlockPlaceRecords = nil
 
-            Logger.common(message: "[EmbeddedBlock] Forgot \(records.count) place(s) — the next launch starts every place hidden",
+            Logger.common(message: "[EmbeddedBlock] Forgot \(records.count) place(s) — new automatic blocks start hidden",
                           category: .embeddedBlocks)
         }
     }

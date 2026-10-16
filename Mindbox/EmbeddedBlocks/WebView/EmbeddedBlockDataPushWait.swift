@@ -61,7 +61,7 @@ final class EmbeddedBlockDataPushWait: EmbeddedBlockAppPresenceSubscribing {
             return
         }
 
-        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the page confirmed the data push",
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the page took the new data — waiting for contentRendered",
                       category: .embeddedBlocks)
         cancel()
     }

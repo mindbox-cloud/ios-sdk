@@ -55,7 +55,10 @@ final class SessionTemporaryStorage {
     }
 
     func erase() {
-        $ledger.mutate { $0 = InappSessionLedger(sessionEpoch: $0.sessionEpoch + 1, unsavedShowHistory: $0.unsavedShowHistory) }
+        let sessionEpoch = $ledger.mutate { ledger -> Int in
+            ledger = InappSessionLedger(sessionEpoch: ledger.sessionEpoch + 1, unsavedShowHistory: ledger.unsavedShowHistory)
+            return ledger.sessionEpoch
+        }
         observedCustomOperations = []
         viewProductOperation = nil
         viewCategoryOperation = nil
@@ -65,6 +68,6 @@ final class SessionTemporaryStorage {
         lastInappClickedID = nil
         inAppSettings = nil
         configSessionExpirationTime = nil
-        Logger.common(message: "[SessionTemporaryStorage] Erased.")
+        Logger.common(message: "[SessionTemporaryStorage] Erased — session \(sessionEpoch) started")
     }
 }

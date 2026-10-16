@@ -8,9 +8,13 @@
 import UIKit
 import MindboxLogger
 
+/// Read outside `WebViewController`, whose own `Constants` hides the shared one.
+private let initTimeoutSeconds = Constants.WebView.timeoutSeconds
+
 protocol WebVCDelegate: AnyObject {
     func closeTapWebViewVC()
     func closeTimeoutWebViewVC()
+    func closeBridgeLostWebViewVC()
     func closeLoadFailedWebViewVC(reason: String)
 }
 
@@ -222,7 +226,6 @@ extension WebViewController: WebVCDelegate {
         reportErrorAndClose(
             Self.timeoutError(
                 readyCheckGaveUp: transparentWebView?.readyCheckDidGiveUp == true,
-                inAppId: id,
                 httpErrorDetail: transparentWebView?.noCacheRetryTelemetryDetail
             )
         )
@@ -233,11 +236,15 @@ extension WebViewController: WebVCDelegate {
     /// "the page never finished loading" (a load defect). `httpErrorDetail` adds the
     /// concrete cause when a script subresource answered with an HTTP error — with it a
     /// poisoned-cache death names the resource and status instead of a generic timeout.
-    static func timeoutError(readyCheckGaveUp: Bool, inAppId: String, httpErrorDetail: String? = nil) -> InAppPresentationError {
+    static func timeoutError(readyCheckGaveUp: Bool, httpErrorDetail: String? = nil) -> InAppPresentationError {
         let suffix = httpErrorDetail.map { " \($0)" } ?? ""
         return readyCheckGaveUp
-            ? .webviewPresentationFailed("[WebView] JS bridge missing after page load (init timeout) for in-app id \(inAppId).\(suffix)")
-            : .webviewLoadFailed("[WebView] WebView initialization timeout for in-app id \(inAppId).\(suffix)")
+            ? .webviewPresentationFailed("JS bridge not found on the loaded page within \(initTimeoutSeconds)s.\(suffix)")
+            : .webviewLoadFailed("Page did not send init within \(initTimeoutSeconds)s.\(suffix)")
+    }
+
+    func closeBridgeLostWebViewVC() {
+        reportErrorAndClose(.webviewPresentationFailed("JS bridge lost after the page was shown"))
     }
 
     func closeLoadFailedWebViewVC(reason: String) {
@@ -251,7 +258,6 @@ extension WebViewController: WebVCDelegate {
 extension WebViewController: WebViewAction {
 
     func onInit() {
-        Logger.common(message: "[WebView] TransparentWebView: received init action", category: .webViewInAppMessages)
         removeLifecycleObservers()
         DispatchQueue.main.async {
             guard !self.hasClosed else { return }

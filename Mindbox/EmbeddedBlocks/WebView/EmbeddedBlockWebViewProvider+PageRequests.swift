@@ -21,7 +21,7 @@ extension EmbeddedBlockWebViewProvider {
             return
         }
 
-        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': showing in-app \(inappId) with \(params.count) param(s)",
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': page asks to show in-app \(inappId) with \(params.count) param(s)",
                       category: .embeddedBlocks)
 
         inappService.showInapp(id: inappId, params: params, proceedIf: { [weak self, weak page] in self?.isShowing(page) ?? false }, completion: completion)
