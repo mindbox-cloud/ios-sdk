@@ -173,7 +173,7 @@ struct EmbeddedBlockWaitBudgetTests {
         bed.enterBackground()
         bed.clock.advance(budgetSeconds)
 
-        bed.budget.armIfNeeded()
+        bed.enterForeground()
 
         #expect(bed.scheduler.lastDelay == budgetSeconds)
     }
@@ -186,6 +186,63 @@ struct EmbeddedBlockWaitBudgetTests {
 
         #expect(bed.budget.isRunning == false)
         #expect(bed.scheduler.lastDelay == nil)
+    }
+
+    @Test("A budget asked to arm in the background counts from the return")
+    func armingInTheBackgroundCountsFromTheReturn() {
+        let bed = BudgetBed()
+
+        bed.enterBackground()
+        bed.budget.armIfNeeded()
+
+        #expect(bed.budget.isRunning == false)
+
+        bed.scheduler.fireAll()
+
+        #expect(bed.expirations == 0)
+
+        bed.enterForeground()
+
+        #expect(bed.budget.isRunning)
+        #expect(bed.scheduler.lastDelay == budgetSeconds)
+    }
+
+    @Test("A budget created while the app is already in the background, as after a launch into it, counts from the return: willEnterForeground, or didBecomeActive when that was missed",
+          arguments: [false, true])
+    func budgetCreatedInTheBackgroundCountsFromTheReturn(isWillEnterForegroundMissed: Bool) {
+        let bed = BudgetBed(applicationState: .background)
+
+        bed.budget.armIfNeeded()
+
+        #expect(bed.budget.isRunning == false)
+
+        bed.scheduler.fireAll()
+
+        #expect(bed.expirations == 0)
+
+        if isWillEnterForegroundMissed {
+            bed.becomeActive()
+        } else {
+            bed.enterForeground()
+        }
+
+        #expect(bed.budget.isRunning)
+        #expect(bed.scheduler.lastDelay == budgetSeconds)
+    }
+
+    @Test("A budget created after the app went to the background counts from the return")
+    func budgetCreatedAfterTheAppLeftCountsFromTheReturn() {
+        let bed = BudgetBed()
+        bed.enterBackground()
+        let later = bed.makeBudget()
+
+        later.armIfNeeded()
+
+        #expect(later.isRunning == false)
+
+        bed.enterForeground()
+
+        #expect(later.isRunning)
     }
 
     // MARK: - Arming
@@ -211,7 +268,7 @@ private func isClose(_ value: TimeInterval?, to expected: TimeInterval) -> Bool 
 @MainActor
 private final class BudgetBed {
 
-    private let bed = EmbeddedBlockWaitBudgetBed(duration: budgetSeconds)
+    private let bed: EmbeddedBlockWaitBudgetBed
 
     private(set) var expirations = 0
 
@@ -219,7 +276,8 @@ private final class BudgetBed {
     var clock: TestClock { bed.clock }
     var scheduler: TestScheduler { bed.scheduler }
 
-    init(isNeeded: Bool = true) {
+    init(isNeeded: Bool = true, applicationState: UIApplication.State = .active) {
+        bed = EmbeddedBlockWaitBudgetBed(duration: budgetSeconds, applicationState: applicationState)
         bed.budget.isNeeded = { isNeeded }
         bed.budget.onExpire = { [weak self] in
             self?.expirations += 1
@@ -232,5 +290,15 @@ private final class BudgetBed {
 
     func enterForeground() {
         bed.enterForeground()
+    }
+
+    func becomeActive() {
+        bed.presenceBed.becomeActive()
+    }
+
+    func makeBudget() -> EmbeddedBlockWaitBudget {
+        let budget = bed.makeBudget(placeSystemName: "later-block")
+        budget.isNeeded = { true }
+        return budget
     }
 }

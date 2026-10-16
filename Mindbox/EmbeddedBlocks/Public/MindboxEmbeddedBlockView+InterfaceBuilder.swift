@@ -72,7 +72,8 @@ extension MindboxEmbeddedBlockView {
         build(contentProvider: DI.injectOrFail(EmbeddedBlockContentProviderMaking.self).makeProvider(placeSystemName: placeKey),
               placeMemory: DI.injectOrFail(EmbeddedBlockPlaceRemembering.self),
               revealAnimation: EmbeddedBlockRevealAnimation(),
-              makeWaitBudget: nil)
+              makeWaitBudget: nil,
+              afterMainPass: Self.onTheNextMainPass)
     }
 
     /// Setup given once the block is built is not obeyed: the dependencies were made for the

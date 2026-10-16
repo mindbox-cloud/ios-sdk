@@ -22,7 +22,6 @@ final class SessionTemporaryStorage {
     @Locked var geoRequestResult: Result<InAppGeoResponse?, MindboxError>?
     @Locked var segmentationRequestResult: Result<[SegmentationCheckResponse.CustomerSegmentation]?, MindboxError>?
     @Locked var pushPermissionStatus: UNAuthorizationStatus = .denied
-    @Locked var showBudget = InappShowBudgetState()
     @Locked var isInstalledFromPersistenceStorageBeforeInitSDK: Bool = false
     @Locked var isInitializationCalled = false {
         didSet {
@@ -47,8 +46,8 @@ final class SessionTemporaryStorage {
     private init() {}
 
     var sessionShownInApps: [String] {
-        get { showBudget.shownInSession }
-        set { $showBudget.mutate { $0.shownInSession = newValue } }
+        get { ledger.showBudget.shownInSession }
+        set { $ledger.mutate { $0.showBudget.shownInSession = newValue } }
     }
 
     var customOperations: Set<String> {
@@ -56,16 +55,14 @@ final class SessionTemporaryStorage {
     }
 
     func erase() {
+        $ledger.mutate { $0 = InappSessionLedger(sessionEpoch: $0.sessionEpoch + 1, unsavedShowHistory: $0.unsavedShowHistory) }
         observedCustomOperations = []
         viewProductOperation = nil
         viewCategoryOperation = nil
         geoRequestResult = nil
         segmentationRequestResult = nil
-        showBudget = InappShowBudgetState()
         isUserVisitSaved = false
         lastInappClickedID = nil
-        ledger = InappSessionLedger()
-        lastTrackVisit = nil
         inAppSettings = nil
         configSessionExpirationTime = nil
         Logger.common(message: "[SessionTemporaryStorage] Erased.")

@@ -16,20 +16,12 @@ struct EmbeddedBlockDelayedDeliveryTests {
 
     private final class Rig {
         let scheduler = TestScheduler()
-        let center = NotificationCenter()
-        var isInBackground = false
+        let presence = AppPresenceBed()
         let delivery: EmbeddedBlockDelayedDelivery<String>
 
         init() {
-            var background = { false }
-            delivery = EmbeddedBlockDelayedDelivery(isInBackground: { background() },
-                                                    notificationCenter: center,
+            delivery = EmbeddedBlockDelayedDelivery(presence: presence.presence,
                                                     schedule: { [scheduler] in scheduler.schedule($0, $1) })
-            background = { [weak self] in self?.isInBackground ?? false }
-        }
-
-        func enterForeground() {
-            center.post(name: UIApplication.willEnterForegroundNotification, object: nil)
         }
     }
 
@@ -99,18 +91,51 @@ struct EmbeddedBlockDelayedDeliveryTests {
         #expect(delivered == 0)
     }
 
-    @Test("A delay that runs out in the background is delivered on return")
+    @Test("A delay that runs out in the background is delivered once the user is back and the return's session check is over")
     func backgroundExpiryIsDeliveredOnReturn() {
         let rig = Rig()
         var delivered = 0
         rig.delivery.schedule(place: "stories", inappId: "a", answer: "a", after: 5) { _ in delivered += 1 }
-        rig.isInBackground = true
+        rig.presence.enterBackground()
 
         rig.scheduler.fireAll()
         #expect(delivered == 0)
 
-        rig.isInBackground = false
-        rig.enterForeground()
+        rig.presence.returnToApp()
+        #expect(delivered == 0)
+
+        rig.presence.finishSessionCheck()
+
+        #expect(delivered == 1)
+    }
+
+    @Test("A delay that runs out after the return but before its session check ends waits for the check")
+    func expiryBeforeTheReturnsCheckWaitsForIt() {
+        let rig = Rig()
+        var delivered = 0
+        rig.delivery.schedule(place: "stories", inappId: "a", answer: "a", after: 5) { _ in delivered += 1 }
+        rig.presence.enterBackground()
+        rig.presence.returnToApp()
+
+        rig.scheduler.fireAll()
+        #expect(delivered == 0)
+
+        rig.presence.finishSessionCheck()
+
+        #expect(delivered == 1)
+    }
+
+    @Test("A delay that runs out while the app is inactive is delivered once it is active again")
+    func inactiveExpiryIsDeliveredOnBecomingActive() {
+        let rig = Rig()
+        var delivered = 0
+        rig.delivery.schedule(place: "stories", inappId: "a", answer: "a", after: 5) { _ in delivered += 1 }
+        rig.presence.applicationState = .inactive
+
+        rig.scheduler.fireAll()
+        #expect(delivered == 0)
+
+        rig.presence.becomeActive()
 
         #expect(delivered == 1)
     }
@@ -119,7 +144,7 @@ struct EmbeddedBlockDelayedDeliveryTests {
     func parkedAnswerStillCountsAsWaiting() {
         let rig = Rig()
         rig.delivery.schedule(place: "stories", inappId: "a", answer: "a", after: 5) { _ in }
-        rig.isInBackground = true
+        rig.presence.enterBackground()
         rig.scheduler.fireAll()
 
         #expect(rig.delivery.isWaiting(place: "stories", for: "a"))

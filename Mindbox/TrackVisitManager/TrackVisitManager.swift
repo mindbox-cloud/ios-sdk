@@ -107,9 +107,10 @@ final class TrackVisitManager: TrackVisitManagerProtocol {
     }
 
     private func sendTrackVisit<E: Encodable>(_ encodable: E) throws {
+        defer { inappSessionManager.checkInappSession() }
+
         let event = Event(type: .trackVisit, body: BodyEncoder(encodable: encodable).body)
         try databaseRepository.create(event: event)
-        inappSessionManager.checkInappSession()
     }
 }
 

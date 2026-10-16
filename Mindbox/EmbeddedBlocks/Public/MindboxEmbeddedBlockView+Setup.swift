@@ -66,6 +66,36 @@ extension MindboxEmbeddedBlockView {
         }
     }
 
+    /// Padding is not part of a name: a name pasted from the admin panel with a stray space still
+    /// finds its place, and the host reads it back without the padding — in sync with Android.
+    static func normalizedPlaceSystemName(_ given: String) -> String {
+        given.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// The case is not part of a name either, but the host reads its own spelling back: the
+    /// folding happens here, on the way into the SDK, and `placeSystemName` stays as given.
+    static func placeKey(_ placeSystemName: String) -> String {
+        EmbeddedFormVariant.placeKey(placeSystemName)
+    }
+
+    static func onTheNextMainPass(_ work: @escaping () -> Void) {
+        DispatchQueue.main.async(execute: work)
+    }
+
+    /// The strategy plus the place's memory, and nothing else: `placeholder` and `hidden` do not
+    /// look at the memory, `automatic` is decided by it.
+    static func initialAppearance(for strategy: MindboxEmbeddedBlockLoadingStrategy,
+                                  hasShownContentBefore: Bool) -> MindboxEmbeddedBlockAppearance {
+        switch strategy {
+        case .placeholder:
+            return .placeholder
+        case .hidden:
+            return .collapsed
+        case .automatic:
+            return hasShownContentBefore ? .placeholder : .collapsed
+        }
+    }
+
     /// Integration errors in the setup, reported once at the build. None of them stops the block:
     /// it runs its whole cycle and the host sees the outcome through the delegate.
     func warnAboutSetup() {

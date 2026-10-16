@@ -18,12 +18,16 @@ final class InappSessionManagerTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
-        manager = DI.injectOrFail(InappSessionManagerProtocol.self) as? InappSessionManager
         coreManagerMock = DI.injectOrFail(InAppCoreManagerProtocol.self) as? InAppCoreManagerMock
         persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
+        manager = InappSessionManager(inappCoreManager: coreManagerMock,
+                                      inappConfigManager: InAppConfigurationManagerStub(),
+                                      targetingChecker: targetingChecker,
+                                      userVisitManager: DI.injectOrFail(UserVisitManagerProtocol.self))
         SessionTemporaryStorage.shared.expiredConfigSession = ""
         SessionTemporaryStorage.shared.isInitializationCalled = true
+        EmbeddedBlockAppPresence.shared.reset()
     }
 
     override func tearDown() {
@@ -189,6 +193,7 @@ final class InappSessionManagerTests: XCTestCase {
         targetingChecker.event = .init(name: "Test", model: nil)
         
         XCTAssertNil(persistenceStorage.lastInappStateChangeDate)
+        let sessionEpoch = SessionTemporaryStorage.shared.ledger.sessionEpoch
 
         manager.checkInappSession()
         
@@ -198,7 +203,7 @@ final class InappSessionManagerTests: XCTestCase {
         XCTAssertNil(SessionTemporaryStorage.shared.segmentationRequestResult)
         XCTAssertEqual(SessionTemporaryStorage.shared.sessionShownInApps, [])
         XCTAssertNil(SessionTemporaryStorage.shared.inAppSettings)
-        XCTAssertEqual(SessionTemporaryStorage.shared.ledger, InappSessionLedger())
+        XCTAssertEqual(SessionTemporaryStorage.shared.ledger, InappSessionLedger(sessionEpoch: sessionEpoch + 1))
         
         targetingChecker.context.isNeedGeoRequest = false
         targetingChecker.checkedSegmentations = nil

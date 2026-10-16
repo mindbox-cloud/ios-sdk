@@ -23,7 +23,7 @@ protocol InappShowAccounting: AnyObject {
 
     func recordCooldown(frequency: InappFrequency?)
 
-    func recordBlockShow(_ show: InappShow, at place: String)
+    func recordBlockShow(_ show: InappShow, at place: String, sessionEpoch: Int)
 }
 
 final class InappShowAccountant: InappShowAccounting {
@@ -37,32 +37,45 @@ final class InappShowAccountant: InappShowAccounting {
     }
 
     func recordShow(_ show: InappShow) {
-        record(show, owner: .overlay(show.inAppId))
+        track(show)
+        budget.commit(.overlay(show.inAppId), inAppId: show.inAppId, frequency: show.frequency)
     }
 
     func recordCooldown(frequency: InappFrequency?) {
         budget.recordCooldown(frequency: frequency)
     }
 
-    func recordBlockShow(_ show: InappShow, at place: String) {
-        guard SessionTemporaryStorage.shared.$ledger.mutate({ $0.recordShow(show.inAppId, at: place) }) else {
-            Logger.common(message: "[InappShowAccountant] Place '\(place)' shows in-app \(show.inAppId) again — nothing new to account for",
-                          level: .debug, category: .inAppMessages)
-            budget.release(.place(place))
-            return
+    func recordBlockShow(_ show: InappShow, at place: String, sessionEpoch: Int) {
+        let owner = InappShowBudgetOwner.place(place)
+        let record = SessionTemporaryStorage.shared.$ledger.mutate { ledger -> BlockShowRecord in
+            let record = ledger.recordShow(show.inAppId, at: place, sessionEpoch: sessionEpoch)
+            if record == .new {
+                budget.commit(owner, inAppId: show.inAppId, frequency: show.frequency, inSession: sessionEpoch, to: &ledger)
+            } else if record == .repeated {
+                budget.release(owner, inSession: sessionEpoch, from: &ledger)
+            }
+            return record
         }
 
-        record(show, owner: .place(place))
+        switch record {
+        case .new:
+            budget.saveShowHistory()
+            track(show)
+        case .repeated:
+            Logger.common(message: "[InappShowAccountant] Place '\(place)' shows in-app \(show.inAppId) again — nothing new to account for",
+                          level: .debug, category: .inAppMessages)
+        case .stale:
+            Logger.common(message: "[InappShowAccountant] Place '\(place)' shows in-app \(show.inAppId) from an earlier session's answer — this session accounts it when the place confirms it",
+                          level: .debug, category: .inAppMessages)
+        }
     }
 
-    private func record(_ show: InappShow, owner: InappShowBudgetOwner) {
+    private func track(_ show: InappShow) {
         do {
             try tracker.trackView(id: show.inAppId, timeToDisplay: show.timeToDisplay.toTimeSpan(), tags: show.tags)
         } catch {
             Logger.common(message: "[InappShowAccountant] Inapp.Show for \(show.inAppId) was not queued: \(error)",
                           level: .error, category: .inAppMessages)
         }
-
-        budget.commit(owner, inAppId: show.inAppId, frequency: show.frequency)
     }
 }

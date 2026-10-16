@@ -104,8 +104,7 @@ extension MBContainer {
         }
         
         register(InAppTrackingServiceProtocol.self) {
-            let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
-            return InAppTrackingService(persistenceStorage: persistenceStorage)
+            InAppTrackingService()
         }
 
         register(InappShowBudgeting.self) {

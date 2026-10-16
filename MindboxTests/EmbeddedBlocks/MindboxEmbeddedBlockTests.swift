@@ -22,6 +22,10 @@ import SwiftUI
 @MainActor
 struct MindboxEmbeddedBlockTests {
 
+    init() {
+        EmbeddedBlockAppPresence.shared.reset()
+    }
+
     // MARK: - Modifiers
 
     /// The modifier contract rests on value semantics: a modifier must return a new block, not
