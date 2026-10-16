@@ -394,8 +394,6 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         case nil:
             return nil
         case .refused?:
-            Logger.common(message: "[EmbeddedBlock] Place '\(place)': in-app \(content.inAppId) won it, but the show budgets are spent — the place stays empty",
-                          category: .embeddedBlocks)
             return answer.with(.empty)
         case .granted?, .notNeeded?:
             return answer

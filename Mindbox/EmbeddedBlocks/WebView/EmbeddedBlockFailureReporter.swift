@@ -81,13 +81,11 @@ final class EmbeddedBlockFailureReporter {
         }
 
         guard isFirst else {
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the SDK stayed silent again this session — already reported",
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': no in-app again, wait_budget_exceeded already reported this session",
                           category: .embeddedBlocks)
             return
         }
 
-        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the SDK never answered within \(waited.toTimeSpan()) — reporting a failure without an in-app",
-                      level: .error, category: .embeddedBlocks)
         reportUnansweredWait(waited)
     }
 }

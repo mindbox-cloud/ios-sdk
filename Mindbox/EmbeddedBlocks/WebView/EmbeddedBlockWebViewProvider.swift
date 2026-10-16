@@ -236,6 +236,8 @@ final class EmbeddedBlockWebViewProvider {
 
     func apply(_ answer: EmbeddedBlockPlaceAnswer) {
         guard isStarted || isStartPending && isReady && answer.resolution.content == nil else {
+            let fate = isPaused ? "arrived off screen, applied when back on screen" : isStartPending ? "arrived before the block started, dropped" : "arrived after the block stopped waiting, dropped"
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': answer \(fate)", category: .embeddedBlocks)
             if isPaused {
                 failures.report(failureOf: answer)
                 deferred.park(answer, overPageOf: pageShow?.confirmedEpoch, timedBy: makeStopwatch)
@@ -490,6 +492,7 @@ final class EmbeddedBlockWebViewProvider {
         didReportShownContent = true
         pageShow?.pageRendered()
         settle(.ready)
+        if !isStarted { Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': rendered off screen, shown when back on screen", category: .embeddedBlocks) }
         catchUpShownPage()
     }
 
