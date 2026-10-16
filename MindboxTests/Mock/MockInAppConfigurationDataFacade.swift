@@ -24,7 +24,7 @@ class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
     @Locked public var targetingArray: [String] = []
     @Locked public var trackTargetingCalls: [(id: String?, tags: [String: String]?)] = []
     @Locked public var downloadImageError: MindboxError?
-    @Locked public var imageDownloadFailures: [(inappId: String, details: String?)] = []
+    @Locked public var imageDownloadFailures: [(inappId: String, details: String?, report: ImageFailureReport)] = []
     @Locked public var downloadImageTags: [String: [String: String]?] = [:]
     @Locked public var collectedTargetingFailureIds: [Set<String>] = []
     @Locked public var collectedTagsByInappId: [[String: [String: String]]] = []
@@ -53,13 +53,17 @@ class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
         completion()
     }
 
-    func downloadImage(withUrl url: String, inappId: String, tags: [String: String]?, completion: @escaping (Result<UIImage, MindboxError>) -> Void) {
+    func downloadImage(withUrl url: String,
+                       inappId: String,
+                       tags: [String: String]?,
+                       failureReport: ImageFailureReport,
+                       completion: @escaping (Result<UIImage, MindboxError>) -> Void) {
         downloadImageTags[inappId] = tags
         if let downloadImageError {
             switch downloadImageError {
             case .serverError, .protocolError, .unknown:
                 let details = "Image URL: \(url). \(downloadImageError.localizedDescription)"
-                imageDownloadFailures.append((inappId: inappId, details: details))
+                imageDownloadFailures.append((inappId: inappId, details: details, report: failureReport))
             default:
                 break
             }

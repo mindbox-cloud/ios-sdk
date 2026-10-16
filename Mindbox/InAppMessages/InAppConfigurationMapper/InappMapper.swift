@@ -21,17 +21,10 @@ protocol InappMapperProtocol {
                              trigger: ApplicationEvent?,
                              _ candidates: ConfigCandidates,
                              _ completion: @escaping (EmbeddedPlaceSelection) -> Void)
-    func getInAppById(_ id: String,
-                      _ candidates: ConfigCandidates,
-                      _ completion: @escaping (InAppTransitionData?) -> Void)
     func getShowableInappIds(_ ids: [String],
                              askedBy requesterInappId: String,
                              _ candidates: ConfigCandidates,
                              _ completion: @escaping ([String]) -> Void)
-    func getInAppToShowById(_ id: String,
-                            params: [String: JSONValue],
-                            _ candidates: ConfigCandidates,
-                            _ completion: @escaping (InAppFormData?) -> Void)
 }
 
 class InappMapper: InappMapperProtocol {
@@ -51,7 +44,7 @@ class InappMapper: InappMapperProtocol {
         self.targetingChecker = targetingChecker
         self.inappFilterService = inappFilterService
         self.dataFacade = dataFacade
-        self.formBuilder = InappFormBuilder(dataFacade: dataFacade)
+        self.formBuilder = InappFormBuilder(dataFacade: dataFacade, imageFailures: .bufferedForThePass)
     }
 
     // MARK: - Entry points
@@ -115,63 +108,6 @@ class InappMapper: InappMapperProtocol {
                 }
             }
         }
-    }
-
-    /// Nothing checked, display conditions included: a direct call may show anything the config holds.
-    func getInAppById(_ id: String,
-                      _ candidates: ConfigCandidates,
-                      _ completion: @escaping (InAppTransitionData?) -> Void) {
-        processingQueue.async {
-            completion(self.transition(forId: id, in: candidates))
-        }
-    }
-
-    /// Show history is deliberately not consulted: the page already offered this in-app, and a tap
-    /// has to open it however many times it opened before. A pass of its own, so a form that could
-    /// not be built reports why at once instead of leaving that to whatever pass comes next.
-    func getInAppToShowById(_ id: String,
-                            params: [String: JSONValue],
-                            _ candidates: ConfigCandidates,
-                            _ completion: @escaping (InAppFormData?) -> Void) {
-        runPass("a tap on in-app \(id)", event: nil) { finish in
-            guard let transitionData = self.transition(forId: id, in: candidates) else {
-                finish(false)
-                completion(nil)
-                return
-            }
-
-            guard transitionData.content.isOverlayPresentable else {
-                Logger.common(message: "[InappMapper] In-app \(id) is drawn inside the host layout and cannot be shown over the screen.",
-                              level: .error, category: .inAppMessages)
-                finish(false)
-                completion(nil)
-                return
-            }
-
-            self.buildInApp(transitionData, extraParams: params) { formData in
-                finish(formData != nil)
-                completion(formData)
-            }
-        }
-    }
-
-    private func transition(forId id: String, in candidates: ConfigCandidates) -> InAppTransitionData? {
-        guard let inapp = inappFilterService.filter(id: id, in: candidates) else { return nil }
-
-        // The variant the page's question picks, so a tap opens what the page offered.
-        guard let variant = inapp.form.variants.first(where: { $0.isOverlayPresentable })
-                ?? inapp.form.variants.first else {
-            Logger.common(message: "[InappMapper] In-app \(id) has no variant left to render.",
-                          level: .error, category: .inAppMessages)
-            return nil
-        }
-
-        return InAppTransitionData(inAppId: inapp.id,
-                                   isPriority: inapp.isPriority,
-                                   delayTime: inapp.delayTime,
-                                   content: variant,
-                                   frequency: inapp.frequency,
-                                   tags: inapp.tags)
     }
 
     // MARK: - The pass
@@ -493,19 +429,5 @@ class InappMapper: InappMapperProtocol {
         }
 
         return (name: event.name, body: body)
-    }
-
-    // MARK: - Building the form
-
-    private func buildInApp(_ inapp: InAppTransitionData,
-                            extraParams: [String: JSONValue],
-                            completion: @escaping (InAppFormData?) -> Void) {
-        DispatchQueue.global().async {
-            let formData = self.formBuilder.makeFormData(inapp, extraParams: extraParams, operation: nil)
-
-            DispatchQueue.main.async {
-                completion(formData)
-            }
-        }
     }
 }
