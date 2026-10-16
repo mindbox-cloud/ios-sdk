@@ -7,6 +7,7 @@
 //
 
 import XCTest
+import Testing
 @testable import Mindbox
 
 final class MockSegmentationService: SegmentationServiceProtocol {
@@ -49,7 +50,11 @@ final class MockInappShowFailureManager: InappShowFailureManagerProtocol {
         failures.append((inappId: inappId, reason: reason, details: details, tags: tags))
     }
 
-    func sendBlockFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?) {}
+    private(set) var sentAtOnce: [(inappId: String, reason: InAppShowFailureReason)] = []
+
+    func sendBlockFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?) {
+        sentAtOnce.append((inappId: inappId, reason: reason))
+    }
 
     func sendFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?) {}
 
@@ -465,5 +470,46 @@ final class InAppConfigurationDataFacadeTests: XCTestCase {
     private func decodeInAppOperationJSONModel(from jsonString: String) -> InappOperationJSONModel? {
         guard let data = jsonString.data(using: .utf8) else { return nil }
         return try? JSONDecoder().decode(InappOperationJSONModel.self, from: data)
+    }
+}
+
+@Suite("Where the facade reports an in-app's failed image download")
+struct InAppConfigurationDataFacadeImageFailureTests {
+
+    private let failureManager = MockInappShowFailureManager()
+    private let dataFacade: InAppConfigurationDataFacade
+
+    init() {
+        TestConfiguration.configure()
+        dataFacade = InAppConfigurationDataFacade(segmentationService: MockSegmentationService(),
+                                                  targetingChecker: DI.injectOrFail(InAppTargetingCheckerProtocol.self),
+                                                  imageService: MockImageDownloadService(),
+                                                  tracker: DI.injectOrFail(InAppMessagesTracker.self),
+                                                  failureManager: failureManager)
+    }
+
+    private func downloadMissingImage(reporting report: ImageFailureReport) async {
+        await withCheckedContinuation { continuation in
+            dataFacade.downloadImage(withUrl: "https://example.com/missing.jpg", inappId: "inapp-1", tags: nil, failureReport: report) { _ in
+                continuation.resume()
+            }
+        }
+    }
+
+    @Test("A pass's failed image download waits in the pass's buffer")
+    func passImageFailureIsBuffered() async {
+        await downloadMissingImage(reporting: .bufferedForThePass)
+
+        #expect(failureManager.failures.map(\.inappId) == ["inapp-1"])
+        #expect(failureManager.sentAtOnce.isEmpty)
+    }
+
+    @Test("A tap's failed image download is sent at once, past the buffer")
+    func tapImageFailureIsSentAtOnce() async {
+        await downloadMissingImage(reporting: .atOnce)
+
+        #expect(failureManager.sentAtOnce.map(\.inappId) == ["inapp-1"])
+        #expect(failureManager.sentAtOnce.map(\.reason) == [.imageDownloadFailed])
+        #expect(failureManager.failures.isEmpty)
     }
 }
