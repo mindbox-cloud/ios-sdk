@@ -329,26 +329,23 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     }
 
     private func completeDownloadTask(_ result: InAppConfigurationAPIResult, sessionEpoch: Int) {
-        let source: String
         switch result {
         case let .data(data):
             do {
                 let config = try jsonDecoder.decode(ConfigResponse.self, from: data)
                 configResponse = config
                 applyDownloadedConfig(config, rawData: data)
-                source = "downloaded"
             } catch {
-                source = applyConfigFromCache() ? "cache" : configSourceWithoutCache
+                applyConfigFromCache()
                 Logger.common(message: "Failed to parse downloaded config file. Error: \(error)", level: .error, category: .inAppMessages)
             }
 
         case .empty:
             configResponse = ConfigResponse()
             inAppConfigRepository.clean()
-            source = "empty"
 
         case let .error(error):
-            source = applyConfigFromCache() ? "cache" : configSourceWithoutCache
+            applyConfigFromCache()
             Logger.common(message: "Failed to download InApp configuration. Error: \(error.localizedDescription)", level: .error, category: .inAppMessages)
         }
 
@@ -361,7 +358,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             entry = ConfigEntry(candidates: candidates, sessionEpoch: sessionEpoch, version: entry.version.next)
             return entry
         }
-        Logger.common(message: "[InAppConfigurationManager] Config \(entry.version) is ready (\(source))", category: .inAppMessages)
+        Logger.common(message: "[InAppConfigurationManager] Config \(entry.version) is ready", category: .inAppMessages)
         hasConcludedDownload = true
 
         let waiters = configWaiters
@@ -396,14 +393,10 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         logsManager.sendLogs(logs: monitoring.logs.elements)
     }
 
-    /// What a failed download leaves the session with when there is no cache.
-    private var configSourceWithoutCache: String { configResponse == nil ? "no config" : "kept in memory" }
-
-    @discardableResult
-    private func applyConfigFromCache() -> Bool {
+    private func applyConfigFromCache() {
         guard var cachedConfig = self.fetchConfigFromCache() else {
             Logger.common(message: "Failed to apply configuration from cache: No cached configuration found.")
-            return false
+            return
         }
 
         let ttlValidationService = createTTLValidationService()
@@ -413,7 +406,6 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         }
         
         configResponse = cachedConfig
-        return true
     }
 
     private func fetchConfigFromCache() -> ConfigResponse? {
