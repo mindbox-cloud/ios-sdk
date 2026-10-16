@@ -37,6 +37,7 @@ struct InappRemainingTargetingTests {
     private var targetingChecker: InAppTargetingCheckerProtocol
     private var mockDataFacade: MockInAppConfigurationDataFacade
     private var mapper: InappMapperProtocol
+    private var requestedInappBuilder: RequestedInappBuilder
     private var persistenceStorage: PersistenceStorage
 
     init() {
@@ -62,6 +63,8 @@ struct InappRemainingTargetingTests {
         self.mockDataFacade.cleanCollectedTargetingFailureIds()
 
         self.mapper = DI.injectOrFail(InappMapperProtocol.self)
+        self.requestedInappBuilder = RequestedInappBuilder(inappFilterService: DI.injectOrFail(InappFilterProtocol.self),
+                                                           dataFacade: mock)
         self.persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         self.persistenceStorage.shownDatesByInApp = [:]
     }
@@ -255,7 +258,7 @@ struct InappRemainingTargetingTests {
         #expect(mockDataFacade.imageDownloadFailures.isEmpty)
     }
 
-    @Test("A tap whose image fails to download reports the failure at once", .tags(.remainingTargeting))
+    @Test("A tap whose image fails to download reports the failure at once, past the passes' buffer", .tags(.remainingTargeting))
     func tapImageDownloadError_sendsTheFailureAtOnce() async throws {
         let config = try InappTargetingConfig.oneTargeting.getConfig()
         mockDataFacade.downloadImageError = MindboxError.serverError(
@@ -263,12 +266,12 @@ struct InappRemainingTargetingTests {
         )
 
         let formData = await withCheckedContinuation { continuation in
-            mapper.getInAppToShowById("1", params: [:], config.candidates) { continuation.resume(returning: $0) }
+            requestedInappBuilder.build("1", params: [:], from: config.candidates) { continuation.resume(returning: $0) }
         }
 
         #expect(formData == nil)
-        #expect(mockDataFacade.imageDownloadFailures.count == 1)
-        #expect(mockDataFacade.sendCollectedFailuresCalls == 1)
+        #expect(mockDataFacade.imageDownloadFailures.map(\.report) == [.atOnce])
+        #expect(mockDataFacade.sendCollectedFailuresCalls == 0)
         #expect(mockDataFacade.discardCollectedFailuresCalls == 0)
     }
 

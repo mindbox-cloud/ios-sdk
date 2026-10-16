@@ -76,12 +76,6 @@ struct EmbeddedBlockResolveTests {
         }
     }
 
-    private func resolveId(_ id: String) async -> InAppTransitionData? {
-        await withCheckedContinuation { continuation in
-            mapper.getInAppById(id, candidates) { continuation.resume(returning: $0) }
-        }
-    }
-
     private func showable(_ ids: [String],
                           askedBy requesterInappId: String = Constants.blockId,
                           candidates: ConfigCandidates? = nil) async -> [String] {
@@ -424,25 +418,6 @@ struct EmbeddedBlockResolveTests {
         #expect(resolved.inAppId == Constants.blockId)
     }
 
-    // MARK: - By id
-
-    @Test("Resolving by id ignores display conditions")
-    func resolvesByIdWithoutChecks() async throws {
-        let resolved = try #require(await resolveId(Constants.unlimitedStoryId))
-        #expect(resolved.inAppId == Constants.unlimitedStoryId)
-    }
-
-    @Test("Resolving a block by id gives the variant with its place")
-    func resolvesBlockByIdWithItsPlace() async throws {
-        let resolved = try #require(await resolveId(Constants.blockId))
-        #expect(resolved.content.placeSystemName == Constants.place)
-    }
-
-    @Test("An unknown id resolves to nothing")
-    func resolvesNothingForUnknownId() async {
-        #expect(await resolveId("44444444-4444-4444-4444-444444444444") == nil)
-    }
-
     // MARK: - What a page may draw
 
     @Test("A page may draw the stories and the modal, but not the block")
@@ -576,7 +551,8 @@ struct EmbeddedBlockResolveTests {
 
     private func inappToShow(_ id: String, params: [String: JSONValue] = [:]) async -> InAppFormData? {
         await withCheckedContinuation { continuation in
-            mapper.getInAppToShowById(id, params: params, candidates) { continuation.resume(returning: $0) }
+            RequestedInappBuilder(inappFilterService: DI.injectOrFail(InappFilterProtocol.self), dataFacade: dataFacade)
+                .build(id, params: params, from: candidates) { continuation.resume(returning: $0) }
         }
     }
 
@@ -632,14 +608,6 @@ struct EmbeddedBlockResolveTests {
     @Test("A block's own id refuses to show over the screen")
     func blockIdDoesNotShowOverTheScreen() async {
         #expect(await inappToShow(Constants.blockId) == nil)
-    }
-
-    @Test("A tap that opens its in-app drops the failure buffer, like a pass that showed")
-    func tapThatShowsDropsTheFailureBuffer() async throws {
-        _ = try #require(await inappToShow(Constants.onceStoryId))
-
-        #expect(dataFacade.discardCollectedFailuresCalls == 1)
-        #expect(dataFacade.sendCollectedFailuresCalls == 0)
     }
 
     // MARK: - The trigger path on the same config

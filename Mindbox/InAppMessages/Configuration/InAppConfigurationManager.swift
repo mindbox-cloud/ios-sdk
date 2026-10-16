@@ -103,6 +103,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     private let featureToggleManager: FeatureToggleManager
     private let webViewPrewarmService: InAppWebViewPrewarmServiceProtocol
     private let inappFilterService: InappFilterProtocol
+    private let requestedInappBuilder: RequestedInappBuilder
 
     private let now: () -> TimeInterval
 
@@ -116,6 +117,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         featureToggleManager: FeatureToggleManager,
         webViewPrewarmService: InAppWebViewPrewarmServiceProtocol,
         inappFilterService: InappFilterProtocol,
+        requestedInappBuilder: RequestedInappBuilder,
         configWaitBudget: TimeInterval = InAppConfigurationManager.defaultConfigWaitBudget,
         now: @escaping () -> TimeInterval = { CACurrentMediaTime() },
         notificationCenter: NotificationCenter = .default
@@ -127,6 +129,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         self.featureToggleManager = featureToggleManager
         self.webViewPrewarmService = webViewPrewarmService
         self.inappFilterService = inappFilterService
+        self.requestedInappBuilder = requestedInappBuilder
         self.configWaitBudget = configWaitBudget
         self.now = now
         self.notificationCenter = notificationCenter
@@ -197,12 +200,12 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
 
     func getInAppToShowById(_ id: String, params: [String: JSONValue], _ completion: @escaping (InAppFormData?) -> Void) {
         awaitConfig("showing in-app \(id)", givingUpAfter: configWaitBudget) { [weak self] candidates, _, _ in
-            guard let self = self, let inappMapper = self.inappMapper, let candidates = candidates else {
+            guard let self = self, let candidates = candidates else {
                 completion(nil)
                 return
             }
 
-            inappMapper.getInAppToShowById(id, params: params, candidates, completion)
+            self.requestedInappBuilder.build(id, params: params, from: candidates, completion)
         }
     }
 

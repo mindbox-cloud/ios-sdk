@@ -11,7 +11,6 @@ import UIKit
 
 protocol ImageDownloader {
     func downloadImage(withUrl imageUrl: String, completion: @escaping (URL?, HTTPURLResponse?, Error?) -> Void)
-    func cancel()
 }
 
 class URLSessionImageDownloader: ImageDownloader {
@@ -21,8 +20,6 @@ class URLSessionImageDownloader: ImageDownloader {
     init(persistenceStorage: PersistenceStorage) {
         self.persistenceStorage = persistenceStorage
     }
-
-    private var task: URLSessionDownloadTask?
 
     func downloadImage(withUrl imageUrl: String, completion: @escaping (URL?, HTTPURLResponse?, Error?) -> Void) {
         guard let url = URL(string: imageUrl) else {
@@ -38,11 +35,6 @@ class URLSessionImageDownloader: ImageDownloader {
             completion(localURL, response as? HTTPURLResponse, error)
         }
 
-        task = downloadTask
         downloadTask.resume()
-    }
-
-    func cancel() {
-        task?.cancel()
     }
 }

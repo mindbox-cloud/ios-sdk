@@ -198,6 +198,8 @@ struct InAppConfigurationManagerTests {
             featureToggleManager: DI.injectOrFail(FeatureToggleManager.self),
             webViewPrewarmService: DI.injectOrFail(InAppWebViewPrewarmServiceProtocol.self),
             inappFilterService: inappFilterService,
+            requestedInappBuilder: RequestedInappBuilder(inappFilterService: inappFilterService,
+                                                         dataFacade: DI.injectOrFail(InAppConfigurationDataFacadeProtocol.self)),
             configWaitBudget: configWaitBudget,
             now: now,
             notificationCenter: notificationCenter
