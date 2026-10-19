@@ -16,7 +16,6 @@ class VersioningTestCase: XCTestCase {
 
     var persistenceStorage: PersistenceStorage!
     var databaseRepository: DatabaseRepositoryProtocol!
-    var guaranteedDeliveryManager: GuaranteedDeliveryManager!
 
     override func setUp() {
         super.setUp()
@@ -27,7 +26,6 @@ class VersioningTestCase: XCTestCase {
         databaseRepository = DI.injectOrFail(DatabaseRepositoryProtocol.self)
         try! databaseRepository.erase()
 
-        guaranteedDeliveryManager = DI.injectOrFail(GuaranteedDeliveryManager.self)
         Mindbox.shared.assembly()
         EmbeddedBlockAppPresence.shared.reset()
         let timer = DI.injectOrFail(TimerManager.self)
@@ -39,7 +37,6 @@ class VersioningTestCase: XCTestCase {
     override func tearDown() {
         persistenceStorage = nil
         databaseRepository = nil
-        guaranteedDeliveryManager = nil
         queues.removeAll()
         super.tearDown()
     }
@@ -47,7 +44,6 @@ class VersioningTestCase: XCTestCase {
     func testInfoUpdateVersioningByAPNSToken() {
         initConfiguration(delay: .default)
 
-        self.guaranteedDeliveryManager.canScheduleOperations = false
         let infoUpdateLimit = 50
 
         makeMockAsyncCallWithDelay(limit: infoUpdateLimit) { _ in
@@ -84,7 +80,6 @@ class VersioningTestCase: XCTestCase {
         setupCyclicStatusProvider()
         initConfiguration(delay: .default)
 
-        self.guaranteedDeliveryManager.canScheduleOperations = false
         let infoUpdateLimit = 50
 
         makeMockSequentialCall(limit: infoUpdateLimit) { _ in
@@ -98,7 +93,6 @@ class VersioningTestCase: XCTestCase {
         setupCyclicStatusProvider()
         initConfiguration(delay: .default)
 
-        self.guaranteedDeliveryManager.canScheduleOperations = false
         let infoUpdateLimit = 50
 
         makeMockSequentialCall(limit: infoUpdateLimit) { _ in
@@ -157,6 +151,7 @@ private extension VersioningTestCase {
         }
 
         wait(for: [delayExpectation], timeout: of.timeInterval * 2)
+        try! databaseRepository.erase()
     }
 
     func initConfiguration() {

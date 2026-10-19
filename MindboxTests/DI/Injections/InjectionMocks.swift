@@ -33,6 +33,14 @@ extension MBContainer {
             return try! MockDatabaseRepository(inMemory: true)
         }
 
+        register(GuaranteedDeliveryManager.self) {
+            let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+            let eventRepository = DI.injectOrFail(EventRepository.self)
+            return GuaranteedDeliveryManager(persistenceStorage: persistenceStorage,
+                                             databaseRepository: NoopDatabaseRepository(),
+                                             eventRepository: eventRepository)
+        }
+
         register(ImageDownloadServiceProtocol.self, scope: .container) {
             MockImageDownloadService()
         }

@@ -28,9 +28,6 @@ struct MindboxOperationsTests {
         try databaseRepository.erase()
         Mindbox.shared.assembly()
         EmbeddedBlockAppPresence.shared.reset()
-        // Keep GuaranteedDeliveryManager from consuming (deleting) the events these
-        // tests assert on — an earlier test may have enabled scheduling.
-        DI.injectOrFail(GuaranteedDeliveryManager.self).canScheduleOperations = false
     }
 
     // MARK: - Helpers

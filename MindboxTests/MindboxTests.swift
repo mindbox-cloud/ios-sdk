@@ -388,7 +388,6 @@ private extension MindboxTests {
         let configuration1 = try! MBConfiguration(plistName: "TestConfig1")
         coreController.initialization(configuration: configuration1)
         waitForInitializationFinished()
-        DI.injectOrFail(GuaranteedDeliveryManager.self).canScheduleOperations = false
         
         try? databaseRepository.erase()
     }
