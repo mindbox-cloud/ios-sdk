@@ -601,7 +601,7 @@ public class Mindbox: NSObject {
         inappMessageEventSender.sendEventIfEnabled(operationSystemName, jsonString: jsonString)
     }
 
-    // Called by the test apps through NSSelectorFromString; no caller in this repo.
+    // Called through NSSelectorFromString by the test apps and one test here; nothing in the SDK calls them.
 
     @objc
     private func resetShownInApps() {
