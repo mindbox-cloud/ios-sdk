@@ -35,7 +35,8 @@ enum BridgeErrorCode: String, CaseIterable, Error {
     case gesturesUnavailable = "gestures_unavailable"
     /// The `asyncOperation` could not be queued.
     case operationFailed = "operation_failed"
-    /// The SDK found no in-app with the `showInApp` id to show.
+    /// The SDK has no in-app with the `showInApp` id it can show over the screen (none in the config
+    /// within 30 s, or only an embedded variant), or the in-app's images did not load.
     case unknownInapp = "unknown_inapp"
     /// The `showInApp` in-app did not appear: the app is in the background or presentation failed.
     case showFailed = "show_failed"

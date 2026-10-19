@@ -11,7 +11,8 @@ import MindboxLogger
 
 /// Errors the Mindbox SDK reports.
 public enum MindboxError: LocalizedError {
-    /// The API answered with status `ValidationError`.
+    /// The API answered with status `ValidationError`, or the SDK refused a sync operation's name or
+    /// JSON body before sending it.
     case validationError(ValidationError)
     /// The API rejected the request with HTTP 4xx.
     case protocolError(ProtocolError)

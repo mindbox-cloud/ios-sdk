@@ -11,8 +11,8 @@ import Foundation
 /// Receives the outcome of a ``MindboxEmbeddedBlockView``: the content is shown, the place has nothing
 /// to show, or the block failed.
 ///
-/// Calls arrive on the main thread. Only a change of outcome is reported: the same outcome never
-/// arrives twice in a row, so a block that replaces its content and shows it again does not call
+/// Calls arrive on the main thread. Only a change of outcome is reported to a delegate that stays
+/// assigned: the same outcome never arrives twice in a row, so a block that replaces its content and shows it again does not call
 /// ``MindboxEmbeddedBlockViewDelegate/mindboxEmbeddedBlockViewDidLoad(_:)`` again. A delegate
 /// assigned after the outcome receives the current one. Every method has an empty default
 /// implementation and passes the view that called it, to tell several blocks apart.

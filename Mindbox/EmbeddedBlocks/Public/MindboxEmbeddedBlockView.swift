@@ -23,8 +23,9 @@ import MindboxLogger
 /// The SDK decides what the block shows and loads it while the block is in a window. When the
 /// block leaves the window, it pauses on the next main-queue turn unless it is back in a window by
 /// then, and resumes when it returns. A failed block tries again when it re-enters a window, or
-/// when the app returns from the background with the block on screen; it stays collapsed or keeps
-/// its ``errorView`` until content arrives. Outcomes reach the host only through ``delegate``.
+/// when the app returns from the background with the block on screen. While it retries it stays
+/// collapsed or keeps its ``errorView``; content replaces the error view, and a place that turns
+/// out to have nothing to show collapses the block. Outcomes reach the host only through ``delegate``.
 ///
 /// Once content is shown, a later answer without content, or a page that renders nothing, waits
 /// until the block leaves the window, even while the app is in the background: only then does the
@@ -63,9 +64,9 @@ public final class MindboxEmbeddedBlockView: UIView {
     /// Receives the block's outcomes: loaded, empty or failed. Held weakly.
     ///
     /// Each outcome arrives asynchronously on the main queue, when `intrinsicContentSize` already
-    /// reports the new height. A different delegate assigned after the block has an outcome
-    /// receives it as well; assigning the same delegate again does not repeat it. A retry that ends
-    /// in the outcome the delegate heard last is not reported again.
+    /// reports the new height. A delegate assigned after the block has an outcome receives it,
+    /// including the same delegate set again after `nil`; assigning the delegate that is already set
+    /// does nothing. A retry that ends in the outcome the delegate heard last is not reported again.
     public weak var delegate: MindboxEmbeddedBlockViewDelegate? {
         didSet {
             guard delegate !== oldValue, !isReleased else { return }

@@ -72,10 +72,10 @@ public struct MindboxEmbeddedBlock: View {
     ///     block invisible and is logged as an error.
     ///   - loadingStrategy: What the block shows while its content loads.
     ///   - timeout: How many seconds the block waits for the SDK to decide its content before it fails
-    ///     with ``MindboxEmbeddedBlockFailReason/networkError``. Time off screen or in the background
-    ///     does not count. `nil`, 0 or less means 30. An answer that comes later is dropped; the block
-    ///     tries again when it re-enters the window, or when the app returns from the background with
-    ///     the block on screen.
+    ///     with ``MindboxEmbeddedBlockFailReason/networkError``. Only time in a window with the app in
+    ///     the foreground counts. `nil`, 0 or less means 30. An answer that comes later is dropped; the
+    ///     block tries again when it re-enters the window, or when the app returns from the background
+    ///     with the block on screen.
     ///   - animatesReveal: Whether the SDK animates the appearance of the content: a fade, and the growth
     ///     of a block that waited hidden. The system's Reduce Motion setting also turns it off. Turn it
     ///     off to animate the block's container yourself in `onLoad`.

@@ -28,9 +28,10 @@ public struct MindboxEmbeddedBlockFailReason: RawRepresentable, Hashable, Sendab
     /// is not retried until the in-app session ends, so such a place keeps failing until then.
     public static let networkError = MindboxEmbeddedBlockFailReason(rawValue: "networkError")
 
-    /// A problem on the Mindbox side: the campaign at the place is not a valid embedded block, or its
-    /// page did not report its content within 7 seconds on screen or reported it in a form the SDK
-    /// cannot read.
+    /// The block's campaign or page did not work: the campaign at the place is not a valid embedded
+    /// block, or its page did not report its content within 7 seconds on screen or reported it in a
+    /// form the SDK cannot read. The 7 seconds include downloading the page, so a slow network that
+    /// does not fail outright also ends here.
     public static let internalError = MindboxEmbeddedBlockFailReason(rawValue: "internalError")
 
     public var description: String { rawValue }

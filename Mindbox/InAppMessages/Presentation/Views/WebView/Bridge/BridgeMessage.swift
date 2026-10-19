@@ -210,8 +210,9 @@ public struct BridgeMessage: Codable {
         ///   ```
         case `init`
 
-        /// Reports a tap, which the overlay handles like a tap on a native in-app. A block page gets
-        /// `success` and nothing happens.
+        /// Reports a tap. The overlay runs the action and passes its URL and `intentPayload` to the app's
+        /// in-app delegate, as a native in-app does, but stays open and sends no `Inapp.Click`: send
+        /// ``close`` to close it. A block page gets `success` and nothing happens.
         ///
         /// The payload is an in-app action: `redirectUrl` with `value` (the URL) and `intentPayload`,
         /// or `pushPermission` with `intentPayload`; any other payload is ignored.
@@ -343,8 +344,9 @@ public struct BridgeMessage: Codable {
 
         /// Opens a URL outside the page.
         ///
-        /// An `http` or `https` URL opens in the app that claims it as a universal link, otherwise in an
-        /// in-app Safari sheet. Any other scheme (`tel:`, `mailto:`, deep links) goes to the system. The
+        /// An `http` or `https` URL opens in another app that claims it as a universal link, otherwise in
+        /// an in-app Safari sheet; a link to this app's own universal-link domain opens in the sheet too.
+        /// Any other scheme (`tel:`, `mailto:`, deep links) goes to the system. The
         /// answer comes once the URL is open.
         ///
         /// - Payload:
@@ -567,7 +569,8 @@ public struct BridgeMessage: Codable {
         /// Asks which of the listed in-apps the page may show.
         ///
         /// Ids are matched exactly as the config spells them; ids that are not strings are skipped. The
-        /// SDK answers once it has the in-app config: up to 30 s later, with an empty list if none arrives.
+        /// SDK answers once it has the in-app config and has fetched the data their targeting needs,
+        /// which can take a network request; with no config within 30 s, it answers an empty list.
         ///
         /// - Payload:
         ///   ```json
@@ -595,7 +598,7 @@ public struct BridgeMessage: Codable {
         ///   { "success": true }
         ///   ```
         /// - Errors: `invalid_payload` (`count` is not a whole number of zero or more), which also fails the
-        ///   block unless the page has already sent a valid count for this load or `initDataUpdated`.
+        ///   block unless the page has already sent a positive count for this load or `initDataUpdated`.
         case contentRendered
 
         /// Shows an in-app over the screen by id, from a block page or an overlay.
@@ -612,8 +615,9 @@ public struct BridgeMessage: Codable {
         ///   ```json
         ///   { "success": true }
         ///   ```
-        /// - Errors: `invalid_payload` (no `inappId`), `unknown_inapp` (no in-app with this id to show,
-        ///   after waiting up to 30 s for the config), `show_failed` (the app is in the background or the
+        /// - Errors: `invalid_payload` (no `inappId`), `unknown_inapp` (after waiting up to 30 s for the
+        ///   config: no in-app with this id, none that can be shown over the screen, or its images failed
+        ///   to load), `show_failed` (the app is in the background or the
         ///   in-app failed to appear), `not_visible` (a block page off screen, or leaving it before the show).
         case showInApp
 
