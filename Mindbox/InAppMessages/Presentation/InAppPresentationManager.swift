@@ -75,14 +75,17 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
     }
 
     private let displayUseCase: PresentationDisplayUseCaseProtocol
+    private let keyWindowReturner: InAppKeyWindowReturning
 
     /// Main-confined, like the shows.
     private var activePresentation: ActivePresentation?
 
     var isPresenting: Bool { activePresentation != nil }
 
-    init(displayUseCase: PresentationDisplayUseCaseProtocol) {
+    init(displayUseCase: PresentationDisplayUseCaseProtocol,
+         keyWindowReturner: InAppKeyWindowReturning = InAppKeyWindowReturner()) {
         self.displayUseCase = displayUseCase
+        self.keyWindowReturner = keyWindowReturner
 
         addObserverToDismissInApp()
     }
@@ -172,13 +175,23 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
             }
         }
 
+        // Noted before our window is up: the host's window to hand key back to.
+        let hostWindow = keyWindowReturner.hostKeyWindow()
+        let keyWindowReturner = self.keyWindowReturner
+        // A host often routes the link from the key window. Whatever made our window key, the host
+        // must find its own window there, not our controller.
+        let hostFacingOnTapAction: InAppMessageTapAction = { [weak hostWindow] tapLink, payload in
+            keyWindowReturner.returnKeyToHost(preferring: hostWindow)
+            onTapAction(tapLink, payload)
+        }
+
         let presentation = ActivePresentation(token: token, complete: safeOnPresentationCompleted)
         activePresentation = presentation
         displayUseCase.presentInAppUIModel(model: inAppFormData,
                                            onPresented: { [weak self] in
             guard let self, self.isOnScreen(token) else { return }
             self.displayUseCase.onPresented(id: inAppFormData.inAppId, onPresented)
-        }, onTapAction: onTapAction,
+        }, onTapAction: hostFacingOnTapAction,
         onClose: { [weak self] in
             self?.finish(token, wasDiscarded: false)
         },

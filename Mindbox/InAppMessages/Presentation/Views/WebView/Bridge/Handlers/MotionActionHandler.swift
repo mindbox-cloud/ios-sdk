@@ -34,6 +34,16 @@ final class MotionActionHandler: WebBridgeActionHandler {
 
     private let makeService: () -> MotionServiceProtocol
 
+    /// Told when the page starts or stops listening for a shake: the window must be key to hear one.
+    var onShakeListeningChanged: ((Bool) -> Void)?
+
+    private(set) var isListeningForShake = false {
+        didSet {
+            guard isListeningForShake != oldValue else { return }
+            onShakeListeningChanged?(isListeningForShake)
+        }
+    }
+
     init(makeService: @escaping () -> MotionServiceProtocol
          = { DI.injectOrFail(MotionServiceProtocol.self) }) {
         self.makeService = makeService
@@ -47,6 +57,7 @@ final class MotionActionHandler: WebBridgeActionHandler {
             start(message, host: host)
         case .motionStop:
             service.stopMonitoring()
+            isListeningForShake = false
             host.respondSuccess(to: message)
         default:
             // Unreachable: the registry routes only what `actions` claims.
@@ -65,6 +76,7 @@ final class MotionActionHandler: WebBridgeActionHandler {
         guard isServiceInUse else { return }
 
         service.stopMonitoring()
+        isListeningForShake = false
     }
 }
 
@@ -98,6 +110,7 @@ private extension MotionActionHandler {
         }
 
         let result = service.startMonitoring(gestures: gestures)
+        isListeningForShake = result.started.contains(.shake)
 
         guard !result.allUnavailable else {
             host.respondError(.gesturesUnavailable,

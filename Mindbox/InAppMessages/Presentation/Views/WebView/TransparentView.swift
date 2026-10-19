@@ -99,6 +99,9 @@ final class TransparentView: UIView {
     }
 
     private func commonInit() {
+        actionRegistry.handler(ofType: MotionActionHandler.self)?.onShakeListeningChanged = { [weak self] isListening in
+            self?.webViewAction?.onShakeListeningChanged(isListening)
+        }
         createFacade()
 
         guard let view = facade?.makeView() else {
@@ -114,6 +117,7 @@ final class TransparentView: UIView {
         facade = MindboxWebViewFacade(params: params, operation: operation, userAgent: userAgent, inAppId: inAppId)
         facade?.setBridgeMessageDelegate(self)
         facade?.setNavigationDelegate(self)
+        (facade as? MindboxWebViewFacade)?.setTextInputDelegate(self)
     }
 
     func loadHTMLPage(baseUrl: String, contentUrl: String) {
@@ -477,4 +481,14 @@ protocol WebViewAction: AnyObject {
     func onCompleted(data: String)
     func onClose()
     func onHide()
+    /// The page started or stopped listening for a shake.
+    func onShakeListeningChanged(_ isListening: Bool)
+    /// The page started or stopped editing text.
+    func onTextEditingChanged(_ isEditing: Bool)
+}
+
+extension TransparentView: WebBridgeTextInputDelegate {
+    func webBridge(_ bridge: MindboxWebBridge, didChangeTextEditing isEditing: Bool) {
+        webViewAction?.onTextEditingChanged(isEditing)
+    }
 }

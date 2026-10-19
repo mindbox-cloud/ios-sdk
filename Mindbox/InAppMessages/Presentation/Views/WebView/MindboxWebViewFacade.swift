@@ -275,6 +275,10 @@ public final class MindboxWebViewFacade: InappWebViewFacadeProtocol {
     public func setNavigationDelegate(_ delegate: WebBridgeNavigationDelegate?) {
         bridge.navigationDelegate = delegate
     }
+
+    func setTextInputDelegate(_ delegate: WebBridgeTextInputDelegate?) {
+        bridge.textInputDelegate = delegate
+    }
 }
 
 extension MindboxWebViewFacade {

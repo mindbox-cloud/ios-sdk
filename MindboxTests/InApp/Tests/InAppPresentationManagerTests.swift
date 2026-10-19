@@ -8,6 +8,7 @@
 
 import Foundation
 import Testing
+import UIKit
 @testable import Mindbox
 
 @Suite("In-app presentation manager", .tags(.inAppSchedule))
@@ -307,5 +308,161 @@ struct InAppPresentationManagerTests {
                              firstImageValue: "",
                              content: .modal(modal),
                              frequency: .unlimited)
+    }
+}
+
+@Suite("The host keeps its key window while an in-app is up", .tags(.inAppSchedule), .serialized)
+@MainActor
+struct InAppKeyWindowTests {
+
+    @Test("Key goes back to the host before the tap reaches it, toward the window noted when the show began")
+    func keyGoesBackBeforeTheTap() throws {
+        let display = PresentationDisplaySpy()
+        let returner = KeyWindowReturnerSpy()
+        let hostWindow = UIWindow(frame: .zero)
+        returner.hostWindow = hostWindow
+        let manager = InAppPresentationManager(displayUseCase: display, keyWindowReturner: returner)
+        var tapped: [URL?] = []
+
+        manager.present(inAppFormData: Self.formData(id: "tapped"),
+                        onPresented: {},
+                        onTapAction: { url, _ in
+                            returner.events.append("tap")
+                            tapped.append(url)
+                        },
+                        onPresentationCompleted: { _ in },
+                        onError: { _ in })
+        let tap = try #require(display.receivedOnTapAction)
+        tap(URL(string: "app://catalog"), "payload")
+
+        #expect(returner.events == ["returnKey", "tap"])
+        #expect(returner.preferred.count == 1)
+        #expect(returner.preferred.first.flatMap { $0 } === hostWindow)
+        #expect(tapped == [URL(string: "app://catalog")])
+        withExtendedLifetime(manager) {}
+    }
+
+    @Test("Our window does not take key on its own")
+    func inAppWindowRefusesKey() {
+        guard #available(iOS 15.0, *) else { return }
+        let (host, ours) = makeWindows()
+        defer { hide(host, ours) }
+
+        ours.makeKey()
+
+        #expect(host.isKeyWindow)
+        #expect(!ours.isKeyWindow)
+    }
+
+    @Test("Allowed key for a shake, our window takes it")
+    func inAppWindowTakesKeyWhenAllowed() {
+        let (host, ours) = makeWindows()
+        defer { hide(host, ours) }
+
+        ours.allowsKey = true
+        ours.makeKey()
+
+        #expect(ours.isKeyWindow)
+    }
+
+    @Test("Key goes back to the host window noted when the show began")
+    func keyGoesBackToTheNotedWindow() {
+        let (host, ours) = makeWindows()
+        defer { hide(host, ours) }
+        ours.allowsKey = true
+        ours.makeKey()
+
+        InAppKeyWindowReturner(windows: { [host, ours] }).returnKeyToHost(preferring: host)
+
+        #expect(host.isKeyWindow)
+    }
+
+    @Test("With no noted window, key goes to the host's window of the same scene")
+    func keyGoesBackToTheHostWindowOfTheScene() {
+        let (host, ours) = makeWindows()
+        defer { hide(host, ours) }
+        ours.allowsKey = true
+        ours.makeKey()
+
+        InAppKeyWindowReturner(windows: { [host, ours] }).returnKeyToHost(preferring: nil)
+
+        #expect(!ours.isKeyWindow)
+        #expect(host.isKeyWindow)
+    }
+
+    @Test("A hidden noted window is passed over")
+    func hiddenNotedWindowIsPassedOver() {
+        let (host, ours) = makeWindows()
+        let gone = UIWindow(frame: UIScreen.main.bounds)
+        defer { hide(host, ours, gone) }
+        ours.allowsKey = true
+        ours.makeKey()
+
+        InAppKeyWindowReturner(windows: { [host, ours, gone] }).returnKeyToHost(preferring: gone)
+
+        #expect(!gone.isKeyWindow)
+        #expect(host.isKeyWindow)
+    }
+
+    @Test("The host's key window is not ours")
+    func hostKeyWindowSkipsOurs() {
+        let (host, ours) = makeWindows()
+        defer { hide(host, ours) }
+        ours.allowsKey = true
+        ours.makeKey()
+
+        #expect(InAppKeyWindowReturner(windows: { [host, ours] }).hostKeyWindow() !== ours)
+    }
+
+    @Test("Nothing moves while the host already holds key")
+    func nothingMovesWhileTheHostHoldsKey() {
+        let (host, ours) = makeWindows()
+        defer { hide(host, ours) }
+
+        InAppKeyWindowReturner(windows: { [host, ours] }).returnKeyToHost(preferring: nil)
+
+        #expect(host.isKeyWindow)
+        #expect(!ours.isKeyWindow)
+    }
+
+    // MARK: Helpers
+
+    private func makeWindows() -> (host: UIWindow, ours: MindboxInAppWindow) {
+        let host = UIWindow(frame: UIScreen.main.bounds)
+        host.rootViewController = UIViewController()
+        host.makeKeyAndVisible()
+        let ours = MindboxInAppWindow(frame: UIScreen.main.bounds)
+        ours.rootViewController = UIViewController()
+        ours.windowLevel = .normal + 3
+        ours.isHidden = false
+        return (host, ours)
+    }
+
+    private func hide(_ windows: UIWindow...) {
+        windows.forEach { $0.isHidden = true }
+    }
+
+    private static func formData(id: String) -> InAppFormData {
+        let modal = ModalFormVariant(content: InappFormVariantContent(background: ContentBackground(layers: []), elements: nil))
+        return InAppFormData(inAppId: id,
+                             isPriority: false,
+                             delayTime: nil,
+                             imagesDict: [:],
+                             firstImageValue: "",
+                             content: .modal(modal),
+                             frequency: .unlimited)
+    }
+}
+
+private final class KeyWindowReturnerSpy: InAppKeyWindowReturning {
+    var hostWindow: UIWindow?
+    var events: [String] = []
+    private(set) var preferred: [UIWindow?] = []
+
+    func hostKeyWindow() -> UIWindow? { hostWindow }
+
+    func returnKeyToHost(preferring preferred: UIWindow?) {
+        self.preferred.append(preferred)
+        events.append("returnKey")
     }
 }

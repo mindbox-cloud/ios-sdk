@@ -239,6 +239,7 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
         } else {
             webView.configuration.userContentController.removeScriptMessageHandler(forName: Constants.WebViewBridgeJS.handlerName)
             webView.configuration.userContentController.removeScriptMessageHandler(forName: Constants.WebViewHTTPErrorJS.handlerName)
+            webView.configuration.userContentController.removeScriptMessageHandler(forName: Constants.WebViewTextInputJS.handlerName)
         }
         loadBlank(on: webView)
     }

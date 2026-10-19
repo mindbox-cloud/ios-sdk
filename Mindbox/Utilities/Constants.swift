@@ -73,6 +73,41 @@ enum Constants {
             + "})()"
     }
 
+    /// Tells the SDK when the page edits text. The in-app window takes key only then (or for a shake):
+    /// the keyboard types into the key window alone, and the rest of the time the key window is the host's.
+    enum WebViewTextInputJS {
+        static let handlerName = "SdkTextInput"
+        static let editing = "editing"
+        static let ended = "ended"
+
+        /// `touchstart` comes before the focus, so the window is key by the time the keyboard is asked for.
+        /// A touch that did not end in a focused field is taken back.
+        static let detectionScript = """
+        (function () {
+          if (window.__mbxTextInputMonitorInstalled) { return; }
+          window.__mbxTextInputMonitorInstalled = true;
+          var notText = ['button', 'checkbox', 'radio', 'submit', 'reset', 'file', 'image', 'range', 'color', 'hidden'];
+          function isText(el) {
+            if (!el) { return false; }
+            if (el.isContentEditable) { return true; }
+            var tag = String(el.tagName || '').toLowerCase();
+            if (tag === 'textarea' || tag === 'select') { return true; }
+            return tag === 'input' && notText.indexOf(String(el.type || 'text').toLowerCase()) < 0;
+          }
+          function report(state) {
+            try { window.webkit.messageHandlers.\(handlerName).postMessage(state); } catch (_) {}
+          }
+          document.addEventListener('touchstart', function (e) {
+            if (!isText(e.target)) { return; }
+            report('\(editing)');
+            setTimeout(function () { if (!isText(document.activeElement)) { report('\(ended)'); } }, 800);
+          }, true);
+          document.addEventListener('focusin', function (e) { if (isText(e.target)) { report('\(editing)'); } }, true);
+          document.addEventListener('focusout', function (e) { if (isText(e.target)) { report('\(ended)'); } }, true);
+        })();
+        """
+    }
+
     enum WebViewHTTPErrorJS {
         static let handlerName = "SdkHttpErrorMonitor"
 

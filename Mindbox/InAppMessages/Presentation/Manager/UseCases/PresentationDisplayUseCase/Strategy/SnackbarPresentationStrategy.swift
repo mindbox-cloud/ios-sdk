@@ -23,12 +23,12 @@ final class SnackbarPresentationStrategy: PresentationStrategyProtocol {
         let windowFrame = CGRect(x: 0, y: 0, width: screenBounds.width, height: screenBounds.height)
         if #available(iOS 13, *) {
             if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
-                window = UIWindow(windowScene: windowScene)
+                window = MindboxInAppWindow(windowScene: windowScene)
             } else {
-                window = UIWindow(frame: UIScreen.main.bounds)
+                window = MindboxInAppWindow(frame: UIScreen.main.bounds)
             }
         } else {
-            window = UIWindow(frame: UIScreen.main.bounds)
+            window = MindboxInAppWindow(frame: UIScreen.main.bounds)
         }
 
         window.frame = windowFrame

@@ -16,6 +16,11 @@ public protocol WebBridgeMessageDelegate: AnyObject {
     func webBridge(_ bridge: MindboxWebBridge, didReceiveBridgeMessage message: BridgeMessage)
 }
 
+/// Hears when the page starts and stops editing text.
+protocol WebBridgeTextInputDelegate: AnyObject {
+    func webBridge(_ bridge: MindboxWebBridge, didChangeTextEditing isEditing: Bool)
+}
+
 @_spi(Internal)
 public protocol WebBridgeNavigationDelegate: AnyObject {
     func webBridge(_ bridge: MindboxWebBridge, didStartProvisionalNavigation url: URL?)
@@ -40,6 +45,7 @@ public final class MindboxWebBridge: NSObject {
 
     weak var messageDelegate: WebBridgeMessageDelegate?
     weak var navigationDelegate: WebBridgeNavigationDelegate?
+    weak var textInputDelegate: WebBridgeTextInputDelegate?
 
     private lazy var dispatcher = BridgeMessageDispatcher(handlers: [RequestMessageHandler(),
                                                                      ResponseMessageHandler(),
@@ -70,6 +76,8 @@ public final class MindboxWebBridge: NSObject {
         // prewarm's monitor still owns it — from here the errors belong to this show.
         controller.removeScriptMessageHandler(forName: Constants.WebViewHTTPErrorJS.handlerName)
         controller.add(self, name: Constants.WebViewHTTPErrorJS.handlerName)
+        controller.removeScriptMessageHandler(forName: Constants.WebViewTextInputJS.handlerName)
+        controller.add(self, name: Constants.WebViewTextInputJS.handlerName)
         webView.navigationDelegate = self
     }
 
@@ -91,6 +99,7 @@ public final class MindboxWebBridge: NSObject {
         let controller = webView.configuration.userContentController
         controller.removeScriptMessageHandler(forName: Constants.WebViewBridgeJS.handlerName)
         controller.removeScriptMessageHandler(forName: Constants.WebViewHTTPErrorJS.handlerName)
+        controller.removeScriptMessageHandler(forName: Constants.WebViewTextInputJS.handlerName)
         if webView.navigationDelegate === self {
             webView.navigationDelegate = nil
         }
@@ -196,6 +205,13 @@ public final class MindboxWebBridge: NSObject {
 extension MindboxWebBridge: WKScriptMessageHandler {
     public func userContentController(_ userContentController: WKUserContentController,
                                       didReceive message: WKScriptMessage) {
+        if message.name == Constants.WebViewTextInputJS.handlerName {
+            // A leftover page on a reused WebView does not get to make this show's window key.
+            guard expectedNavigationCommitted, let state = message.body as? String else { return }
+            textInputDelegate?.webBridge(self, didChangeTextEditing: state == Constants.WebViewTextInputJS.editing)
+            return
+        }
+
         if message.name == Constants.WebViewHTTPErrorJS.handlerName {
             // Same staleness gate as bridge messages below: a leftover page's error on a
             // reused WebView must not consume this show's one-shot retry. The show's own

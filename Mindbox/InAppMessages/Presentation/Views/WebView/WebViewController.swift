@@ -46,8 +46,13 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
     private let onError: (InAppPresentationError) -> Void
     private let onTapAction: InAppMessageTapAction
     private let windowProvider: () -> UIWindow?
+    private let keyWindowReturner: InAppKeyWindowReturning
     private var hasClosed = false
     private var hasOnPresentedBeenCalled = false
+    /// Shown to the user: after `init`, until `hide`.
+    private var isRevealed = false
+    private var isListeningForShake = false
+    private var isEditingText = false
 
     private enum Constants {
         static let defaultAlphaBackgroundColor: CGFloat = 0.0
@@ -69,6 +74,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         onCloseInApp: @escaping () -> Void,
         onError: @escaping (InAppPresentationError) -> Void,
         windowProvider: @escaping () -> UIWindow? = WebViewController.defaultWindowProvider,
+        keyWindowReturner: InAppKeyWindowReturning = InAppKeyWindowReturner(),
         operation: (name: String, body: String)?,
         tags: [String: String]?,
         extraParams: [String: JSONValue]? = nil
@@ -84,6 +90,7 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         self.onError = onError
         self.onTapAction = onTapAction
         self.windowProvider = windowProvider
+        self.keyWindowReturner = keyWindowReturner
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -269,7 +276,10 @@ extension WebViewController: WebViewAction {
                 UIView.animate(withDuration: Constants.revealDuration) {
                     window.alpha = 1.0
                 }
-                window.makeKeyAndVisible()
+                // Visible, but not key: the host keeps its key window (see `MindboxInAppWindow`).
+                window.isHidden = false
+                self.isRevealed = true
+                self.updateKeyWindow(in: window)
                 self.notifyPresentedIfNeeded()
                 Logger.common(message: "[WebView] TransparentWebView: Window is now visible", category: .webViewInAppMessages)
             }
@@ -300,8 +310,34 @@ extension WebViewController: WebViewAction {
             if let window = self.windowProvider() {
                 window.isUserInteractionEnabled = false
                 window.alpha = 0.00
+                self.isRevealed = false
+                self.updateKeyWindow(in: window)
                 Logger.common(message: "[WebView] TransparentWebView: Window is now non-interactive and transparent", category: .webViewInAppMessages)
             }
+        }
+    }
+
+    func onShakeListeningChanged(_ isListening: Bool) {
+        let apply = {
+            self.isListeningForShake = isListening
+            self.updateKeyWindow(in: self.windowProvider())
+        }
+        if Thread.isMainThread {
+            apply()
+        } else {
+            DispatchQueue.main.async(execute: apply)
+        }
+    }
+
+    func onTextEditingChanged(_ isEditing: Bool) {
+        let apply = {
+            self.isEditingText = isEditing
+            self.updateKeyWindow(in: self.windowProvider())
+        }
+        if Thread.isMainThread {
+            apply()
+        } else {
+            DispatchQueue.main.async(execute: apply)
         }
     }
 }
@@ -309,6 +345,28 @@ extension WebViewController: WebViewAction {
 private extension WebViewController {
     static func defaultWindowProvider() -> UIWindow? {
         UIApplication.shared.windows.first(where: { $0.rootViewController is WebViewController })
+    }
+
+    /// The system delivers a shake and typing to the key window alone, so the window is key exactly while
+    /// a shown page listens for a shake or edits text — and gives key back to the host as soon as neither holds.
+    func updateKeyWindow(in window: UIWindow?) {
+        guard let window = window as? MindboxInAppWindow else { return }
+
+        let needsKey = (isListeningForShake || isEditingText) && isRevealed && !hasClosed
+        window.allowsKey = needsKey
+        if needsKey {
+            if !window.isKeyWindow {
+                window.makeKey()
+                Logger.common(message: "[WebView] Window is key while the page listens for a shake or edits text",
+                              category: .webViewInAppMessages)
+            }
+            // A shake goes to the first responder, but not while typing: taking it from the page puts the keyboard away.
+            if isListeningForShake && !isEditingText {
+                becomeFirstResponder()
+            }
+        } else if window.isKeyWindow {
+            keyWindowReturner.returnKeyToHost(preferring: nil)
+        }
     }
 
     func notifyPresentedIfNeeded() {

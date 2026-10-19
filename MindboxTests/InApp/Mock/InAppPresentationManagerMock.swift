@@ -76,6 +76,7 @@ final class PresentationDisplaySpy: PresentationDisplayUseCaseProtocol {
     private(set) var reportedOnScreen: [String] = []
 
     private(set) var receivedOnClose: (() -> Void)?
+    private(set) var receivedOnTapAction: InAppMessageTapAction?
     private(set) var receivedOnPresented: (() -> Void)?
     private(set) var receivedOnError: ((InAppPresentationError) -> Void)?
 
@@ -88,6 +89,7 @@ final class PresentationDisplaySpy: PresentationDisplayUseCaseProtocol {
                              onError: @escaping (InAppPresentationError) -> Void) {
         presentCount += 1
         receivedOnClose = onClose
+        receivedOnTapAction = onTapAction
         receivedOnPresented = onPresented
         receivedOnError = onError
         if closesWhilePresenting {

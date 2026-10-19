@@ -60,7 +60,7 @@ final class ModalPresentationStrategy: PresentationStrategyProtocol {
     @available(iOS 13.0, *)
     private var iOS13PlusWindow: UIWindow? {
         if let mostSuitableScene = mostSuitableScene {
-            return UIWindow(windowScene: mostSuitableScene)
+            return MindboxInAppWindow(windowScene: mostSuitableScene)
         } else {
             return nil
         }

@@ -26,6 +26,13 @@ enum InAppWebViewFactory {
                 forMainFrameOnly: false
             )
         )
+        config.userContentController.addUserScript(
+            WKUserScript(
+                source: Constants.WebViewTextInputJS.detectionScript,
+                injectionTime: .atDocumentStart,
+                forMainFrameOnly: false
+            )
+        )
         let webView = WKWebView(frame: .zero, configuration: config)
         #if DEBUG
         if #available(iOS 16.4, *) {

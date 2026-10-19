@@ -224,6 +224,45 @@ struct MotionActionHandlerTests {
 
         #expect(built == 0)
     }
+
+    // MARK: - Shake listening, which decides whether the window may be key
+
+    @Test("Listening for a shake is reported on start and on stop")
+    func shakeListeningIsReportedOnStartAndStop() {
+        let (handler, _, host) = makeSUT(started: [.shake])
+        var reports: [Bool] = []
+        handler.onShakeListeningChanged = { reports.append($0) }
+
+        handler.handle(startRequest(["shake"]), host: host)
+        handler.handle(.request(.motionStop, payload: .object([:])), host: host)
+
+        #expect(reports == [true, false])
+        #expect(handler.isListeningForShake == false)
+    }
+
+    @Test("A start without a shake is not a shake subscription")
+    func flipOnlyIsNotShakeListening() {
+        let (handler, _, host) = makeSUT(started: [.flip])
+        var reports: [Bool] = []
+        handler.onShakeListeningChanged = { reports.append($0) }
+
+        handler.handle(startRequest(["flip"]), host: host)
+
+        #expect(reports.isEmpty)
+        #expect(handler.isListeningForShake == false)
+    }
+
+    @Test("Teardown ends a shake subscription")
+    func teardownEndsShakeListening() {
+        let (handler, _, host) = makeSUT(started: [.shake])
+        var reports: [Bool] = []
+        handler.onShakeListeningChanged = { reports.append($0) }
+
+        handler.handle(startRequest(["shake"]), host: host)
+        handler.tearDown()
+
+        #expect(reports == [true, false])
+    }
 }
 
 // MARK: - Doubles
