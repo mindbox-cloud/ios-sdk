@@ -23,13 +23,6 @@ final class MockDatabaseRepository: MBDatabaseRepository {
         createsDeprecated ? Date() : super.lifeLimitDate
     }
     
-    /// Creates a Core Data stack for in-memory tests or persistent storage.
-    ///
-    /// - Parameter inMemory: Pass `true` to use an in-memory store (good for unit tests).
-    /// - Throws: Errors thrown while creating the underlying ``NSPersistentContainer``.
-    /// - Note: Useful for unit tests to avoid writing to disk.
-    /// - See also:
-    ///   - [Setting up a Core Data store for unit tests (Donny Wals)](https://www.donnywals.com/setting-up-a-core-data-store-for-unit-tests/)
     convenience init(inMemory: Bool) throws {
         let loader = DI.injectOrFail(DatabaseLoaderProtocol.self)
         let container: NSPersistentContainer = inMemory ? try loader.makeInMemoryContainer() : try loader.loadPersistentContainer()
@@ -37,20 +30,10 @@ final class MockDatabaseRepository: MBDatabaseRepository {
     }
 }
 
-
-/// MBDatabaseRepository can get events via `query(fetchLimit:retryDeadline:)`.
-/// For `GuaranteedDeliveryTestCase.testFailureAndRetryScheduleByTimer`:
-/// 1st call to return all events (first run),
-/// 2nd — empty (waitingForRetry branch),
-/// 3rd — events again (retry),
-/// 4th and further — empty (after deletion).
 final class FakeDatabaseRepository: MBDatabaseRepository {
     
     private var queryCalls = 0
     
-    /// Convenience initializer, which does not search .xcdatamodeld by name,
-    /// but loads any model from the same bundle as your CDEvent class,
-    /// and sets the In-Memory store.
     convenience init() {
         let bundle = Bundle(for: CDEvent.self)
         guard let model = NSManagedObjectModel.mergedModel(from: [bundle]) else {
@@ -59,7 +42,6 @@ final class FakeDatabaseRepository: MBDatabaseRepository {
         
         let container = NSPersistentContainer(name: "FakeContainer", managedObjectModel: model)
         
-        // Don't install SQLite, but keep everything in memory
         let desc = NSPersistentStoreDescription()
         desc.type = NSInMemoryStoreType
         container.persistentStoreDescriptions = [desc]
@@ -78,19 +60,15 @@ final class FakeDatabaseRepository: MBDatabaseRepository {
         
         switch queryCalls {
         case 1:
-            // First Run: Real MBDatabaseRepository.query
             return try super.query(fetchLimit: fetchLimit, retryDeadline: retryDeadline)
             
         case 2:
-            // Second run: empty → waitingForRetry
             return []
             
         case 3:
-            // Third run: events for retry
             return try super.query(fetchLimit: fetchLimit, retryDeadline: retryDeadline)
             
         default:
-            // Fourth and beyond: empty (after deletion)
             return []
         }
     }

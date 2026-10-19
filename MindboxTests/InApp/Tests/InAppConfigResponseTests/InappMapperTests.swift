@@ -42,10 +42,8 @@ struct InappRemainingTargetingTests {
     private var persistenceStorage: PersistenceStorage
 
     init() {
-        // Common test DI configuration
         TestConfiguration.configure()
 
-        // Clear temporary in-app state
         SessionTemporaryStorage.shared.erase()
 
         self.targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
@@ -53,7 +51,6 @@ struct InappRemainingTargetingTests {
         let databaseRepository = DI.injectOrFail(DatabaseRepositoryProtocol.self)
         try? databaseRepository.erase()
 
-        // We require the mock facade here. If DI is misconfigured, fail fast.
         let facade = DI.injectOrFail(InAppConfigurationDataFacadeProtocol.self)
         guard let mock = facade as? MockInAppConfigurationDataFacade else {
             fatalError("Expected MockInAppConfigurationDataFacade from DI. Check test DI configuration.")
@@ -72,8 +69,6 @@ struct InappRemainingTargetingTests {
 
     // MARK: - Helpers
 
-    /// Wrapper around `mapper.handleInapps` that exposes async/await
-    /// instead of using XCTestExpectation-based callbacks.
     @discardableResult
     private func handleInapps(
         event: ApplicationEvent?,
@@ -86,8 +81,6 @@ struct InappRemainingTargetingTests {
         }
     }
 
-    /// Asserts that the given in-app ID is present in `showArray`
-    /// and therefore is expected to be shown.
     private func assertTargetingShows(id: String) {
         #expect(
             mockDataFacade.showArray.contains(id),
@@ -95,8 +88,6 @@ struct InappRemainingTargetingTests {
         )
     }
 
-    /// Asserts that the collected targeting IDs match the expected set,
-    /// ignoring ordering.
     private func assertTargetingEquals(ids: [String]) {
         #expect(
             Set(mockDataFacade.targetingArray) == Set(ids),
@@ -104,8 +95,6 @@ struct InappRemainingTargetingTests {
         )
     }
 
-    /// Small helper to wait until the async logic populates `targetingArray`.
-    /// Preferable to hard-coded `DispatchQueue.main.asyncAfter` in XCTest-style tests.
     private func waitForTargetingArray(
         expectedCount: Int,
         timeout: TimeInterval = 5
@@ -165,7 +154,6 @@ struct InappRemainingTargetingTests {
 
         await handleInapps(event: nil, config: config)
 
-        // In-apps "1" (with tags) and "3" (without tags) fail segment targeting, "2" passes.
         #expect(mockDataFacade.collectedTargetingFailureIds == [Set(["1", "3"])])
         #expect(mockDataFacade.collectedTagsByInappId == [
             ["1": ["templateType": "Popup", "abTestVariant": "control"]]
@@ -375,14 +363,12 @@ struct InappRemainingTargetingTests {
         ]
         SessionTemporaryStorage.shared.segmentationRequestResult = .success(targetingChecker.checkedSegmentations)
 
-        // First pass (no event)
         await handleInapps(event: nil, config: config)
         assertTargetingShows(id: "3")
         assertTargetingEquals(ids: ["3", "1", "4", "5"])
 
         mockDataFacade.cleanTargetingArray()
 
-        // Second pass (with event)
         let event = ApplicationEvent(name: "test", model: nil)
         await handleInapps(event: event, config: config)
         assertTargetingEquals(ids: ["2"])
@@ -392,7 +378,6 @@ struct InappRemainingTargetingTests {
     func oneInapp_twoOperations1Or2() async throws {
         let config = try InappTargetingConfig.fourteenRequests.getConfig()
 
-        // Operation "1"
         let event1 = ApplicationEvent(name: "1", model: nil)
         await handleInapps(event: event1, config: config)
         assertTargetingShows(id: "1")
@@ -400,7 +385,6 @@ struct InappRemainingTargetingTests {
 
         mockDataFacade.cleanTargetingArray()
 
-        // Operation "2"
         let event2 = ApplicationEvent(name: "2", model: nil)
         await handleInapps(event: event2, config: config)
         assertTargetingEquals(ids: ["1"])
@@ -415,13 +399,11 @@ struct InappRemainingTargetingTests {
         ]
         SessionTemporaryStorage.shared.segmentationRequestResult = .success(targetingChecker.checkedSegmentations)
 
-        // No event
         await handleInapps(event: nil, config: config)
         assertTargetingEquals(ids: [])
 
         mockDataFacade.cleanTargetingArray()
 
-        // With event "test"
         let event = ApplicationEvent(name: "test", model: nil)
         await handleInapps(event: event, config: config)
         assertTargetingShows(id: "1")
@@ -432,21 +414,18 @@ struct InappRemainingTargetingTests {
     func true_operationTest() async throws {
         let config = try InappTargetingConfig.sixteenSeventeenRequests.getConfig()
 
-        // First, true-targeting in-app
         await handleInapps(event: nil, config: config)
         assertTargetingShows(id: "1")
         assertTargetingEquals(ids: ["1"])
 
         mockDataFacade.cleanTargetingArray()
 
-        // First "test" event
         let testEvent = ApplicationEvent(name: "test", model: nil)
         await handleInapps(event: testEvent, config: config)
         assertTargetingEquals(ids: ["2"])
 
         mockDataFacade.cleanTargetingArray()
 
-        // Second "test" event
         let testAgain = ApplicationEvent(name: "test", model: nil)
         await handleInapps(event: testAgain, config: config)
         assertTargetingEquals(ids: ["2"])
@@ -464,20 +443,17 @@ struct InappRemainingTargetingTests {
     @Test("Four in-apps with A/B tests, device variant 1", .tags(.remainingTargeting, .abTesting))
     func fourInappsWithABTests_variant1() async throws {
         let config = try InappTargetingConfig.thirtyOneRequests.getConfig()
-        persistenceStorage.deviceUUID = "40909d27-4bef-4a8d-9164-6bfcf58ecc76" // variant 1
+        persistenceStorage.deviceUUID = "40909d27-4bef-4a8d-9164-6bfcf58ecc76"
         targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
         SessionTemporaryStorage.shared.geoRequestResult = .success(targetingChecker.geoModels)
 
-        // Initial request
         await handleInapps(event: nil, config: config)
 
-        // We wait until the facade accumulates targetings (previously there was asyncAfter + expectation here)
         await waitForTargetingArray(expectedCount: 3)
         assertTargetingEquals(ids: ["1", "2", "3"])
 
         mockDataFacade.cleanTargetingArray()
 
-        // Event "test" → A/B-result
         let testEventAgain = ApplicationEvent(name: "test", model: nil)
         await handleInapps(event: testEventAgain, config: config)
         assertTargetingEquals(ids: ["4"])
@@ -486,7 +462,7 @@ struct InappRemainingTargetingTests {
     @Test("Four in-apps with A/B tests, device variant 2", .tags(.remainingTargeting, .abTesting))
     func fourInappsWithABTests_variant2() async throws {
         let config = try InappTargetingConfig.thirtyOneRequests.getConfig()
-        persistenceStorage.deviceUUID = "b4e0f767-fe8f-4825-9772-f1162f2db52d" // variant 2
+        persistenceStorage.deviceUUID = "b4e0f767-fe8f-4825-9772-f1162f2db52d"
         targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
         SessionTemporaryStorage.shared.geoRequestResult = .success(targetingChecker.geoModels)
 
@@ -504,7 +480,7 @@ struct InappRemainingTargetingTests {
     @Test("Four in-apps with A/B tests, device variant 3", .tags(.remainingTargeting, .abTesting))
     func fourInappsWithABTests_variant3() async throws {
         let config = try InappTargetingConfig.thirtyOneRequests.getConfig()
-        persistenceStorage.deviceUUID = "55fbd965-c658-47a8-8786-d72ba79b38a2" // variant 3
+        persistenceStorage.deviceUUID = "55fbd965-c658-47a8-8786-d72ba79b38a2"
         targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
         SessionTemporaryStorage.shared.geoRequestResult = .success(targetingChecker.geoModels)
 
@@ -527,21 +503,18 @@ struct InappRemainingTargetingTests {
         targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
         SessionTemporaryStorage.shared.geoRequestResult = .success(targetingChecker.geoModels)
 
-        // Initial geo-based call
         await handleInapps(event: nil, config: config)
         assertTargetingShows(id: "1")
         assertTargetingEquals(ids: ["1", "5"])
 
         mockDataFacade.cleanTargetingArray()
 
-        // "test" event
         let testEvent = ApplicationEvent(name: "test", model: nil)
         await handleInapps(event: testEvent, config: config)
         assertTargetingEquals(ids: ["1", "2", "3"])
 
         mockDataFacade.cleanTargetingArray()
 
-        // "test2" event
         let testEvent2 = ApplicationEvent(name: "test2", model: nil)
         await handleInapps(event: testEvent2, config: config)
         assertTargetingEquals(ids: ["4"])
@@ -553,21 +526,18 @@ struct InappRemainingTargetingTests {
         targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
         SessionTemporaryStorage.shared.geoRequestResult = .success(targetingChecker.geoModels)
 
-        // Initial geo-based call
         await handleInapps(event: nil, config: config)
         assertTargetingShows(id: "1")
         assertTargetingEquals(ids: ["1", "5"])
 
         mockDataFacade.cleanTargetingArray()
 
-        // "test" event
         let testEvent = ApplicationEvent(name: "test", model: nil)
         await handleInapps(event: testEvent, config: config)
         assertTargetingEquals(ids: ["2", "3", "5"])
 
         mockDataFacade.cleanTargetingArray()
 
-        // "test2" event
         let testEvent2 = ApplicationEvent(name: "test2", model: nil)
         await handleInapps(event: testEvent2, config: config)
         assertTargetingEquals(ids: ["4"])
@@ -579,21 +549,18 @@ struct InappRemainingTargetingTests {
         targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
         SessionTemporaryStorage.shared.geoRequestResult = .success(targetingChecker.geoModels)
 
-        // Initial geo-based call
         await handleInapps(event: nil, config: config)
         assertTargetingShows(id: "1")
         assertTargetingEquals(ids: ["1", "5"])
 
         mockDataFacade.cleanTargetingArray()
 
-        // "test" event
         let testEvent = ApplicationEvent(name: "test", model: nil)
         await handleInapps(event: testEvent, config: config)
         assertTargetingEquals(ids: ["1", "2", "3", "5"])
 
         mockDataFacade.cleanTargetingArray()
 
-        // "test2" event
         let testEvent2 = ApplicationEvent(name: "test2", model: nil)
         await handleInapps(event: testEvent2, config: config)
         assertTargetingEquals(ids: ["4"])

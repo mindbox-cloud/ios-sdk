@@ -48,8 +48,6 @@ struct LocalStateActionHandlerTests {
         #expect(response.payload == .object(["data": .object(["seen": .string("1")]), "version": .int(7)]))
     }
 
-    /// The page has to tell "stored as empty" from "never stored", so a miss answers null
-    /// rather than being left out of the object.
     @Test("A key that is not stored answers null instead of being omitted")
     func getAnswersNullForMissingKey() throws {
         let (handler, storage, host) = makeSUT()
@@ -117,8 +115,6 @@ struct LocalStateActionHandlerTests {
         #expect(host.sent.first?.payload == .object(["data": .object(["seen": .null]), "version": .int(7)]))
     }
 
-    /// Storage keeps strings, so a richer value is kept as its JSON text — the page gets back
-    /// what it put in instead of losing the key.
     @Test("A non-string value is stored as its JSON text")
     func setEncodesRicherValues() throws {
         let (handler, storage, host) = makeSUT()
@@ -251,8 +247,6 @@ struct LocalStateActionHandlerTests {
 
 // MARK: - Doubles
 
-/// One object both answers the request and sits in the registry: the handler excludes the writer
-/// by identity, so a page that registered anything else would hear its own write.
 private final class BroadcastHostSpy: HostSpy, MindboxWebPage {
 
     private(set) var pushed: [(action: BridgeMessage.Action, payload: JSONValue)] = []

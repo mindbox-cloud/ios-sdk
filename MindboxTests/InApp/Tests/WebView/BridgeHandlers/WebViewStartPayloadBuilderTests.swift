@@ -11,11 +11,6 @@ import UIKit
 import UserNotifications
 @_spi(Internal) @testable import Mindbox
 
-/// Pins what a page is told at start-up.
-///
-/// The payload was assembled inside the WebView facade and moved out wholesale; the failure to
-/// guard against is a field quietly going missing on the way, which no other suite would see —
-/// the page would simply configure itself wrong.
 @Suite("WebViewStartPayloadBuilder", .tags(.webView))
 @MainActor
 struct WebViewStartPayloadBuilderTests {
@@ -36,7 +31,6 @@ struct WebViewStartPayloadBuilderTests {
             builder.build { continuation.resume(returning: $0) }
         }
 
-        // The contract has JS calling JSON.parse on it, so a string is the shape, not a detail.
         guard case .string(let json) = payload else {
             throw BuilderTestError.payloadIsNotAString
         }
@@ -52,8 +46,6 @@ struct WebViewStartPayloadBuilderTests {
         return dictionary
     }
 
-    /// The test container answers `.authorized` for notifications by default; this swaps in another
-    /// answer for the duration of `body` and rebuilds the container afterwards.
     private func withNotificationAuthorization<T>(_ status: UNAuthorizationStatus,
                                                   _ body: () async throws -> T) async throws -> T {
         let base = MBInject.buildTestContainer
@@ -83,8 +75,6 @@ struct WebViewStartPayloadBuilderTests {
         }
     }
 
-    /// The backend's spelling, and the one every other bridge payload already uses. Safe only in
-    /// this order: the page that reads `inappId` and falls back to `inAppId` ships before this SDK.
     @Test("The content id travels as inappId, not the old inAppId")
     func contentIdTravelsAsInappId() async throws {
         let payload = try await build(contentId: "block-42")
@@ -104,7 +94,6 @@ struct WebViewStartPayloadBuilderTests {
 
     // MARK: - Permissions
 
-    /// Only notifications are under the test's control; the camera and the rest are asked of the simulator as they are.
     @Test("permissions is present even when notifications are not granted")
     func permissionsIsPresentWhenNotificationsAreNotGranted() async throws {
         try await withNotificationAuthorization(.denied) {
@@ -152,8 +141,6 @@ struct WebViewStartPayloadBuilderTests {
         #expect(payload["catalogEntry"] == .string("stories-feed"))
     }
 
-    /// The order the fields are applied in is load-bearing: the configuration's own params are
-    /// merged before the operation, so a collision resolves towards the operation.
     @Test("A configuration param cannot displace the operation")
     func operationWinsOverCustomParams() async throws {
         let payload = try await build(operation: (name: "Real.Operation", body: "{}"),
@@ -164,8 +151,6 @@ struct WebViewStartPayloadBuilderTests {
 
     // MARK: - Who wins a collision
 
-    /// Deliberate: a direct call names what this show must carry, so its params outrank the fields
-    /// the SDK fills in. Pinned so the day someone protects these keys is a decision, not a slip.
     @Test("A param can displace a field the SDK fills in", arguments: [
         "deviceUUID", "endpointId", "inappId", "sdkVersion", "userVisitCount", "localStateVersion", "permissions"
     ])
@@ -212,14 +197,11 @@ struct WebViewStartPayloadBuilderTests {
         #expect(WebViewStartPayloadBuilder.mergedParams(config: config, fromCaller: nil) == config)
     }
 
-    /// A page that receives `{}` reports its own failure; a page that receives nothing waits on
-    /// an id that will never be closed.
     @Test("An unencodable payload degrades to an empty object rather than to silence")
     func unencodablePayloadDegradesToEmptyObject() async {
         let reported = Reported()
         let builder = WebViewStartPayloadBuilder(contentId: "content-1",
                                                  operation: nil,
-                                                 // Not representable in JSON.
                                                  customParams: ["bad": .double(.nan)],
                                                  insetsSource: nil,
                                                  logError: { reported.messages.append($0) })

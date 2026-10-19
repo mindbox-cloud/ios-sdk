@@ -11,8 +11,6 @@ import UIKit
 import WebKit
 @_spi(Internal) @testable import Mindbox
 
-/// The user content controller retains its script message handlers and outlives the web view, so
-/// a bridge is released only once it is taken off the web view it was put on.
 @Suite("MindboxWebBridge release", .tags(.webView))
 @MainActor
 struct MindboxWebBridgeReleaseTests {
@@ -52,8 +50,6 @@ struct MindboxWebBridgeReleaseTests {
     }
 }
 
-/// A reused (pre-warmed) WebView delivers navigation callbacks from previous owners'
-/// loads; leftovers must never reach the show's delegate.
 @Suite("MindboxWebBridge navigation staleness", .tags(.webView))
 @MainActor
 struct MindboxWebBridgeStalenessTests {
@@ -79,8 +75,7 @@ struct MindboxWebBridgeStalenessTests {
     private let webView: WKWebView
     private let bridge: MindboxWebBridge
     private let spy: DelegateSpy
-    // Source of real, distinct WKNavigation objects; separate from `webView` so its async
-    // delegate callbacks can never reach the bridge under test.
+    // A second web view mints the navigations so WebKit's own delegate callbacks never reach the bridge under test.
     private let navigationFactory = WKWebView(frame: .zero, configuration: WKWebViewConfiguration())
 
     init() {
@@ -189,7 +184,6 @@ struct MindboxWebBridgeStalenessTests {
         bridge.expectContentNavigation(expected)
 
         bridge.webView(webView, didFinish: expected)
-        // The unloaded test instance's real URL is nil — distinct from contentURL.
         bridge.webView(webView, didFinish: makeNavigation())
 
         #expect(spy.finishURLs.count == 2)
@@ -198,15 +192,10 @@ struct MindboxWebBridgeStalenessTests {
     }
 }
 
-/// Script messages have their own gate: until the show's own document commits, a reused
-/// WebView's previous document (e.g. a dying prewarm page) can still post to the freshly
-/// attached handler — answering it could present a page that must never be shown.
 @Suite("MindboxWebBridge message gate", .tags(.webView))
 @MainActor
 struct MindboxWebBridgeMessageGateTests {
 
-    /// WKScriptMessage's real initializer is WebKit-internal; the bridge only reads
-    /// `name` and `body`.
     private final class FakeScriptMessage: WKScriptMessage {
         private let fakeName: String
         private let fakeBody: Any
@@ -258,7 +247,6 @@ struct MindboxWebBridgeMessageGateTests {
         try postValidMessage()
         #expect(spy.received.isEmpty)
 
-        // A stale (stranger) commit must not open the gate.
         bridge.webView(webView, didCommit: makeNavigation())
         try postValidMessage()
         #expect(spy.received.isEmpty)

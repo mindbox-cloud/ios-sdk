@@ -10,14 +10,6 @@ import Testing
 import Foundation
 @_spi(Internal) @testable import Mindbox
 
-/// What the handler does with an operation request: what it writes, what it answers, and what it
-/// refuses.
-///
-/// Two neighbours own the rest of this action deliberately. `TransparentViewSyncOperationResponseTests`
-/// covers `makeSyncOperationResponse` on its own, as the pure mapping it is, so nothing here
-/// re-checks the shape of every backend outcome. `TransparentViewJSBridgeTests` proves the window's
-/// tags reach the handler through the view; whose tags an operation carries is decided here. This
-/// suite is the wiring in between: parse, tag, write, answer, and whose lifetime the answer depends on.
 @Suite("OperationActionHandler", .tags(.webView))
 @MainActor
 struct OperationActionHandlerTests {
@@ -98,8 +90,6 @@ struct OperationActionHandlerTests {
         #expect(response.payload == .object(["success": .bool(true)]))
     }
 
-    /// The queue is a database write, and a database can be full or broken. The page is told so
-    /// rather than being left to believe the operation is on its way.
     @Test("A queue that fails is reported to the page instead of being confirmed")
     func asyncOperationFailureIsReported() throws {
         let database = DatabaseRepositoryStub()
@@ -167,8 +157,6 @@ struct OperationActionHandlerTests {
         #expect(sut.database.created.isEmpty)
     }
 
-    /// A backend answer arrives whenever it arrives, and by then the show may be over. Waiting on
-    /// it must not be what keeps the page — and the whole handler set behind it — alive.
     @Test("A request in flight does not hold the page alive")
     func pendingSyncOperationDoesNotHoldThePage() {
         let sut = makeSUT()
@@ -196,8 +184,6 @@ struct OperationActionHandlerTests {
         }
 
         sut.events.answer(.success(Data(#"{"status":"Success"}"#.utf8)))
-        // Nothing arrives to be waited for, so the queue is drained for its own sake: the answer
-        // has nowhere to go, and going there anyway is what this guards against.
         await drainMainQueue(until: { false }, turns: 3)
 
         #expect(page == nil)

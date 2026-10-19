@@ -48,8 +48,6 @@ struct LockedTests {
         #expect(set.wrappedValue.count == inserts)
     }
 
-    // Real threads behind a start gate: a read-then-write `exchange` only misbehaves with two
-    // callers inside it at once, and one raised flag makes each round a single race — hence rounds.
     @Test("A raised flag is consumed by exactly one of the racing threads")
     func exchangeHandsTheFlagToExactlyOneTaker() {
         let racers = max(4, ProcessInfo.processInfo.activeProcessorCount * 2)
@@ -72,8 +70,6 @@ struct LockedTests {
     }
 }
 
-/// Counts with its own lock: counting through `Locked` is a locked read then a locked write, which
-/// would swallow the very races this test is looking for.
 private final class TakeCounter: @unchecked Sendable {
     private let lock = NSLock()
     private var takes = 0

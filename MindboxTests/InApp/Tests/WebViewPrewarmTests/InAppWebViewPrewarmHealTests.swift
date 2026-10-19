@@ -12,7 +12,7 @@ struct InAppWebViewPrewarmHealTests {
 
         override func loadHTMLString(_ string: String, baseURL: URL?) -> WKNavigation? {
             loadedHTMLCount += 1
-            return nil // spy only — keep WebKit from actually navigating in unit tests
+            return nil
         }
 
         override func stopLoading() {}
@@ -72,7 +72,7 @@ struct InAppWebViewPrewarmHealTests {
         service.prewarmResources(for: try loadPrewarmTestConfig("InAppWebviewValid"))
         await drainMainQueue()
         await drainMainQueue()
-        #expect(spy.loadedHTMLCount == 2) // preconnect + content page
+        #expect(spy.loadedHTMLCount == 2)
     }
 
     private var poisonedScript: String { "https://web-static.mindbox.ru/js/byendpoint/x.webview.js" }
@@ -86,7 +86,6 @@ struct InAppWebViewPrewarmHealTests {
         #expect(purgeSpy.purgedURLs.first == poisonedScript)
         #expect(spy.loadedHTMLCount == 3)
 
-        // One-shot: the same (or another) error must not loop the reload.
         service.healPrewarmContentPage(failedURL: poisonedScript)
         #expect(purgeSpy.purgedURLs.count == 1)
         #expect(spy.loadedHTMLCount == 3)
@@ -98,7 +97,7 @@ struct InAppWebViewPrewarmHealTests {
         purgeSpy.completesImmediately = false
 
         service.healPrewarmContentPage(failedURL: poisonedScript)
-        #expect(spy.loadedHTMLCount == 2) // purge still in flight — no reload yet
+        #expect(spy.loadedHTMLCount == 2)
 
         purgeSpy.pendingCompletions.forEach { $0(true) }
         #expect(spy.loadedHTMLCount == 3)
@@ -113,12 +112,10 @@ struct InAppWebViewPrewarmHealTests {
         #expect(purgeSpy.purgedURLs.count == 1)
         #expect(spy.loadedHTMLCount == 3)
 
-        // The reloaded page hits the (now persisted) poison and reports again.
         service.healPrewarmContentPage(failedURL: poisonedScript)
         #expect(purgeSpy.purgedURLs.count == 2)
         #expect(spy.loadedHTMLCount == 4)
 
-        // Hard cap: two attempts per content load, whatever the purge outcomes were.
         service.healPrewarmContentPage(failedURL: poisonedScript)
         #expect(purgeSpy.purgedURLs.count == 2)
         #expect(spy.loadedHTMLCount == 4)
@@ -132,7 +129,6 @@ struct InAppWebViewPrewarmHealTests {
         service.healPrewarmContentPage(failedURL: poisonedScript)
         #expect(purgeSpy.purgedURLs.count == 1)
 
-        // The entry was provably removed — a repeated error means the poison is upstream.
         service.healPrewarmContentPage(failedURL: poisonedScript)
         #expect(purgeSpy.purgedURLs.count == 1)
         #expect(spy.loadedHTMLCount == 3)
@@ -147,7 +143,6 @@ struct InAppWebViewPrewarmHealTests {
         service.healPrewarmContentPage(failedURL: poisonedScript)
         #expect(purgeSpy.purgedURLs.count == 1)
 
-        // The empty purge reports back — the next error may use the second attempt.
         purgeSpy.pendingCompletions.forEach { $0(false) }
         purgeSpy.pendingCompletions.removeAll()
         #expect(spy.loadedHTMLCount == 3)
@@ -188,7 +183,6 @@ struct InAppWebViewPrewarmHealTests {
         service.healPrewarmContentPage(failedURL: poisonedScript)
 
         #expect(purgeSpy.purgedURLs.isEmpty)
-        // borrow itself parks the page with one blank load; the heal must add nothing.
         #expect(spy.loadedHTMLCount == 3)
     }
 }

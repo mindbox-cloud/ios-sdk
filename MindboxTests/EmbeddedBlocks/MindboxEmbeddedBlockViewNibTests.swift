@@ -10,8 +10,6 @@ import Testing
 import UIKit
 @_spi(Internal) @testable import Mindbox
 
-/// A block created from Interface Builder: the real nib loader runs `init?(coder:)`, applies the
-/// inspectables the way the Attributes Inspector stores them and calls `awakeFromNib`.
 @Suite("MindboxEmbeddedBlockView from a nib", .tags(.embeddedBlocks))
 @MainActor
 struct MindboxEmbeddedBlockViewNibTests {
@@ -24,7 +22,6 @@ struct MindboxEmbeddedBlockViewNibTests {
 
         let view = try nib.loadConfiguredBlock()
 
-        // The name is normalized at the boundary, the way the code path normalizes it.
         #expect(view.placeSystemName == "Stories")
         #expect(view.loadingStrategy == .placeholder)
         #expect(view.animatesReveal == false)
@@ -48,8 +45,6 @@ struct MindboxEmbeddedBlockViewNibTests {
 
         _ = try nib.loadConfiguredBlock()
 
-        // The SDK knows the place by its key — the name with the case folded — while the host
-        // reads its own spelling back.
         #expect(nib.factory.requestedPlaces == ["stories", "promo"])
         #expect(nib.memory.askedPlaces == ["stories", "promo"])
     }
@@ -84,8 +79,6 @@ struct MindboxEmbeddedBlockViewNibTests {
         #expect(MindboxEmbeddedBlockView.loadingStrategy(named: name) == strategy)
     }
 
-    /// Interface Builder applies the attributes in the order the xib lists them: a strategy given
-    /// before the place must land the same way.
     @Test("A strategy applied before the place name still takes effect")
     func strategyBeforePlaceStillApplies() throws {
         let nib = NibFixture()
@@ -164,8 +157,6 @@ struct MindboxEmbeddedBlockViewNibTests {
 
     // MARK: - After the block is built
 
-    /// The setters are not public, so a write after the build can come only the way Interface
-    /// Builder writes: through key-value coding.
     @Test("Inspectables given after the block is built are ignored")
     func inspectablesAfterBuildAreIgnored() throws {
         let nib = NibFixture()
@@ -255,8 +246,6 @@ struct MindboxEmbeddedBlockViewNibTests {
     }
 }
 
-/// The nib path reaches the SDK through DI, which is process-global: the fixture swaps the
-/// container for the test and restores it when it goes.
 @MainActor
 private final class NibFixture {
 
@@ -287,17 +276,14 @@ private final class NibFixture {
         MBInject.mode = savedMode
     }
 
-    /// The page the block of this place loaded, once the block started its content.
     func page(for place: String) -> EmbeddedBlockPageMock? {
         factory.beds[place]?.page
     }
 
-    /// The first block of the fixture nib: every inspectable filled in.
     func loadConfiguredBlock() throws -> MindboxEmbeddedBlockView {
         try loadBlocks()[0]
     }
 
-    /// The second block of the fixture nib: the place name and the height only.
     func loadDefaultBlock() throws -> MindboxEmbeddedBlockView {
         try loadBlocks()[1]
     }
@@ -309,8 +295,6 @@ private final class NibFixture {
         return views
     }
 
-    /// A block that has gone through `init?(coder:)` and nothing else — the state a nib-loaded
-    /// block is in while Interface Builder's values are being applied, before `awakeFromNib`.
     func makeUnbuiltBlock() throws -> MindboxEmbeddedBlockView {
         let archived = try NSKeyedArchiver.archivedData(withRootObject: UIView(frame: .zero), requiringSecureCoding: false)
         let unarchiver = try NSKeyedUnarchiver(forReadingFrom: archived)
@@ -321,8 +305,6 @@ private final class NibFixture {
     }
 }
 
-/// Every block gets a provider of its own, the way the SDK's factory makes them: the nib holds two
-/// blocks, and a provider shared between them would report to the last one wired.
 private final class PerPlaceProviderFactory: EmbeddedBlockContentProviderMaking {
 
     private(set) var requestedPlaces: [String] = []

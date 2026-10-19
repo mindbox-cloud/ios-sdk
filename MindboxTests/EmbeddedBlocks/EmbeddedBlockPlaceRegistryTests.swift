@@ -48,7 +48,6 @@ struct EmbeddedBlockPlaceRegistryTests {
         let registry: EmbeddedBlockPlaceRegistry
 
         init(onClockRead: @escaping () -> Void = {}) {
-            // Served delays and shown slots live on the shared session singleton — reset, or rigs would see each other's.
             SessionTemporaryStorage.shared.$ledger.mutate {
                 $0.servedPlaceDelays = []
                 $0.placeShownInappId = [:]
@@ -260,7 +259,6 @@ struct EmbeddedBlockPlaceRegistryTests {
         #expect(rig.resolver.resolveCount == 0)
     }
 
-    /// In sync with Android: the intersection with the config happens before the resolve, so a no-op costs nothing.
     @Test("An operation skips places the config does not address")
     func operationSkipsUnaddressedPlaces() {
         let rig = Rig()
@@ -326,7 +324,6 @@ struct EmbeddedBlockPlaceRegistryTests {
         #expect(resolvedByOperation == ["stories", "promo"])
     }
 
-    /// In sync with Android: an operation wakes a place only when some in-app of the place actually listens to it.
     @Test("An operation no in-app of the place listens to does not resolve it")
     func foreignOperationDoesNotResolveThePlace() {
         let rig = Rig()
@@ -1734,7 +1731,6 @@ struct EmbeddedBlockPlaceRegistryTests {
         #expect(block.answers.map(\.isOperationTriggered) == [false, true, false])
     }
 
-    /// A limitation, not an oversight: neither platform remembers past operations — pinned so the day it changes is a decision.
     @Test("An operation that happened off screen is not replayed on return")
     func operationOffScreenIsNotReplayed() {
         let rig = Rig()
@@ -1830,8 +1826,6 @@ struct EmbeddedBlockPlaceRegistryTests {
         rig.registry.register(block, place: "stories")
         rig.registry.blockAppeared("stories")
 
-        // The second pass runs inside the delay, which is not the user's waiting: its own duration
-        // says nothing about how long the user waited for the first answer.
         rig.resolver.resolution = .content(.delayed(params: ["fresh": .bool(true)]))
         rig.resolver.processingDuration = 2.5
         rig.announceNewConfig()
@@ -1850,8 +1844,6 @@ struct EmbeddedBlockPlaceRegistryTests {
         rig.registry.register(block, place: "stories")
         rig.registry.blockAppeared("stories")
 
-        // The config dropped the delay: there is nothing left to wait out, and the user waited for
-        // this very answer.
         rig.resolver.resolution = .content(.delayed("00:00:00", params: ["fresh": .bool(true)]))
         rig.resolver.processingDuration = 2.5
         rig.announceNewConfig()

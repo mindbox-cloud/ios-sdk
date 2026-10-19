@@ -9,9 +9,6 @@ import Testing
 import Foundation
 @testable import MindboxLogger
 
-/// `Date.toString()` / `toFullString()` and `TimeInterval.asReadableDateTime` use the
-/// device-local time zone, so these assert on the literal shape rather than an exact
-/// instant. `DateFormatTests` already covers the time-zone-pinned `DateFormat` parsing.
 @Suite("Date / TimeInterval / DateFormat helpers", .tags(.dateFormatting))
 struct DateAndFormatExtensionTests {
 

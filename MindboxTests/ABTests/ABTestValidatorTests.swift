@@ -33,21 +33,15 @@ class ABTestValidatorTests: XCTestCase {
             createVariant(lower: 50, upper: 100, objects: [abObject])
         ])
 
-        // TODO: - Divide to few different unit tests.
-
         testCases = [
-            // Valid cases
             TestCase(abTest: abtest, isValid: true),
             TestCase(abTest: createAbTest(id: "sdfkj-sdfds-213123-dsew", sdkVersion: SdkVersion(min: 4, max: nil), salt: abtest.salt, variants: abtest.variants), isValid: true),
             TestCase(abTest: createAbTest(id: abtest.id, sdkVersion: SdkVersion(min: 4, max: nil), salt: "sdfsdf-sdfsd", variants: abtest.variants), isValid: true),
 
-            // Invalid cases: No variants provided
             TestCase(abTest: createAbTest(id: abtest.id, sdkVersion: SdkVersion(min: 4, max: nil), salt: abtest.salt, variants: []), isValid: false),
 
-            // Invalid cases: Only one variant provided
             TestCase(abTest: createAbTest(id: abtest.id, sdkVersion: SdkVersion(min: 4, max: nil), salt: abtest.salt, variants: [variant1]), isValid: false),
 
-            // Invalid cases: Incorrect modulus values
             TestCase(abTest: createAbTest(id: abtest.id, sdkVersion: SdkVersion(min: 4, max: nil), salt: abtest.salt, variants: [
                 createVariant(lower: -1, upper: 50, objects: [abObject]),
                 createVariant(lower: 50, upper: 100, objects: [abObject])
@@ -57,13 +51,11 @@ class ABTestValidatorTests: XCTestCase {
                 createVariant(lower: 101, upper: 100, objects: [abObject])
             ]), isValid: false),
 
-            // Invalid cases: Modulus values do not span from 0 to 100
             TestCase(abTest: createAbTest(id: abtest.id, sdkVersion: SdkVersion(min: 4, max: nil), salt: abtest.salt, variants: [
                 createVariant(lower: 1, upper: 50, objects: [abObject]),
                 createVariant(lower: 50, upper: 100, objects: [abObject])
             ]), isValid: false),
 
-            // Invalid cases: Incorrect modulus values
             TestCase(abTest: createAbTest(id: abtest.id, sdkVersion: SdkVersion(min: 4, max: nil), salt: abtest.salt, variants: [
                 createVariant(lower: 50, upper: 98, objects: [abObject]),
                 variant1
@@ -97,14 +89,11 @@ class ABTestValidatorTests: XCTestCase {
                 createVariant(lower: 60, upper: 40, objects: [abObject])
             ]), isValid: false),
 
-            // Invalid cases: Empty or null values
             TestCase(abTest: createAbTest(id: abtest.id, sdkVersion: SdkVersion(min: 4, max: nil), salt: nil, variants: abtest.variants), isValid: false),
             TestCase(abTest: createAbTest(id: abtest.id, sdkVersion: SdkVersion(min: 4, max: nil), salt: "", variants: abtest.variants), isValid: false),
 
-            // Invalid cases: Empty id
             TestCase(abTest: createAbTest(id: "", sdkVersion: SdkVersion(min: 4, max: nil), salt: abtest.salt, variants: [variant1, variant1]), isValid: false),
 
-            // Invalid cases: Null sdkVersion
             TestCase(abTest: createAbTest(id: abtest.id, sdkVersion: nil, salt: abtest.salt, variants: [variant1, variant1]), isValid: false)
         ]
     }

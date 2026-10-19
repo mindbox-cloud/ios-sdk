@@ -10,8 +10,6 @@ import Testing
 import Foundation
 @testable import MindboxNotifications
 
-/// Covers the public `MindboxPushNotificationProtocol` surface on `MindboxNotificationService`
-/// and `MBPushNotification` decoding.
 @Suite("MindboxPushNotification public API", .tags(.notifications, .pushParsing))
 struct MindboxPushNotificationTests {
 

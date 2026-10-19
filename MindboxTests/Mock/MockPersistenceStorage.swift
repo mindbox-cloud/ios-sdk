@@ -10,7 +10,6 @@ import Foundation
 import class MindboxLogger.Locked
 @testable import Mindbox
 
-/// Every stored property is `@Locked`: production reaches this storage from background queues while tests assert from their own threads — TSan flagged the unsynchronized version.
 class MockPersistenceStorage: PersistenceStorage {
 
     var onDidChange: (() -> Void)?
@@ -30,8 +29,6 @@ class MockPersistenceStorage: PersistenceStorage {
         }
     }
 
-    // Mirror production `MBPersistenceStorage`: installed state is the presence of a persisted
-    // installation-date marker, never its parseability — not `installationDate != nil` directly.
     var isInstalled: Bool {
         installationDateString != nil
     }
@@ -66,9 +63,6 @@ class MockPersistenceStorage: PersistenceStorage {
         }
     }
 
-    // Presence marker for `isInstalled`, mirroring production's installation-date string. The Date
-    // itself is stored as-is (no `.utc` flooring) so the mock keeps full precision like its other
-    // date properties — only `isInstalled` is derived from the marker's presence.
     @Locked private var installationDateString: String?
 
     @Locked var installationDate: Date? {
@@ -124,14 +118,11 @@ class MockPersistenceStorage: PersistenceStorage {
 
     @Locked var webViewLocalStateVersion: Int?
 
-    // Counts writes so a no-op-write regression (rewriting an unchanged dictionary) is
-    // observable — the persisted value alone can't distinguish "written again" from "unchanged".
     @Locked var webViewLearnedHostsWriteCount = 0
     @Locked var webViewLearnedHosts: [String: [String]]? {
         didSet { webViewLearnedHostsWriteCount += 1 }
     }
 
-    // Same idea: the place memory promises to write a place once, and only the count can tell.
     @Locked var embeddedBlockPlaceRecordsWriteCount = 0
     @Locked var embeddedBlockPlaceRecords: [String: Data]? {
         didSet { embeddedBlockPlaceRecordsWriteCount += 1 }

@@ -36,7 +36,6 @@ struct EmbeddedBlockPlaceMemoryTests {
         #expect(memory.record(at: "stories") == EmbeddedBlockPlaceRecord(rememberedAt: Self.moment))
     }
 
-    /// A shown block shows again on every return to the screen; only the first show is worth a write.
     @Test("A place is written once")
     func placeIsWrittenOnce() {
         let memory = makeMemory()
@@ -104,7 +103,6 @@ struct EmbeddedBlockPlaceMemoryTests {
         let memory = makeMemory()
         let places = (0..<64).map { "place-\($0)" }
 
-        // Each remember is a read-modify-write of the whole dictionary; without the lock they overwrite each other.
         DispatchQueue.concurrentPerform(iterations: places.count) { index in
             memory.rememberShownContent(at: places[index])
             _ = memory.hasShownContent(at: places[index])

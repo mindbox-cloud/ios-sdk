@@ -10,19 +10,11 @@ import Testing
 import Foundation
 @_spi(Internal) @testable import Mindbox
 
-/// A page nobody is looking at must not act on the user's behalf.
-///
-/// An embedded block that left the window keeps its page alive, and that page still delivers
-/// whatever its `setTimeout` scheduled. These suites pin down what that costs it: which actions
-/// are refused, that the refusal reaches the page as an answer rather than as silence, and that
-/// leaving the screen mid-request stops the action too.
 @Suite("Bridge user presence", .tags(.webView))
 struct WebBridgeUserPresenceTests {
 
     // MARK: - The vocabulary
 
-    /// Leaving the app, covering it, or reaching for the device — none of it has a touch behind
-    /// it once the page is off screen.
     @Test("Acting on the user's behalf requires their presence",
           arguments: [BridgeMessage.Action.openLink,
                       .settingsOpen,
@@ -34,9 +26,6 @@ struct WebBridgeUserPresenceTests {
         #expect(action.requiresUserPresence)
     }
 
-    /// Bookkeeping the page does about itself. A block goes on reporting, logging and sending its
-    /// operations off screen exactly as it did before the shared bridge — none of it is something
-    /// done on the user's behalf.
     @Test("Everything else runs off screen as before",
           arguments: [BridgeMessage.Action.ready,
                       .log,
@@ -55,8 +44,6 @@ struct WebBridgeUserPresenceTests {
         #expect(!action.requiresUserPresence)
     }
 
-    /// Giving the sensors back is not something done on the user's behalf, and a page that left
-    /// the screen is exactly the page that should be able to release them.
     @Test("Motion can always be stopped, only started with a user there")
     func stoppingIsAlwaysAllowed() {
         #expect(BridgeMessage.Action.motionStart.requiresUserPresence)
@@ -77,8 +64,6 @@ struct WebBridgeUserPresenceTests {
         #expect(handler.handled.isEmpty)
     }
 
-    /// The page is waiting on a promise. Dropping the request would leave it waiting forever, so
-    /// the refusal is spent as its answer.
     @Test("The refused request is answered rather than dropped")
     func refusalIsAnswered() throws {
         let registry = WebBridgeActionRegistry(handlers: [PresenceHandlerSpy(actions: [.openLink])])
@@ -140,8 +125,6 @@ struct WebBridgeUserPresenceTests {
         #expect(host.sent.isEmpty)
     }
 
-    /// A modal in-app has no off-screen life in which its page could keep talking, so nothing here
-    /// costs it anything.
     @Test("A page that is always present is never refused",
           arguments: [BridgeMessage.Action.openLink, .haptic, .permissionRequest])
     func alwaysPresentHostIsNeverRefused(action: BridgeMessage.Action) {
@@ -156,17 +139,10 @@ struct WebBridgeUserPresenceTests {
 
 // MARK: - Leaving the screen mid-request
 
-/// The gate before dispatch is not enough on its own: the system takes its own time to decide a
-/// link is nobody's, and the block can be scrolled away while it does. A sheet put up after that
-/// covers a screen the user chose themselves.
 @Suite("Bridge user presence, mid-request", .tags(.webView))
 @MainActor
 struct WebBridgeUserPresenceDuringRequestTests {
 
-    /// The one the gate before dispatch cannot catch: the page is on screen when the system is
-    /// asked, and gone by the time it answers. Told apart from the ordinary refusal by the reason —
-    /// the spy page owns no controller, so a fallback that got past the gate would fail on the
-    /// missing presenter instead.
     @Test("A page that leaves the screen while the system decides gets no Safari")
     func presenceLostBeforeSafariFallback() async throws {
         let opener = DeferredURLOpenerSpy()
@@ -178,7 +154,6 @@ struct WebBridgeUserPresenceDuringRequestTests {
         #expect(opener.opened.first?.universalLinksOnly == true, "the system is asked while the page is still up")
 
         host.isUserPresent = false
-        // Nobody claims the link, which is what sends the handler to the Safari sheet.
         opener.answer(opened: false)
         await drainMainQueue(until: { !host.sent.isEmpty })
 
@@ -188,8 +163,6 @@ struct WebBridgeUserPresenceDuringRequestTests {
         #expect(host.sent.count == 1)
     }
 
-    /// A web address is offered to the system a main-queue turn after the request arrives, and
-    /// that turn is enough for the block to leave the window.
     @Test("A page that leaves the screen first is not offered to the system as a universal link")
     func universalLinkIsNotTriedAfterPresenceIsLost() async throws {
         let opener = URLOpenerSpy()
@@ -206,7 +179,6 @@ struct WebBridgeUserPresenceDuringRequestTests {
         #expect(response.payload == .object(["error": .string("not_visible")]))
     }
 
-    /// The same turn on the route every other scheme takes, and the one `settings.open` shares.
     @Test("A page that leaves the screen first never reaches the system at all")
     func systemIsNotReachedAfterPresenceIsLost() async throws {
         let opener = URLOpenerSpy()
@@ -223,8 +195,6 @@ struct WebBridgeUserPresenceDuringRequestTests {
         #expect(response.payload == .object(["error": .string("not_visible")]))
     }
 
-    /// The whole point of asking again is that the answer may have changed. A page still on screen
-    /// when the system comes back is opened for, exactly as before.
     @Test("A page still on screen when the system answers is served")
     func presenceKeptThroughoutIsServed() async {
         let opener = URLOpenerSpy()
@@ -241,8 +211,6 @@ struct WebBridgeUserPresenceDuringRequestTests {
 
 // MARK: - Doubles
 
-/// Records what it was given, so a suite can tell "the handler refused" from "the handler was
-/// never reached".
 private final class PresenceHandlerSpy: WebBridgeActionHandler {
 
     let actions: Set<BridgeMessage.Action>
@@ -258,11 +226,6 @@ private final class PresenceHandlerSpy: WebBridgeActionHandler {
     }
 }
 
-/// Holds the system's answer back until the test hands it over.
-///
-/// The only way to stand a page down *between* asking the system and hearing from it — which is
-/// the window the gate before dispatch cannot see. `URLOpenerSpy` answers on the spot and leaves
-/// no such window.
 private final class DeferredURLOpenerSpy: BridgeURLOpening {
 
     private(set) var opened: [(url: URL, universalLinksOnly: Bool)] = []
@@ -274,7 +237,6 @@ private final class DeferredURLOpenerSpy: BridgeURLOpening {
         pending = completion
     }
 
-    /// - Parameter opened: what the system decided about the last URL it was given.
     func answer(opened: Bool) {
         let completion = pending
         pending = nil

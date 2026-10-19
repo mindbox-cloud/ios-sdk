@@ -107,7 +107,6 @@ struct EmbeddedFormVariantTests {
         #expect(try filter(embeddedVariant(place: "stories-list-container", layers: layers)).isEmpty)
     }
 
-    /// A configuration mistake, not a reason to show nothing: the first webview layer wins, in sync with Android.
     @Test("Two webview layers keep the variant and use the first")
     func keepsVariantWithTwoLayersAndUsesTheFirst() throws {
         let first = webviewLayer(contentUrl: "https://example.com/first.html")
@@ -159,7 +158,6 @@ struct EmbeddedFormVariantTests {
         let variants = try filter(embeddedVariant(place: nil), modal)
 
         #expect(variants.count == 1)
-        // `MindboxFormVariant.==` only compares the case — an expected variant built from content would assert nothing.
         guard case .modal(let survivor)? = variants.first else {
             Issue.record("The modal sibling is expected to survive")
             return

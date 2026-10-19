@@ -9,11 +9,6 @@
 import Testing
 @_spi(Internal) @testable import Mindbox
 
-/// Guards the one thing no other suite can see: that the shipped handler set is complete.
-///
-/// Every other suite either builds a handler directly or injects a registry of its own, so a
-/// handler written, tested and then left out of the factory would pass all of them while the
-/// page was refused the action as not served.
 @Suite("WebBridgeActionHandlerFactory", .tags(.webView))
 struct WebBridgeActionHandlerFactoryTests {
 
@@ -44,8 +39,6 @@ struct WebBridgeActionHandlerFactoryTests {
         #expect(owned.isDisjoint(with: Self.requestedOnlyBySDK))
     }
 
-    /// Two handlers claiming one action is resolved by the registry, but silently — the set
-    /// itself should not contain the collision in the first place.
     @Test("No action is claimed twice")
     func noActionIsClaimedTwice() {
         let handlers = WebBridgeActionHandlerFactory.makeHandlers()
@@ -54,8 +47,6 @@ struct WebBridgeActionHandlerFactoryTests {
         #expect(claims.count == Set(claims).count)
     }
 
-    /// Several handlers own state that belongs to one page — a prepared haptic engine, a motion
-    /// subscription — so a set shared between shows would leak one page's devices into another.
     @Test("Each call builds a fresh set")
     func buildsFreshInstances() {
         let first = WebBridgeActionHandlerFactory.makeHandlers()

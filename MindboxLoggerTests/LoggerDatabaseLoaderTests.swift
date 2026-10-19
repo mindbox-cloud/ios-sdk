@@ -56,7 +56,6 @@ struct LoggerDatabaseLoaderTests {
     func loadContainerAutoRecreatesOnCorruptedStore() throws {
         let url = tmpURL("Corrupted")
 
-        // A broken file + sidecars so the first load attempt fails.
         try "NOT A SQLITE DB".data(using: .utf8)!.write(to: url, options: .atomic)
         try "WAL".data(using: .utf8)!.write(to: URL(fileURLWithPath: url.path + "-wal"))
         try "SHM".data(using: .utf8)!.write(to: URL(fileURLWithPath: url.path + "-shm"))
@@ -65,7 +64,6 @@ struct LoggerDatabaseLoaderTests {
                                              storeURL: url, descriptions: nil)
         let loader = LoggerDatabaseLoader(cfg)
 
-        // First loadStores fails -> catch destroys the store -> successful reload.
         let (_, ctx) = try loader.loadContainer()
         #expect(sqliteHeader(at: url) == "SQLite format 3")
 
@@ -119,7 +117,6 @@ struct LoggerDatabaseLoaderTests {
                                              storeURL: url, descriptions: nil)
         let loader = LoggerDatabaseLoader(cfg)
 
-        // Create a store and release all references so the file is not held by Core Data.
         try autoreleasepool {
             _ = try loader.loadContainer()
         }

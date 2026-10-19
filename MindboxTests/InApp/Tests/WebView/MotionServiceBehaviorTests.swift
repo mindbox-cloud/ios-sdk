@@ -39,7 +39,6 @@ struct MotionServiceBehaviorTests {
         await Task.yield()
         #expect(UIApplication.shared.applicationSupportsShakeToEdit == original)
 
-        // Second stop — should be a no-op, no side effects
         service.stopMonitoring()
         await Task.yield()
         #expect(UIApplication.shared.applicationSupportsShakeToEdit == original)
@@ -52,11 +51,9 @@ struct MotionServiceBehaviorTests {
         let result1 = service.startMonitoring(gestures: [.shake, .flip])
         #expect(result1.started.contains(.shake))
 
-        // Restart with only flip — shake should no longer be active
         let result2 = service.startMonitoring(gestures: [.flip])
         #expect(!result2.started.contains(.shake))
 
-        // Verify shake handler does not fire after restart without shake
         var gestureReceived = false
         service.onGestureDetected = { gesture, _ in
             if gesture == .shake { gestureReceived = true }

@@ -31,7 +31,6 @@ struct LoggerPersistenceInternalsTests {
         #expect(manager.debugLogBufferCount == 0)
         #expect(manager.debugLogBufferCapacity >= manager.debugBatchSize)
 
-        // Setters actually persist the value: flip to a distinct value, assert, restore.
         let originalState = manager.debugStorageState
         manager.debugStorageState = .disabled
         #expect(manager.debugStorageState == .disabled)

@@ -121,7 +121,7 @@ private extension VersioningTestCase {
         var timeInterval: TimeInterval {
             switch self {
             case .default:
-                return 3.5 // 1.5 секунды
+                return 3.5
             case .custom(let interval):
                 switch interval {
                 case .seconds(let seconds):
@@ -176,11 +176,9 @@ private extension VersioningTestCase {
             }
         }
 
-        // Явное ожидание завершения всех задач
         let result = dispatchGroup.wait(timeout: .now() + TimeInterval(limit / 2))
         XCTAssertEqual(result, .success, "Timeout while waiting for async calls")
 
-        // Проверяем, что все вызовы произошли
         XCTAssertEqual(dispatchGroup.wait(timeout: .now()), .success, "Not all calls completed")
     }
 
@@ -220,8 +218,6 @@ private extension VersioningTestCase {
         wait(for: [delayExpectation], timeout: of.timeInterval * 2)
     }
     
-    /// Sets up CyclicUNAuthorizationStatusProvider for versioning tests.
-    /// Must use .container scope (singleton) to preserve state between calls.
     func setupCyclicStatusProvider() {
         MBInject.container.register(
             UNAuthorizationStatusProviding.self,
@@ -232,7 +228,6 @@ private extension VersioningTestCase {
         }
     }
     
-    /// Verifies that events are properly versioned with sequential version numbers.
     func verifyVersioning(limit: Int, file: StaticString = #file, line: UInt = #line) {
         delay(of: .default)
 

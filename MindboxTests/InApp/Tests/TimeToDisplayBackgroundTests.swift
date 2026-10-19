@@ -10,8 +10,6 @@ import Testing
 import UIKit
 @testable import Mindbox
 
-// The stopwatch listens on the main queue; posting from it keeps the delivery synchronous, so the
-// clock is read after the observer ran and not before.
 @Suite("TimeToDisplay excludes background time")
 @MainActor
 struct TimeToDisplayBackgroundTests {

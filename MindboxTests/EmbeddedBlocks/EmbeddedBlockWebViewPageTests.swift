@@ -16,9 +16,6 @@ struct EmbeddedBlockWebViewPageTests {
 
     // MARK: - Navigation
 
-    /// A navigation is cancelled in two perfectly ordinary cases: it was superseded by a client-side
-    /// redirect, and it was stopped by our own `cancel()` on a block that went off screen. Neither
-    /// means the block is broken — while a failure collapses it for good.
     @Test("A cancelled navigation is not a load failure")
     func cancelledNavigationIsNotAFailure() {
         let bed = PageBed()
@@ -28,7 +25,6 @@ struct EmbeddedBlockWebViewPageTests {
         #expect(bed.failures == 0)
     }
 
-    /// A real network error, on the other hand, is exactly what the page must report.
     @Test("A real navigation error is a load failure", arguments: [NSURLErrorNotConnectedToInternet,
                                                                   NSURLErrorTimedOut,
                                                                   NSURLErrorCannotFindHost])
@@ -40,7 +36,6 @@ struct EmbeddedBlockWebViewPageTests {
         #expect(bed.failures == 1)
     }
 
-    /// Cancelling one navigation must not mute the page: the next real error arrives as usual.
     @Test("A cancellation does not swallow the failure that comes after it")
     func cancellationDoesNotSwallowLaterFailures() {
         let bed = PageBed()
@@ -268,7 +263,6 @@ struct EmbeddedBlockWebViewPageTests {
         #expect(answer.payload == .object(["success": .bool(true)]))
     }
 
-    /// The storage is in memory only because the test container does not carry the real one.
     @Test("A shared action is served by the shared handlers")
     func sharedActionIsServed() throws {
         let handlers: [WebBridgeActionHandler] = [

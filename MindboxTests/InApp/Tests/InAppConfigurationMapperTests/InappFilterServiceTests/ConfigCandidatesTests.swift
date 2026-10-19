@@ -111,8 +111,6 @@ struct ConfigCandidatesTests {
         #expect(ids(sut.filter(requestedIds: [Constants.storyId, Constants.secondStoryId], in: candidates)) == inPool.intersection([Constants.storyId, Constants.secondStoryId]))
     }
 
-    /// The fixture plus an A/B test whose two branches cover the whole range and name one story each,
-    /// so whichever branch this device lands in, exactly one of them leaves the pool.
     private func configSplittingTheTwoStories() throws -> ConfigResponse {
         let url = try #require(Bundle(for: MindboxTests.self).url(forResource: "EmbeddedBlockConfig", withExtension: "json"))
         var raw = try #require(try JSONSerialization.jsonObject(with: Data(contentsOf: url)) as? [String: Any])

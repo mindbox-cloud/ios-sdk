@@ -12,8 +12,6 @@ import Testing
 @Suite("WebView timeout error category", .tags(.webView))
 struct WebViewTimeoutErrorTests {
 
-    /// The 7s init timeout stays the single closing authority, but monitoring must tell
-    /// "page loaded, JS bridge never appeared" apart from "page never finished loading".
     @Test
     func timeoutDistinguishesBridgeMissingFromLoadFailure() {
         guard case .webviewPresentationFailed = WebViewController.timeoutError(readyCheckFailure: "no-handlers: window.bridgeMessagesHandlers.emit is missing") else {
@@ -60,7 +58,6 @@ struct WebViewTimeoutErrorTests {
         #expect(!plain.contains("Last script HTTP error"))
     }
 
-    /// Android sends the same texts, so one search finds the failure on both platforms.
     @Test
     func timeoutTextsMatchAndroid() {
         #expect(WebViewController.timeoutError(readyCheckFailure: nil).failureDetails == "Page did not send init within 7s.")

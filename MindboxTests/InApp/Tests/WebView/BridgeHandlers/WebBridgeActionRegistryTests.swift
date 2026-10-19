@@ -81,8 +81,6 @@ struct WebBridgeActionRegistryTests {
 
     // MARK: - Requests only
 
-    /// Both kinds in one test rather than as arguments: `MessageType` does not cross into a test
-    /// as a parameter under the Swift 6 language mode.
     @Test("Anything that is not a request is swallowed without an answer")
     func nonRequestIsSwallowed() {
         let motion = HandlerSpy(actions: [.motionStart])
@@ -97,8 +95,6 @@ struct WebBridgeActionRegistryTests {
         #expect(host.sent.isEmpty)
     }
 
-    /// The handler contract is "requests only", so an answer that happens to carry an owned action
-    /// must not run it a second time — the request it answers has already been through here.
     @Test("A response carrying an owned action does not reach that handler")
     func responseWithOwnedActionIsNotRouted() {
         let openLink = HandlerSpy(actions: [.openLink])
@@ -169,7 +165,6 @@ private final class HandlerSpy: WebBridgeActionHandler {
     }
 }
 
-/// A second concrete type, so `handler(ofType:)` has something to tell apart from `HandlerSpy`.
 private final class OtherHandlerSpy: WebBridgeActionHandler {
 
     let actions: Set<BridgeMessage.Action> = [.motionStart]

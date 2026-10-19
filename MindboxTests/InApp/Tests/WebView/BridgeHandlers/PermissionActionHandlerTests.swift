@@ -36,8 +36,6 @@ struct PermissionActionHandlerTests {
 
     // MARK: - Outcomes
 
-    /// The page is told both the stance and whether a dialog appeared, so it can tell a fresh
-    /// refusal from a standing one.
     @Test("A grant answers with the result and whether a dialog was shown")
     func grantIsReported() async throws {
         let (handler, _, host) = makeSUT(result: .granted(dialogShown: true))
@@ -103,8 +101,6 @@ struct PermissionActionHandlerTests {
         #expect(host.sent.first?.payload == .object(["error": .string("internal_error")]))
     }
 
-    /// Asking without the usage description in place would kill the host app rather than
-    /// return a refusal, so the missing key is reported instead of requested.
     @Test("A missing Info.plist key is reported and the permission is never requested")
     func missingInfoPlistKeyIsRefused() throws {
         let (handler, permission, host) = makeSUT(requiredKeys: ["NSUserTrackingUsageDescription"])
@@ -138,9 +134,6 @@ struct PermissionActionHandlerTests {
 
     // MARK: - Lifetime
 
-    /// A system dialog stands for as long as the user leaves it standing. Waiting on it must not
-    /// be what keeps the page alive: with the page would stay its whole handler set, its ready
-    /// checker and any sensor subscription the page started.
     @Test("A page released while the dialog is up is not held by the pending request")
     func pendingRequestDoesNotHoldPage() async {
         let permission = PermissionHandlerSpy(result: .granted(dialogShown: true),
@@ -161,7 +154,6 @@ struct PermissionActionHandlerTests {
         #expect(page == nil)
     }
 
-    /// A show that ended gets no answer — and the answer arriving late is not a crash either.
     @Test("An answer that arrives after the page is gone is dropped")
     func lateAnswerIsDropped() async {
         let permission = PermissionHandlerSpy(result: .granted(dialogShown: true),
@@ -188,8 +180,6 @@ final class PermissionHandlerSpy: PermissionHandler {
 
     private let result: PermissionRequestResult
 
-    /// Holds the answer back instead of giving it, standing in for a dialog the user has not
-    /// dismissed yet. That is the only window in which what the SDK holds onto is observable.
     private let defersAnswer: Bool
 
     private var pendingAnswer: ((PermissionRequestResult) -> Void)?
@@ -213,7 +203,6 @@ final class PermissionHandlerSpy: PermissionHandler {
         pendingAnswer = completion
     }
 
-    /// The user finally answers the dialog.
     func answer() {
         let pendingAnswer = self.pendingAnswer
         self.pendingAnswer = nil

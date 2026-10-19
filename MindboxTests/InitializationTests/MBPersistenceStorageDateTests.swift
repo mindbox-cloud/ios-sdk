@@ -43,7 +43,6 @@ struct MBPersistenceStorageDateTests {
 
     @Test("All six UTC date properties round-trip setter → getter at second precision")
     func allDatesRoundTrip() {
-        // (name, setter, getter) for every Date property backed by a `.utc` string in production.
         let cases: [(name: String, set: (Date?) -> Void, get: () -> Date?)] = [
             ("installationDate",
              { storage.installationDate = $0 }, { storage.installationDate }),
@@ -59,8 +58,6 @@ struct MBPersistenceStorageDateTests {
              { storage.configDownloadDate = $0 }, { storage.configDownloadDate }),
         ]
 
-        // Whole-second timestamp: the `.utc` format ("yyyy-MM-dd'T'HH:mm:ss'Z'") has no sub-second
-        // component, so a round-trip is exact only at second precision.
         let expectedEpoch = 1_700_000_000
 
         for testCase in cases {

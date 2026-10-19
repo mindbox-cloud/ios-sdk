@@ -12,7 +12,7 @@ import Testing
 @Suite("DateFormat ISO-8601 primitive", .tags(.dateFormatting))
 struct DateFormatTests {
 
-    private let fixedDate = Date(timeIntervalSince1970: 1_747_017_155) // 2025-05-12T02:32:35Z
+    private let fixedDate = Date(timeIntervalSince1970: 1_747_017_155)
 
     @Test("Date.toString(withFormat: .utc) produces literal yyyy-MM-dd'T'HH:mm:ss'Z'")
     func utcFormatLiteral() {
@@ -42,9 +42,6 @@ struct DateFormatTests {
 
     @Test("Formatter does not silently switch to 12h pattern under 12-hour preference")
     func twelveHourPreferenceDoesNotLeakIntoOutput() {
-        // QA1480: when the user's region preference is 12h, DateFormatter rewrites
-        // HH:mm:ss into h:mm:ss a unless locale is en_US_POSIX. We assert the
-        // literal still matches the contract — no AM/PM, no whitespace, leading zero.
         let serialized = fixedDate.toString(withFormat: .utc)
         #expect(!serialized.contains("AM"))
         #expect(!serialized.contains("PM"))

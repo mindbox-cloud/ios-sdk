@@ -36,8 +36,6 @@ struct HapticActionHandlerTests {
         #expect(response.id == message.id)
     }
 
-    /// The engine is warmed up when the page reports it is up, so the first tap does not pay
-    /// for starting it.
     @Test("Preparing warms the engine")
     func prepareWarmsEngine() {
         let (handler, service, _) = makeSUT()
@@ -57,7 +55,6 @@ struct HapticActionHandlerTests {
         #expect(service.stopCount == 1)
     }
 
-    /// Every show ends, and most never buzz: teardown must not be what builds an engine.
     @Test("Teardown builds no engine when haptics were never used")
     func tearDownBuildsNothingWhenUnused() {
         var built = 0
@@ -71,8 +68,6 @@ struct HapticActionHandlerTests {
         #expect(built == 0)
     }
 
-    /// The service is registered transient, so a second resolution would be a second engine —
-    /// preparing one while playing on another silently does nothing.
     @Test("One engine serves preparing, playing and stopping")
     func oneEngineThroughout() {
         var built = 0

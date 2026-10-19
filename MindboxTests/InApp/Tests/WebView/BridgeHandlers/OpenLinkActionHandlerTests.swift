@@ -22,8 +22,6 @@ struct OpenLinkActionHandlerTests {
 
     // MARK: - Routing by scheme
 
-    /// A web address may belong to an installed app, so the system is asked first and only
-    /// falls back to opening it in-app.
     @Test("A web address is offered as a universal link first", arguments: ["https://example.com", "http://example.com"])
     func webAddressTriesUniversalLinkFirst(urlString: String) async {
         let opener = URLOpenerSpy()
@@ -37,8 +35,6 @@ struct OpenLinkActionHandlerTests {
         #expect(opener.opened.first?.universalLinksOnly == true)
     }
 
-    /// Anything that is not a web address means nothing to Safari — only the system knows
-    /// which app answers `tel:` or a deep link.
     @Test("A non-web scheme goes straight to the system",
           arguments: ["tel:+123456789", "mailto:a@b.c", "myapp://product/1"])
     func otherSchemesGoToSystem(urlString: String) async {
@@ -161,8 +157,6 @@ struct OpenLinkActionHandlerTests {
         #expect(response.payload == .object(["error": .string("invalid_url")]))
     }
 
-    /// A bare address parses, but with no scheme it is nothing Safari could show — only the system
-    /// might know what it means, so it goes there rather than down the universal-link route.
     @Test("A url without a scheme goes to the system, not the universal-link route")
     func schemelessURLGoesToSystem() async {
         let opener = URLOpenerSpy()
@@ -176,8 +170,6 @@ struct OpenLinkActionHandlerTests {
         #expect(opener.opened.map(\.universalLinksOnly) == [false])
     }
 
-    /// The fallback needs a controller to present from, and off the window there is none. The page is
-    /// answered with an error rather than left waiting on a presentation that cannot happen.
     @Test("A web address nobody claims and no presenter to fall back on is refused")
     func safariFallbackWithoutPresenterIsRefused() async throws {
         let opener = URLOpenerSpy()
@@ -198,10 +190,6 @@ struct OpenLinkActionHandlerTests {
 
     // MARK: - Finding something that can present
 
-    /// UIKit skips `present` without a word — and without the completion the answer is sent from —
-    /// when the presenter is already presenting. A second link tapped while Safari is up would
-    /// leave the page waiting on a promise nothing settles, so the sheet goes on top of the chain
-    /// rather than to the controller the host named.
     @Test("Safari is presented from the topmost controller, not from a busy presenter")
     func safariIsPresentedFromTheTopmostController() async throws {
         let opener = URLOpenerSpy()
@@ -222,8 +210,6 @@ struct OpenLinkActionHandlerTests {
         #expect(host.sent.first?.type == .response, "the page is answered from the presentation that happened")
     }
 
-    /// One level is not the contract: a block inside a modal that itself put up a sheet is the same
-    /// question, one deeper.
     @Test("The walk goes through the whole presentation chain")
     func safariIsPresentedThroughTheChain() async {
         let opener = URLOpenerSpy()
@@ -262,8 +248,6 @@ struct OpenLinkActionHandlerTests {
         #expect(presenter.presented.count == 1)
     }
 
-    /// The system takes its own time, and the show may end first. Waiting on it must not be what
-    /// keeps the page alive.
     @Test("A page released while the system is deciding is not held by the request")
     func pendingOpenDoesNotHoldThePage() async {
         let opener = URLOpenerSpy()
@@ -312,11 +296,6 @@ struct OpenLinkActionHandlerTests {
 
 // MARK: - Doubles
 
-/// Stands in for a controller in a presentation chain, and records what was presented from it.
-///
-/// Both sides are stubbed on purpose: `presentedViewController` is set by an actual presentation,
-/// and presenting for real drags a visible window and a transition into a unit test. What is
-/// checked here is which controller the sheet was offered to.
 @MainActor
 private final class PresentationSpy: UIViewController {
 

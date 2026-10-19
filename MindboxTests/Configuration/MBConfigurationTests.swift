@@ -189,8 +189,6 @@ struct MBConfigurationTests {
 
     @Test("operationsDomain with non-hex percent escape throws")
     func operationsDomainWithNonHexPercentEscapeThrows() {
-        // Regression: "%zz" parsed fine at validation but corrupted (or failed)
-        // URLComponents at request time — must be rejected here instead.
         #expect(throws: MindboxError.self) {
             _ = try MBConfiguration(
                 endpoint: endpoint,
@@ -287,9 +285,6 @@ struct MBConfigurationTests {
 
     @Test("Plist init succeeds for valid configurations", .tags(.decoding))
     func plistInitSucceedsForValidConfigs() throws {
-        // TestConfig1/2/3 — full valid configurations.
-        // TestConfig_Invalid_3/4 — valid despite the filename (only previousIDs / domain
-        // edges are checked at the type level, not the file).
         for plist in ["TestConfig1", "TestConfig2", "TestConfig3", "TestConfig_Invalid_3", "TestConfig_Invalid_4"] {
             #expect(throws: Never.self) { try MBConfiguration(plistName: plist) }
         }
@@ -297,7 +292,6 @@ struct MBConfigurationTests {
 
     @Test("Plist init throws on empty domain or endpoint", .tags(.decoding))
     func plistInitThrowsOnInvalid() {
-        // TestConfig_Invalid_1 — empty domain. TestConfig_Invalid_2 — empty endpoint.
         for plist in ["TestConfig_Invalid_1", "TestConfig_Invalid_2"] {
             #expect(throws: (any Error).self) { try MBConfiguration(plistName: plist) }
         }

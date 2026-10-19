@@ -9,9 +9,6 @@ import Testing
 import Foundation
 @testable import MindboxLogger
 
-/// Exercises the `UnknownDecodable` default initializer for `RawRepresentable`
-/// string enums through both a type that provides an `unknown` fallback (`Status`)
-/// and one that does not (`NoFallback`), to hit every branch.
 @Suite("UnknownDecodable RawRepresentable conformance", .tags(.errorHandling))
 struct UnknownDecodableTests {
 
