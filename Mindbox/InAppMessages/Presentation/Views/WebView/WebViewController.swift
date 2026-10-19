@@ -8,9 +8,13 @@
 import UIKit
 import MindboxLogger
 
+/// Read outside `WebViewController`, whose own `Constants` hides the shared one.
+private let initTimeoutSeconds = Constants.WebView.timeoutSeconds
+
 protocol WebVCDelegate: AnyObject {
     func closeTapWebViewVC()
     func closeTimeoutWebViewVC()
+    func closeBridgeLostWebViewVC()
     func closeLoadFailedWebViewVC(reason: String)
 }
 
@@ -218,14 +222,12 @@ extension WebViewController: WebVCDelegate {
     }
     
     func closeTimeoutWebViewVC() {
-        Logger.common(message: "[WebView] WebViewVC closeTimeoutOrErrorWebViewVC", category: .webViewInAppMessages)
-        reportErrorAndClose(
-            Self.timeoutError(
-                readyCheckGaveUp: transparentWebView?.readyCheckDidGiveUp == true,
-                inAppId: id,
-                httpErrorDetail: transparentWebView?.noCacheRetryTelemetryDetail
-            )
+        let error = Self.timeoutError(
+            readyCheckFailure: transparentWebView?.readyCheckFailure,
+            httpErrorDetail: transparentWebView?.noCacheRetryTelemetryDetail
         )
+        Logger.common(message: "[WebView] In-app \(id) closed: \(error.failureDetails ?? "")", category: .webViewInAppMessages)
+        reportErrorAndClose(error)
     }
 
     /// The init timeout is the single closing authority, but monitoring must still tell
@@ -233,11 +235,19 @@ extension WebViewController: WebVCDelegate {
     /// "the page never finished loading" (a load defect). `httpErrorDetail` adds the
     /// concrete cause when a script subresource answered with an HTTP error — with it a
     /// poisoned-cache death names the resource and status instead of a generic timeout.
-    static func timeoutError(readyCheckGaveUp: Bool, inAppId: String, httpErrorDetail: String? = nil) -> InAppPresentationError {
+    /// `readyCheckFailure` is the ready check's give-up reason, `nil` while it hasn't given up — one
+    /// value, so the category and the status that explains it can't disagree.
+    static func timeoutError(readyCheckFailure: String?, httpErrorDetail: String? = nil) -> InAppPresentationError {
         let suffix = httpErrorDetail.map { " \($0)" } ?? ""
-        return readyCheckGaveUp
-            ? .webviewPresentationFailed("[WebView] JS bridge missing after page load (init timeout) for in-app id \(inAppId).\(suffix)")
-            : .webviewLoadFailed("[WebView] WebView initialization timeout for in-app id \(inAppId).\(suffix)")
+        guard let readyCheckFailure else {
+            return .webviewLoadFailed("Page did not send init within \(initTimeoutSeconds)s.\(suffix)")
+        }
+        return .webviewPresentationFailed("JS bridge not found on the loaded page within \(initTimeoutSeconds)s: \(readyCheckFailure).\(suffix)")
+    }
+
+    func closeBridgeLostWebViewVC() {
+        let status = transparentWebView?.readyCheckFailure.map { ": \($0)" } ?? ""
+        reportErrorAndClose(.webviewPresentationFailed("JS bridge lost after the page was shown\(status)"))
     }
 
     func closeLoadFailedWebViewVC(reason: String) {
@@ -251,7 +261,6 @@ extension WebViewController: WebVCDelegate {
 extension WebViewController: WebViewAction {
 
     func onInit() {
-        Logger.common(message: "[WebView] TransparentWebView: received init action", category: .webViewInAppMessages)
         removeLifecycleObservers()
         DispatchQueue.main.async {
             guard !self.hasClosed else { return }

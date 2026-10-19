@@ -181,7 +181,7 @@ final class EmbeddedBlockWebViewProvider {
     }
 
     private func land(_ held: EmbeddedBlockDeferredAnswers.HeldCollapse) {
-        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the user left a block kept on screen with nothing to show — landing the outcome held back", category: .embeddedBlocks)
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the user left, applying the held answer", category: .embeddedBlocks)
         guard case .placeAnswer(let answer) = held else {
             dropPage()
             settle(.empty, isUserLeaving: true)
@@ -236,6 +236,8 @@ final class EmbeddedBlockWebViewProvider {
 
     func apply(_ answer: EmbeddedBlockPlaceAnswer) {
         guard isStarted || isStartPending && isReady && answer.resolution.content == nil else {
+            let fate = isPaused ? "arrived off screen, applied when back on screen" : isStartPending ? "arrived before the block started, dropped" : "arrived after the block stopped waiting, dropped"
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': answer \(fate)", category: .embeddedBlocks)
             if isPaused {
                 failures.report(failureOf: answer)
                 deferred.park(answer, overPageOf: pageShow?.confirmedEpoch, timedBy: makeStopwatch)
@@ -251,7 +253,7 @@ final class EmbeddedBlockWebViewProvider {
         isAwaitingDelayedContent = false
 
         if answer.resolution.content == nil, !isParked, isReady, !answer.isOperationTriggered {
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': its place no longer shows this content — keeping it on screen until the user leaves",
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the place answered without content — keeping what is shown until the user leaves",
                           category: .embeddedBlocks)
             failures.report(failureOf: answer)
             deferred.hold(answer)
@@ -325,7 +327,7 @@ final class EmbeddedBlockWebViewProvider {
             return
         }
 
-        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': same page, new data — telling the page",
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': same in-app — updating the page in place",
                       category: .embeddedBlocks)
         pageShow?.refreshSent()
         didReportShownContent = false
@@ -369,8 +371,8 @@ final class EmbeddedBlockWebViewProvider {
         page.onDataPushConfirmed = { [weak self] in
             self?.dataPushWait.acknowledge()
         }
-        page.onLoadFailure = { [weak self] in
-            self?.handleLoadFailure()
+        page.onLoadFailure = { [weak self] details in
+            self?.handleLoadFailure(details)
         }
         self.page = page
         self.content = fresh
@@ -428,12 +430,12 @@ final class EmbeddedBlockWebViewProvider {
         onStateChange?(newOutcome)
     }
 
-    func handleLoadFailure() {
-        fail(.webviewLoadFailed, "The block's page failed to load")
+    func handleLoadFailure(_ details: String) {
+        fail(.webviewLoadFailed, details)
     }
 
     func failSilentPage() {
-        fail(.presentationFailed, "The block's page did not report itself in time")
+        fail(.presentationFailed, "Page did not send contentRendered within \(Constants.EmbeddedBlock.readyTimeoutSeconds)s")
         abandonAttempt()
     }
 
@@ -502,7 +504,7 @@ final class EmbeddedBlockWebViewProvider {
 
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': contentRendered without a readable count, treating as broken",
                       level: .error, category: .embeddedBlocks)
-        fail(.presentationFailed, "The block's page reported contentRendered without a readable count")
+        fail(.presentationFailed, "Page sent contentRendered with an invalid count")
     }
 
     private func accountForShow() {

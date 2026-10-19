@@ -15,7 +15,7 @@ extension EmbeddedBlockResolution {
         case .content:
             return nil
         case .empty:
-            return (.empty, "nothing at this place — collapsing")
+            return (.empty, "the place came out empty — collapsing")
         case .failure(let failure):
             return (.failed(MindboxEmbeddedBlockFailReason(failure.reason)), "\(failure.details) — failing")
         case .configUnavailable:

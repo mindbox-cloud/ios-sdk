@@ -584,6 +584,7 @@ final class ShowControllerSpy: WebViewAction, WebVCDelegate {
     func onHide() { events.append("hide") }
     func closeTapWebViewVC() { events.append("closeTap") }
     func closeTimeoutWebViewVC() { events.append("closeTimeout") }
+    func closeBridgeLostWebViewVC() { events.append("closeBridgeLost") }
     func closeLoadFailedWebViewVC(reason: String) { events.append("closeLoadFailed") }
 }
 

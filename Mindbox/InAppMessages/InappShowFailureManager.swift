@@ -235,7 +235,7 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
         queue.async { [self] in
             guard enqueue([.embeddedBlock(failure)]) else { return }
 
-            Logger.common(message: "[InappShowFailureManager] Inapp.ShowFailure event sent for place '\(place)': the SDK stayed silent for \(waited.toTimeSpan()) (\(phase.rawValue))",
+            Logger.common(message: "[InappShowFailureManager] Inapp.ShowFailure event sent for place '\(place)': no in-app after \(waited.toTimeSpan()) (\(phase.rawValue))",
                           category: .inAppMessages)
         }
     }

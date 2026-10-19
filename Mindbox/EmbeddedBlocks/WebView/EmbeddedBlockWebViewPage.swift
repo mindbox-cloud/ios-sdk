@@ -26,7 +26,7 @@ final class EmbeddedBlockWebViewPage: NSObject, EmbeddedBlockPageHosting {
 
     var onDataPushConfirmed: (() -> Void)?
 
-    var onLoadFailure: (() -> Void)?
+    var onLoadFailure: ((String) -> Void)?
 
     /// Set by the provider. A block that left the window keeps its page alive, and that page can
     /// still deliver whatever its `setTimeout` scheduled — nothing the user did stands behind
@@ -77,7 +77,7 @@ final class EmbeddedBlockWebViewPage: NSObject, EmbeddedBlockPageHosting {
         facade.loadHTML(baseUrl: content.baseUrl, contentUrl: content.contentUrl) { [weak self] in
             Logger.common(message: "[EmbeddedBlock] Failed to load page markup from '\(self?.content.contentUrl ?? "")'",
                           level: .error, category: .embeddedBlocks)
-            self?.onLoadFailure?()
+            self?.onLoadFailure?("Failed to fetch page HTML")
         }
     }
 
@@ -235,7 +235,7 @@ extension EmbeddedBlockWebViewPage: WebBridgeNavigationDelegate {
 
         Logger.common(message: "[EmbeddedBlock] Page navigation failed: \(error.localizedDescription)",
                       level: .error, category: .embeddedBlocks)
-        onLoadFailure?()
+        onLoadFailure?("Page failed to load: \(error.code) \(error.localizedDescription)")
     }
 
     func webBridge(_ bridge: MindboxWebBridge,
