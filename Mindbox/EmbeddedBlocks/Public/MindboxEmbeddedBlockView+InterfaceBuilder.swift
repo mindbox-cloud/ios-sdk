@@ -12,8 +12,7 @@ import MindboxLogger
 /// Setting up a block in a storyboard or xib.
 ///
 /// 1. In the Identity Inspector set Class to `MindboxEmbeddedBlockView` and Module to `Mindbox`.
-///    Without the module UIKit logs "Unknown class MindboxEmbeddedBlockView in Interface Builder
-///    file" and silently puts a plain `UIView` in its place.
+///    Without the module, UIKit puts a plain `UIView` in its place.
 /// 2. In the Attributes Inspector set ``placeSystemName`` and ``blockHeight`` (required), and
 ///    optionally ``loadingStrategyName``, ``timeoutSeconds`` and ``animatesReveal``.
 /// 3. Constrain the position and width only: the block sets its own height.
@@ -23,12 +22,12 @@ import MindboxLogger
 /// keeps the background color and clipping set in Interface Builder. The page inside is
 /// transparent: set Background to Clear Color to let the host's background show through.
 ///
-/// Interface Builder sets these values before `awakeFromNib()`, where the block builds itself.
-/// After that they are read-only: a key-value write is ignored and logged as an error.
+/// These values are read-only once the block is built from the nib: a later key-value write is
+/// ignored and logged as an error.
 extension MindboxEmbeddedBlockView {
 
-    /// The initializer's `height`. Required: 0 or less keeps the block invisible and is logged as
-    /// an error.
+    /// The initializer's `height`, in points. Required: 0 or less keeps the block invisible and is
+    /// logged as an error.
     @IBInspectable public private(set) var blockHeight: CGFloat {
         get { preferredHeight }
         set { applyInspectable("blockHeight") { preferredHeight = newValue } }

@@ -29,9 +29,6 @@ import UIKit
 /// them before any SwiftUI modifier such as `.frame(…)` or `.padding(…)`.
 ///
 /// `onLoad`, `onEmpty` and `onFail` arrive like the matching ``MindboxEmbeddedBlockViewDelegate`` calls.
-/// An empty or failed outcome the block holds back while it shows content (see
-/// ``MindboxEmbeddedBlockView``) arrives when the user leaves; when leaving removes the block from the view
-/// tree, that callback comes on a later turn of the main queue, outside SwiftUI's view update.
 ///
 /// ```swift
 /// MindboxEmbeddedBlock(placeSystemName: "stories", height: 104,
@@ -41,8 +38,8 @@ import UIKit
 /// ```
 ///
 /// A collapsed block is zero points tall, but a stack still adds its spacing around it. To give the space
-/// back completely, remove the section from the layout in `onEmpty`, and in `onFail` when no error view
-/// is set.
+/// back completely, remove the section from the layout in `onEmpty`, and in `onFail` unless the block
+/// shows its error view; ``MindboxEmbeddedBlock/errorView(_:)`` says when it does.
 @available(iOS 13.0, *)
 public struct MindboxEmbeddedBlock: View {
 
@@ -64,27 +61,29 @@ public struct MindboxEmbeddedBlock: View {
     private(set) var placeholderBuilder: (() -> AnyView)?
     private(set) var errorBuilder: (() -> AnyView)?
 
+    /// Creates a block for a place.
+    ///
     /// - Parameters:
     ///   - placeSystemName: The place's system name from the admin panel. Surrounding whitespace and
     ///     letter case are ignored: `Main-Screen-Top` and `main-screen-top` are the same place.
-    ///   - height: The height the block occupies while shown, and while loading unless it waits hidden.
-    ///     A new value resizes the block without reloading its content. A value of 0 or less keeps the
-    ///     block invisible and is logged as an error.
-    ///   - loadingStrategy: What the block shows while its content loads.
-    ///   - timeout: How many seconds the block waits for the SDK to decide its content before it fails
-    ///     with ``MindboxEmbeddedBlockFailReason/networkError``. Only time in a window with the app in
-    ///     the foreground counts. `nil`, 0 or less means 30. An answer that comes later is dropped; the
-    ///     block tries again when it re-enters the window, or when the app returns from the background
-    ///     with the block on screen.
+    ///   - height: The height, in points, the block occupies while it shows content, a placeholder or
+    ///     an error view. A new value resizes the block without reloading its content. 0 or less keeps
+    ///     the block invisible and, at creation, is logged as an error.
+    ///   - loadingStrategy: What the block shows while its content loads; see
+    ///     ``MindboxEmbeddedBlockLoadingStrategy``.
+    ///   - timeout: How long, in seconds, the block waits for the SDK to choose its content before it
+    ///     fails with ``MindboxEmbeddedBlockFailReason/networkError``. Only time in a window with the
+    ///     app in the foreground counts. `nil` means 30; 0 or less is logged as an error and means 30
+    ///     too.
     ///   - animatesReveal: Whether the SDK animates the appearance of the content: a fade, and the growth
     ///     of a block that waited hidden. The system's Reduce Motion setting also turns it off. Turn it
     ///     off to animate the block's container yourself in `onLoad`.
-    ///   - onLoad: The content is shown. A block that waited hidden takes its `height` at this point,
-    ///     growing from 0.
-    ///   - onEmpty: There is nothing to show at the place. The block collapses; the error view does not
-    ///     apply.
-    ///   - onFail: The block could not be shown; it collapses or shows its error view. The reason is for
-    ///     logs and analytics.
+    ///   - onLoad: Called when the content is shown. A block that waited hidden takes its `height` at
+    ///     this point.
+    ///   - onEmpty: Called when the place has nothing to show. The block collapses; the error view does
+    ///     not apply.
+    ///   - onFail: Called when the block could not be shown; it collapses or shows its error view. The
+    ///     reason is for logs and analytics.
     public init(placeSystemName: String,
                 height: CGFloat,
                 loadingStrategy: MindboxEmbeddedBlockLoadingStrategy = .automatic,
@@ -105,9 +104,8 @@ public struct MindboxEmbeddedBlock: View {
 
     /// Shows this view instead of the SDK's shimmer while the block is loading.
     ///
-    /// Calling it again replaces the previous placeholder. A block that waits hidden shows no
-    /// placeholder until it has shown content; after that it shows the placeholder while new content
-    /// replaces what is shown. A block that has collapsed loads hidden until content is shown again.
+    /// Calling it again replaces the previous placeholder. A block that waits hidden while it loads
+    /// shows no placeholder; see ``MindboxEmbeddedBlock/loadingStrategy``.
     public func placeholder<Content: View>(@ViewBuilder _ build: @escaping () -> Content) -> Self {
         var block = self
         block.placeholderBuilder = { AnyView(build()) }
@@ -116,8 +114,8 @@ public struct MindboxEmbeddedBlock: View {
 
     /// Shows this view instead of collapsing when the block fails.
     ///
-    /// Applies only to a failure while the block takes its space. A block that waits hidden, or has
-    /// already collapsed, stays collapsed; a place with nothing to show always collapses.
+    /// Applies only to a failure while the block takes its height. A block that is collapsed when it
+    /// fails stays collapsed; a place with nothing to show always collapses.
     public func errorView<Content: View>(@ViewBuilder _ build: @escaping () -> Content) -> Self {
         var block = self
         block.errorBuilder = { AnyView(build()) }
