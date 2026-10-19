@@ -73,6 +73,7 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
 
     private let displayUseCase: PresentationDisplayUseCaseProtocol
 
+    // Main-confined: isPresenting and discardActiveInApp read it without hopping to main.
     private var activePresentation: ActivePresentation?
 
     var isPresenting: Bool { activePresentation != nil }

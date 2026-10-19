@@ -72,7 +72,6 @@ final class EmbeddedBlockWebViewPage: NSObject, EmbeddedBlockPageHosting {
         }
     }
 
-    // Synchronous: the provider drops the page right after, so a hop to main would find the facade gone.
     func cancel() {
         facade.endShow()
     }

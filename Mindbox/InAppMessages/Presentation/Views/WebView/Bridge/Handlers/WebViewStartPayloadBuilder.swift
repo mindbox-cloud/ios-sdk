@@ -56,6 +56,7 @@ struct WebViewStartPayloadBuilder {
         return config.merging(fromCaller) { _, caller in caller }
     }
 
+    // Completes on main because getGrantedPermissions answers there; the UIView insets and callers' bridge sends rely on it.
     func build(_ completion: @escaping (JSONValue) -> Void) {
         let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         let systemInfoProvider = DI.injectOrFail(SystemInfoProvider.self)

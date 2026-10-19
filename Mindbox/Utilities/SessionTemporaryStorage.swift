@@ -10,7 +10,6 @@ import Foundation
 import UserNotifications
 import MindboxLogger
 
-// One writer per property keeps compound mutations (append, insert) safe under @Locked.
 final class SessionTemporaryStorage {
 
     public static let shared = SessionTemporaryStorage()

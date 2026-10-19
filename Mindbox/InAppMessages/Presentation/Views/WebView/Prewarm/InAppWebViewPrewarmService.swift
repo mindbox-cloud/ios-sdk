@@ -33,6 +33,7 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
     private let fetchHTML: (URL, @escaping (String?) -> Void) -> Void
     private let loadCachedConfig: () -> ConfigResponse?
 
+    // Main thread only, like the WKWebView it holds: entry points hop to main or refuse off-main callers.
     private var warmWebView: WKWebView?
     private var hasBeenBorrowed = false
     private var resourcePrewarmLatched = false

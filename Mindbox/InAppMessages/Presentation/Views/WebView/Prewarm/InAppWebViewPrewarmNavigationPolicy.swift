@@ -11,6 +11,7 @@ import MindboxLogger
 
 final class InAppWebViewPrewarmNavigationPolicy: NSObject, WKNavigationDelegate {
 
+    // Main thread only, like the WebKit delegate callback that reads it.
     private var allowedURLs: Set<String> = ["about:blank"]
 
     func allow(_ url: URL) {

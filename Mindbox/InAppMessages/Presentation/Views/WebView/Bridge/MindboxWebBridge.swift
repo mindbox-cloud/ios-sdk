@@ -66,8 +66,6 @@ public final class MindboxWebBridge: NSObject {
         webView.navigationDelegate = self
     }
 
-    // WKUserContentController keeps its handlers past the web view, so the owner takes the bridge off with detach(), not deinit.
-
     func detach() {
         assert(Thread.isMainThread)
         guard let webView else { return }

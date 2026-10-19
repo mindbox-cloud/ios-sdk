@@ -20,6 +20,7 @@ protocol SystemInfoProvider {
 
     func getSafeAreaInsets(from view: UIView?) -> UIEdgeInsets
 
+    // Completes on the main queue.
     func getGrantedPermissions(_ completion: @escaping ([String: PermissionStatus]) -> Void)
 
     func getBasicSystemInfo() -> [String: Any]

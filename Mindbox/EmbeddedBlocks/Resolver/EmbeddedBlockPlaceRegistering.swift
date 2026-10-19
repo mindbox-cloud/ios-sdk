@@ -56,7 +56,7 @@ protocol EmbeddedBlockPlaceHandling: AnyObject {
     var holdsAnAttempt: Bool { get }
 }
 
-// Main thread only; keepsContent(for:) and bringOnScreen(_:at:) answer synchronously.
+// Main-confined: the void calls hop to main themselves; call keepsContent(for:) and bringOnScreen(_:at:) on main.
 protocol EmbeddedBlockPlaceRegistering: AnyObject {
 
     func register(_ block: EmbeddedBlockPlaceHandling, place: String)

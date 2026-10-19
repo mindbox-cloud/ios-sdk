@@ -151,6 +151,7 @@ internal extension InappScheduleManager {
                      holdsSlot: winner.holdsSlot || reservation == .granted)
     }
 
+    // On main: isPresenting is read here, before the hop to queue.
     func holdEligibleInapp(_ presentationTime: TimeInterval) {
         let isScreenTaken = presentationManager.isPresenting
         queue.async {

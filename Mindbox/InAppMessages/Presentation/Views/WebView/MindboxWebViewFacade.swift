@@ -44,6 +44,7 @@ public final class MindboxWebViewFacade: InappWebViewFacadeProtocol {
     let bridge: MindboxWebBridge
     private let warmWebViewLender: InAppWebViewPrewarmServiceProtocol?
 
+    // Main-confined, like fetchTask, isClosed and the retained content: methods without a main hop are called on main.
     private var params: [String: JSONValue]?
     private let operation: (name: String, body: String)?
     private let inAppId: String

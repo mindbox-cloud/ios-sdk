@@ -10,6 +10,7 @@ import Foundation
 import QuartzCore
 import UIKit
 
+// Main thread only: the observers run on main and init reads UIApplication's applicationState.
 final class ForegroundStopwatch {
     private let now: () -> CFTimeInterval
 
@@ -54,7 +55,6 @@ final class ForegroundStopwatch {
             queue: .main,
             using: foreground
         )
-        // applicationState still reads .background during willEnterForeground, and an observer added mid-delivery misses that post.
         activeObserver = notificationCenter.addObserver(
             forName: UIApplication.didBecomeActiveNotification,
             object: nil,

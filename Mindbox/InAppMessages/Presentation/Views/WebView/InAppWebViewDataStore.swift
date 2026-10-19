@@ -62,6 +62,7 @@ enum InAppWebViewDataStore {
             if !matching.isEmpty {
                 store.removeData(ofTypes: cacheTypes, for: matching) { finish(true) }
             } else if isIsolatedStore {
+                // Reports false on purpose: the host's record was absent, the race signal that lets the retry policy try once more.
                 store.removeData(ofTypes: cacheTypes, modifiedSince: .distantPast) { finish(false) }
             } else {
                 finish(false)

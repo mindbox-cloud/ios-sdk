@@ -17,5 +17,6 @@ protocol PermissionProvider {
 
     func getLocationPermissionStatus() -> PermissionStatus
 
+    // Completes on main: the system reports the notifications status off main, and callers read UIKit in the completion.
     func getGrantedPermissions(_ completion: @escaping ([String: PermissionStatus]) -> Void)
 }

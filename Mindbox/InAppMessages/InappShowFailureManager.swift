@@ -135,6 +135,7 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
         }
     }
 
+    // On queue only: record, enqueue and rollback form one step only because queue is serial.
     private func enqueueOncePerSession(_ candidates: [InAppShowFailure],
                                        where isReportedOnce: (InAppShowFailureReason) -> Bool) -> [InAppShowFailure]? {
         let toSend = SessionTemporaryStorage.shared.$ledger.mutate { ledger in

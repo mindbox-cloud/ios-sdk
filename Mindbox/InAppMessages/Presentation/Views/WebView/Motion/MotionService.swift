@@ -33,6 +33,7 @@ struct MotionStartResult {
 }
 
 protocol MotionServiceProtocol: AnyObject {
+    // Called on the main thread.
     var onGestureDetected: ((MotionGesture, [String: Any]) -> Void)? { get set }
 
     @discardableResult
