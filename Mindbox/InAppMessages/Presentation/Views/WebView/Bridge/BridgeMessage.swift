@@ -197,8 +197,8 @@ public struct BridgeMessage: Codable {
 
         /// Shows the overlay once its content is ready. A block page gets `success` and nothing happens.
         ///
-        /// An overlay that does not send it within 7 seconds of starting to load is closed. Sent after
-        /// ``hide``, it shows the overlay again.
+        /// An overlay that does not send it within 7 seconds of starting to load, or of the app's return to
+        /// the foreground, is closed. Sent after ``hide``, it shows the overlay again.
         ///
         /// - Payload:
         ///   ```json

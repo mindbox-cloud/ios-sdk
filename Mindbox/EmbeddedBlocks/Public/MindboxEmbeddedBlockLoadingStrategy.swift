@@ -20,12 +20,13 @@ public enum MindboxEmbeddedBlockLoadingStrategy: Sendable {
     /// failure keeps the record.
     case automatic
 
-    /// A placeholder until content is shown: the host's own (``MindboxEmbeddedBlockView/placeholderView``
-    /// or ``MindboxEmbeddedBlock/placeholder(_:)``) or the SDK's shimmer.
+    /// A placeholder until the block's first outcome, and while new content replaces shown content: the
+    /// host's own (``MindboxEmbeddedBlockView/placeholderView`` or ``MindboxEmbeddedBlock/placeholder(_:)``)
+    /// or the SDK's shimmer. A retry after a collapse waits hidden; one after a failure keeps the error view.
     case placeholder
 
     /// Zero height until the block has shown content: no placeholder, and no error view on a failure,
-    /// which is still reported to the delegate or `onFail`. Once it has shown content, the block shows
-    /// a placeholder while new content loads.
+    /// which is still reported to the delegate or `onFail`. While it shows content, new content that
+    /// replaces it loads behind a placeholder; after a collapse the block waits hidden again.
     case hidden
 }

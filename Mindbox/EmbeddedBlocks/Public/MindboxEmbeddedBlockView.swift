@@ -27,8 +27,8 @@ import MindboxLogger
 /// collapsed or keeps its ``errorView``; content replaces the error view, and a place that turns
 /// out to have nothing to show collapses the block. Outcomes reach the host only through ``delegate``.
 ///
-/// Once content is shown, a later answer without content, or a page that renders nothing, waits
-/// until the block leaves the window, even while the app is in the background: only then does the
+/// While content is shown, a later answer without content, or new data its page renders as nothing,
+/// waits until the block leaves the window, even while the app is in the background: only then does the
 /// block apply it (collapse, or show ``errorView`` for a failure) and report it. Such an answer to
 /// an operation the app sends is applied at once.
 public final class MindboxEmbeddedBlockView: UIView {

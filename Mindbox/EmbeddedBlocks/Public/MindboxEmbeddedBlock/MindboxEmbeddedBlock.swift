@@ -107,7 +107,7 @@ public struct MindboxEmbeddedBlock: View {
     ///
     /// Calling it again replaces the previous placeholder. A block that waits hidden shows no
     /// placeholder until it has shown content; after that it shows the placeholder while new content
-    /// loads.
+    /// replaces what is shown. A block that has collapsed loads hidden until content is shown again.
     public func placeholder<Content: View>(@ViewBuilder _ build: @escaping () -> Content) -> Self {
         var block = self
         block.placeholderBuilder = { AnyView(build()) }
