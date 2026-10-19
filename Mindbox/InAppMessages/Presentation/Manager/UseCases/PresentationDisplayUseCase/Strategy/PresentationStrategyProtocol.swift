@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import UserNotifications
 import MindboxLogger
 
 protocol PresentationStrategyProtocol {
@@ -97,5 +98,45 @@ final class InAppKeyWindowReturner: InAppKeyWindowReturning {
             return window.windowScene === other.windowScene
         }
         return true
+    }
+}
+
+/// Gives key back to the host before the host handles a tap on a push.
+///
+/// While a page edits text, the in-app window must be key, and a push banner tapped then does not make
+/// the app inactive: the host's handler would find our controller in the key window. So the handler of
+/// the current notification delegate is wrapped, once per class, on the first text editing.
+enum NotificationResponseKeyGuard {
+
+    private static var guardedClasses = Set<ObjectIdentifier>()
+
+    /// Main thread only. Leaves an app without a notification delegate, or an extension, alone.
+    static func installIfNeeded() {
+        guard Bundle.main.bundleIdentifier != nil,
+              !Bundle.main.bundlePath.hasSuffix(".appex"),
+              let delegate = UNUserNotificationCenter.current().delegate,
+              let delegateClass = object_getClass(delegate) else { return }
+
+        guardResponses(of: delegateClass)
+    }
+
+    /// Wraps `userNotificationCenter(_:didReceive:withCompletionHandler:)` of `delegateClass`, if it has one.
+    static func guardResponses(of delegateClass: AnyClass, returner: InAppKeyWindowReturning = InAppKeyWindowReturner()) {
+        guard guardedClasses.insert(ObjectIdentifier(delegateClass)).inserted else { return }
+        let selector = #selector(UNUserNotificationCenterDelegate.userNotificationCenter(_:didReceive:withCompletionHandler:))
+        guard let method = class_getInstanceMethod(delegateClass, selector) else { return }
+
+        typealias DidReceive = @convention(c) (AnyObject, Selector, UNUserNotificationCenter, UNNotificationResponse, @escaping () -> Void) -> Void
+        let original = unsafeBitCast(method_getImplementation(method), to: DidReceive.self)
+        typealias Guarded = @convention(block) (AnyObject, UNUserNotificationCenter, UNNotificationResponse, @escaping () -> Void) -> Void
+        let guarded: Guarded = { delegate, center, response, completion in
+            returner.returnKeyToHost(preferring: nil)
+            original(delegate, selector, center, response, completion)
+        }
+        let implementation = imp_implementationWithBlock(guarded)
+        if !class_addMethod(delegateClass, selector, implementation, method_getTypeEncoding(method)) {
+            method_setImplementation(method, implementation)
+        }
+        Logger.common(message: "[InAppKeyWindow] Push taps give key back to the host first", category: .inAppMessages)
     }
 }

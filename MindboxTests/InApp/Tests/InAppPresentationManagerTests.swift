@@ -9,6 +9,7 @@
 import Foundation
 import Testing
 import UIKit
+import UserNotifications
 @testable import Mindbox
 
 @Suite("In-app presentation manager", .tags(.inAppSchedule))
@@ -425,6 +426,23 @@ struct InAppKeyWindowTests {
         #expect(!ours.isKeyWindow)
     }
 
+    @Test("A push-tap handler is wrapped once, and a delegate without one is left alone")
+    func pushTapHandlerIsWrappedOnce() {
+        let selector = #selector(UNUserNotificationCenterDelegate.userNotificationCenter(_:didReceive:withCompletionHandler:))
+        let before = class_getMethodImplementation(PushTapDelegateStandIn.self, selector)
+
+        NotificationResponseKeyGuard.guardResponses(of: PushTapDelegateStandIn.self, returner: KeyWindowReturnerSpy())
+        let wrapped = class_getMethodImplementation(PushTapDelegateStandIn.self, selector)
+        NotificationResponseKeyGuard.guardResponses(of: PushTapDelegateStandIn.self, returner: KeyWindowReturnerSpy())
+        let again = class_getMethodImplementation(PushTapDelegateStandIn.self, selector)
+
+        #expect(wrapped != before)
+        #expect(again == wrapped)
+
+        NotificationResponseKeyGuard.guardResponses(of: SilentDelegateStandIn.self, returner: KeyWindowReturnerSpy())
+        #expect(class_getInstanceMethod(SilentDelegateStandIn.self, selector) == nil)
+    }
+
     // MARK: Helpers
 
     private func makeWindows() -> (host: UIWindow, ours: MindboxInAppWindow) {
@@ -466,3 +484,13 @@ private final class KeyWindowReturnerSpy: InAppKeyWindowReturning {
         events.append("returnKey")
     }
 }
+
+private final class PushTapDelegateStandIn: NSObject, UNUserNotificationCenterDelegate {
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                didReceive response: UNNotificationResponse,
+                                withCompletionHandler completionHandler: @escaping () -> Void) {
+        completionHandler()
+    }
+}
+
+private final class SilentDelegateStandIn: NSObject, UNUserNotificationCenterDelegate {}
