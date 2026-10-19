@@ -247,7 +247,8 @@ public final class MindboxEmbeddedBlockView: UIView {
         didSet {
             updateTimeout(from: oldValue)
             apply(state)
-            if case .failed = state { Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': content failed — \(shownAppearance == .error ? "showing the host's error view" : "collapsing")", category: .embeddedBlocks) }
+            if case .failed = state { Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': content failed — \(shownAppearance == .error ? "showing the host's error view" : "collapsing")",
+                                                    category: .embeddedBlocks) }
         }
     }
 
