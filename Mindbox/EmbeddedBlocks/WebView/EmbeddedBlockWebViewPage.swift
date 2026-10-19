@@ -34,7 +34,8 @@ final class EmbeddedBlockWebViewPage: NSObject, EmbeddedBlockPageHosting {
     var isUserPresent = true
 
     private let content: EmbeddedBlockWebContent
-    private let facade: InappWebViewFacadeProtocol
+    /// Internal for the tests that pin the release of the whole web chain.
+    let facade: InappWebViewFacadeProtocol
     private let registry: MindboxWebPageRegistry
     private let actionRegistry: WebBridgeActionRegistry
     private let pageView: UIView
@@ -81,8 +82,10 @@ final class EmbeddedBlockWebViewPage: NSObject, EmbeddedBlockPageHosting {
         }
     }
 
+    /// Synchronous on purpose: the provider drops the page right after, and a close that hops to
+    /// the main queue would find the facade already gone and do nothing.
     func cancel() {
-        facade.cleanWebView()
+        facade.endShow()
     }
 
     func sendInitData(params: [String: JSONValue]) {
@@ -202,6 +205,10 @@ extension EmbeddedBlockWebViewPage: WebBridgeMessageDelegate {
 
         isRegistered = true
         registry.register(self)
+        // The page has proven it can boot: the markup kept for the no-cache retry is dead weight
+        // from here — the retry policy refuses a heal on a booted page — so it goes, as the overlay
+        // lets it go on `init`.
+        facade.releaseRetainedContent()
     }
 }
 

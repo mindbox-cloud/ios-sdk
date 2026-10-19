@@ -339,7 +339,11 @@ final class SharedWebLayerMock: InappWebViewFacadeProtocol {
 
     func cleanWebView() {}
 
-    func endShow() {}
+    private(set) var endedShows = 0
+
+    func endShow() {
+        endedShows += 1
+    }
 
     private(set) var startPayloadRequests = 0
 
@@ -359,7 +363,11 @@ final class SharedWebLayerMock: InappWebViewFacadeProtocol {
         onPurgeOutcome(true)
     }
 
-    func releaseRetainedContent() {}
+    private(set) var retainedContentReleases = 0
+
+    func releaseRetainedContent() {
+        retainedContentReleases += 1
+    }
 
     func sendToJS(_ message: BridgeMessage) {
         sentMessages.append(message)

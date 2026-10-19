@@ -2456,6 +2456,27 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.reveal.runs == [Constants.EmbeddedBlock.revealAnimationDuration])
     }
 
+    @Test("A block let go mid-reveal is released, and the end of its fade finds no container to touch")
+    func blockLetGoMidRevealIsReleased() throws {
+        weak var released: MindboxEmbeddedBlockView?
+        var reveal: EmbeddedBlockRevealAnimationSpy?
+
+        autoreleasepool {
+            let block = BlockFixture()
+            block.reveal.isDeferred = true
+            block.attachToWindow()
+            block.page?.reportRendered(1)
+            reveal = block.reveal
+            released = block.view
+        }
+
+        // The layer host holds its container unowned: the container must go while the fade is
+        // still running, and the fade's end — the only thing left of the host — must not reach it.
+        #expect(released == nil)
+        try #require(reveal).finish()
+        #expect(released == nil)
+    }
+
     @Test("A hidden block grows to its height with animation when its content arrives")
     func hiddenBlockGrowsWithAnimation() {
         let block = BlockFixture(loadingStrategy: .hidden)
