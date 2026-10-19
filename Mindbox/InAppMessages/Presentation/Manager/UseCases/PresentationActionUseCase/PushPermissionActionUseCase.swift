@@ -9,8 +9,6 @@
 import Foundation
 
 extension ContentBackgroundLayerAction {
-    /// Delegates to `ActionUseCaseFactory` to extract URL/payload and handle side effects.
-    /// Returns `nil` for `.unknown` or empty redirect actions (no callback should be invoked).
     func handleTap() -> (url: URL?, payload: String)? {
         guard let useCase = ActionUseCaseFactory.createUseCase(action: self) else {
             return nil

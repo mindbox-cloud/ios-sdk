@@ -9,29 +9,21 @@
 import UIKit
 import MindboxLogger
 
-/// What a block is given at creation, whichever way it is created: by the initializer, or by
-/// Interface Builder between `init(coder:)` and `awakeFromNib`.
 struct EmbeddedBlockSetup {
 
     var placeSystemName = ""
 
     var loadingStrategy: MindboxEmbeddedBlockLoadingStrategy = .automatic
 
-    /// A strategy name Interface Builder gave that matched nothing. Reported at the build, when the
-    /// place name is known: the attributes arrive in the order the xib lists them.
     var unknownLoadingStrategyName: String?
 
-    /// The timeout in effect, in seconds: a missing or broken one is already the SDK default.
     var timeout = TimeInterval(Constants.EmbeddedBlock.answerTimeoutSeconds)
 
     var animatesReveal = true
 }
 
-/// Sanitizing and parsing the setup, shared by both ways of creating a block.
 extension MindboxEmbeddedBlockView {
 
-    /// A non-positive timeout would collapse every block before the config had a chance, so it is
-    /// reported and replaced with the default rather than obeyed.
     static func sanitizedTimeout(_ timeout: TimeInterval?, placeSystemName: String) -> TimeInterval {
         guard let timeout else {
             return TimeInterval(Constants.EmbeddedBlock.answerTimeoutSeconds)
@@ -46,13 +38,10 @@ extension MindboxEmbeddedBlockView {
         return timeout
     }
 
-    /// The inspector cannot express "no value": 0 — and anything below it — stands for the default.
     static func timeout(fromInspectableSeconds value: Double) -> TimeInterval {
         value > 0 ? value : TimeInterval(Constants.EmbeddedBlock.answerTimeoutSeconds)
     }
 
-    /// `automatic`, `placeholder` or `hidden` in any letter case; empty is `automatic`; anything
-    /// else is `nil`, for the caller to report once it knows which block it is about.
     static func loadingStrategy(named name: String) -> MindboxEmbeddedBlockLoadingStrategy? {
         switch name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
         case "", "automatic":
@@ -66,14 +55,10 @@ extension MindboxEmbeddedBlockView {
         }
     }
 
-    /// Padding is not part of a name: a name pasted from the admin panel with a stray space still
-    /// finds its place, and the host reads it back without the padding — in sync with Android.
     static func normalizedPlaceSystemName(_ given: String) -> String {
         given.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    /// The case is not part of a name either, but the host reads its own spelling back: the
-    /// folding happens here, on the way into the SDK, and `placeSystemName` stays as given.
     static func placeKey(_ placeSystemName: String) -> String {
         EmbeddedFormVariant.placeKey(placeSystemName)
     }
@@ -82,8 +67,6 @@ extension MindboxEmbeddedBlockView {
         DispatchQueue.main.async(execute: work)
     }
 
-    /// The strategy plus the place's memory, and nothing else: `placeholder` and `hidden` do not
-    /// look at the memory, `automatic` is decided by it.
     static func initialAppearance(for strategy: MindboxEmbeddedBlockLoadingStrategy,
                                   hasShownContentBefore: Bool) -> MindboxEmbeddedBlockAppearance {
         switch strategy {
@@ -96,17 +79,13 @@ extension MindboxEmbeddedBlockView {
         }
     }
 
-    /// Integration errors in the setup, reported once at the build. None of them stops the block:
-    /// it runs its whole cycle and the host sees the outcome through the delegate.
     func warnAboutSetup() {
-        // An empty name addresses no place.
         if placeSystemName.isEmpty {
             Logger.common(message: "[EmbeddedBlock] A block was created without a place system name: it has nothing to resolve and stays invisible.",
                           level: .error,
                           category: .embeddedBlocks)
         }
 
-        // Zero height is not a collapse: the block runs its whole cycle, it is simply never visible.
         if preferredHeight <= 0 {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' was created with height \(preferredHeight): it reserves no space and stays invisible whatever loads. Pass the height it should occupy.",
                           level: .error,

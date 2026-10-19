@@ -9,11 +9,6 @@
 import Foundation
 import MindboxLogger
 
-/// The page reports how much content it put on screen.
-///
-/// Registered everywhere, like every handler. Only a surface that reserves space for content
-/// listens today — a block gives its space back when the count is zero — but nothing here is
-/// specific to one, so an in-app that wants the same signal conforms and starts receiving it.
 final class ContentRenderedActionHandler: WebBridgeActionHandler {
 
     let actions: Set<BridgeMessage.Action> = [.contentRendered]
@@ -32,10 +27,6 @@ final class ContentRenderedActionHandler: WebBridgeActionHandler {
         case .whole(let count):
             renderedCount = count
         case .notWhole(let count):
-            // A fraction is a page bug, and rounding one decides the block's fate on the page's
-            // behalf: `0.4` would collapse it as empty, `0.6` would show it. Named instead, so
-            // the bug is found where it is rather than lived with as a block that sometimes
-            // disappears.
             refuse("'count' must be a whole number, got \(count)", message: message, host: host, content: content)
             return
         case .absent:
@@ -57,26 +48,20 @@ final class ContentRenderedActionHandler: WebBridgeActionHandler {
         content.bridgeDidReportUnreadableContent()
     }
 
-    /// What the payload's `count` turned out to be.
     private enum ReportedCount {
 
         case whole(Int)
 
-        /// A number, but not a number of items. Carried as sent so the refusal can name it.
         case notWhole(Double)
 
-        /// Missing, or not a number at all.
         case absent
     }
 
-    /// JS gives a number as a `Double`, but a whole value may also arrive as an `Int`.
     private static func count(in message: BridgeMessage) -> ReportedCount {
         switch message.payloadObject?["count"] {
         case .int(let count):
             return .whole(count)
         case .double(let count):
-            // `Int(exactly:)` refuses a fraction, and refuses NaN, infinity and anything past
-            // `Int` with it — none of which is a number of items either.
             guard let whole = Int(exactly: count) else { return .notWhole(count) }
 
             return .whole(whole)

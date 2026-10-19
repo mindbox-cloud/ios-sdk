@@ -202,7 +202,6 @@ extension BGTaskManager {
         scheduleAppGDRefreshTask()
         
         guard beginBGSession() else {
-            // Refresh rejected: another BG session is running
             task.setTaskCompleted(success: false)
             return
         }
@@ -233,7 +232,6 @@ extension BGTaskManager {
             return
         }
         guard beginBGSession() else {
-            // Processing rejected: another BG session is running
             task.setTaskCompleted(success: false)
             return
         }

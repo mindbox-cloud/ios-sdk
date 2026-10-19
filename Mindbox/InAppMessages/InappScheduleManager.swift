@@ -22,12 +22,6 @@ protocol InappScheduleManagerProtocol {
     var delegate: InAppMessagesDelegate? { get set }
     func scheduleInApp(_ inAppFormData: InAppFormData, processingDuration: TimeInterval)
 
-    /// Past the queue and every limit — a direct call is invited, and a tap that does nothing is a
-    /// defect. Only `Inapp.Show` goes out: targeting was sent when the selection offered the in-app.
-    /// `processingDuration` is the caller's time since the tap; it counts into `timeToDisplay` like the overlay pass's.
-    /// `requesterIsActive` is asked on the main queue right before the in-app on screen is closed for this one.
-    /// In the background it shows nothing and answers `appInBackground`: not a failure, no `Inapp.ShowFailure`.
-    /// `completion` answers once: the window is on screen, or the error that kept it off.
     func showInAppNow(_ inAppFormData: InAppFormData,
                       processingDuration: TimeInterval,
                       proceedIf requesterIsActive: @escaping () -> Bool,
@@ -130,7 +124,7 @@ internal extension InappScheduleManager {
         }
     }
 
-    /// On `queue`. Whether the winner goes on screen is decided on the main queue, with every other show.
+    // On queue.
     private func showWinner(at presentationTime: TimeInterval) {
         guard let winner = takeWinner(at: presentationTime) else { return }
 
@@ -139,7 +133,7 @@ internal extension InappScheduleManager {
         }
     }
 
-    /// On the main queue.
+    // On main.
     private func presentIfScreenIsFree(_ winner: ScheduledInapp) {
         guard !presentationManager.isPresenting else {
             Logger.common(message: "[InappScheduleManager] Another in-app is already being shown, skipping \(winner.inapp.inAppId)",
@@ -157,8 +151,6 @@ internal extension InappScheduleManager {
                      holdsSlot: winner.holdsSlot || reservation == .granted)
     }
 
-    /// On the main queue. The moment came in the background: the slot is taken now and the show waits for the
-    /// foreground, in sync with Android.
     func holdEligibleInapp(_ presentationTime: TimeInterval) {
         let isScreenTaken = presentationManager.isPresenting
         queue.async {
@@ -181,7 +173,6 @@ internal extension InappScheduleManager {
         }
     }
 
-    /// A moment missed behind another in-app is missed, by decision — no queue, no re-arm.
     private func takeWinner(at presentationTime: TimeInterval) -> ScheduledInapp? {
         guard let scheduled = inappsByPresentationTime.removeValue(forKey: presentationTime) else { return nil }
 
@@ -208,8 +199,6 @@ internal extension InappScheduleManager {
                                         timeToDisplay: timeToDisplay))
     }
 
-    /// The cooldown is written a second time on dismissal, so that an app killed while the in-app was
-    /// on screen still leaves the interval counted from a real moment.
     private func trackDismissal(_ inapp: InAppFormData) {
         accountant.recordCooldown(frequency: inapp.frequency)
     }
@@ -247,7 +236,7 @@ internal extension InappScheduleManager {
         )
     }
 
-    /// On the main queue.
+    // On main.
     private func present(_ inapp: InAppFormData,
                          holdsSlot: Bool,
                          onPresented: @escaping () -> Void,

@@ -16,12 +16,6 @@ class MBLoggerUtilitiesFetcher {
         return bundle
     }()
 
-    /// Identifier of the shared App Group container the logger persists its database in,
-    /// or `nil` when none is available (missing/misconfigured/unprovisioned capability).
-    ///
-    /// `nil` makes `LoggerDatabaseLoader` fall back to the app's local caches store, so the
-    /// logger keeps working instead of being disabled. Must never trap — the SDK must not
-    /// bring down its host over an unavailable container, on simulator or device.
     var applicationGroupIdentifier: String? {
         guard let hostApplicationName = hostApplicationName else {
             return nil
@@ -38,7 +32,7 @@ class MBLoggerUtilitiesFetcher {
 
     private static func prepareBundle(_ bundle: inout Bundle) {
         if Bundle.main.bundleURL.pathExtension == "appex" {
-            // Peel off two directory levels - MY_APP.app/PlugIns/MY_APP_EXTENSION.appex
+            // <App>.app/PlugIns/<Extension>.appex
             let url = bundle.bundleURL.deletingLastPathComponent().deletingLastPathComponent()
             if let otherBundle = Bundle(url: url) {
                 bundle = otherBundle

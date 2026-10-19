@@ -11,8 +11,6 @@ import MindboxLogger
 
 extension EmbeddedBlockWebViewProvider {
 
-    /// A page whose block has collapsed or failed is still alive and can still ask — but no user
-    /// touch stands behind it, and the in-app would appear over the app out of nowhere.
     func showInapp(id inappId: String, params: [String: JSONValue], askedFrom page: EmbeddedBlockPageHosting?, completion: @escaping (Result<Void, BridgeErrorCode>) -> Void) {
         guard isShowing(page) else {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': refused a show request from a block that is not shown",

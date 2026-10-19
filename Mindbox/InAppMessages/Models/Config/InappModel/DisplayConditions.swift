@@ -20,8 +20,6 @@ enum DisplayConditionsType: String, Decodable {
     }
 }
 
-/// Fail-open: anything we cannot parse comes out as `unrestricted`, so an in-app never becomes
-/// less showable over a value we could not read.
 enum DisplayConditions: Decodable, Equatable {
 
     case directCall

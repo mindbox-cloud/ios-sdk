@@ -45,23 +45,18 @@ protocol EmbeddedBlockPlaceHandling: AnyObject {
 
     var isStartPending: Bool { get }
 
-    /// The place's fresh answer, on the main thread.
     func apply(_ answer: EmbeddedBlockPlaceAnswer)
 
-    /// The place's answer is known and held back by its `delayTime`: content is coming, the SDK is not silent.
     func contentIsDelayed()
 
     func contentIsKept()
 
     func keptContentIsReleased()
 
-    /// Loading or showing, on screen or paused off it: the block still owes the place a show or a give-up.
     var holdsAnAttempt: Bool { get }
 }
 
-/// Main-thread confined. The void entry points hop there themselves: a block's `init` is not promised the main thread. The
-/// container's `deinit` is, because UIKit releases a `UIView` on main. `keepsContent(for:)` and `bringOnScreen(_:at:)` answer
-/// synchronously: call them on main.
+// Main thread only; keepsContent(for:) and bringOnScreen(_:at:) answer synchronously.
 protocol EmbeddedBlockPlaceRegistering: AnyObject {
 
     func register(_ block: EmbeddedBlockPlaceHandling, place: String)

@@ -111,7 +111,6 @@ public struct MindboxEmbeddedBlock: View {
                 onLoad: (() -> Void)? = nil,
                 onEmpty: (() -> Void)? = nil,
                 onFail: ((MindboxEmbeddedBlockFailReason) -> Void)? = nil) {
-        // Normalized here too, so the view below gets the name the way the UIKit init would.
         self.placeSystemName = MindboxEmbeddedBlockView.normalizedPlaceSystemName(placeSystemName)
         self.height = height
         self.timeout = timeout
@@ -155,8 +154,6 @@ public struct MindboxEmbeddedBlock: View {
                           onFail: onFail,
                           placeholder: placeholderBuilder,
                           errorContent: errorBuilder)
-            // One SwiftUI identity per place, however the name was padded or cased: `Stories` and
-            // `stories` are the same place to the SDK, so they are the same block here.
             .id(MindboxEmbeddedBlockView.placeKey(placeSystemName))
     }
 }
@@ -175,13 +172,8 @@ private struct EmbeddedBlockBody: View {
     let placeholder: (() -> AnyView)?
     let errorContent: (() -> AnyView)?
 
-    /// What the container reported, once it exists. Until then the look is the first look — read
-    /// here, when the body is first built, and not when the block value is created: a value is
-    /// made on every pass of its parent's body, and may be made before the SDK is initialized.
     @State private var appearance: MindboxEmbeddedBlockAppearance?
 
-    /// The first look is known before the first frame, so a block that waits hidden is zero points
-    /// tall from its very first layout.
     private var shownAppearance: MindboxEmbeddedBlockAppearance {
         appearance ?? MindboxEmbeddedBlockView.initialAppearance(placeSystemName: placeSystemName,
                                                                  loadingStrategy: loadingStrategy)
@@ -230,7 +222,6 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
     let loadingStrategy: MindboxEmbeddedBlockLoadingStrategy
     let animatesReveal: Bool
 
-    /// `nil` until the container has reported anything: the body then shows the first look.
     @Binding var appearance: MindboxEmbeddedBlockAppearance?
 
     let onLoad: (() -> Void)?
@@ -260,9 +251,7 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
         return blockView
     }
 
-    /// Passes each look on with `isRevealAnimated`, read while the observer runs.
     static func observe(_ blockView: MindboxEmbeddedBlockView, with coordinator: Coordinator) {
-        // The container holds the observer, so it is captured weakly.
         blockView.setAppearanceObserver { [weak blockView] appearance in
             coordinator.update(appearance, animated: blockView?.isRevealAnimated ?? false)
         }
@@ -318,10 +307,8 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
 
         private var isDetached = false
 
-        /// `DispatchQueue.main` outside tests.
         private let schedule: (@escaping () -> Void) -> Void
 
-        /// `withAnimation` with the SDK's reveal outside tests.
         private let animate: (@escaping () -> Void) -> Void
 
         init(appearance: Binding<MindboxEmbeddedBlockAppearance?>,
@@ -340,7 +327,6 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
             self.animate = animate
         }
 
-        /// Writes the look, under the reveal animation when the view says `animated`.
         func update(_ newAppearance: MindboxEmbeddedBlockAppearance, animated: Bool) {
             schedule { [weak self] in
                 guard let self, !self.isDetached,
@@ -356,8 +342,6 @@ struct EmbeddedBlockRepresentable: UIViewRepresentable {
             }
         }
 
-        /// Silences the write `update` has already queued: `weak self` is no guarantee — when
-        /// SwiftUI releases the coordinator after dismantling is unspecified.
         func detach() {
             isDetached = true
         }

@@ -10,6 +10,5 @@ import Foundation
 
 enum Constants {
 
-    /// For `UNMutableNotificationContent.categoryIdentifier`
     static var categoryIdentifier = "MindBoxCategoryIdentifier"
 }

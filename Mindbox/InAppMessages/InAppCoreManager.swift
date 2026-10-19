@@ -10,7 +10,6 @@ import Foundation
 import QuartzCore
 import MindboxLogger
 
-/// Event that may trigger showing in-app message
 enum InAppMessageTriggerEvent: Hashable {
     static func == (lhs: InAppMessageTriggerEvent, rhs: InAppMessageTriggerEvent) -> Bool {
         switch (lhs, rhs) {
@@ -23,9 +22,7 @@ enum InAppMessageTriggerEvent: Hashable {
         }
     }
 
-    /// Application start event. Fires after SDK configurated
-    case start // All inapps by now is Start
-    /// Any other event sent to SDK
+    case start
     case applicationEvent(ApplicationEvent)
     
     var applicationEvent: ApplicationEvent? {
@@ -59,8 +56,6 @@ protocol InAppCoreManagerProtocol: AnyObject {
     var delegate: InAppMessagesDelegate? { get set }
 }
 
-/// The class is an entry point for all in-app messages logic.
-/// The main responsibility it to handle incoming events and decide whether to show in-app message
 final class InAppCoreManager: InAppCoreManagerProtocol {
 
     init(
@@ -82,8 +77,6 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
     private let serialQueue: DispatchQueue
     private var unhandledEvents: [InAppMessageTriggerEvent] = []
 
-    /// This method called on app start.
-    /// The config file will be loaded here or fetched from the cache.
     func start() {
         guard !isInAppManagerLaunched else {
             Logger.common(message: "Skip launching InAppManager because it is already launched", level: .info, category: .visit)
@@ -96,7 +89,6 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
         configManager.prepareConfiguration()
     }
 
-    /// This method handles events and decides if in-app message should be shown
     func sendEvent(_ event: InAppMessageTriggerEvent) {
         serialQueue.async {
             guard self.isConfigurationReady else {
@@ -109,8 +101,6 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
         }
     }
     
-    /// `serialQueue` owns this state, and the caller sends the new session's `start` through the
-    /// same queue right after — the discard always lands first.
     func discardEvents() {
         serialQueue.async {
             Logger.common(message: "[InappCoreManager] Discard expired events.")
@@ -131,7 +121,6 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
         }
     }
 
-    /// Core flow that decised to show in-app message based on incoming event
     private func handleEvent(_ event: InAppMessageTriggerEvent,
                              _ completion: @escaping () -> Void = {}) {
         
@@ -141,8 +130,6 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
             return
         }
 
-        // Push side of embedded blocks: the place registry re-resolves affected places with the
-        // operation. Posted after the gate above so an operation the config never mentions wakes nobody.
         if let applicationEvent = event.applicationEvent {
             NotificationCenter.default.post(name: .inAppOperationOccurred, object: applicationEvent)
         }
@@ -179,8 +166,7 @@ final class InAppCoreManager: InAppCoreManagerProtocol {
         processNextEvent()
     }
     
-    /// `handleEvent` answers on the main thread, and the next iteration mutates `unhandledEvents`,
-    /// which `serialQueue` owns — hence the hop back.
+    // handleEvent may complete on main or the config queue; unhandledEvents belongs to serialQueue.
     private func processNextEvent() {
         guard !unhandledEvents.isEmpty else { return }
         let event = unhandledEvents.removeFirst()

@@ -25,8 +25,6 @@ final class TrackVisitManager: TrackVisitManagerProtocol {
     private let databaseRepository: DatabaseRepositoryProtocol
     private let inappSessionManager: InappSessionManagerProtocol
 
-    /// Set by `handlePush` / `handleUniversalLink` so the session handler's next `trackDirect()`
-    /// does not duplicate the visit they already sent.
     @Locked private var skipNextDirectTrackVisit = false
 
     init(

@@ -10,12 +10,7 @@ import Foundation
 
 extension FileManager {
 
-    /// Error thrown when a shared App Group container cannot be resolved.
     enum StoreURLError: LocalizedError, Equatable {
-        /// The App Group container for `appGroup` is unavailable — typically a missing,
-        /// misconfigured, or unprovisioned App Group capability. (On a clean Simulator
-        /// install the container has also been seen to resolve late, though that isn't
-        /// documented.)
         case containerUnavailable(appGroup: String)
 
         var errorDescription: String? {

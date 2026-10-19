@@ -17,8 +17,6 @@ struct EmbeddedFormVariant: iFormVariant, Decodable, Equatable {
 
     let content: InappFormVariantContent
 
-    /// Canonical by construction — `placeKey(_:)` of what the config said. The name the host passes
-    /// goes through the same key, so the two meet whatever padding or letter case either side used.
     let placeSystemName: String
 
     init(content: InappFormVariantContent, placeSystemName: String) {
@@ -37,9 +35,6 @@ struct EmbeddedFormVariant: iFormVariant, Decodable, Equatable {
         case placeSystemName
     }
 
-    /// A place name is matched like an operation system name: the surrounding whitespace is trimmed
-    /// and the letter case is ignored, so `Main-Screen-Top` and `main-screen-top` are one place, not
-    /// two. In sync with Android's `PlaceKey`.
     static func placeKey(_ raw: String) -> String {
         raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }

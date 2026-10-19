@@ -12,10 +12,8 @@
 /// reason — never the intermediate progress, so the SDK stays free to change the flow later.
 enum EmbeddedBlockState: Equatable {
 
-    /// The content has not resolved yet.
     case loading
 
-    /// The content is renderable.
     case ready
 
     case failed(MindboxEmbeddedBlockFailReason)

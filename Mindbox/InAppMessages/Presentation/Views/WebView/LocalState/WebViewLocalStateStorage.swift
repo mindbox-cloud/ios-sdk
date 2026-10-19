@@ -9,38 +9,19 @@
 import Foundation
 import MindboxLogger
 
-/// Snapshot of local state: stored key-value data and schema version.
 struct WebViewLocalState {
-    /// Schema version, stored in `PersistenceStorage`. Starts at 1.
     let version: Int
-    /// Key-value data, stored in `UserDefaults` with a namespaced prefix.
     let data: [String: String]
 }
 
-/// On-device key-value storage for WebView in-app messages.
-///
-/// Data is persisted in a dedicated `UserDefaults` suite with prefixed keys.
-/// Schema version is stored separately in `PersistenceStorage`.
-///
-/// Used by bridge actions `localState.get`, `localState.set`, `localState.init`.
 protocol WebViewLocalStateStorageProtocol: AnyObject {
-    /// Returns stored values for the given keys, or **all** values if `keys` is empty.
     func get(keys: [String]) -> WebViewLocalState
 
-    /// Merges provided data into existing state. A `nil` value removes the key.
-    /// Returns the updated state for the affected keys.
     func set(data: [String: String?]) -> WebViewLocalState
 
-    /// Merges data and updates schema version. Version must be positive.
-    /// Always applies data regardless of current version (no skip on same version).
-    /// Returns `nil` if version is invalid (<= 0).
     func initialize(version: Int, data: [String: String?]) -> WebViewLocalState?
 }
 
-/// On-device key-value storage backed by `UserDefaults`.
-///
-/// Keys are prefixed with a namespace to avoid collisions with the host app's own UserDefaults keys.
-/// All values are stored as strings. Version is stored in `PersistenceStorage`.
 final class WebViewLocalStateStorage: WebViewLocalStateStorageProtocol {
     private static let keyPrefix = Constants.WebViewLocalState.keyPrefix
 

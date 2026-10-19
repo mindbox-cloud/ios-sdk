@@ -8,10 +8,6 @@
 
 import UIKit
 
-/// The SDK's own reveal of the block content — a fade of the content and, for a block that started
-/// hidden, the growth of its height — with its two seams: the animation call and the accessibility
-/// setting that turns animation off. Nothing about the curve or the timing is open to the host: a host
-/// that wants its own puts the block in a container of its own and animates that in `didLoad`.
 struct EmbeddedBlockRevealAnimation {
 
     typealias Run = (_ duration: TimeInterval, _ animations: @escaping () -> Void, _ completion: @escaping () -> Void) -> Void

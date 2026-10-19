@@ -41,11 +41,9 @@ public typealias WebViewLogError = (String) -> Void
 public final class MindboxWebViewFacade: InappWebViewFacadeProtocol {
 
     private let webView: WKWebView
-    /// Internal for the tests that pin its release.
     let bridge: MindboxWebBridge
     private let warmWebViewLender: InAppWebViewPrewarmServiceProtocol?
 
-    /// Main-confined, like every other send on this facade.
     private var params: [String: JSONValue]?
     private let operation: (name: String, body: String)?
     private let inAppId: String
@@ -53,18 +51,9 @@ public final class MindboxWebViewFacade: InappWebViewFacadeProtocol {
     private let log: WebViewLog
     private let logError: WebViewLogError
 
-    // Main-confined. A borrowed prewarmed `webView` outlives this facade (the prewarm
-    // service keeps it warm across shows), so a `[weak webView]` guard is not enough to
-    // stop a slow fetch that completes after the show closed — it would load the dead
-    // show's page into the parked hidden instance. `isClosed` gates the load and the
-    // in-flight fetch is cancelled outright on teardown.
     private var fetchTask: URLSessionDataTask?
     private var isClosed = false
 
-    // Main-confined. The content page is retained so a poisoned-cache HTTP error can be
-    // answered by reloading the exact same page after the purge (mirror of Android's
-    // `lastLoadedContent`). Released on `init` — after it the page has proven it can boot
-    // and a reload would tear down a live in-app.
     private var retainedContentHTML: String?
     private var retainedContentBaseURL: URL?
 
@@ -91,11 +80,7 @@ public final class MindboxWebViewFacade: InappWebViewFacadeProtocol {
          prewarmService: InAppWebViewPrewarmServiceProtocol?,
          log: @escaping WebViewLog,
          logError: @escaping WebViewLogError) {
-        // Borrow the prewarmed live instance when available (kept across shows — hidden,
-        // not destroyed); otherwise create one on the same shared data store so cached
-        // resources stay visible either way. A warm instance can only serve a caller that
-        // wants the stock UA: its applicationNameForUserAgent was baked at prewarm
-        // creation and cannot change on a live WKWebView.
+        // A warm instance serves only the stock UA: applicationNameForUserAgent is fixed when the prewarm creates it.
         let webView: WKWebView
         if let prewarmService,
            userAgent == SDKUserAgent.build(),
@@ -118,14 +103,8 @@ public final class MindboxWebViewFacade: InappWebViewFacadeProtocol {
     }
 
     deinit {
-        // The fetch completion does not hold the facade, so a pending request can outlive it;
-        // cancel it so it can never resume work against a reused webView.
         fetchTask?.cancel()
-        // An owned web view goes with the facade, but its user content controller keeps the
-        // script handlers — and the bridge with them — past the web view itself: the bridge is
-        // taken off here. A borrowed warm instance had its handlers taken off by the prewarm when
-        // it was returned, and may already be lent to the next show: detaching by name here would
-        // take that show's handlers off.
+        // A borrowed warm instance may already serve the next show, so only an owned web view's bridge is detached here.
         if warmWebViewLender == nil {
             bridge.detach()
         }
@@ -144,9 +123,6 @@ public final class MindboxWebViewFacade: InappWebViewFacadeProtocol {
         
         fetchHTML(from: contentUrl) { [weak self] html in
             DispatchQueue.main.async {
-                // A show that closed while the fetch was in flight must not load into the
-                // (possibly reused) webView, and must not re-report failure — it is already
-                // tearing down.
                 guard let self, !self.isClosed else { return }
                 guard let html else {
                     onFailure()
@@ -165,8 +141,6 @@ public final class MindboxWebViewFacade: InappWebViewFacadeProtocol {
             let baseURL = self.retainedContentBaseURL
             InAppWebViewDataStore.purgeCache(forHostOf: failedURL) { [weak self] didRemoveAnything in
                 onPurgeOutcome(didRemoveAnything)
-                // The reload must be sequenced strictly after the purge completes —
-                // re-fetching before the poisoned entry is gone would just replay it.
                 guard let self, !self.isClosed else { return }
                 self.bridge.expectContentNavigation(self.webView.loadHTMLString(html, baseURL: baseURL))
             }
@@ -226,7 +200,6 @@ public final class MindboxWebViewFacade: InappWebViewFacadeProtocol {
             self.params = params
 
             self.makeStartPayload { [weak self] payload in
-                // A close or a newer update during the system round trip makes this payload stale.
                 guard let self, !self.isClosed, self.params == params else { return }
 
                 self.bridge.send(BridgeMessage(type: .request,
@@ -286,8 +259,6 @@ extension MindboxWebViewFacade {
             return
         }
 
-        // The embedded-block debug override packs markup into a data: url; URLSession would only
-        // die on the HTTPURLResponse cast, so it is read directly.
         if url.scheme == "data" {
             completion((try? Data(contentsOf: url)).flatMap { String(data: $0, encoding: .utf8) })
             return
@@ -297,8 +268,7 @@ extension MindboxWebViewFacade {
 
         log("Fetching HTML from \(url.absoluteString)")
 
-        // The loggers, not the facade: the completion runs on URLSession's queue, a cancelled task's
-        // too, and a facade held there for a moment could be let go there — off the main thread.
+        // Capture the loggers, not the facade: the completion runs on URLSession's queue and must not release the facade off main.
         let task = session.dataTask(with: request) { [log, logError] data, response, error in
             if let error {
                 logError("Error fetching HTML: \(error.localizedDescription)")
@@ -324,8 +294,6 @@ extension MindboxWebViewFacade {
             completion(htmlString)
         }
 
-        // Retained so teardown can cancel an in-flight request. Main-confined: `loadHTML`
-        // (the sole caller) runs on the main thread.
         fetchTask = task
         task.resume()
     }

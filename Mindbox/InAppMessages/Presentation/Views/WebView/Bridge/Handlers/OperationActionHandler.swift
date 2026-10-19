@@ -9,11 +9,6 @@
 import Foundation
 import MindboxLogger
 
-/// Mindbox operations the page asks the SDK to send.
-///
-/// Two shapes of the same thing: `asyncOperation` is queued and confirmed straight away, while
-/// `syncOperation` waits for the backend and hands the raw body back — the page's own tracker
-/// reads a `status` out of it that the SDK has no business interpreting.
 final class OperationActionHandler: WebBridgeActionHandler {
 
     let actions: Set<BridgeMessage.Action> = [.asyncOperation, .syncOperation]
@@ -63,7 +58,6 @@ final class OperationActionHandler: WebBridgeActionHandler {
         case .syncOperation:
             send(operation, message: message, host: host)
         default:
-            // Unreachable: the registry routes only what `actions` claims.
             break
         }
     }
@@ -140,7 +134,6 @@ private extension OperationActionHandler {
         inAppEventSender.sendEventIfEnabled(operation.name, jsonString: operation.body)
     }
 
-    /// The operation name and its body, with the in-app tags merged in and encoded ready to send.
     func operation(from message: BridgeMessage, host: WebBridgeHost) -> Result<(name: String, body: String), Refusal> {
         guard let payload = message.payloadObject,
               case .string(let name)? = payload["operation"],
@@ -189,7 +182,7 @@ enum OperationTagsResolver {
         case invalidInappId
     }
 
-    /// `lookup` must not wait: operations keep their order because each is tagged and sent within one main-thread turn.
+    // lookup must not wait: operations keep their order because each is tagged and sent within one main-thread turn.
     static func resolve(inappId: JSONValue?,
                         host: WebBridgeHost,
                         lookup: (_ id: String) -> InApp?) -> Resolution {
@@ -216,9 +209,6 @@ enum OperationTagsResolver {
 
 extension OperationActionHandler {
 
-    /// Maps the raw `sendRaw` result of a `syncOperation` request to the outgoing
-    /// `BridgeMessage` sent back to JS. Pure function — no side effects — extracted
-    /// to keep the JS-bridge contract independently unit-testable.
     static func makeSyncOperationResponse(
         result: Result<Data, MindboxError>,
         action: String,

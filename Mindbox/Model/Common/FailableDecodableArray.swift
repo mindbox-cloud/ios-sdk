@@ -28,7 +28,7 @@ extension FailableDecodableArray {
             if let element = try? container.decode(Element.self) {
                 elements.append(element)
             } else {
-                _ = try? container.decode(DummyCodable.self) // "Consumes" the failed element
+                _ = try? container.decode(DummyCodable.self) // A failed decode does not advance the unkeyed container.
             }
         }
 

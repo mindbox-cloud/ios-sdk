@@ -21,8 +21,6 @@ open class OperationResponse: OperationResponseType {
     public let personalOffers: [PersonalOffersResponse]?
     public let balances: [BalanceResponse]?
     public let discountCards: [DiscountCardResponse]?
-    // TODO: MOBILE-303 — rename to `promoActions` in 3.0: the API key is plural,
-    // the singular property name is a source-breaking legacy we keep until a major release.
     public let promoAction: [PromoActionsResponse]?
     public let retailOrderStatistics: RetailOrderStatisticsResponse?
 
@@ -48,9 +46,6 @@ open class OperationResponse: OperationResponseType {
         retailOrderStatistics = try container.decodeIfPresent(RetailOrderStatisticsResponse.self, forKey: .retailOrderStatistics)
     }
 
-    // `encode(to:)` must stay in sync with `Keys` — the compiler can't synthesize it
-    // from this enum (it isn't named `CodingKeys`), and synthesized encoding by
-    // property names is exactly what hid the promoAction/promoActions mismatch.
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: Keys.self)
         try container.encode(status, forKey: .status)
@@ -72,11 +67,6 @@ open class OperationResponse: OperationResponseType {
         case status
         case customer
         case productList
-        // Encode-only: both productList shapes decode from the `productList` wire key,
-        // but have always re-encoded under their own property names — kept that way
-        // so the bridge payload only gains promoActions, nothing else moves.
-        // TODO: MOBILE-303 — drop this key in 3.0 and re-encode both shapes under
-        // `productList`, making the bridge payload fully wire-faithful (as on Android).
         case productListItems
         case recommendations
         case customerSegmentations
@@ -85,8 +75,6 @@ open class OperationResponse: OperationResponseType {
         case personalOffers
         case balances
         case discountCards
-        // The API sends the plural key; the `promoAction` property keeps its
-        // historical singular name because renaming it would break the public SDK surface.
         case promoActions
         case retailOrderStatistics
     }

@@ -9,10 +9,8 @@
 import Foundation
 
 struct TrackVisit: Codable {
-    /// ID текущая таймзона устройства в формате IANA, например "Asia/Krasnoyarsk", null если недоступно
     let ianaTimeZone: String?
 
-    /// ссылка, по которой перешли в приложение, либо null
     let requestUrl: URL?
 
     let source: TrackVisitSource?

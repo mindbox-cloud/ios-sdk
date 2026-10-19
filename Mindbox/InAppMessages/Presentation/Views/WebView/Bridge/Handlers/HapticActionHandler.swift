@@ -8,17 +8,10 @@
 
 import Foundation
 
-/// Haptic feedback for the page.
-///
-/// Owns the engine outright. It has to: the service is registered `.transient`, so anyone else
-/// resolving it would get a second engine — and preparing one while playing on another silently
-/// does nothing.
 final class HapticActionHandler: WebBridgeActionHandler {
 
     let actions: Set<BridgeMessage.Action> = [.haptic]
 
-    /// Whether the engine was ever asked for. Teardown must not build one just to stop it: most
-    /// shows never touch haptics, and every one of them ends.
     private var isEngineInUse = false
 
     private lazy var service: HapticServiceProtocol = {
@@ -38,10 +31,6 @@ final class HapticActionHandler: WebBridgeActionHandler {
         host.respondSuccess(to: message)
     }
 
-    /// Warms the engine up so the first tap does not pay for starting it.
-    ///
-    /// Called when the page reports it is up, which is a lifecycle event rather than an action —
-    /// hence the door in from outside a request.
     func prepare() {
         service.prepare()
     }

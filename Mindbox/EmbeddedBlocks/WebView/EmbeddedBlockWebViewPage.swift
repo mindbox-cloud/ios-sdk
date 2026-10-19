@@ -10,8 +10,6 @@ import UIKit
 import WebKit
 import MindboxLogger
 
-/// The web view, the bridge, the markup fetch and the start payload all come from the shared
-/// facade: a block and an overlay must agree on the bridge protocol down to the envelope.
 final class EmbeddedBlockWebViewPage: NSObject, EmbeddedBlockPageHosting {
 
     var view: UIView { pageView }
@@ -28,20 +26,14 @@ final class EmbeddedBlockWebViewPage: NSObject, EmbeddedBlockPageHosting {
 
     var onLoadFailure: ((String) -> Void)?
 
-    /// Set by the provider. A block that left the window keeps its page alive, and that page can
-    /// still deliver whatever its `setTimeout` scheduled — nothing the user did stands behind
-    /// such a message.
     var isUserPresent = true
 
     private let content: EmbeddedBlockWebContent
-    /// Internal for the tests that pin the release of the whole web chain.
     let facade: InappWebViewFacadeProtocol
     private let registry: MindboxWebPageRegistry
     private let actionRegistry: WebBridgeActionRegistry
     private let pageView: UIView
 
-    /// A page joins the broadcast set once it has proven it can receive, that is, on its first `ready`:
-    /// registering earlier would aim `localState.changed` at a document that has no bridge yet.
     private var isRegistered = false
 
     private let noCacheRetryPolicy: WebViewNoCacheRetryPolicy
@@ -54,8 +46,6 @@ final class EmbeddedBlockWebViewPage: NSObject, EmbeddedBlockPageHosting {
          noCacheRetryPolicy: WebViewNoCacheRetryPolicy = WebViewNoCacheRetryPolicy()) {
         self.content = content
         self.noCacheRetryPolicy = noCacheRetryPolicy
-        // The block does not borrow the prewarmed instance: it would hold it for as long as its
-        // screen lives and leave the next in-app to start cold.
         self.facade = facade ?? MindboxWebViewFacade(params: content.params,
                                                      userAgent: SDKUserAgent.build(),
                                                      inAppId: content.inAppId,
@@ -82,8 +72,7 @@ final class EmbeddedBlockWebViewPage: NSObject, EmbeddedBlockPageHosting {
         }
     }
 
-    /// Synchronous on purpose: the provider drops the page right after, and a close that hops to
-    /// the main queue would find the facade already gone and do nothing.
+    // Synchronous: the provider drops the page right after, so a hop to main would find the facade gone.
     func cancel() {
         facade.endShow()
     }
@@ -93,8 +82,6 @@ final class EmbeddedBlockWebViewPage: NSObject, EmbeddedBlockPageHosting {
     }
 
     private func applyViewSettings() {
-        // The background is transparent: the app background, not a white sheet, should show through
-        // the gaps in the content.
         pageView.backgroundColor = .clear
 
         guard let webView = pageView as? WKWebView else { return }
@@ -102,9 +89,6 @@ final class EmbeddedBlockWebViewPage: NSObject, EmbeddedBlockPageHosting {
         webView.isOpaque = false
         webView.scrollView.backgroundColor = .clear
 
-        // The container height equals the content height, so there is nothing to scroll vertically —
-        // otherwise the block would bounce under the finger on every horizontal swipe. Horizontal
-        // scrolling stays on, unlike an overlay's: a block is a row the user swipes through.
         webView.scrollView.bounces = false
         webView.scrollView.alwaysBounceVertical = false
         webView.scrollView.showsVerticalScrollIndicator = false
@@ -122,11 +106,6 @@ extension EmbeddedBlockWebViewPage: WebBridgeHost {
 
     var tags: [String: String]? { content.tags }
 
-    /// The block draws inside the host's own hierarchy and owns no controller, so the search starts
-    /// at the window's root — and does not stop there. Whatever is on top is what can present: a
-    /// root that already presents something refuses to present anything else, and the block sitting
-    /// inside a modal screen is exactly that case. Stopping at the root would leave the tap with no
-    /// Safari and the page with no answer.
     var presentingViewController: UIViewController? {
         guard var presenter = view.window?.rootViewController else { return nil }
 
@@ -205,18 +184,12 @@ extension EmbeddedBlockWebViewPage: WebBridgeMessageDelegate {
 
         isRegistered = true
         registry.register(self)
-        // The page has proven it can boot: the markup kept for the no-cache retry is dead weight
-        // from here — the retry policy refuses a heal on a booted page — so it goes, as the overlay
-        // lets it go on `init`.
         facade.releaseRetainedContent()
     }
 }
 
 // MARK: - Navigation
 
-/// Navigation only judges its own business: the load failed or the document arrived. Block
-/// readiness does not follow from that — the page declares it by reporting the content it
-/// rendered.
 extension EmbeddedBlockWebViewPage: WebBridgeNavigationDelegate {
 
     func webBridge(_ bridge: MindboxWebBridge, didStartProvisionalNavigation url: URL?) {
@@ -229,8 +202,6 @@ extension EmbeddedBlockWebViewPage: WebBridgeNavigationDelegate {
                       category: .embeddedBlocks)
     }
 
-    /// Not a load failure: WebKit returns `NSURLErrorCancelled` for a navigation superseded by a
-    /// client-side redirect and for our own `cancel()` on a block that went off screen.
     func webBridge(_ bridge: MindboxWebBridge, didFailProvisionalNavigation url: URL?, error: Error) {
         let error = error as NSError
 

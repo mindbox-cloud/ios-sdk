@@ -8,8 +8,6 @@
 
 import Foundation
 
-/// Unified permission status model for all permission types
-/// This model is designed to be cross-platform compatible with Android SDK
 struct PermissionStatus: Codable {
     let status: PermissionStatusValue
     let details: [String: String]?
@@ -19,7 +17,6 @@ struct PermissionStatus: Codable {
         self.details = details
     }
 
-    /// Converts PermissionStatus to a dictionary for JSON serialization
     func toDictionary() -> [String: Any] {
         var dict: [String: Any] = ["status": status.rawValue]
         if let details = details {

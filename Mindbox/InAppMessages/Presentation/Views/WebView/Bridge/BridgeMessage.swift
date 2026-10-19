@@ -652,22 +652,15 @@ public struct BridgeMessage: Codable {
         /// handlers that go on to wait — the page can leave the screen while they do.
         var requiresUserPresence: Bool {
             switch self {
-            // Leave the app or cover it — a Safari sheet, the settings screen, a permission
-            // dialog — over whatever the user went to instead.
             case .openLink, .settingsOpen, .permissionRequest:
                 return true
 
-            // Felt rather than seen, which makes it worse: a block three screens down buzzing the
-            // device gives the user nothing to trace it back to.
             case .haptic:
                 return true
 
-            // Takes the sensors on behalf of a page nobody sees. Stopping is always allowed —
-            // giving the sensors back is not something done on the user's behalf.
             case .motionStart:
                 return true
 
-            // Opens a window.
             case .showInApp:
                 return true
 

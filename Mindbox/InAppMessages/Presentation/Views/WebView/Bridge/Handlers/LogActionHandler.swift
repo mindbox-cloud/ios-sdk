@@ -9,11 +9,6 @@
 import Foundation
 import MindboxLogger
 
-/// Writes what the page says into the SDK log.
-///
-/// The category comes from the host rather than from here: the same handler serves an in-app
-/// popup and an embedded block, and each keeps its own trail. That is the whole reason a
-/// handler is given a host instead of being told which surface it is on.
 final class LogActionHandler: WebBridgeActionHandler {
 
     let actions: Set<BridgeMessage.Action> = [.log]

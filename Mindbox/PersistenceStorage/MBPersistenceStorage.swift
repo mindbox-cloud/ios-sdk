@@ -17,11 +17,6 @@ class MBPersistenceStorage: PersistenceStorage {
     static var defaults: UserDefaults = .standard
 
     // MARK: - Property
-    // Installed state is the presence of the persisted installation date string,
-    // never its parseability. Decoupling from parsing keeps `isInstalled` stable
-    // across region/locale and 12h↔24h time-format changes, which would otherwise
-    // break a localized date string and route an existing install through the
-    // fresh-install path.
     var isInstalled: Bool {
         installationDateString != nil
     }
@@ -280,8 +275,6 @@ class MBPersistenceStorage: PersistenceStorage {
     }
 
     // MARK: - Deprecated Properties
-    // These properties are deprecated and will be removed in future versions.
-    // Please use the recommended alternatives instead.
     
     @UserDefaultsWrapper(key: .shownInAppsIds, defaultValue: nil)
     var shownInAppsIds: [String]?
@@ -322,8 +315,6 @@ extension MBPersistenceStorage {
             case operationsDomainFromConfig = "MBPersistenceStorage-operationsDomainFromConfig"
 
             // MARK: - Deprecated Keys
-            // These keys are deprecated and will be removed in future versions.
-            // Please use the recommended alternatives instead.
             
             case shownInAppsIds = "MBPersistenceStorage-shownInAppsIds"
             case shownInAppsDictionary = "MBPersistenceStorage-shownInAppsDictionary"
@@ -339,13 +330,11 @@ extension MBPersistenceStorage {
 
         var wrappedValue: T? {
             get {
-                // Read value from UserDefaults
                 let isExists = defaults.isValueExists(forKey: key.rawValue)
                 let value = MBPersistenceStorage.defaults.value(forKey: key.rawValue) as? T ?? defaultValue
                 return isExists ? value : defaultValue
             }
             set {
-                // Set value to UserDefaults
                 MBPersistenceStorage.defaults.setValue(newValue, forKey: key.rawValue)
                 MBPersistenceStorage.defaults.synchronize()
             }
@@ -364,7 +353,6 @@ fileprivate extension UserDefaults {
 
 extension MBPersistenceStorage {
 
-    /// Backing key for `isInstalled`, exposed so the reporter can probe a specific store.
     static var installationDataKey: String {
         UserDefaultsWrapper<String>.Key.installationData.rawValue
     }
@@ -374,16 +362,11 @@ extension MBPersistenceStorage {
     }
 }
 
-/// Reports a fallback-then-recovery fingerprint: install state in BOTH the
-/// `.standard` fallback and the App Group suite. Read-only by design (cleanup deferred to a future
-/// migration). Runs after re-registration, so it fires on the recovery launch itself and on every
-/// cold start while the fingerprint persists.
 struct AppGroupStorageTransitionReporter {
 
     private let localDefaults: UserDefaults
     private let sharedDefaults: UserDefaults?
 
-    /// In fallback the active store *is* `.standard`, so there's nothing to compare.
     init(activeDefaults: UserDefaults = MBPersistenceStorage.defaults,
          localDefaults: UserDefaults = .standard) {
         self.localDefaults = localDefaults

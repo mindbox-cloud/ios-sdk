@@ -10,14 +10,8 @@ import UIKit
 import QuartzCore
 import MindboxLogger
 
-/// Embedded block content — a web page found by the block id.
-///
-/// An instance belongs to one container, so `start()` and `stop()` simply mirror its visibility
-/// and can be called in cycles. After `stop()` the provider must stay silent until the next
-/// `start()` — the container relies on this when it collapses an expired block.
 final class EmbeddedBlockWebViewProvider {
 
-    /// Reports every state change on the main thread. Set by the container.
     var onStateChange: ((EmbeddedBlockState) -> Void)?
 
     var onContentArrived: (() -> Void)?
@@ -34,7 +28,6 @@ final class EmbeddedBlockWebViewProvider {
 
     var isAwaitingAnswer: Bool { page == nil }
 
-    /// While set, the block keeps loading on purpose: content is coming, the SDK is not silent.
     private(set) var isAwaitingDelayedContent = false
 
     var isAwaitingKeptContent: Bool { page == nil && registry.keepsContent(for: placeSystemName) }
@@ -66,8 +59,6 @@ final class EmbeddedBlockWebViewProvider {
 
     private var loadGeneration = 0
 
-    /// The page has drawn something and nothing has been asked of it since. A stray repeat must not
-    /// un-show a shown block; a rebuild and a data push both invite a fresh report.
     private var didReportShownContent = false
 
     private var pageShow: EmbeddedBlockPageShow?
@@ -78,7 +69,6 @@ final class EmbeddedBlockWebViewProvider {
 
     private let dataPushWait: EmbeddedBlockDataPushWait
 
-    /// Internal for the tests that pin the release of a block let go with a push unconfirmed.
     var isAwaitingDataPushConfirmation: Bool { dataPushWait.isAwaitingConfirmation }
 
     private(set) var deferred = EmbeddedBlockDeferredAnswers()
@@ -138,7 +128,6 @@ final class EmbeddedBlockWebViewProvider {
 
         failures.flushHeld()
 
-        // The parked answer goes first, as on Android: a page it replaces or drops is not resumed.
         let generation = loadGeneration
         let parked = deferred.takeParked(unlessEndedIn: SessionTemporaryStorage.shared.ledger).flatMap { registry.bringOnScreen($0, at: placeSystemName) }
         if let parked {
@@ -165,8 +154,6 @@ final class EmbeddedBlockWebViewProvider {
 
     func stop() {
         deferred.isStartAwaitingSessionCheck = false
-        // The show's time stops with the block: it left the window or the host hid it. The background
-        // is not a stop — the stopwatch excludes it on its own.
         pageShow?.suspend()
         if let held = deferred.takeHeld() {
             land(held)
@@ -175,10 +162,7 @@ final class EmbeddedBlockWebViewProvider {
 
         isStarted = false
         isPaused = true
-        // The outcome is deliberately not reset: otherwise every pass of the block across the screen
-        // would cost a full reload.
         dataPushWait.suspend()
-        // The page stays alive off screen, so it has to be told that nobody is looking.
         page?.isUserPresent = false
         if let unseen = deferred.parkContentAwaitingTheUser(ifAlive: isAttemptAlive, timedBy: makeStopwatch) { registry.giveSlotBack(unseen, at: placeSystemName) }
     }
@@ -296,9 +280,6 @@ final class EmbeddedBlockWebViewProvider {
 
     private func applyContent(_ fresh: EmbeddedBlockWebContent, of answer: EmbeddedBlockPlaceAnswer) {
         defer { deferred.contentAwaitingTheUser = appPresence.isPresent ? nil : answer }
-        // Only a block that shows something is talked to; one that shows nothing is rebuilt. A page
-        // confirms a data push and stays exactly as it was, so a collapsed block told about its content
-        // would sit waiting for a report that never comes. Rebuilding revives it, in sync with Android.
         if let current = content, page != nil, isAttemptAlive, fresh.isSamePage(as: current) {
             content = fresh
             pageShow?.confirm(answer)
@@ -385,7 +366,6 @@ final class EmbeddedBlockWebViewProvider {
         page.load()
     }
 
-    /// Detached from us first, so that its late messages do not end up in the new attempt.
     private func dropPage() {
         dataPushWait.cancel()
         page?.detachCallbacks()
@@ -442,15 +422,6 @@ final class EmbeddedBlockWebViewProvider {
         abandonAttempt()
     }
 
-    /// The SDK never answered within the block's budget. The block fails every time — the host and
-    /// the analytics must agree it was a failure, not an empty place — while the analytics hear about
-    /// it once per place per session, with no in-app to pin it on. Any answer, "nothing" included,
-    /// would have disarmed the budget instead.
-    ///
-    /// Unlike `configUnavailable` — an instant answer that leaves the block started, so the next
-    /// config revives it at once — a timeout abandons the attempt: a late answer is dropped and the
-    /// block asks afresh on its next appearance. In sync with Android, where `onConfigTimeout` gives
-    /// up and `onConfigUnavailable` does not.
     func failUnanswered(waited: TimeInterval) {
         failures.reportUnansweredWaitOnce(waited)
         settle(.failed(MindboxEmbeddedBlockFailReason(.waitBudgetExceeded)))

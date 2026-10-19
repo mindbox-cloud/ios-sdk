@@ -8,9 +8,7 @@
 
 import Foundation
 
-/// Holds a place's answer for its `delayTime`, like the schedule queue holds an overlay: one answer per
-/// place, the caller refreshes the waiting one through `refresh(place:_:)` while its delay keeps
-/// running, and what runs out while the user is not present is delivered once they are. Main thread only.
+// Main thread only.
 final class EmbeddedBlockDelayedDelivery<Answer>: EmbeddedBlockAppPresenceSubscribing {
 
     typealias Delivery = (Answer) -> Void
@@ -79,7 +77,6 @@ final class EmbeddedBlockDelayedDelivery<Answer>: EmbeddedBlockAppPresenceSubscr
         schedule(delay, timer)
     }
 
-    /// Updates the answer of the in-app already waiting at the place; its delay keeps running.
     func refresh(place: String, _ update: (Answer) -> Answer) {
         guard let current = waiting[place]?.answer else { return }
 

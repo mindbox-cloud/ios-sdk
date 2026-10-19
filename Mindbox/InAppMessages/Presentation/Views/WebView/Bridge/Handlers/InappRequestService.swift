@@ -12,15 +12,10 @@ import MindboxLogger
 
 protocol InappRequestServing: AnyObject {
 
-    /// Whether a config of the current session is in hand — what a never-answered block reports it was waiting on.
     var hasConfig: Bool { get }
 
-    /// Which of `ids` the page of in-app `requesterInappId` may draw, targeting checked and fetched like a place
-    /// resolve; vouches for every targeted id as it answers. The answer mirrors the question — order and duplicates kept.
-    /// Answers on the main thread.
     func showableInappIds(among ids: [String], askedBy requesterInappId: String, completion: @escaping ([String]) -> Void)
 
-    /// Deliberately unchecked: the page decided when it drew the in-app. Answers once, on the main thread.
     func showInapp(id: String,
                    params: [String: JSONValue],
                    proceedIf requesterIsActive: @escaping () -> Bool,
@@ -69,7 +64,6 @@ final class InappRequestService: InappRequestServing {
                    params: [String: JSONValue],
                    proceedIf requesterIsActive: @escaping () -> Bool,
                    completion: @escaping (Result<Void, BridgeErrorCode>) -> Void) {
-        // The tap is the trigger: the fetch and the form build count into timeToDisplay, on the overlay pass's clock.
         let tappedAt = now()
         let answer = Self.onTheMainThread(completion)
         fetchInappToShow(id, params) { [showNow, now] formData in

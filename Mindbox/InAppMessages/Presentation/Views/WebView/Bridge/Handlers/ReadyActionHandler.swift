@@ -8,12 +8,6 @@
 
 import Foundation
 
-/// The page reports it can receive messages, and is answered with what it needs to configure
-/// itself.
-///
-/// What goes into the payload belongs to the host — an in-app knows its operation, a block
-/// knows its configuration entry — so this handler only decides *when* to answer, never *with
-/// what*.
 final class ReadyActionHandler: WebBridgeActionHandler {
 
     let actions: Set<BridgeMessage.Action> = [.ready]

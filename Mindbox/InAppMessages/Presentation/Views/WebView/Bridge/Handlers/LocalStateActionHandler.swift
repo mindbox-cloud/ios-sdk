@@ -9,13 +9,10 @@
 import Foundation
 import MindboxLogger
 
-/// On-device key-value storage for the page.
 final class LocalStateActionHandler: WebBridgeActionHandler {
 
     let actions: Set<BridgeMessage.Action> = [.localStateGet, .localStateSet, .localStateInit]
 
-    /// Resolved on first use, not at construction: a handler set is built for every show, and
-    /// a page that never touches storage should not pull it out of the container.
     private lazy var storage: WebViewLocalStateStorageProtocol = makeStorage()
 
     private let makeStorage: () -> WebViewLocalStateStorageProtocol
@@ -37,7 +34,6 @@ final class LocalStateActionHandler: WebBridgeActionHandler {
         case .localStateInit:
             initialize(message, host: host)
         default:
-            // Unreachable: the registry routes only what `actions` claims.
             break
         }
     }
@@ -68,8 +64,6 @@ private extension LocalStateActionHandler {
             category: host.logCategory
         )
 
-        // Asking for nothing means asking for everything; asking for a key that is not there
-        // answers null, so the page can tell "absent" from "never asked".
         var stored: [String: JSONValue] = [:]
         if keys.isEmpty {
             for (key, value) in state.data {
@@ -138,8 +132,6 @@ private extension LocalStateActionHandler {
 
 private extension LocalStateActionHandler {
 
-    /// Storage keeps strings, so anything richer is kept as its JSON text rather than dropped —
-    /// the page gets back what it put in. `null` is an erase, and stays distinct from `""`.
     static func storable(_ entries: [String: JSONValue]) -> [String: String?] {
         var data: [String: String?] = [:]
 
@@ -160,7 +152,6 @@ private extension LocalStateActionHandler {
         return data
     }
 
-    /// Echoes back the keys the request carried, not the whole store.
     static func payload(for data: [String: String?], version: Int) -> JSONValue {
         var stored: [String: JSONValue] = [:]
 

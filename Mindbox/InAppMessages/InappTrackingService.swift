@@ -29,8 +29,6 @@ final class InAppTrackingService: InAppTrackingServiceProtocol {
     }
     
     func saveInappStateChange(in history: inout InappShowHistory) {
-        // We save the in-app state timestamp in two places (onPresented and onPresentationCompleted) to handle the case
-        // when the app is terminated while an in-app message is being shown.
         
         let now = Date()
         history.lastStateChangeDate = now

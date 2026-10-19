@@ -23,8 +23,6 @@ final class HapticService: HapticServiceProtocol {
     private var impactGenerators: [UIImpactFeedbackGenerator.FeedbackStyle: UIImpactFeedbackGenerator] = [:]
     private let selectionGenerator = UISelectionFeedbackGenerator()
     private let notificationGenerator = UINotificationFeedbackGenerator()
-    /// Retains the `CHHapticEngine` while a pattern is playing (engine deallocates → playback stops).
-    /// Typed as `AnyObject` because `CHHapticEngine` requires iOS 13+ and the class must support iOS 12.
     private var activeEngineStorage: AnyObject?
 
     // MARK: - Stop

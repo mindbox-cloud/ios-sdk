@@ -30,7 +30,6 @@ final class ModalPresentationStrategy: PresentationStrategyProtocol {
     }
 
     func setupWindowFrame(model: MindboxFormVariant, imageSize: CGSize) {
-        // Not need to setup.
     }
 
     private func makeInAppMessageWindow() -> UIWindow? {

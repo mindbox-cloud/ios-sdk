@@ -72,7 +72,6 @@ final class MBSystemInfoProvider: SystemInfoProvider {
             return view.safeAreaInsets
         }
 
-        // Fallback to key window if view is not provided
         if #available(iOS 13.0, *) {
             let window = UIApplication.shared.windows.first { $0.isKeyWindow }
             return window?.safeAreaInsets ?? .zero

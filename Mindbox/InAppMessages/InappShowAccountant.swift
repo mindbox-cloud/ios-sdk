@@ -9,7 +9,6 @@
 import Foundation
 import MindboxLogger
 
-/// A show as the accounting sees it — the same for an overlay window and a block page.
 struct InappShow {
     let inAppId: String
     let frequency: InappFrequency?

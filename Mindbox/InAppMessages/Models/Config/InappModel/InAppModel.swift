@@ -39,7 +39,6 @@ extension InAppDTO {
         self.id = try container.decode(String.self, forKey: .id)
         self.isPriority = (try? container.decode(Bool.self, forKey: .isPriority)) ?? false
         
-        // Логирование для delayTime
         do {
             self.delayTime = try container.decodeIfPresent(String.self, forKey: .delayTime)
             if let delayTime = self.delayTime {

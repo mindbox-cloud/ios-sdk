@@ -49,10 +49,6 @@ public final class MindboxWebBridge: NSObject {
     private var pendingRequestIds = Set<UUID>()
     private var contentURL: URL?
 
-    // A reused (pre-warmed) WKWebView can deliver navigation callbacks and script messages
-    // that belong to a previous owner's load. Callbacks are filtered by navigation identity;
-    // messages are gated until the show's own document commits (the document-swap point —
-    // whoever posts before it is not this show's page). Main-thread only.
     private var expectedNavigation: WKNavigation?
     private var expectedNavigationFinished = false
     private var expectedNavigationCommitted = false
@@ -63,27 +59,15 @@ public final class MindboxWebBridge: NSObject {
         super.init()
 
         let controller = webView.configuration.userContentController
-        // Idempotent: a reused WebView may still carry a previous show's handler of this name.
         controller.removeScriptMessageHandler(forName: Constants.WebViewBridgeJS.handlerName)
         controller.add(self, name: Constants.WebViewBridgeJS.handlerName)
-        // Take over the HTTP-error detection channel too: on a borrowed instance the
-        // prewarm's monitor still owns it — from here the errors belong to this show.
         controller.removeScriptMessageHandler(forName: Constants.WebViewHTTPErrorJS.handlerName)
         controller.add(self, name: Constants.WebViewHTTPErrorJS.handlerName)
         webView.navigationDelegate = self
     }
 
-    // No deinit teardown: a bridge still on its web view is retained by the user content
-    // controller, so `deinit` cannot be where it leaves. The owner takes it off with `detach()`;
-    // a successor's init does remove-then-add on the script handlers anyway.
+    // WKUserContentController keeps its handlers past the web view, so the owner takes the bridge off with detach(), not deinit.
 
-    /// Takes the bridge off its web view: the script handlers and the navigation delegate.
-    ///
-    /// The user content controller retains its handlers and outlives the web view itself, so a
-    /// bridge left on it stays registered — and alive — after the page is gone. The owner of the
-    /// web view calls this when it lets the web view go. A borrowed warm instance is not detached
-    /// here: the prewarm takes every handler off when it is returned, and by the time this bridge
-    /// goes the instance may be lent again — these names would take the next show's handlers off.
     func detach() {
         assert(Thread.isMainThread)
         guard let webView else { return }
@@ -166,8 +150,6 @@ public final class MindboxWebBridge: NSObject {
         contentURL = url
     }
 
-    /// Registers the navigation issued by this show's own load (loadHTMLString/reload).
-    /// Until it finishes, callbacks for any other navigation are treated as stale leftovers.
     func expectContentNavigation(_ navigation: WKNavigation?) {
         contentLoadIssued = true
         expectedNavigation = navigation
@@ -178,8 +160,6 @@ public final class MindboxWebBridge: NSObject {
     private func isStaleNavigation(_ navigation: WKNavigation?) -> Bool {
         if expectedNavigationFinished { return false }
         guard contentLoadIssued else { return true }
-        // WebKit occasionally delivers a nil navigation (early provisional failures): it
-        // can't be proven to be a leftover — fail open, like the nil-expected case below.
         guard let navigation else { return false }
         guard let expected = expectedNavigation else { return false }
         return navigation !== expected
@@ -197,10 +177,6 @@ extension MindboxWebBridge: WKScriptMessageHandler {
     public func userContentController(_ userContentController: WKUserContentController,
                                       didReceive message: WKScriptMessage) {
         if message.name == Constants.WebViewHTTPErrorJS.handlerName {
-            // Same staleness gate as bridge messages below: a leftover page's error on a
-            // reused WebView must not consume this show's one-shot retry. The show's own
-            // subresources only start loading after its document commits, so nothing real
-            // is lost.
             guard expectedNavigationCommitted else {
                 logStaleNavigation("http error message")
                 return
@@ -218,8 +194,6 @@ extension MindboxWebBridge: WKScriptMessageHandler {
             return
         }
 
-        // Mirror of the navigation staleness filter at message level: until the show's own
-        // document has committed, whoever is posting is not this show's page — drop it.
         guard expectedNavigationCommitted else {
             Logger.common(
                 message: "[WebView] Bridge: ignoring JS message before the show's document committed (leftover page on reused WebView)",
@@ -277,7 +251,6 @@ extension MindboxWebBridge: WKNavigationDelegate {
             logStaleNavigation("commit")
             return
         }
-        // The old document is gone from this point: script messages are now this show's.
         expectedNavigationCommitted = true
     }
 
@@ -286,8 +259,6 @@ extension MindboxWebBridge: WKNavigationDelegate {
             logStaleNavigation("finish")
             return
         }
-        // Only the show's own load reports the content URL; a page-initiated navigation
-        // reports its real URL so upstream can tell the documents apart.
         let isExpected = navigation === expectedNavigation
         if isExpected {
             expectedNavigationFinished = true

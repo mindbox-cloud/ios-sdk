@@ -20,13 +20,10 @@ struct EmbeddedBlockPageShow {
 
     private var isAwaitingRefreshRender = false
 
-    /// The selection's part of `timeToDisplay`; the page's part runs on `stopwatch`.
     private(set) var processingDuration: TimeInterval
 
     private var stopwatch: ForegroundStopwatch
 
-    /// `timeToDisplay` frozen at the moment the page drew: a show sent on a later return reports the
-    /// render, not the time nobody was looking.
     private var renderedElapsed: TimeInterval?
 
     private let makeStopwatch: () -> ForegroundStopwatch

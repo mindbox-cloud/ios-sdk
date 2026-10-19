@@ -9,13 +9,6 @@
 import Foundation
 import MindboxLogger
 
-/// What a page says about its own life: it booted, it was tapped, it wants to be hidden or
-/// closed.
-///
-/// Registered everywhere, like every other handler. Whether these mean anything depends on who
-/// is hosting the page — a surface that has no window to close simply does not conform, and the
-/// message is acknowledged and journalled rather than refused. That is what lets a surface pick
-/// one of these up later by adding a conformance and nothing else.
 final class LifecycleActionHandler: WebBridgeActionHandler {
 
     let actions: Set<BridgeMessage.Action> = [.close, .`init`, .click, .hide]
@@ -37,10 +30,8 @@ final class LifecycleActionHandler: WebBridgeActionHandler {
         case .hide:
             lifecycle.bridgeDidRequestHide()
         case .click:
-            // Forwarded verbatim: what a tap means is decided above the bridge.
             lifecycle.bridgeDidClick(rawPayload: message.payloadString)
         default:
-            // Unreachable: the registry routes only what `actions` claims.
             break
         }
     }

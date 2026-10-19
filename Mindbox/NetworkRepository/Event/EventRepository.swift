@@ -19,6 +19,5 @@ protocol EventRepository {
     /// Tracker can route by the body's `status` field).
     func sendRaw(event: Event, completion: @escaping (Result<Data, MindboxError>) -> Void)
 
-    /// Cancels all ongoing network requests associated with this repository.
     func cancelAllRequests()
 }
