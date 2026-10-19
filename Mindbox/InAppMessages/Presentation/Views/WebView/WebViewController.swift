@@ -337,7 +337,7 @@ extension WebViewController: WebViewAction {
     func onTextEditingChanged(_ isEditing: Bool) {
         let apply = {
             if isEditing {
-                NotificationResponseKeyGuard.installIfNeeded()
+                HostEntryKeyGuard.installIfNeeded()
             }
             self.isEditingText = isEditing
             self.updateKeyWindow(in: self.windowProvider())

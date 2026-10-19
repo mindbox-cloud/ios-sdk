@@ -431,16 +431,45 @@ struct InAppKeyWindowTests {
         let selector = #selector(UNUserNotificationCenterDelegate.userNotificationCenter(_:didReceive:withCompletionHandler:))
         let before = class_getMethodImplementation(PushTapDelegateStandIn.self, selector)
 
-        NotificationResponseKeyGuard.guardResponses(of: PushTapDelegateStandIn.self, returner: KeyWindowReturnerSpy())
+        HostEntryKeyGuard.guardPushTaps(of: PushTapDelegateStandIn.self, returner: KeyWindowReturnerSpy())
         let wrapped = class_getMethodImplementation(PushTapDelegateStandIn.self, selector)
-        NotificationResponseKeyGuard.guardResponses(of: PushTapDelegateStandIn.self, returner: KeyWindowReturnerSpy())
+        HostEntryKeyGuard.guardPushTaps(of: PushTapDelegateStandIn.self, returner: KeyWindowReturnerSpy())
         let again = class_getMethodImplementation(PushTapDelegateStandIn.self, selector)
 
         #expect(wrapped != before)
         #expect(again == wrapped)
 
-        NotificationResponseKeyGuard.guardResponses(of: SilentDelegateStandIn.self, returner: KeyWindowReturnerSpy())
+        HostEntryKeyGuard.guardPushTaps(of: SilentDelegateStandIn.self, returner: KeyWindowReturnerSpy())
         #expect(class_getInstanceMethod(SilentDelegateStandIn.self, selector) == nil)
+    }
+
+    @Test("A scene's link handler gives key back to the host before the host's code runs, once")
+    func sceneLinkHandlerGivesKeyBackFirst() {
+        let returner = KeyWindowReturnerSpy()
+        HostEntryKeyGuard.guardSceneLinks(of: SceneDelegateStandIn.self, returner: returner)
+        HostEntryKeyGuard.guardSceneLinks(of: SceneDelegateStandIn.self, returner: KeyWindowReturnerSpy())
+        let delegate = SceneDelegateStandIn()
+        delegate.onLink = { returner.events.append("host") }
+
+        delegate.perform(#selector(UISceneDelegate.scene(_:openURLContexts:)), with: nil, with: NSSet())
+
+        #expect(returner.events == ["returnKey", "host"])
+    }
+
+    @Test("An application's link handler gives key back to the host before the host's code runs")
+    func applicationLinkHandlerGivesKeyBackFirst() throws {
+        let returner = KeyWindowReturnerSpy()
+        HostEntryKeyGuard.guardApplicationLinks(of: ApplicationDelegateStandIn.self, returner: returner)
+        let delegate = ApplicationDelegateStandIn()
+        delegate.onLink = { returner.events.append("host") }
+        let selector = #selector(UIApplicationDelegate.application(_:open:options:))
+        typealias Open = @convention(c) (AnyObject, Selector, AnyObject?, NSURL, NSDictionary) -> Bool
+        let open = unsafeBitCast(try #require(class_getMethodImplementation(ApplicationDelegateStandIn.self, selector)), to: Open.self)
+
+        let handled = open(delegate, selector, nil, NSURL(string: "app://catalog")!, NSDictionary())
+
+        #expect(handled)
+        #expect(returner.events == ["returnKey", "host"])
     }
 
     // MARK: Helpers
@@ -494,3 +523,20 @@ private final class PushTapDelegateStandIn: NSObject, UNUserNotificationCenterDe
 }
 
 private final class SilentDelegateStandIn: NSObject, UNUserNotificationCenterDelegate {}
+
+private final class SceneDelegateStandIn: NSObject, UISceneDelegate {
+    var onLink: () -> Void = {}
+
+    func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
+        onLink()
+    }
+}
+
+private final class ApplicationDelegateStandIn: NSObject, UIApplicationDelegate {
+    var onLink: () -> Void = {}
+
+    func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
+        onLink()
+        return true
+    }
+}
