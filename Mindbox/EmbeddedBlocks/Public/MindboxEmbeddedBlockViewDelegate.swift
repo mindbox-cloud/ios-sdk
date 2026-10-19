@@ -8,34 +8,29 @@
 
 import Foundation
 
-/// The events a host app can observe on `MindboxEmbeddedBlockView`.
+/// Receives the outcome of a ``MindboxEmbeddedBlockView``: the content is shown, the place has nothing
+/// to show, or the block failed.
 ///
-/// The block resolves into one of three outcomes: it is shown, there is nothing to show, or it
-/// failed. Intermediate states like "started loading" stay internal.
-///
-/// Every method has an empty default implementation, so only the interesting ones have to be
-/// written. Calls always arrive on the main thread. Every method hands back the view that fired
-/// it — with several blocks on screen, compare it against your own references (or give each block
-/// its own delegate) to tell them apart.
+/// Calls arrive on the main thread. Only a change of outcome is reported: the same outcome never
+/// arrives twice in a row, so a block that replaces its content and shows it again does not call
+/// ``MindboxEmbeddedBlockViewDelegate/mindboxEmbeddedBlockViewDidLoad(_:)`` again. A delegate
+/// assigned after the outcome receives the current one. Every method has an empty default
+/// implementation and passes the view that called it, to tell several blocks apart.
 public protocol MindboxEmbeddedBlockViewDelegate: AnyObject {
 
-    /// The block content is shown: the container has taken its own height and is visible. A block
-    /// that waited hidden takes that height here, growing from 0 — a host that measures the block
-    /// itself, a table or a collection view among them, remeasures the row on this call, as it does
-    /// on empty and failure.
+    /// The content is shown. A block that waited hidden takes its height at this point, growing from 0,
+    /// so a table or collection view that sizes the row itself should remeasure it here, as on empty
+    /// and failure.
     func mindboxEmbeddedBlockViewDidLoad(_ blockView: MindboxEmbeddedBlockView)
 
-    /// There is nothing to show at the place: no campaign behind its place system name, the
-    /// targeting or the A/B group did not match, the show budget is spent, or the page rendered
-    /// nothing. The container collapses to zero height; `errorView` does not apply. No reason is
-    /// given — which of these it was is the SDK's business.
+    /// There is nothing to show at the place: no campaign whose targeting and A/B group match, a show
+    /// limit is reached, or the page rendered nothing. The block collapses to zero height;
+    /// ``MindboxEmbeddedBlockView/errorView`` does not apply.
     func mindboxEmbeddedBlockViewDidBecomeEmpty(_ blockView: MindboxEmbeddedBlockView)
 
-    /// The block could not be shown: the SDK had no config or never answered, the page could not be
-    /// loaded, the content is malformed or the SDK hit an internal error. The container collapses to
-    /// zero height, or keeps its height and shows `errorView` when one is set — unless it waited
-    /// hidden: a block that never took its space does not take it for an error screen. `reason` says
-    /// why, for logs and analytics — match it with a `default`, a later SDK may add reasons.
+    /// The block could not be shown; `reason` says why, for logs and analytics. The block collapses to
+    /// zero height, or keeps its height and shows ``MindboxEmbeddedBlockView/errorView`` when one is set
+    /// and the block was taking its space.
     func mindboxEmbeddedBlockViewDidFail(_ blockView: MindboxEmbeddedBlockView,
                                          reason: MindboxEmbeddedBlockFailReason)
 }

@@ -9,38 +9,34 @@
 import UIKit
 import MindboxLogger
 
-/// A block created from a storyboard or xib.
+/// Setting up a block in a storyboard or xib.
 ///
-/// In the Identity Inspector set the class to `MindboxEmbeddedBlockView` and the module to `Mindbox`:
-/// without the module UIKit reports "Unknown class MindboxEmbeddedBlockView in Interface Builder
-/// file" and silently puts a plain `UIView` in its place. In the Attributes Inspector fill the
-/// inspectables: `placeSystemName` and `blockHeight` are required and mean what the initializer's
-/// `placeSystemName` and `height` mean; `loadingStrategyName`, `timeoutSeconds` and `animatesReveal`
-/// are optional.
-/// Constrain the position and the width only, the way a block from code is laid out — the height
-/// is the block's own, through `intrinsicContentSize`, and collapses to 0 when there is nothing to
-/// show. The `delegate` is assigned from code: outlets cannot hold it.
+/// 1. In the Identity Inspector set Class to `MindboxEmbeddedBlockView` and Module to `Mindbox`.
+///    Without the module UIKit logs "Unknown class MindboxEmbeddedBlockView in Interface Builder
+///    file" and silently puts a plain `UIView` in its place.
+/// 2. In the Attributes Inspector set ``placeSystemName`` and ``blockHeight`` (required), and
+///    optionally ``loadingStrategyName``, ``timeoutSeconds`` and ``animatesReveal``.
+/// 3. Constrain the position and width only: the block sets its own height.
+/// 4. Assign ``delegate`` in code.
 ///
-/// The view attributes are the host's, as on any view from a nib: the block keeps the background
-/// colour and the clipping given in the Attributes Inspector, where a block from code starts
-/// transparent and clipping. The page inside is transparent, so a background left at the inspector's
-/// default hides the host's background behind the block — set it to Clear Color to let it through.
+/// Unlike a block created in code, which is transparent and clips its content, a block from a nib
+/// keeps the background color and clipping set in Interface Builder. The page inside is
+/// transparent: set Background to Clear Color to let the host's background show through.
 ///
-/// The values are applied between `init(coder:)` and `awakeFromNib`, where the block builds itself
-/// from them; from then on they are read-only, like for a block from code: the setters are not
-/// public, and a key-value write after the build is ignored and reported.
+/// Interface Builder sets these values before `awakeFromNib()`, where the block builds itself.
+/// After that they are read-only: a key-value write is ignored and logged as an error.
 extension MindboxEmbeddedBlockView {
 
-    /// The height the block occupies when shown — the initializer's `height`. Required: left at 0,
-    /// the block reserves no space and stays invisible whatever loads. Not `height`: that name
-    /// collides with the `UIView` helpers many hosts carry, in Swift and in Objective-C alike.
+    /// The initializer's `height`. Required: 0 or less keeps the block invisible and is logged as
+    /// an error.
     @IBInspectable public private(set) var blockHeight: CGFloat {
         get { preferredHeight }
         set { applyInspectable("blockHeight") { preferredHeight = newValue } }
     }
 
     /// The initializer's `loadingStrategy` by name: `automatic`, `placeholder` or `hidden`, in any
-    /// letter case. Empty means `automatic`; any other name is reported and means `automatic` too.
+    /// letter case. Empty means `automatic`; any other name is logged as an error and means
+    /// `automatic` too.
     @IBInspectable public private(set) var loadingStrategyName: String {
         get { String(describing: loadingStrategy) }
         set {
@@ -52,8 +48,7 @@ extension MindboxEmbeddedBlockView {
         }
     }
 
-    /// The initializer's `timeout`, in seconds — not milliseconds like the Android attribute. Left
-    /// at 0 — the inspector's default — it means the SDK default of 30, and that is what reads back.
+    /// The initializer's `timeout`, in seconds. Unset, 0 or less means 30 and reads back as 30.
     @IBInspectable public private(set) var timeoutSeconds: Double {
         get { setup.timeout }
         set { applyInspectable("timeoutSeconds") { setup.timeout = Self.timeout(fromInspectableSeconds: newValue) } }

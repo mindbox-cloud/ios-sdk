@@ -8,12 +8,12 @@
 
 import Foundation
 
-/// Why a block could not be shown — the payload of `onFail`.
+/// Why a block could not be shown, passed to
+/// ``MindboxEmbeddedBlockViewDelegate/mindboxEmbeddedBlockViewDidFail(_:reason:)`` and to `onFail`.
 ///
-/// Meant for logs and analytics on the host side, not for branching: whatever the reason, the
-/// container has already collapsed or switched to `errorView`. A string-backed struct rather than
-/// an enum so a later SDK can add a reason without breaking an exhaustive `switch` — keep a
-/// `default` when matching. The raw values are the same on every platform.
+/// Meant for logs and analytics: by the time it arrives, the block has already collapsed or shown its
+/// error view. Later SDK versions may add reasons, so keep a `default` when matching. The raw values
+/// match the Mindbox Android SDK.
 public struct MindboxEmbeddedBlockFailReason: RawRepresentable, Hashable, Sendable, CustomStringConvertible {
 
     public let rawValue: String
@@ -22,16 +22,15 @@ public struct MindboxEmbeddedBlockFailReason: RawRepresentable, Hashable, Sendab
         self.rawValue = rawValue
     }
 
-    /// The content is unavailable because of the environment: the config could not be downloaded
-    /// and nothing is cached, the SDK gave no answer within the block's wait budget, the block's
-    /// page could not be loaded, or the segmentation, product segmentation or geo the targeting
-    /// needs could not be fetched — typically a network problem. A segmentation or geo fetch that
-    /// failed is not asked again within the session, whatever the reason; a block at that place
-    /// fails the same way until the next launch.
+    /// The content could not be obtained, typically because of the network: the SDK has no config, it
+    /// did not decide within the block's `timeout`, the block's page failed to load, or segment or geo
+    /// data the place's targeting needs could not be fetched. A failed customer segment or geo request
+    /// is not retried until the in-app session ends, so such a place keeps failing until then.
     public static let networkError = MindboxEmbeddedBlockFailReason(rawValue: "networkError")
 
-    /// An error on the Mindbox side: the page loaded but never reported its content or reported
-    /// something unusable, or the SDK failed inside.
+    /// A problem on the Mindbox side: the campaign at the place is not a valid embedded block, or its
+    /// page did not report its content within 7 seconds on screen or reported it in a form the SDK
+    /// cannot read.
     public static let internalError = MindboxEmbeddedBlockFailReason(rawValue: "internalError")
 
     public var description: String { rawValue }

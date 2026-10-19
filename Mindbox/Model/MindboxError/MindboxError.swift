@@ -9,24 +9,24 @@
 import Foundation
 import MindboxLogger
 
-/// Data types that thrown the possible errors from Mindbox.
+/// Errors the Mindbox SDK reports.
 public enum MindboxError: LocalizedError {
-    /// Client error
+    /// The API answered with status `ValidationError`.
     case validationError(ValidationError)
-    /// Request error/server error
+    /// The API rejected the request with HTTP 4xx.
     case protocolError(ProtocolError)
-    /// Error for code 5xx
+    /// The server failed with HTTP 5xx.
     case serverError(ProtocolError)
-    /// Internal mindbox errors wrapper
+    /// An error inside the SDK, such as a missing configuration or a response it could not parse.
     case internalError(InternalError)
-    /// Other response error
+    /// A response the SDK cannot use, such as a redirect.
     case invalidResponse(URLResponse?)
-    /// Error for connection failure
+    /// No response came from the server, for example without a network connection.
     case connectionError
-    /// Unhandled errors
+    /// Any other error.
     case unknown(Error)
 
-    /// Return a formatted error message
+    /// A readable description of the error.
     public var errorDescription: String? {
         switch self {
         case let .validationError(error):
@@ -147,8 +147,9 @@ public extension MindboxError {
         makeErrorJSON().convertToString()
     }
 
-    /// Data-only JSON without the `{type, data}` envelope — the WebView JS-bridge
-    /// `onError` contract. `createJSON()` must keep the envelope: RN/Flutter dispatch on it.
+    /// The error's `data` object alone, without the `{type, data}` envelope: the payload a WebView page
+    /// gets when `syncOperation` fails. ``createJSON()`` keeps the envelope, since the React Native and
+    /// Flutter SDKs dispatch on `type`.
     internal func createDataJSON() -> String {
         makeErrorJSON().convertDataToString()
     }

@@ -8,30 +8,24 @@
 
 import Foundation
 
-/// What the block shows until the SDK has decided what goes into it — given at creation.
-///
-/// Every place marked up in the app waits for the SDK on every launch, and a place with no campaign
-/// behind it would flash a placeholder and collapse each time. The strategy decides whether the block
-/// takes its space before the answer, and the SDK remembers per place whether content was ever shown
-/// there, so the layout does not jump where content is expected and does not flash where it is not.
-///
-/// `automatic` is the default.
+/// What the block shows while its content loads: a placeholder that takes the block's
+/// height, or nothing. Set when the block is created; the default is
+/// ``MindboxEmbeddedBlockLoadingStrategy/automatic``.
 public enum MindboxEmbeddedBlockLoadingStrategy: Sendable {
 
-    /// Hidden until the place has shown content once on this device; a placeholder from then on.
+    /// Hidden until content has been shown at this place on this device; a placeholder from then on.
     ///
-    /// The memory is per `placeSystemName` and survives a restart. It is dropped when the place
-    /// answers with nothing to show — the campaign was switched off, the targeting did not match, the
-    /// page rendered nothing — so the next launch starts hidden again. A failure keeps the memory:
-    /// that is "could not", not "nothing here".
+    /// The SDK remembers this per place system name across app launches. A place that turns out to
+    /// have nothing to show is forgotten, so the next block created there starts hidden again; a
+    /// failure keeps the record.
     case automatic
 
-    /// Always a placeholder until the answer: the SDK shimmer or the host's `placeholderView`.
+    /// A placeholder until content is shown: the host's own (``MindboxEmbeddedBlockView/placeholderView``
+    /// or ``MindboxEmbeddedBlock/placeholder(_:)``) or the SDK's shimmer.
     case placeholder
 
-    /// Hidden until the content is shown once: zero height, no placeholder, and no `errorView` on a
-    /// failure — a block that never took its space does not take it for an error screen either.
-    /// The outcome still arrives through `onFail`. A block that shows content keeps its space in
-    /// a placeholder while its page is replaced; only the next creation starts hidden again.
+    /// Zero height until the block has shown content: no placeholder, and no error view on a failure,
+    /// which is still reported to the delegate or `onFail`. Once it has shown content, the block shows
+    /// a placeholder while new content loads.
     case hidden
 }
