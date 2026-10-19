@@ -72,6 +72,10 @@ class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
         $heldFetches.exchange([]).forEach { $0() }
     }
 
+    func releaseOldestHeldFetch() {
+        $heldFetches.mutate { $0.isEmpty ? nil : $0.removeFirst() }?()
+    }
+
     func releaseHeldImageDownload() {
         $heldImageDownload.exchange(nil)?()
     }

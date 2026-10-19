@@ -194,6 +194,48 @@ struct InappRemainingTargetingTests {
         #expect(mockDataFacade.discardCollectedFailuresCalls == 0)
     }
 
+    @Test("A place resolve waits for the trigger pass ahead of it to finish before it swaps the event or fetches",
+          .tags(.remainingTargeting))
+    func placeResolve_waitsForTheTriggerPassAheadOfIt() async throws {
+        let config = try InappTargetingConfig.tagsFailedTargeting.getConfig()
+        let triggerEvent = ApplicationEvent(name: "nobody.listens", model: nil)
+        let placeTrigger = ApplicationEvent(name: "block.refresh", model: nil)
+        let triggerAnswers = Locked<[String?]>(wrappedValue: [])
+        let placeAnswers = Locked<[EmbeddedPlaceSelection]>(wrappedValue: [])
+        func expectThePlaceStillWaits(fetchesSoFar: Int, _ moment: String) async throws {
+            try await Task.sleep(nanoseconds: 300_000_000)
+            #expect(mockDataFacade.fetchDependenciesCalls == fetchesSoFar, "the place resolve fetched \(moment)")
+            #expect(targetingChecker.event?.name == triggerEvent.name, "the place resolve swapped the event \(moment)")
+        }
+        mockDataFacade.holdsFetches = true
+
+        mapper.handleInapps(triggerEvent, config.candidates) { formData in
+            triggerAnswers.mutate { $0.append(formData?.inAppId) }
+        }
+        let held = await pollUntil(deadline: 5, value: { mockDataFacade.heldFetchCount }, condition: { $0 == 1 })
+        try #require(held == 1, "the trigger pass never reached its fetch")
+
+        mapper.selectInappForPlace("place-nobody-addresses", trigger: placeTrigger, config.candidates) { selection in
+            placeAnswers.mutate { $0.append(selection) }
+        }
+        try await expectThePlaceStillWaits(fetchesSoFar: 1, "while the trigger pass waited for its selection")
+
+        mockDataFacade.releaseOldestHeldFetch()
+        let fetches = await pollUntil(deadline: 5, value: { mockDataFacade.fetchDependenciesCalls }, condition: { $0 >= 2 })
+        try #require(fetches >= 2, "the trigger pass never reached its catch-up")
+        try await expectThePlaceStillWaits(fetchesSoFar: 2, "between the trigger pass's selection and its catch-up")
+
+        mockDataFacade.releaseHeldFetches()
+
+        let answered = await pollUntil(deadline: 5,
+                                       value: { (trigger: triggerAnswers.wrappedValue, place: placeAnswers.wrappedValue) },
+                                       condition: { $0.trigger.count == 1 && $0.place.count == 1 })
+        #expect(answered.trigger == [nil])
+        #expect(answered.place == [.decided(nil)])
+        #expect(mockDataFacade.fetchDependenciesCalls == 3)
+        #expect(targetingChecker.event?.name == placeTrigger.name)
+    }
+
     @Test("Shown in-app propagates its tags into trackTargeting and downloadImage", .tags(.remainingTargeting, .inAppTags))
     func shownInapp_propagatesTagsToTrackTargetingAndDownloadImage() async throws {
         let config = try InappTargetingConfig.tagsFailedTargeting.getConfig()
