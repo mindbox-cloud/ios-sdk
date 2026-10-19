@@ -247,6 +247,8 @@ public final class MindboxEmbeddedBlockView: UIView {
         didSet {
             updateTimeout(from: oldValue)
             apply(state)
+            if case .failed = state { Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': content failed — \(shownAppearance == .error ? "showing the host's error view" : "collapsing")",
+                                                    category: .embeddedBlocks) }
         }
     }
 
@@ -493,7 +495,7 @@ public final class MindboxEmbeddedBlockView: UIView {
             runtime.contentProvider.start()
             runtime.waitBudget.armIfNeeded()
         } else {
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' \(reason), stopping content",
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' \(reason), \(isReleased ? "stopping" : "pausing") content",
                           category: .embeddedBlocks)
             // A pause, not a reset: leaving the window does not cancel an attempt already started.
             runtime.waitBudget.pause()
@@ -660,6 +662,7 @@ public final class MindboxEmbeddedBlockView: UIView {
     private func refreshErrorView() {
         guard shownAppearance == .error else { return }
 
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the host replaced the error view", category: .embeddedBlocks)
         apply(state)
     }
 

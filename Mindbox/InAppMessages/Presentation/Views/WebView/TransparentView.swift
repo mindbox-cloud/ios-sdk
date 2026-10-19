@@ -33,6 +33,8 @@ final class TransparentView: UIView {
     /// later ready-check give-up (a post-load navigation dropped the bridge) has no other
     /// closing authority — it must close the show itself.
     private var hasReceivedInit = false
+    /// When the current wait for `init` started; nil once `init` came or the wait timed out.
+    private var initWaitStartedAt: TimeInterval?
     private var hasEndedBridgeSession = false
     private var hasCapturedObservedHosts = false
     private let noCacheRetryPolicy: WebViewNoCacheRetryPolicy
@@ -118,9 +120,7 @@ final class TransparentView: UIView {
         setupTimeoutTimer()
 
         facade?.loadHTML(baseUrl: baseUrl, contentUrl: contentUrl) { [weak self] in
-            self?.delegate?.closeLoadFailedWebViewVC(
-                reason: "[WebView] Failed to load HTML content from baseUrl=\(baseUrl), contentUrl=\(contentUrl)"
-            )
+            self?.delegate?.closeLoadFailedWebViewVC(reason: "Failed to fetch page HTML")
         }
     }
 
@@ -138,6 +138,9 @@ final class TransparentView: UIView {
     }
 
     func endShow() {
+        if !hasReceivedInit, let waited = takeInitWait() {
+            Logger.common(message: "[WebView] In-app \(inAppId): closed before init after \(waited)", category: .webViewInAppMessages)
+        }
         endBridgeSession()
         captureObservedResourceHosts()
         facade?.endShow()
@@ -172,10 +175,19 @@ final class TransparentView: UIView {
     private func setupTimeoutTimer() {
         quizInitTimeoutWorkItem?.cancel()
         let workItem = DispatchWorkItem { [weak self] in
+            self?.initWaitStartedAt = nil
             self?.delegate?.closeTimeoutWebViewVC()
         }
         quizInitTimeoutWorkItem = workItem
+        if initWaitStartedAt == nil { initWaitStartedAt = ProcessInfo.processInfo.systemUptime }
         DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(Constants.WebView.timeoutSeconds), execute: workItem)
+    }
+
+    /// How long the page has been waited for, as "2.37s", or nil when no wait is running; ends the wait.
+    private func takeInitWait() -> String? {
+        guard let startedAt = initWaitStartedAt else { return nil }
+        initWaitStartedAt = nil
+        return String(format: "%.2fs", ProcessInfo.processInfo.systemUptime - startedAt)
     }
 }
 
@@ -233,6 +245,9 @@ extension TransparentView: WebBridgeLifecycleHosting {
         // First, before anything else can read it: the no-cache retry policy decides whether a
         // failed subresource is worth healing by asking whether the page ever booted, and a
         // late flag silently disables that.
+        if !hasReceivedInit, let waited = takeInitWait() {
+            Logger.common(message: "[WebView] In-app \(inAppId): init received after \(waited)", category: .webViewInAppMessages)
+        }
         hasReceivedInit = true
         quizInitTimeoutWorkItem?.cancel()
         // The page has proven it can boot — drop the retained retry content (mirror of
@@ -318,7 +333,7 @@ extension TransparentView: WebBridgeNavigationDelegate {
 
     func webBridge(_ bridge: MindboxWebBridge, didFinishNavigation url: URL?) {
         let urlString = url?.absoluteString ?? "unknown"
-        Logger.common(message: "[WebView] WKNavigationDelegate: Upload completed \(urlString)", category: .webViewInAppMessages)
+        Logger.common(message: "[WebView] WKNavigationDelegate: finished loading \(urlString)", category: .webViewInAppMessages)
         guard !hasEndedBridgeSession else { return }
 
         // Avoid duplicate checks on multiple didFinish calls for the same URL.
@@ -349,10 +364,9 @@ extension TransparentView: WebBridgeNavigationDelegate {
             // anyway; the flag above lets that timeout report the real category. After
             // `init` the timeout is already cancelled, so a give-up here (a post-load
             // navigation dropped the bridge) is the only signal left — close now, else the
-            // in-app stays up with a dead bridge. The give-up flag makes this report
-            // webview_presentation_failed, matching the pre-refactor behavior.
+            // in-app stays up with a dead bridge, reported as webview_presentation_failed.
             if self.hasReceivedInit {
-                self.delegate?.closeTimeoutWebViewVC()
+                self.delegate?.closeBridgeLostWebViewVC()
             }
         })
     }
@@ -393,7 +407,7 @@ extension TransparentView: WebBridgeNavigationDelegate {
     func webBridge(_ bridge: MindboxWebBridge, didFailProvisionalNavigation url: URL?, error: any Error) {
         Logger.common(message: "[WebView] WKNavigationDelegate: Loading error \(error.localizedDescription)", category: .webViewInAppMessages)
         delegate?.closeLoadFailedWebViewVC(
-            reason: "[WebView] WKNavigation loading failed for URL \(url?.absoluteString ?? "unknown"): \(error.localizedDescription)"
+            reason: "Page failed to load: \((error as NSError).code) \(error.localizedDescription)"
         )
     }
     

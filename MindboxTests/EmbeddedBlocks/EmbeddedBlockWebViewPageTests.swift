@@ -354,7 +354,7 @@ private final class PageBed {
                                         registry: registry,
                                         actionRegistry: actionRegistry,
                                         noCacheRetryPolicy: WebViewNoCacheRetryPolicy { isCacheFeatureEnabled })
-        page.onLoadFailure = { [weak self] in
+        page.onLoadFailure = { [weak self] _ in
             self?.failures += 1
         }
         page.onShowableQuestion = { [weak self] ids, completion in

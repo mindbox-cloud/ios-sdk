@@ -358,6 +358,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             entry = ConfigEntry(candidates: candidates, sessionEpoch: sessionEpoch, version: entry.version.next)
             return entry
         }
+        Logger.common(message: "[InAppConfigurationManager] Config \(entry.version) is ready", category: .inAppMessages)
         hasConcludedDownload = true
 
         let waiters = configWaiters

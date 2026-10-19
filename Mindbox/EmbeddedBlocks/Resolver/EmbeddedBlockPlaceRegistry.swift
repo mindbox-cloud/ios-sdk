@@ -156,7 +156,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
 
         for place in placesWithActiveBlocks() {
             if resolvingPlaces[place] != nil {
-                Logger.common(message: "[EmbeddedBlock] Place '\(place)': config \(version) arrived while its pass is in flight — that pass answers from it or is asked again when it lands",
+                Logger.common(message: "[EmbeddedBlock] Place '\(place)': config \(version) arrived mid-resolve",
                               category: .embeddedBlocks)
             } else if let answeredFrom = answeredPasses[place]?.configVersion, answeredFrom >= version {
                 Logger.common(message: "[EmbeddedBlock] Place '\(place)': already answered from config \(version) — not asking again",
@@ -176,6 +176,7 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
                 continue
             }
 
+            Logger.common(message: "[EmbeddedBlock] A new session began, asking place '\(place)' again", category: .embeddedBlocks)
             requestResolve(place: place, cause: .newSession(operations[place]?.first))
             operations[place]?.dropFirst().forEach { requestResolve(place: place, cause: .operation($0)) }
         }
@@ -394,8 +395,6 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         case nil:
             return nil
         case .refused?:
-            Logger.common(message: "[EmbeddedBlock] Place '\(place)': in-app \(content.inAppId) won it, but the show budgets are spent — the place stays empty",
-                          category: .embeddedBlocks)
             return answer.with(.empty)
         case .granted?, .notNeeded?:
             return answer
