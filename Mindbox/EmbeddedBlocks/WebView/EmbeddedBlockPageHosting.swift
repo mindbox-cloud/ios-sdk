@@ -40,7 +40,7 @@ protocol EmbeddedBlockPageHosting: AnyObject {
 
     /// The page failed to load — the markup fetch or the navigation itself. Delivered on the
     /// main thread.
-    var onLoadFailure: (() -> Void)? { get set }
+    var onLoadFailure: ((String) -> Void)? { get set }
 
     /// Whether the block is on screen for the user. The provider keeps it current; the page's
     /// bridge reads it before doing anything on the user's behalf, such as opening a link.

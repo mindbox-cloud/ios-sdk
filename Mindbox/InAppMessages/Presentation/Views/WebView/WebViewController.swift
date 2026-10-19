@@ -222,13 +222,12 @@ extension WebViewController: WebVCDelegate {
     }
     
     func closeTimeoutWebViewVC() {
-        Logger.common(message: "[WebView] WebViewVC closeTimeoutOrErrorWebViewVC", category: .webViewInAppMessages)
-        reportErrorAndClose(
-            Self.timeoutError(
-                readyCheckFailure: transparentWebView?.readyCheckFailure,
-                httpErrorDetail: transparentWebView?.noCacheRetryTelemetryDetail
-            )
+        let error = Self.timeoutError(
+            readyCheckFailure: transparentWebView?.readyCheckFailure,
+            httpErrorDetail: transparentWebView?.noCacheRetryTelemetryDetail
         )
+        Logger.common(message: "[WebView] In-app \(id) closed: \(error.failureDetails ?? "")", category: .webViewInAppMessages)
+        reportErrorAndClose(error)
     }
 
     /// The init timeout is the single closing authority, but monitoring must still tell

@@ -371,8 +371,8 @@ final class EmbeddedBlockWebViewProvider {
         page.onDataPushConfirmed = { [weak self] in
             self?.dataPushWait.acknowledge()
         }
-        page.onLoadFailure = { [weak self] in
-            self?.handleLoadFailure()
+        page.onLoadFailure = { [weak self] details in
+            self?.handleLoadFailure(details)
         }
         self.page = page
         self.content = fresh
@@ -430,8 +430,8 @@ final class EmbeddedBlockWebViewProvider {
         onStateChange?(newOutcome)
     }
 
-    func handleLoadFailure() {
-        fail(.webviewLoadFailed, "Page failed to load")
+    func handleLoadFailure(_ details: String) {
+        fail(.webviewLoadFailed, details)
     }
 
     func failSilentPage() {

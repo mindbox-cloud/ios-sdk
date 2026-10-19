@@ -34,7 +34,7 @@ final class TransparentView: UIView {
     /// closing authority — it must close the show itself.
     private var hasReceivedInit = false
     /// When the current wait for `init` started; nil once `init` came or the wait timed out.
-    private var initWaitStartedAt: Date?
+    private var initWaitStartedAt: TimeInterval?
     private var hasEndedBridgeSession = false
     private var hasCapturedObservedHosts = false
     private let noCacheRetryPolicy: WebViewNoCacheRetryPolicy
@@ -139,7 +139,7 @@ final class TransparentView: UIView {
 
     func endShow() {
         if !hasReceivedInit, let waited = takeInitWait() {
-            Logger.common(message: "[WebView] Closed before init after \(waited)", category: .webViewInAppMessages)
+            Logger.common(message: "[WebView] In-app \(inAppId): closed before init after \(waited)", category: .webViewInAppMessages)
         }
         endBridgeSession()
         captureObservedResourceHosts()
@@ -179,7 +179,7 @@ final class TransparentView: UIView {
             self?.delegate?.closeTimeoutWebViewVC()
         }
         quizInitTimeoutWorkItem = workItem
-        initWaitStartedAt = Date()
+        if initWaitStartedAt == nil { initWaitStartedAt = ProcessInfo.processInfo.systemUptime }
         DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(Constants.WebView.timeoutSeconds), execute: workItem)
     }
 
@@ -187,7 +187,7 @@ final class TransparentView: UIView {
     private func takeInitWait() -> String? {
         guard let startedAt = initWaitStartedAt else { return nil }
         initWaitStartedAt = nil
-        return String(format: "%.2fs", Date().timeIntervalSince(startedAt))
+        return String(format: "%.2fs", ProcessInfo.processInfo.systemUptime - startedAt)
     }
 }
 
@@ -246,7 +246,7 @@ extension TransparentView: WebBridgeLifecycleHosting {
         // failed subresource is worth healing by asking whether the page ever booted, and a
         // late flag silently disables that.
         if !hasReceivedInit, let waited = takeInitWait() {
-            Logger.common(message: "[WebView] Init received after \(waited)", category: .webViewInAppMessages)
+            Logger.common(message: "[WebView] In-app \(inAppId): init received after \(waited)", category: .webViewInAppMessages)
         }
         hasReceivedInit = true
         quizInitTimeoutWorkItem?.cancel()

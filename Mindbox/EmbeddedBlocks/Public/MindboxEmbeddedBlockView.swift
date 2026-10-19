@@ -247,6 +247,7 @@ public final class MindboxEmbeddedBlockView: UIView {
         didSet {
             updateTimeout(from: oldValue)
             apply(state)
+            if case .failed = state { Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': content failed — \(shownAppearance == .error ? "showing the host's error view" : "collapsing")", category: .embeddedBlocks) }
         }
     }
 
@@ -557,10 +558,6 @@ public final class MindboxEmbeddedBlockView: UIView {
         shownAppearance = appearance(for: state)
         updatePlaceMemory(for: state)
 
-        if case .failed = state {
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': content failed — \(shownAppearance == .error ? "showing the host's error view" : "collapsing")", category: .embeddedBlocks)
-        }
-
         switch shownAppearance {
         case .collapsed, .error: hasSettled = true
         case .content: hasSettled = false
@@ -664,6 +661,7 @@ public final class MindboxEmbeddedBlockView: UIView {
     private func refreshErrorView() {
         guard shownAppearance == .error else { return }
 
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the host replaced the error view", category: .embeddedBlocks)
         apply(state)
     }
 

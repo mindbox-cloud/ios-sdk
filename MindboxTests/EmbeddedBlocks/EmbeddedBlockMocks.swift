@@ -187,7 +187,7 @@ final class EmbeddedBlockPageMock: EmbeddedBlockPageHosting {
 
     var onDataPushConfirmed: (() -> Void)?
 
-    var onLoadFailure: (() -> Void)?
+    var onLoadFailure: ((String) -> Void)?
 
     var isUserPresent = true
 
@@ -231,7 +231,7 @@ final class EmbeddedBlockPageMock: EmbeddedBlockPageHosting {
     }
 
     func failLoad() {
-        onLoadFailure?()
+        onLoadFailure?("Failed to fetch page HTML")
     }
 
     func reportRendered(_ count: Int) {
