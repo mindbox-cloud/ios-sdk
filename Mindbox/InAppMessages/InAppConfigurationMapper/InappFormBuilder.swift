@@ -13,9 +13,11 @@ import MindboxLogger
 struct InappFormBuilder {
 
     private let dataFacade: InAppConfigurationDataFacadeProtocol
+    private let imageFailures: ImageFailureReport
 
-    init(dataFacade: InAppConfigurationDataFacadeProtocol) {
+    init(dataFacade: InAppConfigurationDataFacadeProtocol, imageFailures: ImageFailureReport) {
         self.dataFacade = dataFacade
+        self.imageFailures = imageFailures
     }
 
     /// Blocking by design — callers walk a list and stop at the first buildable in-app. Must not run
@@ -50,7 +52,7 @@ struct InappFormBuilder {
         for imageValue in imageValues {
             group.enter()
             Logger.common(message: "[InappFormBuilder] Initiating the process of image loading from the URL: \(imageValue)", level: .debug, category: .inAppMessages)
-            dataFacade.downloadImage(withUrl: imageValue, inappId: inapp.inAppId, tags: inapp.tags) { result in
+            dataFacade.downloadImage(withUrl: imageValue, inappId: inapp.inAppId, tags: inapp.tags, failureReport: imageFailures) { result in
                 defer {
                     group.leave()
                 }

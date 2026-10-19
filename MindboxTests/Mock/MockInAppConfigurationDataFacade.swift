@@ -24,7 +24,7 @@ class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
     @Locked public var targetingArray: [String] = []
     @Locked public var trackTargetingCalls: [(id: String?, tags: [String: String]?)] = []
     @Locked public var downloadImageError: MindboxError?
-    @Locked public var imageDownloadFailures: [(inappId: String, details: String?)] = []
+    @Locked public var imageDownloadFailures: [(inappId: String, details: String?, report: ImageFailureReport)] = []
     @Locked public var downloadImageTags: [String: [String: String]?] = [:]
     @Locked public var collectedTargetingFailureIds: [Set<String>] = []
     @Locked public var collectedTagsByInappId: [[String: [String: String]]] = []
@@ -33,6 +33,15 @@ class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
     @Locked public var discardCollectedFailuresCalls = 0
     /// What `collectTargetingFailures` answers: whether a cut candidate could not be checked.
     @Locked public var cutByFetchFailure = false
+    @Locked public var holdsFetches = false
+    @Locked private var heldFetches: [() -> Void] = []
+
+    var heldFetchCount: Int { heldFetches.count }
+
+    @Locked public var holdsNextImageDownload = false
+    @Locked private var heldImageDownload: (() -> Void)?
+
+    var holdsAnImageDownload: Bool { heldImageDownload != nil }
 
     init(segmentationService: SegmentationServiceProtocol,
          targetingChecker: InAppTargetingCheckerProtocol,
@@ -50,16 +59,50 @@ class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
         _ completion: @escaping () -> Void
     ) {
         fetchDependenciesCalls += 1
+        guard !holdsFetches else {
+            $heldFetches.mutate { $0.append(completion) }
+            return
+        }
+
         completion()
     }
 
-    func downloadImage(withUrl url: String, inappId: String, tags: [String: String]?, completion: @escaping (Result<UIImage, MindboxError>) -> Void) {
+    func releaseHeldFetches() {
+        holdsFetches = false
+        $heldFetches.exchange([]).forEach { $0() }
+    }
+
+    func releaseHeldImageDownload() {
+        $heldImageDownload.exchange(nil)?()
+    }
+
+    func downloadImage(withUrl url: String,
+                       inappId: String,
+                       tags: [String: String]?,
+                       failureReport: ImageFailureReport,
+                       completion: @escaping (Result<UIImage, MindboxError>) -> Void) {
+        let download = {
+            self.completeImageDownload(url: url, inappId: inappId, tags: tags, failureReport: failureReport, completion: completion)
+        }
+        guard !$holdsNextImageDownload.exchange(false) else {
+            heldImageDownload = download
+            return
+        }
+
+        download()
+    }
+
+    private func completeImageDownload(url: String,
+                                       inappId: String,
+                                       tags: [String: String]?,
+                                       failureReport: ImageFailureReport,
+                                       completion: @escaping (Result<UIImage, MindboxError>) -> Void) {
         downloadImageTags[inappId] = tags
         if let downloadImageError {
             switch downloadImageError {
             case .serverError, .protocolError, .unknown:
                 let details = "Image URL: \(url). \(downloadImageError.localizedDescription)"
-                imageDownloadFailures.append((inappId: inappId, details: details))
+                imageDownloadFailures.append((inappId: inappId, details: details, report: failureReport))
             default:
                 break
             }

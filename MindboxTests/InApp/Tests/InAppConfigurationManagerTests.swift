@@ -198,6 +198,8 @@ struct InAppConfigurationManagerTests {
             featureToggleManager: DI.injectOrFail(FeatureToggleManager.self),
             webViewPrewarmService: DI.injectOrFail(InAppWebViewPrewarmServiceProtocol.self),
             inappFilterService: inappFilterService,
+            requestedInappBuilder: RequestedInappBuilder(inappFilterService: inappFilterService,
+                                                         dataFacade: DI.injectOrFail(InAppConfigurationDataFacadeProtocol.self)),
             configWaitBudget: configWaitBudget,
             now: now,
             notificationCenter: notificationCenter
@@ -899,5 +901,52 @@ struct InAppConfigurationManagerTests {
         let answer = try #require(answers.first)
         #expect(answer.selection == .decided(nil))
         #expect(answer.sessionEpoch == later)
+    }
+
+    private func heldTriggerPass(event: ApplicationEvent?) async throws -> (facade: MockInAppConfigurationDataFacade, passAnswers: Answers<String?>) {
+        let facade = try #require(DI.injectOrFail(InAppConfigurationDataFacadeProtocol.self) as? MockInAppConfigurationDataFacade)
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.data(try fixtureData()))
+        try await waitUntil(manager.hasConfig)
+
+        facade.holdsFetches = true
+        let passAnswers = Answers<String?>()
+        manager.handleInapps(event: event) { passAnswers.append($0?.inAppId) }
+        try await waitUntil(facade.heldFetchCount == 1)
+        return (facade, passAnswers)
+    }
+
+    @Test("A requested show is answered while a trigger pass still waits for its segment check")
+    func requestedShowDoesNotWaitForAHeldPass() async throws {
+        let (facade, passAnswers) = try await heldTriggerPass(event: nil)
+
+        let shown = Answers<String?>()
+        manager.getInAppToShowById(Constants.liveStoryId, params: [:]) { shown.append($0?.inAppId) }
+
+        try await waitUntil(!shown.isEmpty)
+        #expect(shown.all == [Constants.liveStoryId])
+        #expect(passAnswers.isEmpty)
+
+        facade.releaseHeldFetches()
+        try await waitUntil(!passAnswers.isEmpty)
+    }
+
+    @Test("A requested show leaves the event and the failure buffer of a pass it overtakes alone")
+    func requestedShowLeavesAHeldPassAlone() async throws {
+        let event = ApplicationEvent(name: "nobody.listens", model: nil)
+        let (facade, passAnswers) = try await heldTriggerPass(event: event)
+        let checker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
+
+        let shown = Answers<String?>()
+        manager.getInAppToShowById(Constants.liveStoryId, params: [:]) { shown.append($0?.inAppId) }
+
+        try await waitUntil(!shown.isEmpty)
+        #expect(checker.event?.name == event.name)
+        #expect(facade.sendCollectedFailuresCalls == 0)
+        #expect(facade.discardCollectedFailuresCalls == 0)
+
+        facade.releaseHeldFetches()
+        try await waitUntil(!passAnswers.isEmpty)
     }
 }
