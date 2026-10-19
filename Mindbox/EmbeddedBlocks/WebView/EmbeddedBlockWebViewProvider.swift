@@ -78,6 +78,9 @@ final class EmbeddedBlockWebViewProvider {
 
     private let dataPushWait: EmbeddedBlockDataPushWait
 
+    /// Internal for the tests that pin the release of a block let go with a push unconfirmed.
+    var isAwaitingDataPushConfirmation: Bool { dataPushWait.isAwaitingConfirmation }
+
     private(set) var deferred = EmbeddedBlockDeferredAnswers()
 
     init(placeSystemName: String,

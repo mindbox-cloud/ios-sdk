@@ -14,7 +14,9 @@ import WebKit
 
 /// The whole web chain of a block — container, provider, page, facade, WKWebView and bridge —
 /// must go when the block does, whatever it was doing. No mocks on the web side: the markup
-/// comes from a `data:` URL, so nothing touches the network.
+/// comes from a `data:` URL, so nothing touches the network. What the page would say — `ready`,
+/// `contentRendered` — the test says for it through the bridge's own delegate path: CI's
+/// simulator runs no page script, and the release is about the native objects anyway.
 @Suite("Embedded block release, real web chain", .tags(.embeddedBlocks), .serialized)
 @MainActor
 struct EmbeddedBlockReleaseTests {
@@ -61,7 +63,7 @@ struct EmbeddedBlockReleaseTests {
 
     @Test("A block whose page stayed silent until the timeout is released whole")
     func blockTimedOutIsReleased() async {
-        let chain = Chain(reports: false)
+        let chain = Chain()
 
         await chain.exercise { block in
             block.attach()
@@ -117,6 +119,7 @@ struct EmbeddedBlockReleaseTests {
             block.attach()
             await block.waitUntilLoaded()
             await chain.pushNewData()
+            #expect(block.provider.isAwaitingDataPushConfirmation, "the page was told and owes a confirmation")
         }
 
         chain.expectReleased()
@@ -189,14 +192,31 @@ private final class Chain {
     @MainActor
     final class Block {
         let view: MindboxEmbeddedBlockView
+        let provider: EmbeddedBlockWebViewProvider
         let outcomes = EmbeddedBlockViewDelegateMock()
         let waitBudget: EmbeddedBlockWaitBudgetBed
         private let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 320, height: 480))
+        private let latestPage: () -> EmbeddedBlockWebViewPage?
 
-        init(view: MindboxEmbeddedBlockView, waitBudget: EmbeddedBlockWaitBudgetBed) {
+        init(view: MindboxEmbeddedBlockView,
+             provider: EmbeddedBlockWebViewProvider,
+             waitBudget: EmbeddedBlockWaitBudgetBed,
+             latestPage: @escaping () -> EmbeddedBlockWebViewPage?) {
             self.view = view
+            self.provider = provider
             self.waitBudget = waitBudget
+            self.latestPage = latestPage
             view.delegate = outcomes
+        }
+
+        /// What the page's script would post, handed to the page the way the bridge hands it.
+        func report(_ action: BridgeMessage.Action, _ payload: [String: JSONValue] = [:]) {
+            guard let page = latestPage(), let facade = page.facade as? MindboxWebViewFacade else {
+                Issue.record("no page to report from")
+                return
+            }
+
+            page.webBridge(facade.bridge, didReceiveBridgeMessage: .pageRequest(action, payload))
         }
 
         func reload() {
@@ -208,10 +228,11 @@ private final class Chain {
             window.addSubview(view)
         }
 
-        /// Up to 20 s: the first page of a run waits for WebKit's content process to start, over 2 s
-        /// on a laptop and past 3 s on CI.
+        /// The page boots and draws one item; the outcome reaches the delegate on a later turn.
         func waitUntilLoaded() async {
-            for _ in 0..<400 where outcomes.events.isEmpty {
+            report(.ready)
+            report(.contentRendered, ["count": .int(1)])
+            for _ in 0..<100 where outcomes.events.isEmpty {
                 await settle(0.05)
             }
             #expect(outcomes.events == [.loaded])
@@ -237,10 +258,9 @@ private final class Chain {
     private var heldBlocks: [HeldBlock] = []
     private var heldPages: [HeldPage] = []
 
-    /// `reports: false` — a page that never says anything, for the timeout.
-    init(reports: Bool = true) {
+    init() {
         TestConfiguration.configure()
-        resolver = EmbeddedBlockResolverMock(resolution: .content(Self.content(reports: reports)))
+        resolver = EmbeddedBlockResolverMock(resolution: .content(Self.content))
         presenceBed = AppPresenceBed(center: center)
         placeRegistry = EmbeddedBlockPlaceRegistry(resolver: resolver,
                                                    budget: InappShowBudgetMock(),
@@ -276,7 +296,7 @@ private final class Chain {
                                                 placeMemory: EmbeddedBlockPlaceMemoryMock(),
                                                 loadingStrategy: .placeholder,
                                                 makeWaitBudget: { _, _ in waitBudget.budget })
-            let block = Block(view: view, waitBudget: waitBudget)
+            let block = Block(view: view, provider: provider, waitBudget: waitBudget, latestPage: { [weak self] in self?.lastPage })
             await body(block)
 
             held.view = view
@@ -315,9 +335,9 @@ private final class Chain {
     }
 
     /// The same page with new params, announced as a new config: what a changed config pushes into
-    /// a live page. Waits until the page hears of it — it never confirms.
+    /// a live page. Waits until the push is on its way — the page never confirms it.
     func pushNewData() async {
-        let content = Self.content(reports: true)
+        let content = Self.content
         resolver.resolution = .content(EmbeddedBlockWebContent(inAppId: content.inAppId,
                                                                baseUrl: content.baseUrl,
                                                                contentUrl: content.contentUrl,
@@ -328,49 +348,17 @@ private final class Chain {
                     object: nil,
                     userInfo: [Constants.Notification.configVersion: resolver.publishConfig()])
 
-        var heard: [String] = []
-        for _ in 0..<100 where !heard.contains(BridgeMessage.Action.initDataUpdated.rawValue) {
-            await settle(0.05)
-            heard = await actionsHeardByLastPage()
-        }
-        #expect(heard.contains(BridgeMessage.Action.initDataUpdated.rawValue))
+        await settle(0.2)
     }
 
-    private func actionsHeardByLastPage() async -> [String] {
-        guard let facade = lastPage?.facade else { return [] }
-
-        return await withCheckedContinuation { continuation in
-            facade.evaluateJavaScript("window.heard || []") { result in
-                continuation.resume(returning: (try? result.get()) as? [String] ?? [])
-            }
-        }
-    }
-
-    /// A page served from a `data:` URL that boots, writes down every action the SDK sends it and
-    /// reports one rendered item on its own — or a page that says nothing at all.
-    static func content(reports: Bool) -> EmbeddedBlockWebContent {
-        let handler = "window.webkit.messageHandlers.\(Constants.WebViewBridgeJS.handlerName)"
-        let script = """
-        <script>
-        window.heard = [];
-        window.bridgeMessagesHandlers = {emit: function (json) { window.heard.push(JSON.parse(json).action); }};
-        function request(action, payload, id) {
-            \(handler).postMessage(JSON.stringify({version: 1, type: "request", action: action,
-                                                  payload: JSON.stringify(payload), id: id, timestamp: Date.now()}));
-        }
-        request("ready", {}, "6F9619FF-8B86-D011-B42D-00C04FC964FE");
-        request("contentRendered", {count: 1}, "6F9619FF-8B86-D011-B42D-00C04FC964FF");
-        </script>
-        """
-        let html = "<!doctype html><html><body>release test\(reports ? script : "")</body></html>"
-        let encoded = Data(html.utf8).base64EncodedString()
-        return EmbeddedBlockWebContent(inAppId: "release-inapp",
-                                       baseUrl: "https://inapp.local/release",
-                                       contentUrl: "data:text/html;base64,\(encoded)",
-                                       frequency: .unlimited,
-                                       tags: nil,
-                                       params: [:])
-    }
+    /// A page served from a `data:` URL, with nothing to say on its own.
+    static let content = EmbeddedBlockWebContent(
+        inAppId: "release-inapp",
+        baseUrl: "https://inapp.local/release",
+        contentUrl: "data:text/html;base64,\(Data("<!doctype html><html><body>release test</body></html>".utf8).base64EncodedString())",
+        frequency: .unlimited,
+        tags: nil,
+        params: [:])
 }
 
 /// Yields the main actor: the main queue drains the block's deliveries and WebKit's callbacks,
