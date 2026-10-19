@@ -34,7 +34,7 @@ final class MotionActionHandler: WebBridgeActionHandler {
 
     private let makeService: () -> MotionServiceProtocol
 
-    /// Told when the page starts or stops listening for a shake: the window must be key to hear one.
+    /// Told when the page starts or stops listening for a shake: the system shake is then heard at the application.
     var onShakeListeningChanged: ((Bool) -> Void)?
 
     private(set) var isListeningForShake = false {

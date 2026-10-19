@@ -23,10 +23,10 @@ protocol PresentationStrategyProtocol {
 /// It does not take key from the host: on a deeplink a host often routes from the key window,
 /// and finding our controller there instead of its own crashes it or loses the screen it opens.
 /// A touch makes a window key by itself, so refusing key is the only way to stay out of the way.
-/// The exception is a page listening for a shake: the system delivers a shake to the key window alone.
+/// The exception is a page editing text: the keyboard types into the key window alone.
 final class MindboxInAppWindow: UIWindow {
 
-    /// Whether the window may become key. Off unless the page asked for a shake.
+    /// Whether the window may become key. Off unless the page edits text.
     var allowsKey = false
 
     @available(iOS 15.0, *)

@@ -65,3 +65,47 @@ struct MotionServiceBehaviorTests {
         #expect(!gestureReceived)
     }
 }
+
+@Suite("System shake relay", .tags(.webView), .serialized)
+@MainActor
+struct SystemShakeRelayTests {
+
+    /// Stands in for the application: the test bundle runs with no host, so there is no `UIApplication.shared`.
+    private final class ApplicationStandIn: UIResponder {}
+
+    @Test("A shake that reaches the relayed responder is posted once, other motions are not")
+    func shakeAtTheRelayedResponderIsPosted() {
+        SystemShakeRelay.relayShakes(of: ApplicationStandIn.self)
+        var heard = 0
+        let token = NotificationCenter.default.addObserver(forName: SystemShakeRelay.didShake, object: nil, queue: nil) { _ in
+            heard += 1
+        }
+        defer { NotificationCenter.default.removeObserver(token) }
+
+        ApplicationStandIn().motionEnded(.motionShake, with: nil)
+        ApplicationStandIn().motionEnded(.none, with: nil)
+
+        #expect(heard == 1)
+    }
+
+    @Test("Other responders are left as they were")
+    func otherRespondersAreUntouched() {
+        SystemShakeRelay.relayShakes(of: ApplicationStandIn.self)
+        var heard = 0
+        let token = NotificationCenter.default.addObserver(forName: SystemShakeRelay.didShake, object: nil, queue: nil) { _ in
+            heard += 1
+        }
+        defer { NotificationCenter.default.removeObserver(token) }
+
+        UIView().motionEnded(.motionShake, with: nil)
+        UIResponder().motionEnded(.motionShake, with: nil)
+
+        #expect(heard == 0)
+    }
+
+    @Test("Installing with no application around does nothing and does not crash")
+    func installWithoutAnApplicationIsSafe() {
+        SystemShakeRelay.installIfNeeded()
+        SystemShakeRelay.installIfNeeded()
+    }
+}

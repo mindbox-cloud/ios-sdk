@@ -73,7 +73,7 @@ enum Constants {
             + "})()"
     }
 
-    /// Tells the SDK when the page edits text. The in-app window takes key only then (or for a shake):
+    /// Tells the SDK when the page edits text. The in-app window takes key only then:
     /// the keyboard types into the key window alone, and the rest of the time the key window is the host's.
     enum WebViewTextInputJS {
         static let handlerName = "SdkTextInput"

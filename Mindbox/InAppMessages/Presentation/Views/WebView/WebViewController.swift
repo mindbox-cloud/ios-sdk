@@ -51,7 +51,6 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
     private var hasOnPresentedBeenCalled = false
     /// Shown to the user: after `init`, until `hide`.
     private var isRevealed = false
-    private var isListeningForShake = false
     private var isEditingText = false
 
     private enum Constants {
@@ -149,8 +148,6 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
 
     // MARK: Life cycle
 
-    override var canBecomeFirstResponder: Bool { true }
-
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .black.withAlphaComponent(Constants.defaultAlphaBackgroundColor)
@@ -162,18 +159,29 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         view.isUserInteractionEnabled = true
         setupWebView()
         addLifecycleObservers()
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(systemDidShake),
+                                               name: SystemShakeRelay.didShake,
+                                               object: nil)
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(appWillResignActive),
+                                               name: UIApplication.willResignActiveNotification,
+                                               object: nil)
     }
 
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        becomeFirstResponder()
+    @objc
+    private func systemDidShake() {
+        transparentWebView?.handleSystemShake()
     }
 
-    override func motionEnded(_ motion: UIEvent.EventSubtype, with event: UIEvent?) {
-        if motion == .motionShake {
-            transparentWebView?.handleSystemShake()
-        }
-        super.motionEnded(motion, with: event)
+    /// A link from another app, Safari or the lock screen comes after the app went inactive. Typing stops
+    /// there, so key goes back to the host before the host routes that link; the next touch on a field
+    /// takes it again.
+    @objc
+    private func appWillResignActive() {
+        guard isEditingText else { return }
+        isEditingText = false
+        updateKeyWindow(in: windowProvider())
     }
 
     // MARK: Private methods
@@ -318,14 +326,11 @@ extension WebViewController: WebViewAction {
     }
 
     func onShakeListeningChanged(_ isListening: Bool) {
-        let apply = {
-            self.isListeningForShake = isListening
-            self.updateKeyWindow(in: self.windowProvider())
-        }
+        guard isListening else { return }
         if Thread.isMainThread {
-            apply()
+            SystemShakeRelay.installIfNeeded()
         } else {
-            DispatchQueue.main.async(execute: apply)
+            DispatchQueue.main.async { SystemShakeRelay.installIfNeeded() }
         }
     }
 
@@ -347,22 +352,17 @@ private extension WebViewController {
         UIApplication.shared.windows.first(where: { $0.rootViewController is WebViewController })
     }
 
-    /// The system delivers a shake and typing to the key window alone, so the window is key exactly while
-    /// a shown page listens for a shake or edits text — and gives key back to the host as soon as neither holds.
+    /// The keyboard types into the key window alone, so the window is key exactly while a shown page edits
+    /// text — and gives key back to the host as soon as it stops. A shake needs no key: see `SystemShakeRelay`.
     func updateKeyWindow(in window: UIWindow?) {
         guard let window = window as? MindboxInAppWindow else { return }
 
-        let needsKey = (isListeningForShake || isEditingText) && isRevealed && !hasClosed
+        let needsKey = isEditingText && isRevealed && !hasClosed
         window.allowsKey = needsKey
         if needsKey {
             if !window.isKeyWindow {
                 window.makeKey()
-                Logger.common(message: "[WebView] Window is key while the page listens for a shake or edits text",
-                              category: .webViewInAppMessages)
-            }
-            // A shake goes to the first responder, but not while typing: taking it from the page puts the keyboard away.
-            if isListeningForShake && !isEditingText {
-                becomeFirstResponder()
+                Logger.common(message: "[WebView] Window is key while the page edits text", category: .webViewInAppMessages)
             }
         } else if window.isKeyWindow {
             keyWindowReturner.returnKeyToHost(preferring: nil)

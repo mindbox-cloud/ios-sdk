@@ -85,7 +85,7 @@ protocol MotionServiceProtocol: AnyObject {
     /// Stops all gesture monitoring, restores system settings, and releases sensors.
     func stopMonitoring()
 
-    /// Called by `WebViewController.motionEnded` when system detects a shake.
+    /// Called when the system reports a shake, heard by `SystemShakeRelay`.
     func handleSystemShake()
 }
 
@@ -341,5 +341,51 @@ final class MotionService: MotionServiceProtocol {
         }
 
         return best
+    }
+}
+
+/// Hears the system shake for an in-app page without the in-app window being key.
+///
+/// The system hands a shake to the first responder of the key window, and one nobody handled travels
+/// up the responder chain to the application. The in-app window leaves key to the host, so the shake is
+/// heard there: on the application's `motionEnded`, which then goes on exactly as before. Installed on
+/// the first shake subscription, so an app whose pages never ask for a shake is left untouched.
+enum SystemShakeRelay {
+
+    static let didShake = Notification.Name("MindboxSystemShakeRelayDidShake")
+
+    private static var isInstalled = false
+    private static var relayedClasses = Set<ObjectIdentifier>()
+
+    /// Main thread only. Without an application, as in a test bundle with no host, there is nothing to hear.
+    static func installIfNeeded() {
+        guard !isInstalled, let applicationClass = object_getClass(UIApplication.shared) else { return }
+        isInstalled = true
+
+        relayShakes(of: applicationClass)
+        Logger.common(message: "[WebView] Motion: listening for the system shake at the application",
+                      category: .webViewInAppMessages)
+    }
+
+    /// Posts `didShake` whenever a shake reaches `motionEnded` of `responderClass`, then lets it go on as before.
+    static func relayShakes(of responderClass: AnyClass) {
+        // Once per class: a second wrap would post every shake twice.
+        guard relayedClasses.insert(ObjectIdentifier(responderClass)).inserted else { return }
+        let selector = #selector(UIResponder.motionEnded(_:with:))
+        guard let method = class_getInstanceMethod(responderClass, selector) else { return }
+
+        typealias MotionEnded = @convention(c) (AnyObject, Selector, UIEvent.EventSubtype, UIEvent?) -> Void
+        let original = unsafeBitCast(method_getImplementation(method), to: MotionEnded.self)
+        let relay: @convention(block) (AnyObject, UIEvent.EventSubtype, UIEvent?) -> Void = { application, motion, event in
+            if motion == .motionShake {
+                NotificationCenter.default.post(name: didShake, object: nil)
+            }
+            original(application, selector, motion, event)
+        }
+        let implementation = imp_implementationWithBlock(relay)
+        // Added on the class itself when it inherits the method, so no other responder changes.
+        if !class_addMethod(responderClass, selector, implementation, method_getTypeEncoding(method)) {
+            method_setImplementation(method, implementation)
+        }
     }
 }
