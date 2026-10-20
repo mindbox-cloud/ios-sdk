@@ -52,7 +52,7 @@ struct InappScheduleManagerTests {
 
     // MARK: - No delay
 
-    @Test("In-app without delay is presented exactly once and the queue is cleaned up", .tags(.inAppSchedule))
+    @Test("In-app without delay is presented exactly once and the queue is cleaned up, whether its own timer or the test fires first", .tags(.inAppSchedule))
     func scheduleInapp_noDelay_schedulesCorrectly() async {
         #expect(scheduleManager.inappsByPresentationTime.isEmpty)
 
@@ -239,7 +239,7 @@ struct InappScheduleManagerTests {
 
     // MARK: - Invalid / zero delay
 
-    @Test("Invalid delay string falls back to zero and in-app is presented", .tags(.inAppSchedule))
+    @Test("Invalid delay string falls back to zero and in-app is presented, whether its own timer or the test fires first", .tags(.inAppSchedule))
     func scheduleInapp_withInvalidDelayTime_usesDefaultDelay() async {
         let inapp = createInAppFormData(id: "1", isPriority: false, delayTime: "invalid_time")
         scheduleManager.scheduleInApp(inapp, processingDuration: 0)
@@ -261,7 +261,7 @@ struct InappScheduleManagerTests {
         }
     }
 
-    @Test("Zero delay is treated as immediate and in-app is presented", .tags(.inAppSchedule))
+    @Test("Zero delay is treated as immediate and in-app is presented, whether its own timer or the test fires first", .tags(.inAppSchedule))
     func scheduleInapp_withZeroDelay_schedulesCorrectly() async {
         let inapp = createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:00")
         scheduleManager.scheduleInApp(inapp, processingDuration: 0)

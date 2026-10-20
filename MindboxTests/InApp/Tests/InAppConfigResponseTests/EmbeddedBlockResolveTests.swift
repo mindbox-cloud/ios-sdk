@@ -107,7 +107,7 @@ struct EmbeddedBlockResolveTests {
         #expect(await resolvePlace("no-such-place") == nil)
     }
 
-    @Test("An expired validityPeriod does not keep a block from being drawn")
+    @Test("An expired validityPeriod does not keep a block from being drawn — neither iOS nor Android reads validityPeriod")
     func expiredValidityPeriodDoesNotStopThePlace() async throws {
         let expiry = try #require(expiryInStub(ofInappWithId: Constants.blockId))
         let today = ISO8601DateFormatter.string(from: Date(),
@@ -286,7 +286,7 @@ struct EmbeddedBlockResolveTests {
         #expect(dataFacade.trackTargetingCalls.contains { $0.id == Constants.abBlockId })
     }
 
-    @Test("A place with no winner is undecided when a fetch failure cut a candidate")
+    @Test("A place with no winner is undecided when a fetch failure cut a candidate, and the pass's buffered failures still go out")
     func placeCutByFetchFailureIsNotEmpty() async {
         let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         persistenceStorage.deviceUUID = Constants.deviceCuttingAbBlock

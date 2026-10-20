@@ -101,7 +101,7 @@ struct SettingsActionHandlerTests {
 
     // MARK: - Lifetime
 
-    @Test("A page released mid-route is not held by the notification route")
+    @Test("A page released mid-route is not held by the notification route, and its late answer is dropped")
     func notificationRouteDoesNotHoldPage() {
         let notifications = NotificationSettingsSpy(result: true, defersAnswer: true)
         let handler = SettingsActionHandler(urlOpener: URLOpenerSpy(),

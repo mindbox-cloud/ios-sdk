@@ -391,7 +391,7 @@ struct InappShowBudgetTests {
 
     // MARK: - The budget rules
 
-    @Test("A session limit of zero or below means no limit", arguments: [0, -1])
+    @Test("A session limit of zero or below means no limit, as on Android", arguments: [0, -1])
     func nonPositiveSessionLimitIsNoLimit(limit: Int) {
         setLimits(session: limit)
         SessionTemporaryStorage.shared.sessionShownInApps = ["a", "b"]

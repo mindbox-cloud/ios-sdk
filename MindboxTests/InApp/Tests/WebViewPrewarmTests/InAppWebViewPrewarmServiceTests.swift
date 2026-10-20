@@ -115,7 +115,8 @@ struct InAppWebViewPrewarmServiceTests {
         #expect(query.contains(URLQueryItem(name: "endpointId", value: "Test.Endpoint")))
         #expect(query.contains(URLQueryItem(name: "deviceUuid", value: "test-device-uuid")))
 
-        #expect(spy.configuration.userContentController.userScripts.isEmpty)
+        let scriptsThatWouldLeakIntoABorrowedShow = spy.configuration.userContentController.userScripts
+        #expect(scriptsThatWouldLeakIntoABorrowedShow.isEmpty)
     }
 
     @Test("The prewarm instance is pinned by the navigation policy until a show takes over")

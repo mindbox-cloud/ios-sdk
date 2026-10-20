@@ -345,7 +345,7 @@ extension MigrationManagerTests {
     func testPerformTwoTestProtocolMigrations() {
         let testMigrations: [MigrationProtocol] = [
             TestProtocolMigration_1(),
-            TestProtocolMigration_2(persistenceStorage: persistenceStorageMock)
+            TestProtocolMigration_2_IncrementsVersionCodeInRun(persistenceStorage: persistenceStorageMock)
         ]
 
         let expectedSdkVersionCodeAfterMigrations = 1
@@ -362,8 +362,8 @@ extension MigrationManagerTests {
     func testPerformThreeTestProtocolMigrations() {
         let testMigrations: [MigrationProtocol] = [
             TestProtocolMigration_1(),
-            TestProtocolMigration_2(persistenceStorage: persistenceStorageMock),
-            TestProtocolMigration_3(persistenceStorage: persistenceStorageMock)
+            TestProtocolMigration_2_IncrementsVersionCodeInRun(persistenceStorage: persistenceStorageMock),
+            TestProtocolMigration_3_WithRunError(persistenceStorage: persistenceStorageMock)
         ]
 
         let expectedSdkVersionCodeAfterMigrations = 2
@@ -392,7 +392,7 @@ extension MigrationManagerTests {
             TestBaseMigration_1(),
             TestBaseMigration_2(),
             TestProtocolMigration_1(),
-            TestProtocolMigration_2(persistenceStorage: persistenceStorageMock)
+            TestProtocolMigration_2_IncrementsVersionCodeInRun(persistenceStorage: persistenceStorageMock)
         ]
 
         let expectedSdkVersionCodeAfterMigrations = 3

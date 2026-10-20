@@ -169,7 +169,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
 
     func testFailureAndRetryScheduleByTimer() throws {
         let fetcher = MockFailureNetworkFetcher()
-        let fakeDB  = FakeDatabaseRepository()
+        let fakeDB  = RetryByTimerScriptedDatabaseRepository()
         let eventRepo = MBEventRepository(
             fetcher: fetcher,
             persistenceStorage: DI.injectOrFail(PersistenceStorage.self)

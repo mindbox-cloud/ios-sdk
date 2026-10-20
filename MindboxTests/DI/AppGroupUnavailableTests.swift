@@ -73,7 +73,7 @@ struct AppGroupStorageTransitionReporterTests {
         return defaults
     }
 
-    @Test("Reports only when install state is in BOTH stores, and never mutates either store",
+    @Test("Reports only when install state is in BOTH stores, on every call rather than once, and never mutates either store",
           arguments: [
             (active: true,  local: true,  expectReport: true),
             (active: false, local: true,  expectReport: false),

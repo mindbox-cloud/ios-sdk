@@ -107,7 +107,7 @@ struct EmbeddedFormVariantTests {
         #expect(try filter(embeddedVariant(place: "stories-list-container", layers: layers)).isEmpty)
     }
 
-    @Test("Two webview layers keep the variant and use the first")
+    @Test("Two webview layers keep the variant and use the first, as on Android")
     func keepsVariantWithTwoLayersAndUsesTheFirst() throws {
         let first = webviewLayer(contentUrl: "https://example.com/first.html")
         let second = webviewLayer(contentUrl: "https://example.com/second.html")

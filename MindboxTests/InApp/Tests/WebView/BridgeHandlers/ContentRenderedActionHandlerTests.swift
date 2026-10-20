@@ -113,7 +113,7 @@ struct ContentRenderedActionHandlerTests {
         #expect(host.sent.first?.type == .error)
     }
 
-    @Test("A count that is not a finite number is refused",
+    @Test("A count that is not finite or does not fit an Int is refused",
           arguments: [Double.nan, .infinity, -.infinity, 1e30])
     func unusableNumberIsRefused(count: Double) {
         let host = ContentHostSpy()

@@ -65,10 +65,10 @@ final class MockDatabaseRepositoryTests: XCTestCase {
 
         _ = try repo.countEvents()
 
-        let cleanedCount = try repo.countEvents()
+        let countAfterCleanUpByFirstCall = try repo.countEvents()
 
-        XCTAssertLessThanOrEqual(cleanedCount, repo.limit)
-        XCTAssertEqual(cleanedCount, 3,
+        XCTAssertLessThanOrEqual(countAfterCleanUpByFirstCall, repo.limit)
+        XCTAssertEqual(countAfterCleanUpByFirstCall, 3,
             "After cleanup there should only be the latest 3 events")
     }
     
