@@ -46,6 +46,7 @@ final class EmbeddedBlockWebViewPage: NSObject, EmbeddedBlockPageHosting {
          noCacheRetryPolicy: WebViewNoCacheRetryPolicy = WebViewNoCacheRetryPolicy()) {
         self.content = content
         self.noCacheRetryPolicy = noCacheRetryPolicy
+        // Not the warm WebView: a block keeps its page for its screen's whole life, so overlays would start cold.
         self.facade = facade ?? MindboxWebViewFacade(params: content.params,
                                                      userAgent: SDKUserAgent.build(),
                                                      inAppId: content.inAppId,
