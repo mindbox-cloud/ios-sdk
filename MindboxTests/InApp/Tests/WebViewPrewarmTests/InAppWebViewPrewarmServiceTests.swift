@@ -18,6 +18,7 @@ struct InAppWebViewPrewarmServiceTests {
     private final class SpyWebView: WKWebView {
         private(set) var loadedHTMLCount = 0
         private(set) var loadedBaseURLs: [URL?] = []
+        private(set) var loadedWithNavigationDelegate: [Bool] = []
         private(set) var stopLoadingCount = 0
         private(set) var evaluatedScriptCount = 0
         var stubbedIsLoading = false
@@ -27,6 +28,7 @@ struct InAppWebViewPrewarmServiceTests {
         override func loadHTMLString(_ string: String, baseURL: URL?) -> WKNavigation? {
             loadedHTMLCount += 1
             loadedBaseURLs.append(baseURL)
+            loadedWithNavigationDelegate.append(navigationDelegate != nil)
             return nil // spy only — keep WebKit from actually navigating in unit tests
         }
 
@@ -294,6 +296,18 @@ struct InAppWebViewPrewarmServiceTests {
         let second = suite.makePage()
 
         #expect(second.makeView() === suite.spy)
+    }
+
+    @Test("A page that ends gives its instance back with its bridge taken off before the blank page loads")
+    func endedPageLoadsTheBlankPageWithoutItsBridgeAsDelegate() async throws {
+        let suite = try await Self.prewarmed()
+        let page = suite.makePage()
+        #expect(suite.spy.navigationDelegate != nil)
+
+        page.endShow()
+
+        #expect(suite.spy.navigationDelegate == nil)
+        #expect(suite.spy.loadedWithNavigationDelegate.last == false)
     }
 
     @Test("A late cleanup from an ended page leaves the instance the next page took alone")
