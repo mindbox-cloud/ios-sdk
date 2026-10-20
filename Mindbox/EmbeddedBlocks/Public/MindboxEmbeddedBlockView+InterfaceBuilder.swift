@@ -22,8 +22,8 @@ import MindboxLogger
 /// keeps the background color and clipping set in Interface Builder. The page inside is
 /// transparent: set Background to Clear Color to let the host's background show through.
 ///
-/// These values are read-only once the block is built from the nib: a later key-value write is
-/// ignored and logged as an error.
+/// These values are read-only once the block is built, in code or from the nib: a later key-value
+/// write is ignored and logged as an error.
 extension MindboxEmbeddedBlockView {
 
     /// The initializer's `height`, in points. Required: 0 or less keeps the block invisible and is

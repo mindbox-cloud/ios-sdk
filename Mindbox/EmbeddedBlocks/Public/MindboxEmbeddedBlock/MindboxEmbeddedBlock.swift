@@ -14,10 +14,10 @@ import UIKit
 /// ``MindboxEmbeddedBlockView``.
 ///
 /// Give it the place's system name from the admin panel and the height the block occupies; the layout
-/// decides only its position and width. While its content loads, the block either reserves
-/// its height with a placeholder or stays at zero height, as ``MindboxEmbeddedBlock/loadingStrategy``
-/// says, and the first frame already has that height. When there is nothing to show, or the block fails
-/// without an error view, it collapses to zero height.
+/// decides only its position and width. Until its first outcome, the block either reserves its height
+/// with a placeholder or stays at zero height, as ``MindboxEmbeddedBlock/loadingStrategy`` says, and the
+/// first frame already has that height. When there is nothing to show, or the block fails without an
+/// error view, it collapses to zero height.
 ///
 /// A `placeSystemName` naming another place replaces the block with a new one; a new `height` resizes it
 /// without reloading. `loadingStrategy`, `timeout` and `animatesReveal` are read only when the block is
@@ -47,11 +47,12 @@ public struct MindboxEmbeddedBlock: View {
     private let height: CGFloat
     private let timeout: TimeInterval?
 
-    /// What the block shows while its content loads.
+    /// What the block shows while it waits for its first outcome.
     public let loadingStrategy: MindboxEmbeddedBlockLoadingStrategy
 
-    /// Whether the SDK animates the appearance of the content. The system's Reduce Motion setting also
-    /// turns the animation off.
+    /// Whether the SDK animates the appearance of the content: a fade, and the growth of a collapsed
+    /// block. The system's Reduce Motion setting also turns the animation off. Set `false` to animate the
+    /// block's container yourself in `onLoad`.
     public let animatesReveal: Bool
 
     private let onLoad: (() -> Void)?
@@ -67,23 +68,20 @@ public struct MindboxEmbeddedBlock: View {
     ///   - placeSystemName: The place's system name from the admin panel. Surrounding whitespace and
     ///     letter case are ignored: `Main-Screen-Top` and `main-screen-top` are the same place.
     ///   - height: The height, in points, the block occupies while it shows content, a placeholder or
-    ///     an error view. A new value resizes the block without reloading its content. 0 or less keeps
-    ///     the block invisible and, at creation, is logged as an error.
-    ///   - loadingStrategy: What the block shows while its content loads; see
+    ///     an error view. 0 or less gives the block no height and, at creation, is logged as an error.
+    ///   - loadingStrategy: What the block shows while it waits for its first outcome; see
     ///     ``MindboxEmbeddedBlockLoadingStrategy``.
     ///   - timeout: How long, in seconds, the block waits for the SDK to choose its content before it
     ///     fails with ``MindboxEmbeddedBlockFailReason/networkError``. Only time in a window with the
     ///     app in the foreground counts. `nil` means 30; 0 or less is logged as an error and means 30
     ///     too.
-    ///   - animatesReveal: Whether the SDK animates the appearance of the content: a fade, and the growth
-    ///     of a block that waited hidden. The system's Reduce Motion setting also turns it off. Turn it
-    ///     off to animate the block's container yourself in `onLoad`.
-    ///   - onLoad: Called when the content is shown. A block that waited hidden takes its `height` at
-    ///     this point.
+    ///   - animatesReveal: Whether the SDK animates the appearance of the content; see
+    ///     ``MindboxEmbeddedBlock/animatesReveal``.
+    ///   - onLoad: Called when the content is shown. A collapsed block takes its `height` at this point.
     ///   - onEmpty: Called when the place has nothing to show. The block collapses; the error view does
     ///     not apply.
-    ///   - onFail: Called when the block could not be shown; it collapses or shows its error view. The
-    ///     reason is for logs and analytics.
+    ///   - onFail: Called when the block fails; it collapses or shows its error view. The reason is for
+    ///     logs and analytics.
     public init(placeSystemName: String,
                 height: CGFloat,
                 loadingStrategy: MindboxEmbeddedBlockLoadingStrategy = .automatic,

@@ -26,10 +26,6 @@ struct PermissionStatus: Codable {
     }
 }
 
-/// The `permissions.<name>.status` value web pages receive in the `ready` response and in
-/// `initDataUpdated`. Only granted permissions are sent, so pages see only `granted`.
-/// Limited photo library access is sent as `granted` with `details.access` set to `limited`.
-/// Android sends the same.
 enum PermissionStatusValue: String, Codable {
     case granted
     case denied

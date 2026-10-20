@@ -18,7 +18,8 @@ public enum MindboxError: LocalizedError {
     case protocolError(ProtocolError)
     /// The server failed with HTTP 5xx.
     case serverError(ProtocolError)
-    /// An error inside the SDK, such as a missing configuration or a response it could not parse.
+    /// An error on the SDK's side, such as an invalid or missing configuration or an HTTP 2xx response it
+    /// could not parse.
     case internalError(InternalError)
     /// A response the SDK cannot use, such as a redirect.
     case invalidResponse(URLResponse?)
@@ -27,7 +28,6 @@ public enum MindboxError: LocalizedError {
     /// Any other error.
     case unknown(Error)
 
-    /// A readable description of the error.
     public var errorDescription: String? {
         switch self {
         case let .validationError(error):
@@ -144,13 +144,16 @@ public extension MindboxError {
         }
     }
 
+    /// The error as a JSON string `{"type": "<type>", "data": {...}}`:
+    /// - `MindboxError` for `.validationError` (`data` has `status` and `validationMessages`), and for
+    ///   `.protocolError` and `.serverError` (`status`, `errorMessage`, `errorId`, `httpStatusCode`).
+    /// - `NetworkError` for `.invalidResponse` and `.connectionError`: `httpStatusCode` (`"null"` without an
+    ///   HTTP response) and `errorMessage`.
+    /// - `InternalError` for `.internalError` and `.unknown`: `errorKey`, `errorName` and `errorMessage`.
     func createJSON() -> String {
         makeErrorJSON().convertToString()
     }
 
-    /// The error's `data` object alone, without the `{type, data}` envelope: the payload a WebView page
-    /// gets when `syncOperation` fails. ``createJSON()`` keeps the envelope, since the React Native and
-    /// Flutter SDKs dispatch on `type`.
     internal func createDataJSON() -> String {
         makeErrorJSON().convertDataToString()
     }

@@ -8,7 +8,7 @@
 
 import Foundation
 
-/// Why a block could not be shown, passed to
+/// Why a block failed, passed to
 /// ``MindboxEmbeddedBlockViewDelegate/mindboxEmbeddedBlockViewDidFail(_:reason:)`` and to `onFail`.
 ///
 /// Meant for logs and analytics: by the time it arrives, the block has already collapsed or shown its

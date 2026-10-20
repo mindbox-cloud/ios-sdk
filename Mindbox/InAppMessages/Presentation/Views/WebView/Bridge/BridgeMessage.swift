@@ -136,11 +136,6 @@ public enum JSONValue: Codable, Equatable {
         anyValue ?? NSNull()
     }
 
-    /// Merges in-app tags into the root of a custom operation `body`.
-    ///
-    /// - No `tags` key (or `null`) in `body` → sets it to the tags object.
-    /// - `tags` already an object → adds only missing keys; existing client keys win.
-    /// - `tags` present but not an object (string/array/etc.) → left untouched.
     static func mergingInAppTags(_ tags: [String: String]?, into body: JSONValue) -> JSONValue {
         guard let tags, !tags.isEmpty else { return body }
         guard case .object(var dict) = body else { return body }
@@ -171,6 +166,13 @@ public enum JSONValue: Codable, Equatable {
     }
 }
 
+/// A message between the SDK and a page over the JS bridge.
+///
+/// A page's message needs `version` 1 or higher, `type`, `action`, a UUID `id` and `timestamp`; one
+/// without them gets no answer. The SDK answers a request with its `id` in lowercase. A page may send
+/// a payload as a JSON string or as an object; every payload the SDK sends is a JSON string: parse it
+/// with `JSON.parse()`. An overlay that answers an SDK request with an `error` is closed; an `error`
+/// answer from a block page is dropped.
 @_spi(Internal)
 public struct BridgeMessage: Codable {
     public enum MessageType: String, Codable {
@@ -275,11 +277,9 @@ public struct BridgeMessage: Codable {
         /// `operationName` and `operationBody` (the operation that triggered the in-app, its body as a JSON
         /// string), `trackVisitSource`, `trackVisitRequestUrl`, `firstInitializationDateTime` and `version`
         /// (the app version) are present only when known. `permissions` lists only granted permissions, `{}`
-        /// when there are none. Params from the in-app config are added at the root and replace SDK keys of
-        /// the same name, except the operation and track visit keys.
-        ///
-        /// > Note: Every message needs a UUID `id`; the SDK answers with the request's `id` in lowercase.
-        /// > Every payload the SDK sends is a JSON string: parse it with `JSON.parse()`.
+        /// when there are none; limited photo library access adds `"details": { "access": "limited" }`.
+        /// Params from the in-app config are added at the root and replace SDK keys of the same name, except
+        /// the operation and track visit keys.
         case ready
 
         // MARK: JS → Native: Info
@@ -329,8 +329,7 @@ public struct BridgeMessage: Codable {
         ///   ```json
         ///   { "status": "Success", ... }
         ///   ```
-        /// - Error, on HTTP 3xx–5xx, no connection or an SDK failure: the error's fields without the
-        ///   `{type, data}` envelope:
+        /// - Error, on HTTP 3xx–5xx, no connection or an SDK failure:
         ///   ```json
         ///   { "status": "ProtocolError", "errorMessage": "<string>", "errorId": "<string>", "httpStatusCode": "400" }
         ///   ```
@@ -346,8 +345,8 @@ public struct BridgeMessage: Codable {
         ///
         /// An `http` or `https` URL opens in another app that claims it as a universal link, otherwise in
         /// an in-app Safari sheet; a link to this app's own universal-link domain opens in the sheet too.
-        /// Any other scheme (`tel:`, `mailto:`, deep links) goes to the system. The
-        /// answer comes once the URL is open.
+        /// Any other scheme (`tel:`, `mailto:`, deep links) goes to the system. The answer comes once the
+        /// URL is open.
         ///
         /// - Payload:
         ///   ```json
@@ -421,7 +420,7 @@ public struct BridgeMessage: Codable {
         /// Writes values to the on-device key-value storage.
         ///
         /// A `null` value deletes the key; a value that is not a string is stored as its JSON text.
-        /// Every other open page that has sent ``ready`` gets ``localStateChanged``.
+        /// Other open pages get ``localStateChanged``.
         ///
         /// - Payload:
         ///   ```json
@@ -617,8 +616,8 @@ public struct BridgeMessage: Codable {
         ///   ```
         /// - Errors: `invalid_payload` (no `inappId`), `unknown_inapp` (after waiting up to 30 s for the
         ///   config: no in-app with this id, none that can be shown over the screen, or its images failed
-        ///   to load), `show_failed` (the app is in the background or the
-        ///   in-app failed to appear), `not_visible` (a block page off screen, or leaving it before the show).
+        ///   to load), `show_failed` (the app is in the background or the in-app failed to appear),
+        ///   `not_visible` (a block page off screen, or leaving it before the show).
         case showInApp
 
         // MARK: Native → JS: Embedded pages
@@ -641,8 +640,7 @@ public struct BridgeMessage: Codable {
 
         /// Tells a page that another page wrote through ``localStateSet``.
         ///
-        /// Sent to every other open page that has sent ``ready``, overlays included. An overlay that
-        /// answers with an `error` is closed.
+        /// Sent to every other open page that has sent ``ready``, overlays included.
         ///
         /// - Payload: the ``localStateSet`` response; `null` means the key was deleted.
         ///   ```json
@@ -658,9 +656,6 @@ public struct BridgeMessage: Codable {
         ///   ```
         case localStateChanged = "localState.changed"
 
-        /// Whether the action acts on the user's behalf, so a page that is not on screen is refused with
-        /// `not_visible`. ``WebBridgeActionRegistry`` checks it before dispatch; some handlers check
-        /// again after waiting.
         var requiresUserPresence: Bool {
             switch self {
             case .openLink, .settingsOpen, .permissionRequest:
@@ -699,8 +694,6 @@ public struct BridgeMessage: Codable {
 
     var parsedAction: Action? { Action(rawValue: action) }
 
-    /// The payload as an object, whether the page sent it as a JSON string or as an object; `nil` when
-    /// it is neither.
     var payloadObject: [String: JSONValue]? {
         if case .string(let string) = payload,
            let data = string.data(using: .utf8),
@@ -715,8 +708,6 @@ public struct BridgeMessage: Codable {
         return nil
     }
 
-    /// The payload as a JSON string, whether the page sent it as a string or as an object; empty when
-    /// there is no payload.
     var payloadString: String {
         if case .string(let value) = payload {
             return value

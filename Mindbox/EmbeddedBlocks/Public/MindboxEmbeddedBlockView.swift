@@ -19,8 +19,9 @@ import MindboxLogger
 /// the place has nothing to show or the block fails without an ``errorView``, and it can wait
 /// collapsed while it loads; see ``loadingStrategy``.
 ///
-/// Outcomes reach the host only through ``delegate``. A table or collection view that sizes a row
-/// by the block must remeasure the row in every delegate call.
+/// Outcomes reach the host only through ``delegate``. The block loads only while it is in a window:
+/// add it to the view hierarchy up front, not in response to an outcome. A table or collection view
+/// that sizes a row by the block must remeasure the row in every delegate call.
 public final class MindboxEmbeddedBlockView: UIView {
 
     // MARK: - Host API
@@ -28,8 +29,7 @@ public final class MindboxEmbeddedBlockView: UIView {
     /// The place system name from the admin panel, without surrounding whitespace; the letter case
     /// is kept as given, and the place is matched ignoring it.
     ///
-    /// Set at creation or in Interface Builder. A key-value write after the block is built is
-    /// ignored and logged as an error.
+    /// Set at creation or in Interface Builder.
     @IBInspectable public private(set) var placeSystemName: String {
         get { setup.placeSystemName }
         set { applyInspectable("placeSystemName") { setup.placeSystemName = Self.normalizedPlaceSystemName(newValue) } }
@@ -37,7 +37,7 @@ public final class MindboxEmbeddedBlockView: UIView {
 
     var placeKey: String { Self.placeKey(placeSystemName) }
 
-    /// What the block shows while its content loads, set at creation or through
+    /// What the block shows until its first outcome, set at creation or through
     /// ``loadingStrategyName``. See ``MindboxEmbeddedBlockLoadingStrategy``.
     public var loadingStrategy: MindboxEmbeddedBlockLoadingStrategy { setup.loadingStrategy }
 
@@ -45,13 +45,13 @@ public final class MindboxEmbeddedBlockView: UIView {
     /// `false`, or Reduce Motion, shows the content and applies the height at once, for a host that
     /// animates the block's container itself.
     ///
-    /// Set at creation or in Interface Builder, like ``placeSystemName``.
+    /// Set at creation or in Interface Builder.
     @IBInspectable public private(set) var animatesReveal: Bool {
         get { setup.animatesReveal }
         set { applyInspectable("animatesReveal") { setup.animatesReveal = newValue } }
     }
 
-    /// Receives the block's outcomes: loaded, empty or failed. Held weakly.
+    /// Receives the block's outcomes: loaded, empty or failed.
     ///
     /// A delegate assigned after the block has an outcome receives it, including the same delegate
     /// set again after `nil`; assigning the delegate that is already set does nothing. See
@@ -77,16 +77,14 @@ public final class MindboxEmbeddedBlockView: UIView {
         }
     }
 
-    /// The view shown when the block fails; `nil` (the default) collapses the block instead. The
-    /// SDK has no error view of its own.
+    /// The view shown when the block fails; `nil` (the default) collapses the block instead.
     ///
     /// A block that shows a placeholder or content when it fails keeps its height and shows this
     /// view, pinned to its edges. A block that is collapsed when it fails stays collapsed. A place
     /// with nothing to show always collapses the block.
     ///
     /// Replacing the view while it is shown swaps it; setting `nil` then collapses the block.
-    /// Setting a view on a collapsed block does not expand it: the view applies to a later failure
-    /// while the block takes its height.
+    /// Setting a view on a collapsed block does not expand it.
     public var errorView: UIView? {
         didSet {
             guard errorView !== oldValue else { return }
@@ -96,7 +94,8 @@ public final class MindboxEmbeddedBlockView: UIView {
 
     // MARK: - Wrapper API
 
-    /// Sets the observer told the block's appearance now and each time it applies a state; `nil` removes it.
+    /// Sets the observer told the block's appearance now and on each update, possibly repeating a value; `nil` removes it.
+    /// While an observer is set, the block does not animate its own height; the wrapper animates its layout when ``isRevealAnimated`` is `true`.
     @_spi(Internal)
     public func setAppearanceObserver(_ observer: ((MindboxEmbeddedBlockAppearance) -> Void)?) {
         appearanceObserver = observer
@@ -216,7 +215,7 @@ public final class MindboxEmbeddedBlockView: UIView {
     ///     letter case are ignored: `Main-Screen-Top` and `main-screen-top` are the same place.
     ///   - height: The height, in points, the block takes while it shows content, a placeholder or
     ///     ``errorView``. 0 or less keeps the block invisible and is logged as an error.
-    ///   - loadingStrategy: What the block shows while its content loads; see
+    ///   - loadingStrategy: What the block shows until its first outcome; see
     ///     ``MindboxEmbeddedBlockLoadingStrategy``.
     ///   - timeout: How long, in seconds, the block waits for the SDK to choose its content before
     ///     it fails with ``MindboxEmbeddedBlockFailReason/networkError``. Only time in a window with

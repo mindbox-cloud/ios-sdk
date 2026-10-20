@@ -47,10 +47,9 @@ enum InAppWebViewPrewarmPlanner {
         URLValidator.isValidHost(host)
     }
 
-    /// Adds `prewarm=1`, `endpointId` and `deviceUuid` to the query of the baseURL the
-    /// prewarm content page loads under, where the page reads them from `location.search`.
-    /// A runtime that supports prewarm then boots only the tracker: no `ready`, no form.
-    /// Older runtimes ignore the parameters. Shows load the page without them.
+    /// Adds `prewarm=1`, `endpointId` and `deviceUuid` to the query of the baseURL the prewarm
+    /// content page loads under; the page reads them from `location.search`. Shows load the page
+    /// without them.
     static func prewarmContentBaseURL(from baseURL: URL, endpoint: String, deviceUUID: String) -> URL {
         guard var components = URLComponents(url: baseURL, resolvingAgainstBaseURL: false) else { return baseURL }
         var queryItems = components.queryItems ?? []
