@@ -59,7 +59,6 @@ struct InappScheduleManagerTests {
         let inapp = createInAppFormData(id: "1", isPriority: false, delayTime: nil)
         scheduleManager.scheduleInApp(inapp, processingDuration: 0)
 
-        // Delay 0 arms the real timer for .now(), which may already have presented: drive the show only if the entry is still queued.
         var presentationTime: TimeInterval?
         scheduleManager.queue.sync {
             presentationTime = self.scheduleManager.inappsByPresentationTime.keys.first

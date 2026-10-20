@@ -75,7 +75,6 @@ struct MindboxWebBridgeStalenessTests {
     private let webView: WKWebView
     private let bridge: MindboxWebBridge
     private let spy: DelegateSpy
-    // A second web view mints the navigations so WebKit's own delegate callbacks never reach the bridge under test.
     private let navigationFactory = WKWebView(frame: .zero, configuration: WKWebViewConfiguration())
 
     init() {

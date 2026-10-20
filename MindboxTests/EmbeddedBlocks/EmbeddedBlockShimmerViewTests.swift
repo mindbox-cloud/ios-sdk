@@ -18,7 +18,6 @@ struct EmbeddedBlockShimmerViewTests {
 
     private let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 320, height: 480))
 
-    // The shimmer placed straight into a per-test window crashes the process on the run-loop turn after the window is released.
     private let host = UIView(frame: CGRect(x: 0, y: 0, width: 320, height: 120))
 
     init() {

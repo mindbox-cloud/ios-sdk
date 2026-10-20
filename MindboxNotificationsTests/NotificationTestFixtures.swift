@@ -127,7 +127,6 @@ final class MockExtensionContext: NSExtensionContext {
     }
 }
 
-// `UNNotification` has no public initializer; build it by round-tripping through NSKeyedArchiver.
 // swiftlint:disable force_unwrapping force_try
 final class MockUNNotification: UNNotification {
     private let mockRequest: UNNotificationRequest
