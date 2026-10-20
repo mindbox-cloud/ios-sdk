@@ -526,8 +526,7 @@ public struct BridgeMessage: Codable {
 
         // MARK: JS → Native: Embedded pages
 
-        /// Asks which of the listed in-apps the page may show. The answer can wait for a network
-        /// request; with no config within 30 s it is an empty list.
+        /// Asks which of the listed in-apps the page may show; the answer can wait for a network request.
         ///
         /// - Payload:
         ///   ```json
