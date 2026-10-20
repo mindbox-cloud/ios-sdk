@@ -541,7 +541,8 @@ public struct BridgeMessage: Codable {
         case filterShowableInapps
 
         /// Reports how many items the page rendered, once per load and after each ``initDataUpdated``;
-        /// zero means nothing to show.
+        /// zero means nothing to show. A block whose page sends no count within 7 s of starting to load
+        /// fails.
         ///
         /// - Payload:
         ///   ```json

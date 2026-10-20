@@ -56,6 +56,7 @@ public final class MindboxEmbeddedBlockView: UIView {
     }
 
     /// The view shown when the block fails while it takes its height; `nil` collapses the block instead.
+    /// Set it before the block is in a window: setting it later does not expand a collapsed block.
     public var errorView: UIView? {
         didSet {
             guard errorView !== oldValue else { return }
