@@ -10,36 +10,17 @@
 import SwiftUI
 import UIKit
 
-/// A SwiftUI view that shows a Mindbox embedded block, the SwiftUI counterpart of
-/// ``MindboxEmbeddedBlockView``.
+/// A SwiftUI view that shows the Mindbox embedded block configured for a place in the admin panel.
 ///
-/// Give it the place's system name from the admin panel and the height the block occupies; the layout
-/// decides only its position and width. Until its first outcome, the block either reserves its height
-/// with a placeholder or stays at zero height, as ``MindboxEmbeddedBlock/loadingStrategy`` says, and the
-/// first frame already has that height. When there is nothing to show, or the block fails without an
-/// error view, it collapses to zero height.
-///
-/// A `placeSystemName` naming another place replaces the block with a new one; a new `height` resizes it
-/// without reloading. `loadingStrategy`, `timeout` and `animatesReveal` are read only when the block is
-/// created.
-///
-/// ``MindboxEmbeddedBlock/placeholder(_:)`` replaces the SDK's loading shimmer, and
-/// ``MindboxEmbeddedBlock/errorView(_:)`` shows a failure instead of collapsing. Both are drawn as ordinary
-/// SwiftUI views and get the surrounding environment. They are methods of `MindboxEmbeddedBlock`, so apply
-/// them before any SwiftUI modifier such as `.frame(…)` or `.padding(…)`.
-///
-/// `onLoad`, `onEmpty` and `onFail` arrive like the matching ``MindboxEmbeddedBlockViewDelegate`` calls.
+/// Give it a height and let the layout set its position and width. Keep it in the layout rather than
+/// removing it in `onEmpty`: a collapsed block still shows content the place gets later.
+/// `loadingStrategy`, `timeout` and `animatesReveal` are read only when the block is created.
 ///
 /// ```swift
 /// MindboxEmbeddedBlock(placeSystemName: "stories", height: 104,
-///                      loadingStrategy: .automatic,
-///                      onEmpty: hideSection,
 ///                      onFail: { reason in log("stories failed: \(reason)") })
+///     .placeholder { StoriesSkeleton() }
 /// ```
-///
-/// A collapsed block is zero points tall, but a stack still adds its spacing around it. To give the space
-/// back completely, remove the section from the layout in `onEmpty`, and in `onFail` unless the block
-/// shows its error view; ``MindboxEmbeddedBlock/errorView(_:)`` says when it does.
 @available(iOS 13.0, *)
 public struct MindboxEmbeddedBlock: View {
 
@@ -47,12 +28,11 @@ public struct MindboxEmbeddedBlock: View {
     private let height: CGFloat
     private let timeout: TimeInterval?
 
-    /// What the block shows while it waits for its first outcome.
+    /// What the block shows while it loads.
     public let loadingStrategy: MindboxEmbeddedBlockLoadingStrategy
 
-    /// Whether the SDK animates the appearance of the content: a fade, and the growth of a collapsed
-    /// block. The system's Reduce Motion setting also turns the animation off. Set `false` to animate the
-    /// block's container yourself in `onLoad`.
+    /// Whether the SDK animates the content's appearance; set `false` to animate the block's container
+    /// yourself in `onLoad`.
     public let animatesReveal: Bool
 
     private let onLoad: (() -> Void)?
@@ -65,23 +45,16 @@ public struct MindboxEmbeddedBlock: View {
     /// Creates a block for a place.
     ///
     /// - Parameters:
-    ///   - placeSystemName: The place's system name from the admin panel. Surrounding whitespace and
-    ///     letter case are ignored: `Main-Screen-Top` and `main-screen-top` are the same place.
-    ///   - height: The height, in points, the block occupies while it shows content, a placeholder or
-    ///     an error view. 0 or less gives the block no height and, at creation, is logged as an error.
-    ///   - loadingStrategy: What the block shows while it waits for its first outcome; see
-    ///     ``MindboxEmbeddedBlockLoadingStrategy``.
+    ///   - placeSystemName: The place's system name from the admin panel, matched ignoring letter case
+    ///     and surrounding whitespace.
+    ///   - height: The block's height, in points, while it is not collapsed.
+    ///   - loadingStrategy: What the block shows while it loads.
     ///   - timeout: How long, in seconds, the block waits for the SDK to choose its content before it
-    ///     fails with ``MindboxEmbeddedBlockFailReason/networkError``. Only time in a window with the
-    ///     app in the foreground counts. `nil` means 30; 0 or less is logged as an error and means 30
-    ///     too.
-    ///   - animatesReveal: Whether the SDK animates the appearance of the content; see
-    ///     ``MindboxEmbeddedBlock/animatesReveal``.
-    ///   - onLoad: Called when the content is shown. A collapsed block takes its `height` at this point.
-    ///   - onEmpty: Called when the place has nothing to show. The block collapses; the error view does
-    ///     not apply.
-    ///   - onFail: Called when the block fails; it collapses or shows its error view. The reason is for
-    ///     logs and analytics.
+    ///     fails with ``MindboxEmbeddedBlockFailReason/networkError``; `nil` means 30.
+    ///   - animatesReveal: Whether the SDK animates the content's appearance.
+    ///   - onLoad: Called when the content is shown.
+    ///   - onEmpty: Called when the place has nothing to show; the block collapses.
+    ///   - onFail: Called when the block fails; it collapses or shows its error view.
     public init(placeSystemName: String,
                 height: CGFloat,
                 loadingStrategy: MindboxEmbeddedBlockLoadingStrategy = .automatic,
@@ -100,20 +73,14 @@ public struct MindboxEmbeddedBlock: View {
         self.onFail = onFail
     }
 
-    /// Shows this view instead of the SDK's shimmer while the block is loading.
-    ///
-    /// Calling it again replaces the previous placeholder. A block that waits hidden while it loads
-    /// shows no placeholder; see ``MindboxEmbeddedBlock/loadingStrategy``.
+    /// Shows this view instead of the SDK's shimmer while the block loads.
     public func placeholder<Content: View>(@ViewBuilder _ build: @escaping () -> Content) -> Self {
         var block = self
         block.placeholderBuilder = { AnyView(build()) }
         return block
     }
 
-    /// Shows this view instead of collapsing when the block fails.
-    ///
-    /// Applies only to a failure while the block takes its height. A block that is collapsed when it
-    /// fails stays collapsed; a place with nothing to show always collapses.
+    /// Shows this view, instead of collapsing, when the block fails while it takes its height.
     public func errorView<Content: View>(@ViewBuilder _ build: @escaping () -> Content) -> Self {
         var block = self
         block.errorBuilder = { AnyView(build()) }

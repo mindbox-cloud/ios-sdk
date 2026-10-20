@@ -144,12 +144,7 @@ public extension MindboxError {
         }
     }
 
-    /// The error as a JSON string `{"type": "<type>", "data": {...}}`:
-    /// - `MindboxError` for `.validationError` (`data` has `status` and `validationMessages`), and for
-    ///   `.protocolError` and `.serverError` (`status`, `errorMessage`, `errorId`, `httpStatusCode`).
-    /// - `NetworkError` for `.invalidResponse` and `.connectionError`: `httpStatusCode` (`"null"` without an
-    ///   HTTP response) and `errorMessage`.
-    /// - `InternalError` for `.internalError` and `.unknown`: `errorKey`, `errorName` and `errorMessage`.
+    /// Returns the error as a JSON string `{"type": "<type>", "data": {...}}`.
     func createJSON() -> String {
         makeErrorJSON().convertToString()
     }

@@ -8,22 +8,19 @@
 
 import Foundation
 
-/// How the block occupies its place right now, for a wrapper that lays the block out itself, such as
-/// ``MindboxEmbeddedBlock``; host apps observe outcomes through ``MindboxEmbeddedBlockViewDelegate``.
+/// How the block occupies its place, for a wrapper that lays the block out itself.
 @_spi(Internal)
 public enum MindboxEmbeddedBlockAppearance: Sendable {
 
-    /// The block is loading at its height and shows its ``MindboxEmbeddedBlockView/placeholderView``,
-    /// or the SDK's shimmer while that is `nil`; a wrapper with a placeholder of its own draws it on top.
+    /// A placeholder at the block's height.
     case placeholder
 
-    /// The content is shown at the block's height; the wrapper draws nothing over it.
+    /// The content at the block's height.
     case content
 
-    /// The block failed and shows its ``MindboxEmbeddedBlockView/errorView`` at its height, so this comes
-    /// only while that view is set; the wrapper draws its own error view on top.
+    /// The error view at the block's height.
     case error
 
-    /// The block takes no space; the wrapper gives the space back to the layout.
+    /// Zero height.
     case collapsed
 }

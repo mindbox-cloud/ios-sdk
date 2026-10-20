@@ -8,11 +8,7 @@
 
 import Foundation
 
-/// Why a block failed, passed to
-/// ``MindboxEmbeddedBlockViewDelegate/mindboxEmbeddedBlockViewDidFail(_:reason:)`` and to `onFail`.
-///
-/// Meant for logs and analytics: by the time it arrives, the block has already collapsed or shown its
-/// error view. Later SDK versions may add reasons, so keep a `default` when matching.
+/// Why a block failed, for logs and analytics. Later SDK versions may add reasons.
 public struct MindboxEmbeddedBlockFailReason: RawRepresentable, Hashable, Sendable, CustomStringConvertible {
 
     public let rawValue: String
@@ -21,14 +17,11 @@ public struct MindboxEmbeddedBlockFailReason: RawRepresentable, Hashable, Sendab
         self.rawValue = rawValue
     }
 
-    /// The content could not be obtained, typically because of the network: the SDK has no config, it
-    /// did not choose the content within the block's `timeout`, the block's page failed to load, or
-    /// segment or geo data the place's targeting needs could not be fetched.
+    /// The SDK could not get the content, typically because of the network or the block's `timeout`.
     public static let networkError = MindboxEmbeddedBlockFailReason(rawValue: "networkError")
 
-    /// The block's campaign or page did not work: the campaign at the place is not a valid embedded
-    /// block, or its page, download included, took too long to report its content or reported it in a
-    /// form the SDK cannot read.
+    /// The campaign at the place is not a valid embedded block, or its page did not report its content
+    /// in time or in a form the SDK can read.
     public static let internalError = MindboxEmbeddedBlockFailReason(rawValue: "internalError")
 
     public var description: String { rawValue }

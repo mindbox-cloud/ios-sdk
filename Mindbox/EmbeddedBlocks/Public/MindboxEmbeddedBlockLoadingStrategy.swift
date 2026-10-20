@@ -8,22 +8,16 @@
 
 import Foundation
 
-/// What a new block shows while it waits for its first outcome: a placeholder that takes the block's
-/// height, or nothing. Set when the block is created; the default is
-/// ``MindboxEmbeddedBlockLoadingStrategy/automatic``.
+/// What a block shows while it loads, set when the block is created.
 public enum MindboxEmbeddedBlockLoadingStrategy: Sendable {
 
-    /// Like ``MindboxEmbeddedBlockLoadingStrategy/placeholder`` if this place has shown content on this
-    /// device, in this or an earlier app launch, and has not come out empty since; otherwise like
-    /// ``MindboxEmbeddedBlockLoadingStrategy/hidden``.
+    /// ``MindboxEmbeddedBlockLoadingStrategy/placeholder`` if the place has shown content on this device
+    /// and has not come out empty since, otherwise ``MindboxEmbeddedBlockLoadingStrategy/hidden``.
     case automatic
 
-    /// A placeholder until the block's first outcome: the host's own
-    /// (``MindboxEmbeddedBlockView/placeholderView`` or ``MindboxEmbeddedBlock/placeholder(_:)``) or the
-    /// SDK's shimmer.
+    /// A placeholder at the block's height: the host's own or the SDK's shimmer.
     case placeholder
 
-    /// Zero height until the block has shown content: no placeholder, and no error view on a failure,
-    /// which is still reported to the delegate or `onFail`.
+    /// Zero height until the content is shown.
     case hidden
 }
