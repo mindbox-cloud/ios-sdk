@@ -33,16 +33,11 @@ struct WebViewNoCacheRetryPolicyTests {
 
         #expect(policy.onHTTPError(url: trackerURL, hasReceivedInit: false))
         policy.notePurgeOutcome(didRemoveAnything: true)
-        // The purge provably removed the poisoned entry — a later error means the poison
-        // is upstream, another reload would just replay the failure.
         #expect(!policy.onHTTPError(url: trackerURL, hasReceivedInit: false))
-        // The later error still refreshes the telemetry detail.
         #expect(!policy.onHTTPError(url: "https://cdn.test/other.js", hasReceivedInit: false))
         #expect(policy.lastHTTPErrorDetail == "load failure (no HTTP status on WebKit) for https://cdn.test/other.js")
     }
 
-    /// Write-behind race (spec D2a): on the very first poisoning the entry may not be
-    /// visible to the purge yet. An empty purge keeps the retry armed for one more attempt.
     @Test
     func emptyPurgeAllowsExactlyOneMoreAttempt() {
         let policy = policy()
@@ -51,14 +46,10 @@ struct WebViewNoCacheRetryPolicyTests {
         policy.notePurgeOutcome(didRemoveAnything: false)
         #expect(policy.onHTTPError(url: trackerURL, hasReceivedInit: false))
         policy.notePurgeOutcome(didRemoveAnything: false)
-        // Hard cap: two attempts per show session whatever the purge outcomes were —
-        // repeated empty purges mean the poison is not in the client cache (offline/CDN).
         #expect(!policy.onHTTPError(url: trackerURL, hasReceivedInit: false))
         #expect(policy.attemptsUsed == WebViewNoCacheRetryPolicy.maxAttempts)
     }
 
-    /// A second error report (another failing script, or a duplicate message posted by
-    /// page JS) must not double-fire the retry while the first purge has not reported back.
     @Test
     func noSecondGrantWhileThePurgeOutcomeIsPending() {
         let policy = policy()
@@ -75,7 +66,6 @@ struct WebViewNoCacheRetryPolicyTests {
 
         #expect(!policy.onHTTPError(url: trackerURL, hasReceivedInit: true))
         #expect(!policy.hasRetried)
-        // A live in-app must not be reloaded, but the error is still worth remembering.
         #expect(policy.lastHTTPErrorDetail == "load failure (no HTTP status on WebKit) for \(trackerURL)")
     }
 

@@ -59,7 +59,6 @@ struct BridgeMessagePayloadStringTests {
     func objectPayloadIsReencoded() {
         let message = BridgeMessage.request(.log, payload: .object(["message": .string("hi")]))
 
-        // Re-encoded as JSON, so a handler sees the same text whichever shape the page sent.
         #expect(message.payloadString == "{\"message\":\"hi\"}")
     }
 

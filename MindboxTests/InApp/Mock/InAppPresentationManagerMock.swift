@@ -18,7 +18,6 @@ class InAppPresentationManagerMock: InAppPresentationManagerProtocol {
     var receivedOnError: ((InAppPresentationError) -> Void)?
     private(set) var presentedOnMainThread: Bool?
 
-    /// Like the real manager, a present closes the show already up, but at once rather than a turn later.
     var hasActivePresentation = false
     private var activeShow = 0
 

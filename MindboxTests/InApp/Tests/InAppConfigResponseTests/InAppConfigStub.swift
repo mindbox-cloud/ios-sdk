@@ -122,7 +122,6 @@ extension InAppConfigStub {
             baseAddresses: nil
         )
         
-        // Mock method setupSettingsFromConfig.
         SessionTemporaryStorage.shared.viewProductOperation = "Mobile.ViewProduct"
         SessionTemporaryStorage.shared.viewCategoryOperation = "Mobile.ViewCategory"
         
@@ -203,8 +202,6 @@ extension InAppConfigStub {
 }
 
 extension ConfigResponse {
-    /// Prepares candidates on every access — production prepares them once per applied config, so a suite
-    /// that wants that fidelity prepares once and holds the result. Needs `TestConfiguration.configure()`.
     var candidates: ConfigCandidates {
         DI.injectOrFail(InappFilterProtocol.self).candidates(from: self)
     }

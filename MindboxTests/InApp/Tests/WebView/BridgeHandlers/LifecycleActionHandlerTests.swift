@@ -33,7 +33,6 @@ struct LifecycleActionHandlerTests {
         #expect(host.events == ["answered", expected])
     }
 
-    /// What a tap means is decided above the bridge, so the payload travels untouched.
     @Test("A click forwards its payload verbatim")
     func clickForwardsPayload() {
         let host = LifecycleHostSpy()
@@ -75,7 +74,6 @@ struct LifecycleActionHandlerTests {
 
 // MARK: - Doubles
 
-/// A page that also steers its own life.
 private final class LifecycleHostSpy: WebBridgeHost, WebBridgeLifecycleHosting {
 
     var contentId = "test-content-id"

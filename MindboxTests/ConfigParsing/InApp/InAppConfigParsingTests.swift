@@ -16,57 +16,50 @@ fileprivate enum InAppConfig: String, Configurable {
 
     // MARK: - Level 1: InAppDTO fields
 
-    // id
-    case inAppIdError = "InAppIdError" // Key is `idTest` instead of `id`
-    case inAppIdTypeError = "InAppIdTypeError" // Type of `id` is Int instead of String
+    case inAppIdError = "InAppIdError"
+    case inAppIdTypeError = "InAppIdTypeError"
 
-    // sdkVersion
-    case inAppSdkVersionError = "InAppSdkVersionError" // Key is `sdkVersionTest` instead of `sdkVersion`
-    case inAppSdkVersionTypeError = "InAppSdkVersionTypeError" // Type of `sdkVersion` is Int instead of SDKVersion
+    case inAppSdkVersionError = "InAppSdkVersionError"
+    case inAppSdkVersionTypeError = "InAppSdkVersionTypeError"
 
-    // frequency
-    case inAppFrequencyError = "InAppFrequencyError" // Key is `frequencyTest` instead of `frequency`
-    case inAppFrequencyTypeError = "InAppFrequencyTypeError" // Type of `frequency` is Int instead of Frequency
-    case inAppFrequencyUnknownType = "InAppFrequencyUnknownType" // frequency.$type is unknown
-    case inAppFrequencyNil = "InAppFrequencyNil" // frequency field is absent
+    case inAppFrequencyError = "InAppFrequencyError"
+    case inAppFrequencyTypeError = "InAppFrequencyTypeError"
+    case inAppFrequencyUnknownType = "InAppFrequencyUnknownType"
+    case inAppFrequencyNil = "InAppFrequencyNil"
 
-    // targeting
-    case inAppTargetingError = "InAppTargetingError" // Key is `targetingTest` instead of `targeting`
-    case inAppTargetingTypeError = "InAppTargetingTypeError" // Type of `targeting` is Int instead of Targeting
+    case inAppTargetingError = "InAppTargetingError"
+    case inAppTargetingTypeError = "InAppTargetingTypeError"
 
-    // form
-    case inAppFormError = "InAppFormError" // Key is `formTest` instead of `form`
-    case inAppFormTypeError = "InAppFormTypeError" // Type of `form` is Int instead of InAppFormDTO
+    case inAppFormError = "InAppFormError"
+    case inAppFormTypeError = "InAppFormTypeError"
 
-    // delayTime
-    case inAppDelayTimeTypeError = "InAppDelayTimeTypeError" // Type of `delayTime` is Int instead of String
+    case inAppDelayTimeTypeError = "InAppDelayTimeTypeError"
 
-    // FailableDecodableArray
-    case inAppOneCorrupted = "InAppOneCorrupted" // Two InApps: first has broken id, second is valid
+    case inAppOneCorrupted = "InAppOneCorrupted"
 
     // MARK: - Level 2: form.variants
 
-    case inAppFormVariantsTypeError = "InAppFormVariantsTypeError" // form.variants is Int instead of array
-    case inAppFormVariantMissingType = "InAppFormVariantMissingType" // variant has no $type field
-    case inAppFormVariantUnknownType = "InAppFormVariantUnknownType" // variant.$type is unknown
+    case inAppFormVariantsTypeError = "InAppFormVariantsTypeError"
+    case inAppFormVariantMissingType = "InAppFormVariantMissingType"
+    case inAppFormVariantUnknownType = "InAppFormVariantUnknownType"
 
     // MARK: - Level 3: background.layers
 
-    case inAppLayersTypeError = "InAppLayersTypeError" // background.layers is Int instead of array
-    case inAppLayerMissingType = "InAppLayerMissingType" // layer has no $type field
-    case inAppLayerUnknownType = "InAppLayerUnknownType" // layer.$type is unknown
+    case inAppLayersTypeError = "InAppLayersTypeError"
+    case inAppLayerMissingType = "InAppLayerMissingType"
+    case inAppLayerUnknownType = "InAppLayerUnknownType"
 
     // MARK: - Webview layer
 
-    case inAppWebviewValid = "InAppWebviewValid" // Valid webview InApp with params
-    case inAppWebviewParamsTypeError = "InAppWebviewParamsTypeError" // webview params is Int instead of object
+    case inAppWebviewValid = "InAppWebviewValid"
+    case inAppWebviewParamsTypeError = "InAppWebviewParamsTypeError"
 
     // MARK: - tags
 
-    case inAppTagsValid = "InAppTagsValid" // tags with only string values
-    case inAppTagsNil = "InAppTagsNil" // tags absent
-    case inAppTagsTypeError = "InAppTagsTypeError" // tags with one non-String value → tags == nil, inapp not skipped
-    case inAppTagsArbitraryKeys = "InAppTagsArbitraryKeys" // tags with arbitrary (non-standard) keys
+    case inAppTagsValid = "InAppTagsValid"
+    case inAppTagsNil = "InAppTagsNil"
+    case inAppTagsTypeError = "InAppTagsTypeError"
+    case inAppTagsArbitraryKeys = "InAppTagsArbitraryKeys"
 }
 
 final class InAppConfigParsingTests: XCTestCase {
@@ -104,7 +97,6 @@ final class InAppConfigParsingTests: XCTestCase {
     // MARK: frequency
 
     func test_InApp_withFrequencyError_shouldDefaultToOnceLifetime() {
-        // Key is `frequencyTest` — decodeIfPresent returns nil — defaults to once/lifetime
         let config = try! InAppConfig.inAppFrequencyError.getConfig()
         XCTAssertNotNil(config.inapps)
         guard let inapp = config.inapps?.elements.first else {
@@ -116,14 +108,12 @@ final class InAppConfigParsingTests: XCTestCase {
     }
 
     func test_InApp_withFrequencyTypeError_shouldSkipInApp() {
-        // Type is Int — decodeIfPresent throws on type mismatch
         let config = try! InAppConfig.inAppFrequencyTypeError.getConfig()
         XCTAssertNotNil(config.inapps)
         XCTAssertTrue(config.inapps!.elements.isEmpty, "InApp must be skipped when frequency has wrong type")
     }
 
     func test_InApp_withFrequencyUnknownType_shouldSkipInApp() {
-        // frequency.$type = "unknownFrequencyType" → .unknown → explicit throw
         let config = try! InAppConfig.inAppFrequencyUnknownType.getConfig()
         XCTAssertNotNil(config.inapps)
         XCTAssertTrue(config.inapps!.elements.isEmpty,
@@ -131,7 +121,6 @@ final class InAppConfigParsingTests: XCTestCase {
     }
 
     func test_InApp_withFrequencyNil_shouldDefaultToOnceLifetime() {
-        // frequency field absent entirely — defaults to once/lifetime
         let config = try! InAppConfig.inAppFrequencyNil.getConfig()
         XCTAssertNotNil(config.inapps)
         guard let inapp = config.inapps?.elements.first else {
@@ -205,7 +194,6 @@ final class InAppConfigParsingTests: XCTestCase {
     // MARK: delayTime
 
     func test_InApp_withDelayTimeTypeError_shouldSetDelayTimeToNil() {
-        // delayTime = 123 (Int) — caught in do/catch → nil, InApp survives
         let config = try! InAppConfig.inAppDelayTimeTypeError.getConfig()
         XCTAssertNotNil(config.inapps)
         guard let inapp = config.inapps?.elements.first else {
@@ -219,7 +207,6 @@ final class InAppConfigParsingTests: XCTestCase {
     // MARK: FailableDecodableArray
 
     func test_InApp_withOneCorrupted_shouldKeepValidInApp() {
-        // Two InApps: first has broken id (skipped), second is valid (survives)
         let config = try! InAppConfig.inAppOneCorrupted.getConfig()
         XCTAssertNotNil(config.inapps)
         XCTAssertEqual(config.inapps!.elements.count, 1,
@@ -230,7 +217,6 @@ final class InAppConfigParsingTests: XCTestCase {
     // MARK: - Level 2: form.variants
 
     func test_InApp_withFormVariantsTypeError_shouldSkipInApp() {
-        // form.variants = Int(1) — InAppFormDTO fails to decode
         let config = try! InAppConfig.inAppFormVariantsTypeError.getConfig()
         XCTAssertNotNil(config.inapps)
         XCTAssertTrue(config.inapps!.elements.isEmpty,
@@ -238,7 +224,6 @@ final class InAppConfigParsingTests: XCTestCase {
     }
 
     func test_InApp_withFormVariantMissingType_shouldSkipInApp() {
-        // variant has no $type → CustomDecodingError → array decode fails → InApp skipped
         let config = try! InAppConfig.inAppFormVariantMissingType.getConfig()
         XCTAssertNotNil(config.inapps)
         XCTAssertTrue(config.inapps!.elements.isEmpty,
@@ -246,7 +231,6 @@ final class InAppConfigParsingTests: XCTestCase {
     }
 
     func test_InApp_withFormVariantUnknownType_shouldSurviveWithUnknownVariant() {
-        // variant.$type = "unknownVariantType" → .unknown case, InApp survives
         let config = try! InAppConfig.inAppFormVariantUnknownType.getConfig()
         XCTAssertNotNil(config.inapps)
         guard let inapp = config.inapps?.elements.first else {
@@ -262,7 +246,6 @@ final class InAppConfigParsingTests: XCTestCase {
     // MARK: - Level 3: background.layers
 
     func test_InApp_withLayersTypeError_shouldSkipInApp() {
-        // background.layers = Int(1) → cascades up → InApp skipped
         let config = try! InAppConfig.inAppLayersTypeError.getConfig()
         XCTAssertNotNil(config.inapps)
         XCTAssertTrue(config.inapps!.elements.isEmpty,
@@ -270,7 +253,6 @@ final class InAppConfigParsingTests: XCTestCase {
     }
 
     func test_InApp_withLayerMissingType_shouldSkipInApp() {
-        // layer has no $type → CustomDecodingError → cascades up → InApp skipped
         let config = try! InAppConfig.inAppLayerMissingType.getConfig()
         XCTAssertNotNil(config.inapps)
         XCTAssertTrue(config.inapps!.elements.isEmpty,
@@ -278,7 +260,6 @@ final class InAppConfigParsingTests: XCTestCase {
     }
 
     func test_InApp_withLayerUnknownType_shouldSurviveWithUnknownLayer() {
-        // layer.$type = "unknownLayerType" → .unknown case, InApp survives
         let config = try! InAppConfig.inAppLayerUnknownType.getConfig()
         XCTAssertNotNil(config.inapps)
         guard let inapp = config.inapps?.elements.first else {
@@ -323,22 +304,18 @@ final class InAppConfigParsingTests: XCTestCase {
         let params = webviewLayer.params!
         XCTAssertEqual(params.count, 5)
 
-        // Simple string values
         XCTAssertEqual(params["formId"], .string("143364"))
         XCTAssertEqual(params["popUpId"], .string("143364"))
         XCTAssertEqual(params["popUpEndpointId"], .string("Mpush-test.inapp-quiz-migration"))
 
-        // Nested object
         XCTAssertEqual(params["test"], .object(["lalala": .string("123")]))
 
-        // Array of objects
         XCTAssertEqual(params["someObject"], .array([
             .object(["lalala": .int(123), "blaBla": .bool(true)])
         ]))
     }
 
     func test_InApp_withWebviewParamsTypeError_shouldSkipInApp() {
-        // params = Int(123) instead of object → WebviewContentBackgroundLayerDTO fails → InApp skipped
         let config = try! InAppConfig.inAppWebviewParamsTypeError.getConfig()
         XCTAssertNotNil(config.inapps)
         XCTAssertTrue(config.inapps!.elements.isEmpty,

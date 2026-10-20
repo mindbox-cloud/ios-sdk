@@ -21,7 +21,6 @@ struct MindboxEmbeddedBlockViewTests {
         let block = BlockFixture()
 
         #expect(block.view.intrinsicContentSize.height == 120)
-        // Width is the host's business, the container does not declare it.
         #expect(block.view.intrinsicContentSize.width == UIView.noIntrinsicMetric)
     }
 
@@ -214,7 +213,6 @@ struct MindboxEmbeddedBlockViewTests {
         let content = try #require(block.page?.view)
         #expect(content.superview === block.view)
         #expect(content.translatesAutoresizingMaskIntoConstraints == false)
-        // Four edges: the content always fills the container it was given.
         #expect(block.view.constraints.count == 4)
     }
 
@@ -1302,7 +1300,6 @@ struct MindboxEmbeddedBlockViewTests {
 
     // MARK: - Timeout
 
-    /// The same knob Android exposes as an XML attribute.
     @Test("A custom timeout is taken as given, a broken one falls back",
           arguments: [(nil as TimeInterval?, TimeInterval(Constants.EmbeddedBlock.answerTimeoutSeconds)),
                       (TimeInterval(12), TimeInterval(12)),
@@ -1321,7 +1318,6 @@ struct MindboxEmbeddedBlockViewTests {
         let bed = EmbeddedBlockTestBed()
         let factory = EmbeddedBlockContentProviderFactoryMock(provider: bed.provider)
         let memory = EmbeddedBlockPlaceMemoryMock()
-        // The container is process-global and the mode swap rebuilds it: save and restore both.
         let savedBuilder = MBInject.buildTestContainer
         let savedMode = MBInject.mode
         defer {
@@ -1388,7 +1384,6 @@ struct MindboxEmbeddedBlockViewTests {
 
         #expect(block.view.intrinsicContentSize.height == 0)
         #expect(delegate.events == [.failed(.internalError)])
-        // Content is stopped, so it can no longer revive the expired block.
         #expect(block.page?.cancelCount == 1)
     }
 
@@ -1400,7 +1395,6 @@ struct MindboxEmbeddedBlockViewTests {
 
         block.attachToWindow()
         block.page?.reportRendered(1)
-        // A shown block has disarmed the budget, so a declared "time is up" no longer concerns it.
         block.expireTimeout()
         await mainQueueTurn()
 
@@ -1705,7 +1699,6 @@ struct MindboxEmbeddedBlockViewTests {
         block.expireTimeout()
         await mainQueueTurn()
 
-        // The countdown did not just fail to fire — it was never armed at all.
         #expect(block.waitBudgetBed.scheduler.lastDelay == nil)
         #expect(delegate.events.isEmpty)
         #expect(block.view.intrinsicContentSize.height == 120)
@@ -2158,8 +2151,6 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(delegate.events == [.empty])
     }
 
-    /// Ten hidden places and one network failure must not become ten error screens: the error view is
-    /// for a block that already took its space. The host still hears about the failure.
     @Test("A hidden block stays collapsed on a failure even with an error view, and still reports it")
     func hiddenBlockIgnoresTheErrorView() async {
         let block = BlockFixture(loadingStrategy: .hidden)
@@ -2254,7 +2245,6 @@ struct MindboxEmbeddedBlockViewTests {
         block.page?.reportRendered(1)
         #expect(block.view.intrinsicContentSize.height == 120)
 
-        // The place now points at another page: the provider drops the shown one and loads anew.
         block.bed.resolver.resolution = .content(.other)
         block.bed.announceNewConfig()
 
@@ -2275,8 +2265,6 @@ struct MindboxEmbeddedBlockViewTests {
         block.bed.resolver.resolution = .content(.other)
         block.bed.announceNewConfig()
 
-        // Off the screen and back while the new page is still on its way: `start()` reports
-        // `.loading` again, and the block already shows a placeholder, not content.
         block.removeFromWindow()
         block.attachToWindow()
 
@@ -2320,8 +2308,6 @@ struct MindboxEmbeddedBlockViewTests {
         await mainQueueTurn()
         #expect(block.view.intrinsicContentSize.height == 0)
 
-        // The answer is held back: what the block shows meanwhile is the reload's first look, decided
-        // by the strategy and the memory the empty answer just dropped — not a placeholder.
         block.bed.resolver.isDeferred = true
         block.view.reload()
 
@@ -2388,7 +2374,6 @@ struct MindboxEmbeddedBlockViewTests {
         block.page?.failLoad()
         await mainQueueTurn()
 
-        // It was a failure the host heard about, not an outcome that went unnoticed.
         #expect(delegate.events == [.failed(.networkError)])
         #expect(memory.hasShownContent(at: "block-id") == hasShownBefore)
         #expect(memory.forgotten.isEmpty)
@@ -2410,7 +2395,6 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(delegate.events == [.failed(.networkError)])
         #expect(memory.hasShownContent(at: "block-id"))
         #expect(memory.forgotten.isEmpty)
-        // The record gave the block a placeholder, so the failure keeps the height for the error view.
         #expect(block.view.subviews.contains(errorView))
     }
 
@@ -2470,8 +2454,6 @@ struct MindboxEmbeddedBlockViewTests {
             released = block.view
         }
 
-        // The layer host holds its container unowned: the container must go while the fade is
-        // still running, and the fade's end — the only thing left of the host — must not reach it.
         #expect(released == nil)
         try #require(reveal).finish()
         #expect(released == nil)
@@ -2484,14 +2466,11 @@ struct MindboxEmbeddedBlockViewTests {
         host.isInsideAnimation = { [reveal = block.reveal] in reveal.isApplyingAnimations }
         block.attachToHost(host)
         host.layouts.removeAll()
-        // Something of the host's own is pending: it must not ride along with the growth.
         host.setNeedsLayout()
 
         block.page?.reportRendered(1)
 
-        // The fade of the content and the growth of the height.
         #expect(block.reveal.runs.count == 2)
-        // The host's pending layout settles outside the animation first; the growth is laid out inside it.
         #expect(host.layouts == ["outside", "inside"])
         #expect(block.view.frame.height == 120)
     }
@@ -2505,8 +2484,6 @@ struct MindboxEmbeddedBlockViewTests {
         header.text = "Header"
         let footer = UILabel()
         footer.text = "Footer"
-        // Header, the block in a wrapper of its own, footer: the wrapper is the block's superview, the
-        // stack is above it and has to grow for the footer to move down.
         let wrapper = UIView()
         block.attachToStack(stack, arranging: [header, wrapper, footer], blockInside: wrapper)
         stack.layouts.removeAll()
@@ -2674,8 +2651,6 @@ struct MindboxEmbeddedBlockViewTests {
 
     // MARK: - Helpers
 
-    /// Outcomes are delivered on the next turn of the main queue, so a block queued after them
-    /// continues only once they have run — the queue is serial and FIFO.
     private func mainQueueTurn() async {
         await withCheckedContinuation { continuation in
             DispatchQueue.main.async {
@@ -2685,7 +2660,6 @@ struct MindboxEmbeddedBlockViewTests {
     }
 }
 
-/// A host that writes down every layout pass and whether it ran inside the reveal animation.
 private final class LayoutRecordingHost: UIView {
 
     var isInsideAnimation: () -> Bool = { false }
@@ -2710,21 +2684,15 @@ private final class LayoutRecordingStack: UIStackView {
     }
 }
 
-/// A block with every dependency substituted and a live window: the window must outlive the test,
-/// otherwise the view would fly out of the window mid-check and the content would stop on its own.
 @MainActor
 private final class BlockFixture {
 
     let bed: EmbeddedBlockTestBed
 
-    /// The budget is handed to the view from outside, so "time is up" here happens on the test's
-    /// command rather than through a sleep: `expireTimeout()`.
     let waitBudgetBed: EmbeddedBlockWaitBudgetBed
 
-    /// The place's memory across launches: a fixture built over the same mock is the block's next launch.
     let memory: EmbeddedBlockPlaceMemoryMock
 
-    /// The SDK's reveal animation, run on the spot and counted.
     let reveal: EmbeddedBlockRevealAnimationSpy
 
     let mainPass: TestScheduler
@@ -2735,8 +2703,6 @@ private final class BlockFixture {
 
     var page: EmbeddedBlockPageMock? { bed.page }
 
-    /// `placeholder` by default: most of the suite is about what happens after the block took its
-    /// space, and that is the look every block used to start with.
     init(placeSystemName: String = "block-id",
          height: CGFloat = 120,
          resolution: EmbeddedBlockResolution = .content(.stub),
@@ -2767,8 +2733,6 @@ private final class BlockFixture {
         window.addSubview(view)
     }
 
-    /// The block inside a host view laid out by constraints, the way an app puts it in a stack or a
-    /// cell: the host's layout is what the growth animation drives.
     func attachToHost(_ host: UIView) {
         host.frame = window.bounds
         window.addSubview(host)
@@ -2782,8 +2746,6 @@ private final class BlockFixture {
         host.layoutIfNeeded()
     }
 
-    /// The block in a vertical stack, inside a wrapper of its own: the stack is an ancestor above
-    /// the block's superview, the way a section of an app screen holds a block among other views.
     func attachToStack(_ stack: UIStackView, arranging views: [UIView], blockInside wrapper: UIView) {
         stack.axis = .vertical
         stack.frame = window.bounds
@@ -2805,7 +2767,6 @@ private final class BlockFixture {
         mainPass.fireAll()
     }
 
-    /// Declares that the waiting budget has run out.
     func expireTimeout() {
         waitBudgetBed.scheduler.fireAll()
     }
@@ -2851,8 +2812,6 @@ private final class BlockFixture {
     }
 }
 
-/// A block on the waiting budget the container builds for itself — its own switch between the answer
-/// timeout and the page's budget — counted down by a test scheduler.
 @MainActor
 private final class OwnBudgetBlockFixture {
 

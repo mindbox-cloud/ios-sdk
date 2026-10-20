@@ -25,8 +25,6 @@ final class TransparentViewJSBridgeTests {
     private var showEvents: [String] = []
     private var windowLookups = 0
     private var presentations = 0
-    /// Registry entries are weak, so the view a test built is held here as well: a local could
-    /// otherwise be released before an assertion that needs the page still registered.
     private var viewUnderTest: TransparentView?
 
     enum ShowState {
@@ -443,8 +441,6 @@ final class TransparentViewJSBridgeTests {
     private func makeView(tags: [String: String]?,
                           webPageRegistry: MindboxWebPageRegistry = MindboxWebPageRegistry(),
                           handlers: [WebBridgeActionHandler]? = nil) -> TransparentView {
-        // The real dispatch path, with doubles behind the handler: this suite is about what
-        // reaches the repositories, and it should keep proving the view routes there at all.
         let handler = OperationActionHandler(featureToggleManager: self.featureToggleManager,
                                              databaseRepository: self.databaseRepository,
                                              eventRepository: self.eventRepository)

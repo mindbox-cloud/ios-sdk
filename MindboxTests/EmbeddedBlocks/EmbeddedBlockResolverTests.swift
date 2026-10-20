@@ -128,7 +128,6 @@ struct EmbeddedBlockResolverTests {
                                    tags: nil)
     }
 
-    /// The params are not read on the way: an empty catalog is the page's own call to make (`contentRendered: 0`).
     @Test("The selection's answer becomes the page, params untouched")
     func resolutionMapsTheWebviewLayerIntoThePage() throws {
         let catalogs: [[String: JSONValue]] = [
@@ -231,8 +230,6 @@ struct EmbeddedBlockResolverTests {
     }
 }
 
-/// A loader that answers only when asked to: this is how the resolver's behaviour while a load is
-/// still in flight gets tested.
 private final class ContentLoaderSpy {
 
     private(set) var requestedIds: [String] = []

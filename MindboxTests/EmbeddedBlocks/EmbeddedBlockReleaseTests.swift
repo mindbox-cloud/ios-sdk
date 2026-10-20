@@ -12,11 +12,6 @@ import UIKit
 import WebKit
 @_spi(Internal) @testable import Mindbox
 
-/// The whole web chain of a block — container, provider, page, facade, WKWebView and bridge —
-/// must go when the block does, whatever it was doing. No mocks on the web side: the markup
-/// comes from a `data:` URL, so nothing touches the network. What the page would say — `ready`,
-/// `contentRendered` — the test says for it through the bridge's own delegate path: CI's
-/// simulator runs no page script, and the release is about the native objects anyway.
 @Suite("Embedded block release, real web chain", .tags(.embeddedBlocks), .serialized)
 @MainActor
 struct EmbeddedBlockReleaseTests {
@@ -123,7 +118,6 @@ struct EmbeddedBlockReleaseTests {
         }
 
         chain.expectReleased()
-        // The same page was told about its data, not rebuilt.
         #expect(chain.pagesBuilt == 1)
     }
 
@@ -162,7 +156,6 @@ struct EmbeddedBlockReleaseTests {
 
 // MARK: - The chain
 
-/// Everything behind one block, held weakly once the block is let go.
 @MainActor
 private final class Chain {
 
@@ -171,7 +164,6 @@ private final class Chain {
         weak var provider: EmbeddedBlockWebViewProvider?
     }
 
-    /// Taken as each page is built: a page dropped by a reload must go as well as the last one.
     private struct HeldPage {
         weak var page: EmbeddedBlockWebViewPage?
         weak var facade: MindboxWebViewFacade?
@@ -209,7 +201,6 @@ private final class Chain {
             view.delegate = outcomes
         }
 
-        /// What the page's script would post, handed to the page the way the bridge hands it.
         func report(_ action: BridgeMessage.Action, _ payload: [String: JSONValue] = [:]) {
             guard let page = latestPage(), let facade = page.facade as? MindboxWebViewFacade else {
                 Issue.record("no page to report from")
@@ -228,7 +219,6 @@ private final class Chain {
             window.addSubview(view)
         }
 
-        /// The page boots and draws one item; the outcome reaches the delegate on a later turn.
         func waitUntilLoaded() async {
             report(.ready)
             report(.contentRendered, ["count": .int(1)])
@@ -246,10 +236,7 @@ private final class Chain {
 
     private let pageRegistry = MindboxWebPageRegistry()
     let resolver: EmbeddedBlockResolverMock
-    /// The registry's own center: a new config is announced here, nothing else hears it.
     let center = NotificationCenter()
-    /// The app's presence as this chain sees it: the shared one would carry the background round
-    /// trip of one test into every block built after it.
     let presenceBed: AppPresenceBed
     private let placeRegistry: EmbeddedBlockPlaceRegistry
     private var lastPage: EmbeddedBlockWebViewPage?
@@ -269,7 +256,6 @@ private final class Chain {
                                                    presence: presenceBed.presence)
     }
 
-    /// Builds a block, hands it to `body`, lets it go and waits for WebKit to catch up.
     func exercise(_ body: (Block) async -> Void) async {
         let waitBudget = EmbeddedBlockWaitBudgetBed()
         var held = HeldBlock()
@@ -309,7 +295,6 @@ private final class Chain {
         await waitForRelease()
     }
 
-    /// WebKit lets its objects go on later turns of the main queue; up to 5 s for it to catch up.
     private func waitForRelease() async {
         for _ in 0..<100 where !isReleased {
             await settle(0.05)
@@ -334,8 +319,6 @@ private final class Chain {
         #expect(pagesInRegistry == 0, "pages left in the registry")
     }
 
-    /// The same page with new params, announced as a new config: what a changed config pushes into
-    /// a live page. Waits until the push is on its way — the page never confirms it.
     func pushNewData() async {
         let content = Self.content
         resolver.resolution = .content(EmbeddedBlockWebContent(inAppId: content.inAppId,
@@ -351,7 +334,6 @@ private final class Chain {
         await settle(0.2)
     }
 
-    /// A page served from a `data:` URL, with nothing to say on its own.
     static let content = EmbeddedBlockWebContent(
         inAppId: "release-inapp",
         baseUrl: "https://inapp.local/release",
@@ -361,9 +343,7 @@ private final class Chain {
         params: [:])
 }
 
-/// Yields the main actor: the main queue drains the block's deliveries and WebKit's callbacks,
-/// and WebKit releases its objects there. A nested run loop would not do — the test itself is a
-/// main-queue job, and the main queue does not re-enter.
+// A nested run loop would not do: the test runs on the main queue, which does not re-enter.
 @MainActor
 private func settle(_ seconds: TimeInterval) async {
     try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))

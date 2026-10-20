@@ -29,7 +29,6 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.pageFactory.contents == [.stub])
         #expect(bed.page?.loadCount == 1)
         #expect(states == [.loading])
-        // Before the page is ready there is no content: the container has nothing to show.
         #expect(bed.provider.contentView == nil)
     }
 
@@ -44,8 +43,6 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.page?.loadCount == 1)
     }
 
-    /// A block switched off in the admin panel or unknown to it is not an error: no page is even
-    /// created for it.
     @Test("Empty resolution needs no page at all")
     func emptyResolutionCreatesNoPage() {
         let bed = EmbeddedBlockTestBed(resolution: .empty)
@@ -74,9 +71,6 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.provider.contentView === bed.page?.view)
     }
 
-    /// A silent page never becomes ready on its own: a loaded document says nothing about whether
-    /// the block has anything to show. Such a block will be finished off by the container's
-    /// timeout.
     @Test("Silent page never becomes ready on its own")
     func silentPageStaysLoading() {
         let bed = EmbeddedBlockTestBed()
@@ -373,7 +367,6 @@ struct EmbeddedBlockWebViewProviderTests {
 
     // MARK: - Load failure
 
-    /// A load failure is the only thing navigation judges.
     @Test("Load failure fails the block")
     func loadFailureFailsTheBlock() {
         let bed = EmbeddedBlockTestBed()
@@ -553,7 +546,6 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.start()
         bed.provider.failUnanswered(waited: 30)
 
-        // The SDK answers late, then a config lands: neither reaches a block that gave up.
         bed.resolver.flush()
         bed.announceNewConfig()
 
@@ -663,7 +655,6 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(states == [.loading, .failed(.networkError)])
         #expect(bed.pageFactory.pages.isEmpty)
         #expect(bed.provider.contentView == nil)
-        // The pass already reported the failed fetch per candidate it cut.
         #expect(bed.failureReporter.reported.isEmpty)
         #expect(bed.failureReporter.unansweredWaits.isEmpty)
     }
@@ -997,8 +988,6 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.pageFactory.pages.count == 1)
     }
 
-    /// A data push cannot revive a collapsed block: the page answers `initDataUpdated` and stays as it
-    /// is, so the block would wait for a report that never comes. It is rebuilt instead, like Android.
     @Test("The same answer revives a page that was collapsed by a dropped place, by rebuilding it")
     func sameAnswerRevivesACollapsedPage() {
         let bed = EmbeddedBlockTestBed()
@@ -1045,8 +1034,6 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.provider.contentView != nil)
     }
 
-    /// One show must not carry both `Inapp.Show` and `Inapp.ShowFailure`: the show is already accounted
-    /// for when the repeat arrives.
     @Test("A shown block is not failed by a later unreadable report")
     func shownBlockIgnoresALaterUnreadableReport() {
         let bed = EmbeddedBlockTestBed()
@@ -1062,8 +1049,6 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(states.isEmpty)
     }
 
-    /// The latch closes on drawn content only: a page that reports nothing first and draws later — it was
-    /// still waiting for its answer about which in-apps it may draw — is still heard.
     @Test("A page that drew nothing and then drew something is heard")
     func pageThatDrawsAfterReportingNothingIsHeard() {
         let bed = EmbeddedBlockTestBed()
@@ -3445,8 +3430,6 @@ struct EmbeddedBlockWebViewProviderTests {
 
     // MARK: - Stop and restart
 
-    /// After `stop()` the provider must stay silent — the container relies on this when it
-    /// collapses expired content on its own timeout.
     @Test("Stop keeps the page, records what it says and announces nothing")
     func stopPausesThePage() {
         let bed = EmbeddedBlockTestBed()
@@ -3815,7 +3798,6 @@ struct EmbeddedBlockWebViewProviderTests {
 
         bed.provider.start()
         bed.page?.reportRendered(1)
-        // Time on screen after the first show: an inherited stopwatch would carry it into the second.
         bed.clock.advance(5)
         bed.provider.stop()
         bed.clock.advance(30)
@@ -3908,7 +3890,6 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.page?.loadCount == 1)
     }
 
-    /// The resolve may have arrived after the stop — then it belongs to the previous attempt.
     @Test("Resolution arriving after a stop creates nothing")
     func lateResolutionAfterStopIsIgnored() {
         let bed = EmbeddedBlockTestBed()
@@ -3944,11 +3925,9 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.page !== firstPage)
         #expect(firstPage?.cancelCount == 1)
         #expect(states == [.loading])
-        // Readiness starts from zero: the new page has said nothing yet.
         #expect(bed.provider.contentView == nil)
     }
 
-    /// The old page is no longer relevant — its late messages must not show the dropped content.
     @Test("The dropped page cannot report into the new attempt")
     func droppedPageIsSilenced() {
         let bed = EmbeddedBlockTestBed()

@@ -170,8 +170,6 @@ struct InAppWebViewPrewarmPlannerTests {
 
     @Test("Parameters land in the query, not the fragment")
     func prewarmContentBaseURLKeepsFragmentSeparate() throws {
-        // In the fragment they would be invisible to location.search and the contract
-        // would silently degrade to a plain page warm.
         let baseURL = try #require(URL(string: "https://inapp.local/popup#main"))
 
         let url = InAppWebViewPrewarmPlanner.prewarmContentBaseURL(

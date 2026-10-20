@@ -48,7 +48,7 @@ struct LogPrimitivesTests {
 
     @Test("LogMessage.description prefixes the UTC timestamp")
     func logMessageDescription() {
-        let date = Date(timeIntervalSince1970: 1_747_017_155) // 2025-05-12T02:32:35Z
+        let date = Date(timeIntervalSince1970: 1_747_017_155)
         let message = LogMessage(timestamp: date, message: "payload")
         #expect(message.description == "2025-05-12T02:32:35Z | payload")
     }

@@ -55,7 +55,6 @@ extension MBLoggerCoreDataManager {
         return manager
     }
 
-    /// Waiting for bootstrap to finish (storageState != .initializing)
     @discardableResult
     static func waitUntilReady(_ m: MBLoggerCoreDataManager, timeout: TimeInterval = 5) -> XCTWaiter.Result {
         let exp = XCTestExpectation(description: "MBLogger ready/disabled")
@@ -67,7 +66,6 @@ extension MBLoggerCoreDataManager {
         return XCTWaiter.wait(for: [exp], timeout: timeout)
     }
 
-    /// Wait for the manager's serial queue to be cleared
     @discardableResult
     static func drainQueue(_ m: MBLoggerCoreDataManager, timeout: TimeInterval = 2) -> XCTWaiter.Result {
         let exp = XCTestExpectation(description: "drain queue")

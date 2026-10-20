@@ -41,8 +41,6 @@ struct MotionActionHandlerTests {
         #expect(host.sent.first?.payload == .object(["success": .bool(true)]))
     }
 
-    /// A partial start is still a start: the page is told what it will not get rather than
-    /// being refused everything it asked for.
     @Test("A partial start succeeds and names what is unavailable")
     func partialStartNamesUnavailable() throws {
         let (handler, _, host) = makeSUT(started: [.shake], unavailable: [.flip])
@@ -155,8 +153,6 @@ struct MotionActionHandlerTests {
 
     // MARK: - Events
 
-    /// A gesture arrives from the sensors with no request behind it, so it is pushed as a
-    /// request of its own rather than as an answer.
     @Test("A detected gesture is pushed to the page as a request")
     func detectedGestureIsPushed() throws {
         let (handler, service, host) = makeSUT()
@@ -184,8 +180,6 @@ struct MotionActionHandlerTests {
         #expect(service.systemShakeCount == 1)
     }
 
-    /// The sensors were never asked for, so there is nothing to forward to — and building a
-    /// service to tell it about a shake nobody subscribed to would be worse than ignoring it.
     @Test("A system shake before any subscription builds no service")
     func systemShakeWithoutSubscriptionIsIgnored() {
         let service = MotionServiceSpy(result: MotionStartResult(started: [.shake], unavailable: []))
@@ -210,8 +204,6 @@ struct MotionActionHandlerTests {
         #expect(service.stopCount == 1)
     }
 
-    /// Every show ends, and most never touch motion: teardown must not be what starts a
-    /// service, only what stops one.
     @Test("Teardown builds no service when motion was never used")
     func tearDownBuildsNothingWhenUnused() {
         var built = 0

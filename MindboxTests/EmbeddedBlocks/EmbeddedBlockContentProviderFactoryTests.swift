@@ -103,8 +103,6 @@ struct EmbeddedBlockContentProviderFactoryTests {
 
     // MARK: - Helpers
 
-    /// The resolver answers "empty": no page is created for such a block, so the factory's tests
-    /// need no real web view.
     private func makeFactory() -> EmbeddedBlockContentProviderFactory {
         let registry = EmbeddedBlockPlaceRegistry(resolver: EmbeddedBlockResolverMock(resolution: .empty),
                                                   budget: InappShowBudgetMock(),

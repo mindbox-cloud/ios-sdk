@@ -21,12 +21,10 @@ struct MotionServiceShakeToEditTests {
         var service: MotionService? = MotionService()
         service?.startMonitoring(gestures: [.shake])
 
-        // disableShakeToEdit uses DispatchQueue.main.async — let it execute
         await Task.yield()
 
         #expect(UIApplication.shared.applicationSupportsShakeToEdit == false)
 
-        // Release triggers deinit → DispatchQueue.main.async (without weak self) restores the flag
         service = nil
 
         await Task.yield()
@@ -60,7 +58,6 @@ struct MotionServiceShakeToEditTests {
         await Task.yield()
         #expect(UIApplication.shared.applicationSupportsShakeToEdit == false)
 
-        // Restart with flip only — shake no longer active, flag should restore
         service.startMonitoring(gestures: [.flip])
 
         await Task.yield()

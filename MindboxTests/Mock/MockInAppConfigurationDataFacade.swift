@@ -12,7 +12,6 @@ import class MindboxLogger.Locked
 
 // swiftlint:disable force_unwrapping
 
-// Spy state is @Locked: the selection calls in on its own queues while tests read from theirs — TSan flagged the unsynchronized version.
 class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
 
     let segmentationService: SegmentationServiceProtocol
@@ -31,7 +30,6 @@ class MockInAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
     @Locked public var fetchDependenciesCalls = 0
     @Locked public var sendCollectedFailuresCalls = 0
     @Locked public var discardCollectedFailuresCalls = 0
-    /// What `collectTargetingFailures` answers: whether a cut candidate could not be checked.
     @Locked public var cutByFetchFailure = false
     @Locked public var holdsFetches = false
     @Locked private var heldFetches: [() -> Void] = []

@@ -11,7 +11,6 @@ import Testing
 import MindboxLogger
 @testable import Mindbox
 
-// Budgets live on the shared session singleton — the suite leans on the target's serial execution.
 @Suite("In-app show budget", .tags(.inAppSchedule))
 struct InappShowBudgetTests {
 
@@ -392,7 +391,6 @@ struct InappShowBudgetTests {
 
     // MARK: - The budget rules
 
-    /// In sync with Android, whose config validator turns zero and below into no limit.
     @Test("A session limit of zero or below means no limit", arguments: [0, -1])
     func nonPositiveSessionLimitIsNoLimit(limit: Int) {
         setLimits(session: limit)
@@ -444,7 +442,6 @@ struct InappShowBudgetTests {
         #expect(reserve(.overlay("a"), "a"))
     }
 
-    /// The config carries the interval as a TimeSpan with a fractional part, and Android compares it in milliseconds.
     @Test("A sub-second interval is still an interval")
     func subSecondIntervalIsEnforced() {
         setLimits(interval: "00:00:00.500")

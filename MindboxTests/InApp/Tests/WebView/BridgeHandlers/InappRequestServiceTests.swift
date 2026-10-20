@@ -192,7 +192,6 @@ struct InappRequestServiceTests {
         }
     }
 
-    /// The default show path reaches the scheduler through DI, which is process-global: restored after the body.
     private func withScheduler(_ scheduler: InappScheduleManagerProtocol, _ body: () throws -> Void) rethrows {
         let savedBuilder = MBInject.buildTestContainer
         let savedMode = MBInject.mode

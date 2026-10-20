@@ -11,8 +11,6 @@ import Foundation
 import UserNotifications
 @testable import MindboxNotifications
 
-// Serialized: the download tests register a process-global stub `URLProtocol` and share its
-// static state, so they must not run concurrently with each other.
 @Suite("MindboxNotificationService (NotificationService extension)", .tags(.notifications, .notificationService), .serialized)
 struct MindboxNotificationServiceTests {
 
@@ -42,7 +40,7 @@ struct MindboxNotificationServiceTests {
             }
         }
 
-        #expect(StubURLProtocol.handledRequestCount > 0) // served from the stub, never the real network
+        #expect(StubURLProtocol.handledRequestCount > 0)
         #expect(service.contentHandler != nil)
         #expect(service.bestAttemptContent != nil)
         #expect(service.bestAttemptContent?.userInfo["uniqueKey"] as? String == NotificationTestFixtures.uniqueKey)
@@ -80,7 +78,7 @@ struct MindboxNotificationServiceTests {
     @Test("didReceive delivers without an attachment when the data is not a recognized image")
     func didReceiveDeliversForUnrecognizedImageData() async {
         StubURLProtocol.reset()
-        StubURLProtocol.stubResponseData = Data([0x00, 0x01, 0x02, 0x03]) // unknown magic byte -> ImageFormat is nil
+        StubURLProtocol.stubResponseData = Data([0x00, 0x01, 0x02, 0x03])
         URLProtocol.registerClass(StubURLProtocol.self)
         defer {
             URLProtocol.unregisterClass(StubURLProtocol.self)

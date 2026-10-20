@@ -301,7 +301,6 @@ final class InAppConfigurationDataFacadeTests: XCTestCase {
 
         let unchecked = dataFacade.collectTargetingFailures(forFailedTargetingInappIds: ["inapp-segment"], tagsByInappId: [:])
 
-        // Offline is not the server's doing: the place hears it, the analytics do not.
         XCTAssertTrue(unchecked)
         XCTAssertTrue(mockFailureManager.failures.isEmpty)
     }

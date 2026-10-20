@@ -18,7 +18,6 @@ struct WebViewReadyCheckerTests {
     private let noHandlers: Any? = Constants.WebViewBridgeJS.bridgeNoPageHandlers
     private let noNativeBridge: Any? = Constants.WebViewBridgeJS.bridgeNoNativeHandler
 
-    /// Scripted evaluate answers + manual control over the retry schedule.
     private final class Harness {
         var answers: [Result<Any?, Error>]
         private(set) var evaluateCount = 0

@@ -10,11 +10,6 @@ import Testing
 import Foundation
 @_spi(Internal) @testable import Mindbox
 
-/// The answer half of the seam: `open(_:answering:host:)`, shared by `openLink` and `settings.open`.
-///
-/// `SystemURLOpener` itself stays out — its whole body is the call to `UIApplication.open`, which the
-/// protocol's own documentation says cannot be exercised in a test. What is checked here is the part
-/// that has a decision in it: which outcome becomes which answer, and whose lifetime it depends on.
 @Suite("BridgeURLOpening.open(answering:)", .tags(.webView))
 @MainActor
 struct BridgeURLOpeningTests {
@@ -54,8 +49,6 @@ struct BridgeURLOpeningTests {
         #expect(response.id == message.id)
     }
 
-    /// This route never asks for universal links: the caller that wants them asks for them itself,
-    /// and reaching the system through here means the decision has already been made.
     @Test("The system is asked without the universal-link restriction")
     func doesNotRestrictToUniversalLinks() async {
         let opener = URLOpenerSpy()
@@ -78,8 +71,6 @@ struct BridgeURLOpeningTests {
         #expect(opener.opened.first?.url == url)
     }
 
-    /// The system takes its own time to answer, and by then the show may be over. Waiting on it must
-    /// not be what keeps the page alive.
     @Test("A page released while the system is deciding is not held by the request")
     func pendingOpenDoesNotHoldThePage() async {
         let opener = URLOpenerSpy()

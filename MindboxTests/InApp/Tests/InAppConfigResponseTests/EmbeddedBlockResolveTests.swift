@@ -35,7 +35,6 @@ struct EmbeddedBlockResolveTests {
         static let abPlace = "ab-block-place"
         static let abBlockId = "cccccccc-cccc-cccc-cccc-cccccccccccc"
         static let directCallBlockId = "dddddddd-dddd-dddd-dddd-dddddddddddd"
-        // The fixture's A/B test shares its salt with the overlay A/B fixture; these devices hash into its first and second branch.
         static let deviceKeepingAbBlock = "40909d27-4bef-4a8d-9164-6bfcf58ecc76"
         static let deviceCuttingAbBlock = "b4e0f767-fe8f-4825-9772-f1162f2db52d"
     }
@@ -108,7 +107,6 @@ struct EmbeddedBlockResolveTests {
         #expect(await resolvePlace("no-such-place") == nil)
     }
 
-    /// `validityPeriod` is read on no path on either platform — the day it starts being read has to be a decision made on both at once.
     @Test("An expired validityPeriod does not keep a block from being drawn")
     func expiredValidityPeriodDoesNotStopThePlace() async throws {
         let expiry = try #require(expiryInStub(ofInappWithId: Constants.blockId))
@@ -295,7 +293,6 @@ struct EmbeddedBlockResolveTests {
         dataFacade.cutByFetchFailure = true
 
         #expect(await selectPlace(Constants.abPlace, candidates: config.candidates) == .targetingUnavailable)
-        // Not a selection: what the pass buffered goes out as failures, as for an empty place.
         #expect(dataFacade.sendCollectedFailuresCalls == 1)
     }
 
@@ -312,7 +309,6 @@ struct EmbeddedBlockResolveTests {
         }
 
         #expect(selection == .targetingUnavailable)
-        // Only the server's own failure is reported, for the block the pass cut.
         let reportedIds = failures.failures.map(\.inappId)
         if case .serverError = error {
             #expect(reportedIds == ["eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"])
@@ -631,7 +627,6 @@ struct EmbeddedBlockResolveTests {
         #expect(!dataFacade.targetingArray.contains(Constants.onceStoryId))
     }
 
-    /// A mixed form's overlay half stays the catch-up's — in sync with Android.
     @Test("The startup catch-up vouches for no in-app without an overlay variant")
     func catchUpSkipsPureEmbeddedInapps() async {
         _ = await withCheckedContinuation { continuation in

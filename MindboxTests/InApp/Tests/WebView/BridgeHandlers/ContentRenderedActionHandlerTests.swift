@@ -43,7 +43,6 @@ struct ContentRenderedActionHandlerTests {
         #expect(host.sent.first?.type == .response)
     }
 
-    /// JS has one number type, so a whole value may arrive either way.
     @Test("A count sent as a JS number is understood")
     func doubleCountIsUnderstood() {
         let host = ContentHostSpy()
@@ -114,7 +113,6 @@ struct ContentRenderedActionHandlerTests {
         #expect(host.sent.first?.type == .error)
     }
 
-    /// Not numbers of items either, and `Int(exactly:)` turns them away with the fractions.
     @Test("A count that is not a finite number is refused",
           arguments: [Double.nan, .infinity, -.infinity, 1e30])
     func unusableNumberIsRefused(count: Double) {

@@ -32,8 +32,6 @@ struct ReadyActionHandlerTests {
         #expect(response.payload == .string(#"{"sdkVersion":"2.15.2"}"#))
     }
 
-    /// Composing the payload belongs to the host — an in-app knows its operation, a block knows
-    /// its configuration entry — so the handler must not add to it or reshape it.
     @Test("Passes the payload through untouched")
     func passesPayloadThrough() {
         let host = HostSpy()

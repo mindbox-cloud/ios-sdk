@@ -13,7 +13,6 @@ import MindboxLogger
 
 extension EmbeddedBlockWebContent {
 
-    /// `unlimited`, the frequency blocks arrive with by contract — so the default block writes no show.
     static let stub = EmbeddedBlockWebContent(inAppId: "block-inapp-id",
                                               baseUrl: "https://inapp.local/stories",
                                               contentUrl: "https://mindbox.ru/block.html",
@@ -150,7 +149,6 @@ final class EmbeddedBlockFailureReporterMock {
 
     var reasons: [InAppShowFailureReason] { reported.map(\.reason) }
 
-    /// Failures with no in-app behind them — the SDK never answered the block — by how long it waited.
     private(set) var unansweredWaits: [TimeInterval] = []
 
     func report(_ inAppId: String, _ tags: [String: String]?, _ reason: InAppShowFailureReason, _ details: String) {
@@ -164,15 +162,12 @@ final class EmbeddedBlockFailureReporterMock {
 
 extension BridgeMessage {
 
-    /// The envelope carries the payload as a JSON string — objects built here would skip the parsing the real path does.
     static func pageRequest(_ action: Action, _ payload: [String: JSONValue] = [:]) -> BridgeMessage {
         let json = (try? JSONEncoder().encode(payload)).flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
         return BridgeMessage(type: .request, action: action, payload: .string(json))
     }
 }
 
-/// A page without WebKit: tests decide what it tells the native side and when.
-/// The envelopes a test sends go through the real action handlers — only WebKit is taken out.
 final class EmbeddedBlockPageMock: EmbeddedBlockPageHosting {
 
     let view = UIView()
@@ -194,7 +189,6 @@ final class EmbeddedBlockPageMock: EmbeddedBlockPageHosting {
     var loadCount = 0
     var cancelCount = 0
 
-    /// `cancel()` closes the real web layer for good; modelled, or a test about a stopped page would pass either way.
     private(set) var isClosed = false
 
     fileprivate(set) var responses: [(action: String, payload: JSONValue)] = []
@@ -242,7 +236,6 @@ final class EmbeddedBlockPageMock: EmbeddedBlockPageHosting {
         send(.contentRendered)
     }
 
-    /// On the real page the `initDataUpdated` response is caught before the registry; here that seam is the closure itself.
     func confirmInitData() {
         onDataPushConfirmed?()
     }
@@ -306,7 +299,6 @@ private final class EmbeddedBlockPageMockHost: WebBridgeHost, WebBridgeContentHo
     }
 }
 
-/// Not main-actor isolated because the protocol is not; the main-actor tests keep the web view on the main thread.
 final class SharedWebLayerMock: InappWebViewFacadeProtocol {
 
     let webView = WKWebView()
@@ -386,7 +378,6 @@ final class SharedWebLayerMock: InappWebViewFacadeProtocol {
     }
 }
 
-/// Counts how many pages were made and with what content: a reload must make a new one.
 final class EmbeddedBlockPageFactoryMock {
 
     private(set) var pages: [EmbeddedBlockPageMock] = []
@@ -416,8 +407,6 @@ final class EmbeddedBlockResolverMock: EmbeddedBlockResolving {
 
     var readsNoConfig = false
 
-    /// `true` — the answer does not arrive until the test calls `flush()`: this is how a resolve
-    /// that lands after the block was stopped or reloaded is checked.
     var isDeferred = false
 
     private(set) var resolvedPlaces: [String] = []
@@ -546,8 +535,6 @@ final class InAppConfigurationManagerStub: InAppConfigurationManagerProtocol {
     func inappInCurrentConfig(withId id: String) -> InApp? { nil }
 }
 
-/// A clock that moves only when asked to. Monotonic seconds, matching the timeout's clock seam;
-/// a negative `advance` models the backward jump a monotonic clock never makes.
 final class TestClock {
 
     private(set) var now: TimeInterval = 1_000_000
@@ -557,13 +544,8 @@ final class TestClock {
     }
 }
 
-/// A scheduler that never fires on its own: "time is up" is declared by the test.
-///
-/// Thanks to it the waiting budget is checked without a single sleep: both in its own tests and in
-/// the tests of the container, which is handed the budget from outside.
 final class TestScheduler {
 
-    /// The delay of the last arm — which is the remainder of the budget given to the countdown.
     private(set) var lastDelay: TimeInterval?
 
     private(set) var armCount = 0
@@ -576,8 +558,6 @@ final class TestScheduler {
         pending.append(work)
     }
 
-    /// Performs the armed work, skipping what was cancelled: `pause()` and `reset()` cancel it
-    /// exactly the way they would cancel work on a real queue.
     func fireAll() {
         let scheduled = pending
         pending = []
@@ -589,8 +569,6 @@ final class TestScheduler {
     }
 }
 
-/// The waiting budget with a substituted clock, scheduler and notification center — everything
-/// that makes it different from the real one, gathered in one place.
 final class EmbeddedBlockWaitBudgetBed {
 
     let duration: TimeInterval
@@ -598,7 +576,6 @@ final class EmbeddedBlockWaitBudgetBed {
     let clock: TestClock
     let scheduler: TestScheduler
 
-    /// One per bed: the background and the return from it must reach only this budget.
     let center: NotificationCenter
 
     let presenceBed: AppPresenceBed
@@ -701,7 +678,6 @@ final class AppPresenceBed {
 }
 
 final class EmbeddedPlacesStub {
-    /// `nil` — no config seen (gate open); a place maps to the operations its in-apps listen to, an empty set wakes nothing.
     var places: [String: Set<String>]?
 
     var isDeferred = false
@@ -738,8 +714,6 @@ final class EmbeddedBlockAckSchedulerMock {
     }
 }
 
-/// The provider with all dependencies substituted — the shared rig for the provider and container
-/// tests. The container runs through a real provider, the provider through a real place registry.
 final class EmbeddedBlockContentProviderFactoryMock: EmbeddedBlockContentProviderMaking {
 
     private(set) var requestedPlaces: [String] = []
@@ -801,7 +775,6 @@ final class EmbeddedBlockTestBed: EmbeddedBlockSessionRig {
     let ackScheduler: EmbeddedBlockAckSchedulerMock
     let delayScheduler: TestScheduler
 
-    /// One per bed: a new config must reach only this provider.
     let center: NotificationCenter
 
     let clock: TestClock
@@ -820,7 +793,6 @@ final class EmbeddedBlockTestBed: EmbeddedBlockSessionRig {
     init(placeSystemName: String = "block-id",
          resolution: EmbeddedBlockResolution = .content(.stub),
          applicationState: UIApplication.State = .active) {
-        // Once-per-session state lives on the shared singleton — reset, or beds would see each other's silence.
         SessionTemporaryStorage.shared.$ledger.mutate {
             $0.placesReportedUnanswered = []
             $0.servedPlaceDelays = []
@@ -946,8 +918,6 @@ final class EmbeddedBlockTestBed: EmbeddedBlockSessionRig {
 
 }
 
-/// The place's memory across launches, kept in memory: a fixture built over the same mock is the
-/// "next launch" of the block.
 final class EmbeddedBlockPlaceMemoryMock: EmbeddedBlockPlaceRemembering {
 
     private(set) var shownPlaces: Set<String>
@@ -956,7 +926,6 @@ final class EmbeddedBlockPlaceMemoryMock: EmbeddedBlockPlaceRemembering {
 
     private(set) var forgotten: [String] = []
 
-    /// The places the block asked about — what it was created for, normalized.
     private(set) var askedPlaces: [String] = []
 
     init(shownPlaces: Set<String> = []) {
@@ -979,23 +948,16 @@ final class EmbeddedBlockPlaceMemoryMock: EmbeddedBlockPlaceRemembering {
     }
 }
 
-/// The SDK's reveal animation run on the spot: the animations apply at once, the way UIKit sets the
-/// model values, and every run is counted — the fade of the content is one run, the growth of a
-/// block that waited hidden another.
 final class EmbeddedBlockRevealAnimationSpy {
 
     private(set) var runs: [TimeInterval] = []
 
     var isReduceMotionEnabled = false
 
-    /// `true` — the completion waits for `finish()`, as it waits for the end of a real animation.
     var isDeferred = false
 
-    /// `true` — the animations block itself waits for `applyAnimations()`: this is how the state
-    /// the animation starts from gets seen, before UIKit would set the model values.
     var holdsAnimations = false
 
-    /// `true` while the animations block runs: what happens then is what UIKit would animate.
     private(set) var isApplyingAnimations = false
 
     private var pendingAnimations: [() -> Void] = []

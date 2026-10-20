@@ -9,8 +9,7 @@
 import UIKit
 import XCTest
 
-// The bundle has no host app, so the first UIWindow in the process starts UIKit, which can take over
-// a minute on CI. Paying it here keeps it out of every test's execution time allowance.
+// Loaded via Info.plist NSPrincipalClass: with no host app, the first UIWindow cold-starts UIKit (over a minute on CI).
 @objc(UIKitWarmUpObserver)
 final class UIKitWarmUpObserver: NSObject, XCTestObservation {
 

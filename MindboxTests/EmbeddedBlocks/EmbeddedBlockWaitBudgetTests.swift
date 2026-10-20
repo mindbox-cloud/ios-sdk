@@ -11,7 +11,6 @@ import Foundation
 import UIKit
 @_spi(Internal) @testable import Mindbox
 
-/// A fake-clock quantity, not a real deadline: nothing here is waited out.
 private let budgetSeconds: TimeInterval = 0.4
 
 @Suite("Embedded block wait budget", .tags(.embeddedBlocks))

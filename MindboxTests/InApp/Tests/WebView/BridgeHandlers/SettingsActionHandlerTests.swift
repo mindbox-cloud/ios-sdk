@@ -29,7 +29,6 @@ struct SettingsActionHandlerTests {
         #expect(SettingsActionHandler().actions == [.settingsOpen])
     }
 
-    /// Notification settings have their own route rather than the app's top-level page.
     @Test("The notifications target takes the notification route, not the URL one")
     func notificationsTargetUsesItsOwnRoute() async throws {
         let (handler, opener, host, notifications) = makeSUT()
@@ -42,8 +41,6 @@ struct SettingsActionHandlerTests {
         #expect(host.sent.first?.payload == .object(["success": .bool(true)]))
     }
 
-    /// The page asked to be sent to settings and it was — whether the user then acts on it is
-    /// not something the page is told.
     @Test("A notification route that reports failure is still answered as a success")
     func notificationsAnswerSuccessRegardless() async {
         let (handler, _, host, _) = makeSUT(notificationsOpen: false)
@@ -104,8 +101,6 @@ struct SettingsActionHandlerTests {
 
     // MARK: - Lifetime
 
-    /// Both routes hold the page weakly, so a show that ended while the system was switching
-    /// screens is not kept alive by the trip to settings.
     @Test("A page released mid-route is not held by the notification route")
     func notificationRouteDoesNotHoldPage() {
         let notifications = NotificationSettingsSpy(result: true, defersAnswer: true)
@@ -123,7 +118,6 @@ struct SettingsActionHandlerTests {
 
         #expect(page == nil)
 
-        // The late answer finds nobody and is dropped rather than crashing.
         notifications.answer()
     }
 }
@@ -134,8 +128,6 @@ final class NotificationSettingsSpy {
 
     private let result: Bool
 
-    /// Holds the answer back instead of giving it, standing in for the moment the system is still
-    /// switching screens. That is the only window in which what the SDK holds onto is observable.
     private let defersAnswer: Bool
 
     private var pendingAnswer: ((Bool) -> Void)?

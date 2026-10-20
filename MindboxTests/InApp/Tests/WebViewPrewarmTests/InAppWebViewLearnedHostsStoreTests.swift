@@ -50,8 +50,6 @@ struct InAppWebViewLearnedHostsStoreTests {
 
     @Test("Page-controlled strings that are not bare hosts are rejected on write")
     func rejectsNonHostStrings() {
-        // The values come from page JS and are later interpolated into preconnect HTML —
-        // anything that is not a bare RFC 1123 host must never be persisted.
         store.remember(
             [
                 "cdn.ok.example",
@@ -74,13 +72,9 @@ struct InAppWebViewLearnedHostsStoreTests {
         store.remember(["a.example", "b.example"], endpoint: "Endpoint")
         let writesAfterFirst = storage.webViewLearnedHostsWriteCount
 
-        // Every observed host is already known — the steady state after the first shows.
-        // The persisted value is unchanged either way, so the write count is the only
-        // observable proof the redundant UserDefaults write is skipped.
         store.remember(["a.example", "b.example"], endpoint: "Endpoint")
         #expect(storage.webViewLearnedHostsWriteCount == writesAfterFirst)
 
-        // A genuinely new host still writes.
         store.remember(["c.example"], endpoint: "Endpoint")
         #expect(storage.webViewLearnedHostsWriteCount == writesAfterFirst + 1)
         #expect(store.hosts(endpoint: "Endpoint") == ["a.example", "b.example", "c.example"])

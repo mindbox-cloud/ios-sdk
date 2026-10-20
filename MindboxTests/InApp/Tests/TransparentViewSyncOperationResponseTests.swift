@@ -100,7 +100,6 @@ struct TransparentViewSyncOperationResponseTests {
 
     @Test("Non-UTF-8 body becomes .error with 'Response body is not valid UTF-8'")
     func nonUTF8Body_becomesError() {
-        // Bytes that are not valid UTF-8: lone continuation byte 0xC3 + invalid follow-up
         let data = Data([0xC3, 0x28])
 
         let outgoing = OperationActionHandler.makeSyncOperationResponse(

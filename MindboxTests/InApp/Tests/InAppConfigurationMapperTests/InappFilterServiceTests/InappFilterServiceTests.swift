@@ -353,7 +353,6 @@ final class InappFilterServiceTests: XCTestCase {
         
         let sortedInapps = sut.sortInappsByPriority(inapps)
         
-        // Then: Priority in-apps should come first, maintaining original order within same priority
         let expectedOrder = ["1", "3", "4", "2", "5"]
         let actualOrder = sortedInapps.map { $0.id }
         
@@ -391,7 +390,6 @@ final class InappFilterServiceTests: XCTestCase {
         
         let sortedInapps = sut.sortInappsByPriority(inapps)
         
-        // Then: Order should remain the same
         let expectedOrder = ["1", "2", "3"]
         let actualOrder = sortedInapps.map { $0.id }
         
@@ -407,7 +405,6 @@ final class InappFilterServiceTests: XCTestCase {
         
         let sortedInapps = sut.sortInappsByPriority(inapps)
         
-        // Then: Order should remain the same
         let expectedOrder = ["1", "2", "3"]
         let actualOrder = sortedInapps.map { $0.id }
         

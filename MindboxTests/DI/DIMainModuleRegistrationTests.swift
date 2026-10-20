@@ -91,7 +91,6 @@ final class DIMainModuleRegistrationTests: XCTestCase {
         XCTAssertNotNil(manager)
     }
 
-    // Тесты для UtilitiesServices
     func testUtilitiesFetcherIsRegistered() {
         let fetcher: UtilitiesFetcher? = DI.inject(UtilitiesFetcher.self)
         XCTAssertNotNil(fetcher)
@@ -230,7 +229,6 @@ final class DIMainModuleRegistrationTests: XCTestCase {
         XCTAssertNotNil(manager)
     }
 
-    // Тесты для InappPresentation
     func testInAppMessagesTrackerIsRegistered() {
         let tracker: InAppMessagesTracker? = DI.inject(InAppMessagesTracker.self)
         XCTAssertNotNil(tracker)

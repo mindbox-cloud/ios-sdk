@@ -12,9 +12,6 @@ import Testing
 @Suite("Bridge wire names: actions and error codes", .tags(.webView))
 struct BridgeMessageActionWireNamesTests {
 
-    // These strings are the contract with the pages already shipped: every other suite builds and
-    // reads messages through the enum, so a renamed raw value round-trips and stays green here
-    // while the page stops recognising the action.
     @Test("A dotted action keeps the wire name the page sends", arguments: [
         (BridgeMessage.Action.localStateGet, "localState.get"),
         (BridgeMessage.Action.localStateSet, "localState.set"),

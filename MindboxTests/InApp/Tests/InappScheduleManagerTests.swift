@@ -59,14 +59,6 @@ struct InappScheduleManagerTests {
         let inapp = createInAppFormData(id: "1", isPriority: false, delayTime: nil)
         scheduleManager.scheduleInApp(inapp, processingDuration: 0)
 
-        // delayTime == nil ⇒ delay 0, so the production DispatchSourceTimer is armed
-        // for `.now()` and can fire and present on its own the instant the host app is
-        // foregrounded, racing any "scheduled but not yet shown" inspection. That
-        // intermediate state is not observable here and contradicts the no-delay
-        // contract, so we assert only the deterministic end state. If the timer has not
-        // already presented (e.g. host app backgrounded), drive it manually — this is
-        // idempotent because showEligibleInapp removes the entry under `queue`, so the
-        // in-app is presented at most once whichever path wins.
         var presentationTime: TimeInterval?
         scheduleManager.queue.sync {
             presentationTime = self.scheduleManager.inappsByPresentationTime.keys.first
@@ -222,7 +214,6 @@ struct InappScheduleManagerTests {
         }
     }
 
-    /// The delay keeps the manager's own timer out of the test.
     @Test("Eligible in-app cleanup leaves the failure buffer alone", .tags(.inAppSchedule))
     func showEligibleInapp_leavesFailuresAlone() {
         let inapp = createInAppFormData(id: "keep-failures", isPriority: false, delayTime: "00:01:00")
@@ -253,9 +244,6 @@ struct InappScheduleManagerTests {
         let inapp = createInAppFormData(id: "1", isPriority: false, delayTime: "invalid_time")
         scheduleManager.scheduleInApp(inapp, processingDuration: 0)
 
-        // An invalid delay string falls back to 0, so the timer can auto-fire and
-        // present immediately, racing inspection — see scheduleInapp_noDelay_schedulesCorrectly.
-        // Drive presentation only if the timer has not already done so.
         var presentationTime: TimeInterval?
         scheduleManager.queue.sync {
             presentationTime = self.scheduleManager.inappsByPresentationTime.keys.first
@@ -278,9 +266,6 @@ struct InappScheduleManagerTests {
         let inapp = createInAppFormData(id: "1", isPriority: false, delayTime: "00:00:00")
         scheduleManager.scheduleInApp(inapp, processingDuration: 0)
 
-        // Zero delay ⇒ the timer can auto-fire and present immediately, racing
-        // inspection — see scheduleInapp_noDelay_schedulesCorrectly. Drive presentation
-        // only if the timer has not already done so.
         var presentationTime: TimeInterval?
         scheduleManager.queue.sync {
             presentationTime = self.scheduleManager.inappsByPresentationTime.keys.first
@@ -523,7 +508,6 @@ struct InappScheduleManagerTests {
         }
     }
 
-    /// The schedule hands its winner to the main queue: drain `queue`, then one main-queue turn.
     private func awaitSchedule() async {
         scheduleManager.queue.sync {}
         await awaitMainQueue()
@@ -959,7 +943,6 @@ struct InappScheduleManagerTests {
 
     // MARK: - The show budget
 
-    /// A two-second delay keeps the production timer out of the way; the eligible show is driven by hand.
     private func showScheduled(_ inapp: InAppFormData) async {
         scheduleManager.scheduleInApp(inapp, processingDuration: 0)
 
@@ -1059,7 +1042,6 @@ struct InappScheduleManagerTests {
         return count
     }
 
-    /// The moment came while the app was away: the timer's background branch, driven by hand.
     private func holdScheduled(_ inapp: InAppFormData) {
         scheduleManager.scheduleInApp(inapp, processingDuration: 0)
 
@@ -1261,7 +1243,6 @@ final class InappShowFailureManagerMock: InappShowFailureManagerProtocol {
         let tags: [String: String]?
     }
 
-    // @Locked: production calls these from its queues while the test reads from its own context.
     @Locked private(set) var addFailureCallCount = 0
     @Locked private(set) var sendFailuresCallCount = 0
     @Locked private(set) var clearFailuresCallCount = 0

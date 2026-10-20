@@ -13,7 +13,6 @@ import Testing
 @Suite("Unlimited in-app frequency", .tags(.inAppSchedule))
 struct UnlimitedFrequencyTests {
 
-    /// Private storage: the validator only reads it, so no need to join the serial-execution-bound suites.
     private func makeValidator(shownDates: [String: [Date]] = [:]) -> InappFrequencyValidator {
         let storage = MockPersistenceStorage()
         storage.shownDatesByInApp = shownDates

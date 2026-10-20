@@ -11,9 +11,6 @@ import Testing
 
 // MARK: - Embedded block place memory across configurations
 
-/// The memory of places outlives the configuration: neither a new endpoint nor a new domain starts
-/// a place hidden again, the same as on Android. A stale record corrects itself — the place answers
-/// with nothing, `onEmpty` forgets it.
 @Suite("Embedded block place memory across configurations", .tags(.embeddedBlocks), .serialized)
 @MainActor
 struct EmbeddedBlockPlaceMemoryEndpointTests {
@@ -86,7 +83,6 @@ struct EmbeddedBlockPlaceMemoryEndpointTests {
         await waitForInitializationFinished()
     }
 
-    /// Written the way the block writes them: through the memory the container hands out.
     private func rememberPlaces() {
         let memory = DI.injectOrFail(EmbeddedBlockPlaceRemembering.self)
         memory.rememberShownContent(at: "stories")

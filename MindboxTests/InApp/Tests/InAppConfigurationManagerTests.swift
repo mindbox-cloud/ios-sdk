@@ -22,7 +22,6 @@ struct InAppConfigurationManagerTests {
         static let fixtureLimits = Settings.InAppSettings(maxInappsPerSession: 3, maxInappsPerDay: 50, minIntervalBetweenShows: "00:00:10")
     }
 
-    /// Answers land on the manager's queue while the test polls from its own thread — the box keeps that race-free.
     private final class Answers<Value> {
         @Locked private var storage: [Value] = []
 
@@ -53,7 +52,6 @@ struct InAppConfigurationManagerTests {
         }
     }
 
-    /// Poll `isFetchPending` before delivering — a result delivered into a fetch that has not started yet would vanish.
     private final class HeldConfigAPI: InAppConfigurationAPI {
         private let lock = NSLock()
         private var held: [(InAppConfigurationAPIResult) -> Void] = []
@@ -93,7 +91,6 @@ struct InAppConfigurationManagerTests {
         }
     }
 
-    /// No disk: the cache must not leak between tests, and a failure path must find it empty.
     private final class EmptyConfigRepository: InAppConfigurationRepository {
         override func fetchConfigFromCache() -> Data? { nil }
         override func saveConfigToCache(_ data: Data) {}
@@ -112,8 +109,6 @@ struct InAppConfigurationManagerTests {
         override func clean() { cached = nil }
     }
 
-    /// Counts the config-only work the manager is supposed to do once per applied config, and
-    /// forwards everything else to the real service.
     private final class CountingFilterService: InappFilterProtocol {
         private let wrapped = DI.injectOrFail(InappFilterProtocol.self)
         @Locked private(set) var prepareCount = 0
@@ -220,7 +215,6 @@ struct InAppConfigurationManagerTests {
         return try JSONSerialization.data(withJSONObject: root)
     }
 
-    /// The fixture with every `stories-list-container` place spelled in another letter case.
     private func fixtureDataWithOtherCasePlace() throws -> Data {
         let json = try #require(String(data: try fixtureData(), encoding: .utf8))
         let otherCase = json.replacingOccurrences(of: "\"stories-list-container\"", with: "\"Stories-List-Container\"")

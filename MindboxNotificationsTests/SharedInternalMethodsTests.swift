@@ -38,9 +38,6 @@ struct SharedInternalMethodsTests {
         #expect(button.debugDescription == "uniqueKey: \(button.uniqueKey)")
     }
 
-    // parse(request:)'s nil paths are unreachable here: getUserInfo never returns nil, and the
-    // only JSONSerialization failures throw an ObjC exception that `try?` can't catch (it crashes).
-
     // MARK: - getUserInfo(from:)
 
     @Test("getUserInfo returns the outer payload for the current format")

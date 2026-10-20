@@ -107,7 +107,6 @@ struct InappPlaceFilterTests {
         #expect(ids(inapps) == ["unshown-block-id"])
     }
 
-    /// Blocks arrive `unlimited` by contract — pinned because Android behaves the same way and the two must not drift.
     @Test("A block whose show was already recorded is no longer a candidate", arguments: [
         InappFrequency.once(OnceFrequency(kind: .lifetime)),
         .once(OnceFrequency(kind: .session)),

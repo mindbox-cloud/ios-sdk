@@ -12,7 +12,6 @@ import Testing
 @testable import Mindbox
 @testable import MindboxLogger
 
-// Shares SessionTemporaryStorage with the whole serial test target; erased in init.
 @Suite("Inapp show failure session dedup", .tags(.inappSelection))
 struct InappShowFailureSessionDedupTests {
 
@@ -546,7 +545,6 @@ final class InappShowFailureManagerTests: XCTestCase {
 
     func testAddFailure_errorDetailsMultibyte_truncatesByUTF8Bytes() throws {
         let limit = InappShowFailureManager.errorDetailsLimit
-        // Cyrillic 'а' is 2 bytes in UTF-8: total = 2 * limit bytes.
         let details = String(repeating: "а", count: limit)
 
         manager.addFailure(inappId: "inapp-multibyte", reason: .unknownError, details: details, tags: nil)
@@ -564,7 +562,6 @@ final class InappShowFailureManagerTests: XCTestCase {
     func testAddFailure_errorDetailsMultibyte_doesNotSplitCharacter() throws {
         let limit = InappShowFailureManager.errorDetailsLimit
         let asciiPrefix = String(repeating: "x", count: limit - 1)
-        // Cyrillic 'ё' is 2 bytes — appending it would overflow by 1 byte.
         let details = asciiPrefix + "ё"
 
         manager.addFailure(inappId: "inapp-no-split", reason: .unknownError, details: details, tags: nil)
@@ -581,7 +578,6 @@ final class InappShowFailureManagerTests: XCTestCase {
 
     func testAddFailure_errorDetailsEmoji_isNotSplit() throws {
         let limit = InappShowFailureManager.errorDetailsLimit
-        // "🙂" is 4 UTF-8 bytes. Fill almost to the limit, then append an emoji.
         let asciiPrefix = String(repeating: "y", count: limit - 2)
         let details = asciiPrefix + "🙂"
 
@@ -690,7 +686,6 @@ final class InappShowFailureManagerTests: XCTestCase {
 }
 
 private extension InappShowFailureManagerTests {
-    /// The wire shape, every `$type` flattened into one record: what the backend reads, not what the SDK built it from.
     struct ShowError: Decodable {
         let type: String
         let inappId: String?
@@ -744,7 +739,6 @@ private extension InappShowFailureManagerTests {
             databaseRepository.createdEvents.count == expectedCount
         }
 
-        // Let pending async tasks finish and verify count is stable.
         RunLoop.current.run(until: Date().addingTimeInterval(settleTime))
         XCTAssertEqual(databaseRepository.createdEvents.count, expectedCount, file: file, line: line)
     }

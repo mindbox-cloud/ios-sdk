@@ -11,9 +11,6 @@ import Foundation
 import UIKit
 @preconcurrency @testable import MindboxLogger
 
-/// Serialized so the global `UIApplication` background/foreground notifications these
-/// tests post don't interleave *within this suite* (the posts flip `writesImmediately`
-/// on every live manager). Note: `.serialized` orders only this suite, not parallel ones.
 @Suite("MBLoggerCoreDataManager", .tags(.storage, .storageState), .serialized)
 struct MBLoggerCoreDataManagerTests {
 
@@ -36,7 +33,6 @@ struct MBLoggerCoreDataManagerTests {
         let timestamp = Date()
 
         await create(manager, message: message, timestamp: timestamp)
-        // Fill the rest of the batch with far-future timestamps so only the first is in range.
         let base = Date()
         for index in 1..<batchSizeConstant {
             await create(manager, message: "Log: \(index)",
@@ -58,7 +54,7 @@ struct MBLoggerCoreDataManagerTests {
         await create(manager, message: "Test message 1", timestamp: t1)
         await create(manager, message: "Test message 2", timestamp: t2)
         await create(manager, message: "Test message 3", timestamp: t3)
-        await createRemaining(basedOn: 3) // fill to a full batch -> flush
+        await createRemaining(basedOn: 3)
 
         let first = try manager.getFirstLog()
         #expect(first?.message == "Test message 1")
@@ -87,11 +83,11 @@ struct MBLoggerCoreDataManagerTests {
         let t2 = Date().addingTimeInterval(-30)
         let t3 = Date()
 
-        await createRemaining(strategy: .reverse(interval: 100)) // far in the past
+        await createRemaining(strategy: .reverse(interval: 100))
         await create(manager, message: "Test message 1", timestamp: t1)
         await create(manager, message: "Test message 2", timestamp: t2)
         await create(manager, message: "Test message 3", timestamp: t3)
-        await createRemaining(basedOn: 3, strategy: .sequentialDefault) // near future
+        await createRemaining(basedOn: 3, strategy: .sequentialDefault)
 
         let result = try manager.fetchPeriod(t1, t2)
         #expect(result.count == 2)
@@ -216,7 +212,7 @@ struct MBLoggerCoreDataManagerTests {
 
         let left = try manager.fetchPeriod(.distantPast, .distantFuture)
         #expect(left.count == 84)
-        #expect(left.first?.message == "Log: 16") // deleted 0…15
+        #expect(left.first?.message == "Log: 16")
     }
 
     @Test("Trim rounds the delete count to the nearest whole record", .tags(.trimming))
@@ -228,12 +224,12 @@ struct MBLoggerCoreDataManagerTests {
 
         await createMessages(range: 0..<3, strategy: .sequentialDefault)
 
-        try manager.deleteOldestLogs(fraction: 1.0 / 3.0) // round(1.0) = 1
+        try manager.deleteOldestLogs(fraction: 1.0 / 3.0)
         var left = try manager.fetchPeriod(.distantPast, .distantFuture)
         #expect(left.count == 2)
         #expect(left.first?.message == "Log: 1")
 
-        try manager.deleteOldestLogs(fraction: 2.0 / 3.0) // round(1.333) = 1
+        try manager.deleteOldestLogs(fraction: 2.0 / 3.0)
         left = try manager.fetchPeriod(.distantPast, .distantFuture)
         #expect(left.count == 1)
         #expect(left.first?.message == "Log: 2")
@@ -253,20 +249,17 @@ struct MBLoggerCoreDataManagerTests {
             await create(m, message: "Log: \(index)", timestamp: base.addingTimeInterval(Double(index)))
         }
 
-        // 1st trim: down to 20.
         m.debugSerialQueue.async { m.debugTrimIfNeeded(precomputedSizeKB: Int.max) }
         await drain(m)
         var left = try m.fetchPeriod(.distantPast, .distantFuture)
         #expect(left.count == 20)
         #expect(left.first?.message == "Log: 20")
 
-        // 2nd call under cooldown — no change.
         m.debugSerialQueue.async { m.debugTrimIfNeeded(precomputedSizeKB: Int.max) }
         await drain(m)
         left = try m.fetchPeriod(.distantPast, .distantFuture)
         #expect(left.count == 20)
 
-        // Reset the cooldown and trim again — down to 10.
         m.debugResetCooldown()
         m.debugSerialQueue.async { m.debugTrimIfNeeded(precomputedSizeKB: Int.max) }
         await drain(m)
@@ -355,21 +348,18 @@ private extension MBLoggerCoreDataManagerTests {
         }
     }
 
-    /// Awaits a single `create` completion.
     func create(_ m: MBLoggerCoreDataManager, message: String, timestamp: Date) async {
         await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
             m.create(message: message, timestamp: timestamp) { continuation.resume() }
         }
     }
 
-    /// Awaits the manager's serial queue draining.
     func drain(_ m: MBLoggerCoreDataManager) async {
         await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
             m.debugSerialQueue.async { continuation.resume() }
         }
     }
 
-    /// Reads a value on the manager's serial queue (matches the production access pattern).
     func onQueue<T>(_ body: @escaping () -> T) async -> T {
         await withCheckedContinuation { (continuation: CheckedContinuation<T, Never>) in
             manager.debugSerialQueue.async { continuation.resume(returning: body()) }

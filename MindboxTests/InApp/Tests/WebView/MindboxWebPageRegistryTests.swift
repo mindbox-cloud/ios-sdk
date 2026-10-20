@@ -10,7 +10,6 @@ import Foundation
 import Testing
 @_spi(Internal) @testable import Mindbox
 
-/// Each test builds its own registry: the shared one is process-wide and would couple the cases.
 @Suite("MindboxWebPageRegistry", .tags(.webView))
 struct MindboxWebPageRegistryTests {
 

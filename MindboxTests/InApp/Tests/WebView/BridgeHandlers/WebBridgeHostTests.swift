@@ -9,11 +9,6 @@
 import Testing
 @_spi(Internal) @testable import Mindbox
 
-/// The answers a host builds for a handler.
-///
-/// Every one of them is built from the request itself rather than from arguments a handler passes,
-/// which is what keeps an answer from drifting away from the thing it answers. That is the whole
-/// subject here: identity travels, and the envelope matches its kind.
 @Suite("WebBridgeHost responses", .tags(.webView))
 struct WebBridgeHostResponseTests {
 
@@ -56,8 +51,6 @@ struct WebBridgeHostResponseTests {
         #expect(host.sent.first?.payload == payload)
     }
 
-    /// One request, one answer: a handler that answers twice would be talking against an id JS has
-    /// already closed, so nothing in the envelope-building path may fan out on its own.
     @Test("Answering once sends exactly one message")
     func answeringOnceSendsOne() {
         let host = HostSpy()
