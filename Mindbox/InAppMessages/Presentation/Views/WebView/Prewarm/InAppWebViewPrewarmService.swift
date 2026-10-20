@@ -240,6 +240,7 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
             webView.configuration.userContentController.removeScriptMessageHandler(forName: Constants.WebViewBridgeJS.handlerName)
             webView.configuration.userContentController.removeScriptMessageHandler(forName: Constants.WebViewHTTPErrorJS.handlerName)
         }
+        webView.navigationDelegate = nil
         loadBlank(on: webView)
     }
 
