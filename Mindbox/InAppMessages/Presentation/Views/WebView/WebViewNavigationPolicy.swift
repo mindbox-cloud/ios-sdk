@@ -9,15 +9,12 @@
 import WebKit
 import MindboxLogger
 
-/// What a Mindbox web view may navigate to — one policy for every surface.
 enum WebViewNavigationPolicy {
 
     enum Decision: Equatable {
 
-        /// Our own load: the content commit, a reload, a back-forward move.
         case allow
 
-        /// Anything the user started: cancelled and handed to the page to decide.
         case handInBack(url: URL?)
     }
 
@@ -26,7 +23,6 @@ enum WebViewNavigationPolicy {
         case .other, .reload, .backForward:
             return .allow
 
-        // `@unknown` included: a navigation type we cannot name is not one we let through.
         default:
             return .handInBack(url: url)
         }

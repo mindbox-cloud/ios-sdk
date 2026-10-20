@@ -11,8 +11,6 @@ import CoreData
 
 public class MBPersistentContainer: NSPersistentContainer, @unchecked Sendable {
 
-    // Written by two independent database loaders (the SDK's and the logger's), each on its own
-    // queue, and read by every container init — TSan-confirmed race without the lock.
     @Locked public static var applicationGroupIdentifier: String?
 
     override public class func defaultDirectoryURL() -> URL {

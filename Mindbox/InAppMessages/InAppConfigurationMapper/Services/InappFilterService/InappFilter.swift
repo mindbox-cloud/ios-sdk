@@ -9,69 +9,41 @@
 import Foundation
 import MindboxLogger
 
-/// The config's in-apps as models, settled once per applied config. Nothing that changes while that
-/// config is live belongs here — frequency, priority and targeting are computed by every pass.
 struct ConfigCandidates {
 
     let renderable: [InApp]
 
-    /// `renderable` minus the in-apps the device's A/B branch drops.
     let inPool: [InApp]
 
     static let empty = ConfigCandidates(renderable: [], inPool: [])
 }
 
-/// The selection's view of the config: which in-apps are valid at all, and which of them each path —
-/// trigger, place, page, direct call — may consider.
 protocol InappFilterProtocol {
 
-    /// The config as models — version range, form rebuild, A/B pool — built once per applied config.
     func candidates(from response: ConfigResponse) -> ConfigCandidates
 
-    /// The trigger path's candidates: in-apps an overlay can show, minus the direct-call-only ones
-    /// and those the frequency already spent — in priority order.
     func filterForTrigger(in candidates: ConfigCandidates) -> [InApp]
 
-    /// The candidates a block at `place` could show, in priority order: the trigger chain with "addressed to
-    /// this place" in place of "shows over the screen".
     func filter(place: String, in candidates: ConfigCandidates) -> [InApp]
 
-    /// Every valid in-app with a variant for `place`, the A/B pool and the frequency not applied — everyone
-    /// who could have shown here.
     func inapps(addressedTo place: String, in candidates: ConfigCandidates) -> [InApp]
 
-    /// Every valid in-app out of `ids`, duplicates collapsed, the A/B pool and the frequency not applied — the
-    /// page's twin of `inapps(addressedTo:)`.
     func inapps(askedAbout ids: [String], in candidates: ConfigCandidates) -> [InApp]
 
-    /// The in-apps out of `ids` a page may draw, before targeting: the trigger chain minus the direct-call cut,
-    /// in the order asked, duplicates kept.
     func filter(requestedIds ids: [String], in candidates: ConfigCandidates) -> [InApp]
 
-    /// The in-app behind `id` with nothing checked — not the frequency, the display conditions or the A/B pool:
-    /// an in-app the page already offered has to open. `nil` — no valid in-app under this id.
     func filter(id: String, in candidates: ConfigCandidates) -> InApp?
 
-    /// The valid in-apps wired to `event`'s operation, with nothing else checked — the A/B pool
-    /// included, so the targeting catch-up speaks for in-apps a show would never pick.
-    /// Empty when the event is missing or no in-app listens to its operation.
     func filterInappsByOperation(event: ApplicationEvent?,
                                  operationInapps: [String: Set<String>],
                                  in candidates: ConfigCandidates) -> [InApp]
 
-    /// Keeps only in-apps with at least one variant an overlay can show. A pure-embedded in-app
-    /// gets its content by place instead, so it has no business on an overlay path or in the
-    /// targeting catch-up (in sync with Android).
     func filterOutNonOverlayInapps(_ inapps: [InApp]) -> [InApp]
 
-    /// `filterInappsByOperation` narrowed the way the trigger path narrows: the operation's in-apps
-    /// that are actually showable right now — A/B pool, overlay variant, direct call, frequency, priority.
     func filterInappsByOperationForShow(event: ApplicationEvent?,
                                         operationInapps: [String: Set<String>],
                                         in candidates: ConfigCandidates) -> [InApp]
 
-    /// The targeting pass: keeps the targeted in-apps, each paired with the variant `pickVariant` names for
-    /// it — `nil` skips the candidate. One check for every path.
     func filterInappsByTargeting(inapps: [InApp],
                                  targetingChecker: InAppTargetingCheckerProtocol,
                                  pickVariant: (InApp) -> MindboxFormVariant?) -> [InAppTransitionData]
@@ -93,8 +65,7 @@ final class InappsFilterService: InappFilterProtocol {
 
     func candidates(from response: ConfigResponse) -> ConfigCandidates {
         let renderable = renderableInapps(from: response.inapps?.elements)
-        // Safe to cache: the device UUID it hashes is written during SDK initialization, before
-        // in-apps start, and never changes afterwards.
+        // Safe to cache: deviceUUID is written during SDK initialization, before in-apps start.
         let inPool = filterInappsByABTests(response.abtests, responseInapps: renderable)
 
         return ConfigCandidates(renderable: renderable, inPool: inPool)
@@ -144,8 +115,6 @@ final class InappsFilterService: InappFilterProtocol {
         return inapp
     }
 
-    /// Version range first: the same id appears in a config once per SDK version range, so matching
-    /// on the id alone can pick the copy meant for a different SDK.
     private func renderableInapps(from inapps: [InAppDTO]?) -> [InApp] {
         guard let inapps = inapps else {
             Logger.common(message: "Received nil for in-apps. Returning an empty array.", level: .debug, category: .inAppMessages)
@@ -209,7 +178,6 @@ final class InappsFilterService: InappFilterProtocol {
 
 // MARK: - Internal methods
 extension InappsFilterService {
-    // FIXME: Rewrite this func in the future
     // swiftlint:disable:next cyclomatic_complexity
     func filterInappsByABTests(_ abTests: [ABTest]?, responseInapps: [InApp]?) -> [InApp] {
         let responseInapps = responseInapps ?? []
@@ -329,8 +297,6 @@ extension InappsFilterService {
         return filteredInapps
     }
 
-    /// An event-only targeting on a direct-call in-app can never pass — every pass cuts direct-call in-apps first,
-    /// and a page's question carries no event. Almost certainly a config mistake (in sync with Android).
     private func warnIfNoPassCanReach(_ inapp: InApp) {
         guard inapp.displayConditions == .directCall, inapp.targeting.requiresEvent else { return }
 
@@ -342,14 +308,10 @@ extension InappsFilterService {
         InappFrequencyValidator(persistenceStorage: persistenceStorage)
     }
 
-    /// The overlay lock and the delayed queue are never asked here; the shared show budgets are
-    /// asked later, on the winner.
     private func applyPostABFilters(_ inapps: [InApp]) -> [InApp] {
         sortInappsByPriority(filterInappsByAlreadyShown(filterOutDirectCallInapps(inapps)))
     }
 
-    /// Both sides arrive as `EmbeddedFormVariant.placeKey`s, so an exact match is a match whatever
-    /// padding or letter case the config and the host used.
     func filterInappsByPlace(_ place: String, inapps: [InApp]) -> [InApp] {
         inapps.filter { inapp in inapp.form.variants.contains { $0.placeSystemName == place } }
     }

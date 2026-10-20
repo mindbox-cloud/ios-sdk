@@ -9,8 +9,6 @@
 import Foundation
 import MindboxLogger
 
-/// An overlay is keyed by its own in-app, so a show on request cannot touch a scheduled overlay's slot;
-/// a place holds one slot for whatever it shows next.
 enum InappShowBudgetOwner: Hashable {
     case overlay(String)
     case place(String)
@@ -51,7 +49,6 @@ protocol InappShowBudgeting: AnyObject {
 
     func release(_ owner: InappShowBudgetOwner, inSession sessionEpoch: Int?, from ledger: inout InappSessionLedger)
 
-    /// The moment `minIntervalBetweenShows` counts from — written when the frequency counts shows.
     func recordCooldown(frequency: InappFrequency?)
 
     func saveShowHistory()
@@ -73,8 +70,6 @@ extension InappShowBudgeting {
     }
 }
 
-/// Every budget read and write goes through one `$ledger.mutate`: the check and the slot it
-/// takes must see the same counts, and a reset must not land between them.
 final class InappShowBudget: InappShowBudgeting {
 
     private let persistenceStorage: PersistenceStorage

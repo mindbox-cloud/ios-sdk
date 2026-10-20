@@ -9,7 +9,6 @@
 import Foundation
 import UIKit
 
-/// Domain model that contains all data needed to show inapp on screen
 struct InAppFormData {
     let inAppId: String
     let isPriority: Bool
@@ -21,8 +20,6 @@ struct InAppFormData {
     let tags: [String: String]?
     var operation: (name: String, body: String)?
 
-    /// Direct-call params, merged flat into the page's start payload on top of the config's — whatever
-    /// is sent wins, service keys included. Opaque to the SDK: neither validated nor limited.
     let extraParams: [String: JSONValue]?
 
     init(
@@ -50,7 +47,6 @@ struct InAppFormData {
     }
 }
 
-// TODO: - Need to remove this struct and use only InappFormData.
 struct InAppTransitionData: Equatable {
     let inAppId: String
     let isPriority: Bool

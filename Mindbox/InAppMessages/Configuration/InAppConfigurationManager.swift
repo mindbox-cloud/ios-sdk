@@ -20,9 +20,6 @@ enum EmbeddedPlaceSelection: Equatable {
 
     case configUnavailable
 
-    /// The pass had no winner because a candidate could not be checked: the segmentation or geo its
-    /// targeting needs failed to fetch. Not an empty place — the block fails, and a place that showed
-    /// content before keeps its record.
     case targetingUnavailable
 
     var inapp: InAppTransitionData? {
@@ -34,13 +31,10 @@ enum EmbeddedPlaceSelection: Equatable {
 protocol InAppConfigurationManagerProtocol: AnyObject {
     var delegate: InAppConfigurationDelegate? { get set }
 
-    /// Whether a config of the current session is in hand: what a place still waiting for an answer is stuck on otherwise.
     var hasConfig: Bool { get }
 
     func prepareConfiguration()
     func handleInapps(event: ApplicationEvent?, _ completion: @escaping (InAppFormData?) -> Void)
-    /// `processingDuration` runs from this call, the wait for a config included: a block's `timeToDisplay`
-    /// counts from the moment it asked for content (in sync with Android).
     func selectInappForPlace(_ place: String,
                              trigger: ApplicationEvent?,
                              _ completion: @escaping (EmbeddedPlaceSelection, _ processingDuration: TimeInterval, _ sessionEpoch: Int, _ configVersion: ConfigVersion?) -> Void)
@@ -51,8 +45,6 @@ protocol InAppConfigurationManagerProtocol: AnyObject {
     func inappInCurrentConfig(withId id: String) -> InApp?
 }
 
-/// Prepares in-apps configation (loads from network, stores in cache, cache invalidation).
-/// Also builds domain models on the base of configuration: in-app requests, in-app message models.
 class InAppConfigurationManager: InAppConfigurationManagerProtocol {
 
     private let jsonDecoder = JSONDecoder()
@@ -65,8 +57,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         let version: ConfigVersion
     }
 
-    /// Written, and checked before a wait, only on `queue`; locked only so a page's operation and `hasConfig`
-    /// can read it synchronously from the main thread.
+    // Written only on queue; locked so the main thread can read it synchronously.
     @Locked private var configEntry = ConfigEntry(candidates: nil, sessionEpoch: 0, version: ConfigVersion(number: 0))
 
     var hasConfig: Bool {
@@ -78,25 +69,23 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
 
     private let configWaitBudget: TimeInterval
 
-    /// Confined to `queue`, like `configResponse`. Keyed so a waiter that gave up leaves the set
-    /// instead of sitting in it until some download completes.
+    // On queue only.
     private var configWaiters: [Int: (ConfigCandidates?, _ sessionEpoch: Int, _ version: ConfigVersion) -> Void] = [:]
 
     private func isOfAnEarlierSession(_ entry: ConfigEntry) -> Bool {
         entry.sessionEpoch < SessionTemporaryStorage.shared.ledger.sessionEpoch
     }
 
-    /// Confined to `queue`, like `configResponse`.
+    // On queue only.
     private var nextConfigWaiterToken = 0
 
-    /// Confined to `queue`, like `configResponse`.
+    // On queue only.
     private var hasConcludedDownload = false
 
     private var newestDownload = 0
     private let inAppConfigRepository: InAppConfigurationRepository
 
-    /// Confined to `queue`, like `configResponse`: swapped on session expiry while the previous
-    /// session's answers may still be in flight.
+    // On queue only: swapped on session expiry while the previous session's answers may still be in flight.
     private var inappMapper: InappMapperProtocol?
     private let inAppConfigAPI: InAppConfigurationAPI
     private let persistenceStorage: PersistenceStorage
@@ -156,10 +145,6 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         }
     }
     
-    /// No cap of its own: the block owns the give-up, and a second timer here raced it.
-    ///
-    /// A download that concluded with nothing — failed, and nothing cached — is not "nothing to
-    /// show": the place gets `configUnavailable` instead of an empty pass, in sync with Android.
     func selectInappForPlace(_ place: String,
                              trigger: ApplicationEvent?,
                              _ completion: @escaping (EmbeddedPlaceSelection, _ processingDuration: TimeInterval, _ sessionEpoch: Int, _ configVersion: ConfigVersion?) -> Void) {
@@ -213,8 +198,6 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         configEntry.candidates?.renderable.first { $0.id == id }
     }
 
-    /// A raw scan, not the selection: unvalidated variants count in on purpose — the resolve applies
-    /// the real filters.
     func getEmbeddedPlaces(_ completion: @escaping ([String: Set<String>]?) -> Void) {
         queue.async {
             guard let config = self.configResponse else {
@@ -226,8 +209,6 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             for inapp in config.inapps?.elements ?? [] {
                 let inappPlaces = (inapp.form.variants ?? []).compactMap { variant -> String? in
                     guard case .embedded(let embedded) = variant else { return nil }
-                    // Must key the name the way the selection keys it, or the gate would close on a
-                    // place the resolve behind it would serve.
                     let place = embedded.placeSystemName.map(EmbeddedFormVariant.placeKey)
                     return place?.isEmpty == false ? place : nil
                 }
@@ -243,8 +224,6 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         }
     }
 
-    /// Must mirror the names the checkers file under `operationInapps`: custom operations by their own
-    /// system name, product/category nodes by the system operation the config settings declare.
     private static func operationNames(in targeting: Targeting) -> Set<String> {
         switch targeting {
         case .apiMethodCall(let operation):
@@ -292,7 +271,6 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
             guard let cap else { return }
 
             self.queue.asyncAfter(deadline: .now() + cap) {
-                // Whoever answers first takes the waiter out, so nobody is answered twice.
                 guard let waiter = self.configWaiters.removeValue(forKey: token) else { return }
 
                 Logger.common(message: "[InAppConfigurationManager] Gave up waiting \(cap)s for a config, \(what) gets nothing",
@@ -303,9 +281,7 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         }
     }
 
-    /// Reached through the core manager's queue, while the new session's config download goes
-    /// straight onto `queue` — so a fresh config can land first and one pass of the new session
-    /// still run on the previous session's mapper.
+    // A fresh config can land on queue first, so one pass of the new session may still run on the previous mapper.
     func resetInappManager() {
         queue.async {
             Logger.common(message: "[InAppConfigurationManager] Reset inappMapper.")
@@ -368,8 +344,6 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         configWaiters = [:]
         waiters.sorted { $0.key < $1.key }.forEach { $0.value(entry.candidates, entry.sessionEpoch, entry.version) }
 
-        // Prewarm stage 2: warm what the config's webview in-apps need (or release the
-        // warm instance when the config proves there are none).
         if let configResponse {
             webViewPrewarmService.prewarmResources(for: configResponse)
         }

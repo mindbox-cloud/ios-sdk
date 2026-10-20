@@ -8,8 +8,6 @@
 
 import Foundation
 
-/// The page's budget to confirm a data push. Spent only while somebody is looking at the block:
-/// a pause suspends the spend, a return arms the remainder.
 struct EmbeddedBlockAckBudget {
 
     private let now: () -> TimeInterval

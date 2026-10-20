@@ -10,8 +10,6 @@ import Foundation
 import UserNotifications
 import MindboxLogger
 
-/// Touched from every queue the SDK runs on. `@Locked` makes each access atomic; the single writer
-/// per property is what keeps compound mutations (`append`, `insert`) safe without a wider transaction.
 final class SessionTemporaryStorage {
 
     public static let shared = SessionTemporaryStorage()
@@ -35,7 +33,6 @@ final class SessionTemporaryStorage {
 
     @Locked var ledger = InappSessionLedger()
 
-    /// Last track-visit data (source and requestUrl only)
     @Locked var lastTrackVisit: (source: TrackVisitSource?, requestUrl: String?)?
 
     @Locked var expiredConfigSession: String?

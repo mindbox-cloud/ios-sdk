@@ -20,8 +20,6 @@ enum InAppShowFailureReason: String, Codable {
     case unknownError = "unknown_error"
 }
 
-/// One element of `Inapp.ShowFailure.errors`, flat, `$type` naming the kind and so the fields that follow —
-/// in sync with Android and the server. A new kind of error is a new `$type`, never a change to an existing one.
 enum InAppShowError: Encodable {
     case inapp(InAppShowFailure)
     case embeddedBlock(EmbeddedBlockShowFailure)
@@ -31,9 +29,6 @@ enum InAppShowError: Encodable {
     }
 
     func encode(to encoder: Encoder) throws {
-        // `$type` merges with the failure's own keys only while both encode into a keyed
-        // container on the same encoder; an unkeyed or single-value encoder in the failure
-        // would silently drop the tag.
         var container = encoder.container(keyedBy: CodingKeys.self)
 
         switch self {
@@ -55,8 +50,6 @@ struct InAppShowFailure: Codable {
     let tags: [String: String]?
 }
 
-/// The SDK stayed silent for a block's whole wait budget: there is no in-app to name, so the place is
-/// named, and `errorDetails` says what the SDK was still busy with and how long the block waited.
 struct EmbeddedBlockShowFailure: Encodable {
 
     enum Phase: String {

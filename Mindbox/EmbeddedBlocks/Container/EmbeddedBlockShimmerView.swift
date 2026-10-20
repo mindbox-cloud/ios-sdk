@@ -10,7 +10,6 @@ import UIKit
 
 final class EmbeddedBlockShimmerView: UIView {
 
-    /// Positions are fractions of the block's width.
     enum Design {
 
         static let lightTint = UIColor(red: 0x28 / 255.0, green: 0x2A / 255.0, blue: 0x2F / 255.0, alpha: 1.0)
@@ -50,7 +49,6 @@ final class EmbeddedBlockShimmerView: UIView {
         }
     }
 
-    /// One per process so every shimmer on screen sweeps in the same phase.
     static let beatEpoch: CFTimeInterval = CACurrentMediaTime()
 
     static let animationKey = "embeddedBlockShimmer"
@@ -154,7 +152,6 @@ final class EmbeddedBlockShimmerView: UIView {
         return animation
     }
 
-    // The system drops infinite animations while the app is in the background.
     @objc
     private func applicationWillEnterForeground() {
         guard window != nil else { return }

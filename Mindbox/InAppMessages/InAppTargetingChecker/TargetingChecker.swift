@@ -54,8 +54,7 @@ final class InAppTargetingChecker: InAppTargetingCheckerProtocol {
         setupCheckerMap()
     }
 
-    // @Locked: selection passes fill these on their queue and fetch callbacks while `eraseCache()`
-    // clears from another thread; an erase overlapping a pass at worst answers from a cleared cache.
+    // Not atomic with a pass: an eraseCache() mid-pass leaves it a cleared cache or is partly undone by its later writes.
     @Locked var context = PreparationContext()
     @Locked var checkedSegmentations: [SegmentationCheckResponse.CustomerSegmentation]?
     @Locked var checkedProductSegmentations: [DictionaryKeyValueModel: [InAppProductSegmentResponse.CustomerSegmentation]] = [:]

@@ -10,34 +10,19 @@ import Foundation
 import CoreData
 
 protocol LoggerDatabaseLoading {
-    /// Loads a persistent container and returns it together with a background context.
-    ///
-    /// The loader is responsible for:
-    ///  - Resolving the Core Data model (`.momd`)
-    ///  - Resolving the SQLite store URL
-    ///  - Applying store descriptions
-    ///  - Attempting to load stores, and auto-recreating them on failure
     func loadContainer() throws -> (container: MBPersistentContainer, context: NSManagedObjectContext)
     
-    /// Destroys the persistent store if it exists (idempotent).
-    ///
-    /// Implementations should remove sidecar files (`-wal`, `-shm`) as well.
     func destroyIfExists() throws
 }
 
 struct LoggerDatabaseLoaderConfig {
-    /// Name of the Core Data model (and the SQLite file base name).
     let modelName: String
-    /// Optional App Group identifier to place the store in shared container.
     let applicationGroupId: String?
-    /// Explicit store URL. If set, it overrides other URL resolution logic.
     let storeURL: URL?
-    /// Optional explicit store descriptions. If provided, they are used as-is.
     let descriptions: [NSPersistentStoreDescription]?
 }
 
 enum LoggerDatabaseLoaderError: LocalizedError {
-    /// The Core Data model (`<modelName>.momd`) could not be found in any known bundle.
     case modelNotFound(modelName: String)
 
     var errorDescription: String? {
@@ -95,7 +80,6 @@ final class LoggerDatabaseLoader: LoggerDatabaseLoading {
         if fm.fileExists(atPath: storeURL.path) {
             let psc = NSPersistentStoreCoordinator(managedObjectModel: NSManagedObjectModel())
             if #available(iOS 15.0, *) {
-                // Force destroy
                 try? psc.destroyPersistentStore(at: storeURL, type: .sqlite,
                                                 options: [NSPersistentStoreForceDestroyOption: true])
             } else {

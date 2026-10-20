@@ -11,7 +11,6 @@ final class CityTargetingChecker: InternalTargetingChecker<CityTargeting> {
     weak var checker: TargetingCheckerContextProtocol?
 
     override func prepareInternal(id: String, targeting: CityTargeting, context: inout PreparationContext) {
-        // TODO: - May be we not need isNeedGeoRequest no more, because we can check by !geoInapps.isEmpty
         context.isNeedGeoRequest = true
         context.geoInapps.insert(id)
     }

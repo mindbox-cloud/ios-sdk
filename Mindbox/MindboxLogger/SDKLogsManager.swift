@@ -15,7 +15,7 @@ protocol SDKLogsManagerProtocol {
 class SDKLogsManager: SDKLogsManagerProtocol {
 
     private enum Constants {
-        static let logsSizeLimit = 800000 // In bytes
+        static let logsSizeLimit = 800000
     }
 
     private let persistenceStorage: PersistenceStorage

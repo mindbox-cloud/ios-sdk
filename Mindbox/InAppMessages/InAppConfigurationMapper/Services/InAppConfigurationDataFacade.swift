@@ -16,9 +16,6 @@ protocol InAppConfigurationDataFacadeProtocol {
         shouldCollectFailures: Bool,
         _ completion: @escaping () -> Void
     )
-    /// Buffers an `Inapp.ShowFailure` for every cut candidate whose fetch failed on the server side.
-    /// Returns whether any cut candidate could not be checked at all — its segmentation or geo failed
-    /// to fetch for whatever reason, offline included. Such a pass did not find the place empty.
     @discardableResult
     func collectTargetingFailures(forFailedTargetingInappIds failedTargetingInappIds: Set<String>, tagsByInappId: [String: [String: String]]) -> Bool
 
@@ -29,10 +26,8 @@ protocol InAppConfigurationDataFacadeProtocol {
                        completion: @escaping (Result<UIImage, MindboxError>) -> Void)
     func trackTargeting(id: String?, tags: [String: String]?)
 
-    /// Sends what the pass buffered — targeting and image failures alike — as one `Inapp.ShowFailure`.
     func sendCollectedFailures()
 
-    /// Drops what the pass buffered: it picked something to show, so there is no "why nothing was shown".
     func discardCollectedFailures()
 }
 
@@ -56,12 +51,8 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
     let tracker: InappTargetingTrackProtocol
     let failureManager: InappShowFailureManagerProtocol
 
-    /// What the analytics hear: only a server-side failure is reported, per candidate it cut.
-    /// Written from the fetch callbacks — segmentation answers on the main thread, geo on a URLSession
-    /// thread — and read on the pass's queue, hence the lock; the same for the set below.
     @Locked private var pendingTargetingFailureDetails: [InAppShowFailureReason: String] = [:]
 
-    /// What the place hears: any fetch that failed left its candidates unchecked, offline included.
     @Locked private var uncheckableReasons: Set<InAppShowFailureReason> = []
 
     init(segmentationService: SegmentationServiceProtocol,
@@ -245,10 +236,8 @@ extension InAppConfigurationDataFacade {
             return
         }
 
-        // Whatever failed, the candidates that need this data were not checked.
         $uncheckableReasons.mutate { $0.insert(reason) }
 
-        // Only the server's own failure is worth a report; offline and the like are not its doing.
         guard case .serverError = error else {
             return
         }

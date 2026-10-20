@@ -11,21 +11,15 @@ import MindboxLogger
 
 protocol MindboxWebPage: AnyObject {
 
-    /// Takes an action and payload rather than a ready-made message — an id identifies one request
-    /// on one channel, so every page mints its own. A closing page is free to drop the request.
     func push(_ action: BridgeMessage.Action, payload: JSONValue)
 }
 
-/// Every live bridge page in the process. Entries are weak: deregistration is the owner letting go.
 final class MindboxWebPageRegistry {
 
-    /// Tests build their own registry instead of resetting this one.
     static let shared = MindboxWebPageRegistry()
 
     private var pages: [WeakPage] = []
 
-    /// Pages live and die with UIKit views (main thread today); the lock guards the day that
-    /// stops being true.
     private let lock = NSLock()
 
     var count: Int {
@@ -53,7 +47,6 @@ final class MindboxWebPageRegistry {
                       category: .webViewInAppMessages)
     }
 
-    /// The author is excluded here rather than page-side: pages cannot tell each other apart.
     func broadcast(_ action: BridgeMessage.Action, payload: JSONValue, excluding author: AnyObject?) {
         lock.lock()
         sweep()
@@ -72,7 +65,6 @@ final class MindboxWebPageRegistry {
         receivers.forEach { $0.push(action, payload: payload) }
     }
 
-    /// Callers hold the lock.
     private func sweep() {
         pages.removeAll { $0.page == nil }
     }

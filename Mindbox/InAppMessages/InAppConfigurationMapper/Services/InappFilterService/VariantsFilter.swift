@@ -80,7 +80,6 @@ final class VariantFilterService: VariantFilterProtocol {
     }
 
     private func makeEmbeddedVariant(from dto: EmbeddedFormVariantDTO) -> EmbeddedFormVariant? {
-        // A place name padded with spaces or typed in another letter case in the admin panel still means the same place.
         let placeSystemName = EmbeddedFormVariant.placeKey(dto.placeSystemName ?? "")
 
         guard !placeSystemName.isEmpty else {
@@ -106,8 +105,6 @@ final class VariantFilterService: VariantFilterProtocol {
             return nil
         }
 
-        // A block renders one web page: extra layers are a config mistake — ignored and logged, in
-        // sync with Android — but no webview layer at all means nothing to render.
         guard let webviewLayerIndex = filteredLayers.firstIndex(where: { if case .webview = $0 { return true } else { return false } }) else {
             Logger.common(message: "[EmbeddedVariant] Variant for place '\(placeSystemName)' has no webview layer. Variant will be skipped.",
                           level: .error, category: .inAppMessages)

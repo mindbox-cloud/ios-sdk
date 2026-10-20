@@ -17,8 +17,6 @@ public extension Date {
         return Date.fullFormatter.string(from: self as Date)
     }
 
-    // Built once and reused: a fully-configured DateFormatter is thread-safe for conversion
-    // (iOS 7+), so there is no need to recreate it on every call.
     static let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")

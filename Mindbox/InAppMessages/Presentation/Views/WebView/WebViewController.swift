@@ -8,7 +8,6 @@
 import UIKit
 import MindboxLogger
 
-/// Read outside `WebViewController`, whose own `Constants` hides the shared one.
 private let initTimeoutSeconds = Constants.WebView.timeoutSeconds
 
 protocol WebVCDelegate: AnyObject {
@@ -52,7 +51,6 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
     private enum Constants {
         static let defaultAlphaBackgroundColor: CGFloat = 0.0
 
-        /// Short on purpose: the page is already drawn at `init`; the fade only delays what the user sees.
         static let revealDuration: TimeInterval = 0.15
     }
 
@@ -95,7 +93,6 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         NotificationCenter.default.removeObserver(self)
         Logger.common(message: "[WebView] Deinit WebViewVC", category: .webViewInAppMessages)
         transparentWebView?.cleanUp()
-        // Stop the closed in-app's JS from running hidden on the parked warm instance.
         DI.injectOrFail(InAppWebViewPrewarmServiceProtocol.self).parkWarmWebView()
     }
 
@@ -230,13 +227,6 @@ extension WebViewController: WebVCDelegate {
         reportErrorAndClose(error)
     }
 
-    /// The init timeout is the single closing authority, but monitoring must still tell
-    /// "the page loaded and its JS bridge never appeared" (a content defect) apart from
-    /// "the page never finished loading" (a load defect). `httpErrorDetail` adds the
-    /// concrete cause when a script subresource answered with an HTTP error — with it a
-    /// poisoned-cache death names the resource and status instead of a generic timeout.
-    /// `readyCheckFailure` is the ready check's give-up reason, `nil` while it hasn't given up — one
-    /// value, so the category and the status that explains it can't disagree.
     static func timeoutError(readyCheckFailure: String?, httpErrorDetail: String? = nil) -> InAppPresentationError {
         let suffix = httpErrorDetail.map { " \($0)" } ?? ""
         guard let readyCheckFailure else {

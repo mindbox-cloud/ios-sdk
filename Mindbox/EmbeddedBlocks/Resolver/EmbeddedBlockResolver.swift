@@ -30,9 +30,6 @@ enum EmbeddedBlockResolution: Equatable {
 
     case configUnavailable
 
-    /// No winner because a candidate could not be checked — its segmentation or geo failed to fetch.
-    /// A 5xx the pass has already reported per candidate; offline goes unreported. The block only
-    /// fails as `networkError`.
     case targetingUnavailable
 
     var content: EmbeddedBlockWebContent? {
@@ -41,14 +38,8 @@ enum EmbeddedBlockResolution: Equatable {
     }
 }
 
-/// Works on the main thread — that is where the container waits for the answer — while the selection
-/// underneath runs on the in-app queue.
 protocol EmbeddedBlockResolving: AnyObject {
 
-    /// - Parameters:
-    ///   - trigger: The operation that caused this resolve, if any. Targeting runs in its context —
-    ///     that is what lets an operation-targeted in-app reach the place.
-    ///   - completion: The answer and how long it took from this call, the wait for a config included.
     func resolve(_ place: String,
                  trigger: ApplicationEvent?,
                  completion: @escaping (EmbeddedBlockResolution, _ processingDuration: TimeInterval, _ sessionEpoch: Int, _ configVersion: ConfigVersion?) -> Void)
@@ -64,8 +55,6 @@ final class EmbeddedBlockResolver: EmbeddedBlockResolving {
         self.load = load
     }
 
-    /// Answers are deliberately not cached. The config arrives after the app starts, so a remembered
-    /// "nothing to show" would outlive the reason for it and leave the block empty until a restart.
     func resolve(_ place: String,
                  trigger: ApplicationEvent?,
                  completion: @escaping (EmbeddedBlockResolution, _ processingDuration: TimeInterval, _ sessionEpoch: Int, _ configVersion: ConfigVersion?) -> Void) {
@@ -111,10 +100,6 @@ final class EmbeddedBlockResolver: EmbeddedBlockResolving {
         }
     }
 
-    /// No winner is an empty place. A winner that is not an embedded block, or one without a webview
-    /// layer, is a broken config: the block fails instead of pretending there is nothing here. Whether
-    /// there is anything to draw is the page's own call, reported back as `contentRendered`, in sync
-    /// with Android.
     static func resolution(from inapp: InAppTransitionData?, place: String) -> EmbeddedBlockResolution {
         guard let inapp = inapp else {
             Logger.common(message: "[EmbeddedBlock] Nothing to show at place '\(place)'", category: .embeddedBlocks)

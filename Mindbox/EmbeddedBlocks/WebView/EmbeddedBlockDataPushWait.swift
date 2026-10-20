@@ -23,7 +23,6 @@ final class EmbeddedBlockDataPushWait: EmbeddedBlockAppPresenceSubscribing {
 
     private var onTimeout: (() -> Void)?
 
-    /// Whether a push is still unconfirmed, for the tests that pin a block let go mid-push.
     var isAwaitingConfirmation: Bool { onTimeout != nil }
 
     init(placeSystemName: String,

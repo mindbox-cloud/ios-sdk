@@ -9,7 +9,6 @@
 import Foundation
 import MindboxLogger
 
-/// Stores in-app messages configuration
 class InAppConfigurationRepository {
     func fetchConfigFromCache() -> Data? {
         guard FileManager.default.fileExists(atPath: inAppConfigFileUrl.path) else {
@@ -27,9 +26,6 @@ class InAppConfigurationRepository {
         }
     }
 
-    /// The single home of the lenient cached-config decode for launch-time readers (the
-    /// prewarm stages, the WebView cache toggle). The config manager keeps its own richer
-    /// variant with per-outcome logging.
     func fetchDecodedConfigFromCache() -> ConfigResponse? {
         guard let data = fetchConfigFromCache() else { return nil }
         return try? JSONDecoder().decode(ConfigResponse.self, from: data)
@@ -37,9 +33,6 @@ class InAppConfigurationRepository {
 
     func saveConfigToCache(_ data: Data) {
         do {
-            // Atomic (write-then-rename): the init-time prewarm reads this file from a
-            // background queue while the config download rewrites it — a concurrent
-            // reader must see the old or the new config, never a torn file.
             try data.write(to: inAppConfigFileUrl, options: .atomic)
             Logger.common(message: "Successfuly saved config file on a disk.", level: .debug, category: .inAppMessages)
         } catch {

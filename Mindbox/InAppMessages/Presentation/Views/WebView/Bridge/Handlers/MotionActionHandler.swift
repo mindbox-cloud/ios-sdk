@@ -8,19 +8,12 @@
 
 import Foundation
 
-/// Device motion gestures — shake and flip — for the page.
-///
-/// The only handler that also speaks unprompted: a gesture arrives from the sensors with no
-/// request in hand, so the page it belongs to is remembered from the request that started
-/// monitoring. Weakly — a gesture must not be what keeps a finished show alive.
 final class MotionActionHandler: WebBridgeActionHandler {
 
     let actions: Set<BridgeMessage.Action> = [.motionStart, .motionStop]
 
     private weak var host: WebBridgeHost?
 
-    /// Whether the sensors were ever asked for. Teardown must not start a service just to stop
-    /// it, and every show ends whether or not it ever used motion.
     private var isServiceInUse = false
 
     private lazy var service: MotionServiceProtocol = {
@@ -49,12 +42,10 @@ final class MotionActionHandler: WebBridgeActionHandler {
             service.stopMonitoring()
             host.respondSuccess(to: message)
         default:
-            // Unreachable: the registry routes only what `actions` claims.
             break
         }
     }
 
-    /// A shake is detected by the system and arrives at the view, not at the bridge.
     func handleSystemShake() {
         guard isServiceInUse else { return }
 
@@ -106,8 +97,6 @@ private extension MotionActionHandler {
             return
         }
 
-        // A partial start is still a start: the page is told which gestures it will not get
-        // rather than being refused everything it asked for.
         var payloadBack: [String: JSONValue] = ["success": .bool(true)]
         if !result.unavailable.isEmpty {
             payloadBack["unavailable"] = .array(result.unavailable.map { .string($0.rawValue) })
@@ -123,7 +112,6 @@ private extension MotionActionHandler {
         }
     }
 
-    /// Pushed as a request, not a response: nothing asked for this gesture, it just happened.
     func report(gesture: MotionGesture, data: [String: Any]) {
         guard let host else { return }
 

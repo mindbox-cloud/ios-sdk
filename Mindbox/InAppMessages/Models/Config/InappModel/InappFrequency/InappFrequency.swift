@@ -52,8 +52,6 @@ enum InappFrequency: Decodable, Equatable, Hashable {
         }
     }
 
-    /// One rule for every show path, in sync with Android; the decoder fills a missing frequency,
-    /// so `nil` never arrives.
     static func countsShows(_ frequency: InappFrequency?) -> Bool {
         frequency != .unlimited
     }

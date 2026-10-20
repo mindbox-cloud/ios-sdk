@@ -46,8 +46,6 @@ class MBEventRepository: EventRepository {
     }
 
     func send<T>(type: T.Type, event: Event, completion: @escaping (Result<T, MindboxError>) -> Void) where T: Decodable {
-        // Public contract: the completion is ALWAYS delivered on the main thread - every
-        // path, including the early validation errors below, goes through `deliver`.
         let deliver: (Result<T, MindboxError>) -> Void = { result in
             DispatchQueue.main.async {
                 completion(result)
@@ -135,7 +133,6 @@ class MBEventRepository: EventRepository {
         }
     }
     
-    /// Cancels all ongoing network requests made via this repository.
     func cancelAllRequests() {
         fetcher.cancelAllTasks()
     }

@@ -15,14 +15,14 @@ final class NoopDatabaseRepository: DatabaseRepositoryProtocol {
     var deprecatedLimit: Int { 0 }
     var onObjectsDidChange: (() -> Void)?
 
-    func create(event: Event) throws { /* no-op */ }
+    func create(event: Event) throws { }
     func readEvent(by transactionId: String) throws -> Event? { nil }
-    func update(event: Event) throws { /* no-op */ }
-    func delete(event: Event) throws { /* no-op */ }
+    func update(event: Event) throws { }
+    func delete(event: Event) throws { }
 
     func query(fetchLimit: Int, retryDeadline: TimeInterval) throws -> [Event] { [] }
-    func removeDeprecatedEventsIfNeeded() throws { /* no-op */ }
+    func removeDeprecatedEventsIfNeeded() throws { }
     func countDeprecatedEvents() throws -> Int { 0 }
-    func erase() throws { /* no-op */ }
+    func erase() throws { }
     func countEvents() throws -> Int { 0 }
 }

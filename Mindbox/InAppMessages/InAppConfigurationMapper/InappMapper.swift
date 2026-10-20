@@ -14,9 +14,6 @@ protocol InappMapperProtocol {
     func handleInapps(_ event: ApplicationEvent?,
                       _ candidates: ConfigCandidates,
                       _ completion: @escaping (InAppFormData?) -> Void)
-    /// Answers `decided` with the winner or with nothing, or `targetingUnavailable` when there is no
-    /// winner because a candidate could not be checked — the data its targeting needs failed to fetch.
-    /// Never `configUnavailable`: the config is in hand here.
     func selectInappForPlace(_ place: String,
                              trigger: ApplicationEvent?,
                              _ candidates: ConfigCandidates,
@@ -77,9 +74,6 @@ class InappMapper: InappMapperProtocol {
 
                     guard let winner else {
                         finish(false)
-                        // A candidate cut because its segmentation or geo could not be fetched is not
-                        // "nothing here": the place stays undecided, and the block fails rather than
-                        // forgets a place that showed content before.
                         completion(cutByFetchFailure ? .targetingUnavailable : .decided(nil))
                         return
                     }
@@ -91,8 +85,6 @@ class InappMapper: InappMapperProtocol {
         }
     }
 
-    /// Vouches as it answers, not on delivery — the overlay's rule. An id whose targeting still lacks data
-    /// after the fetch is cut: fail closed, in sync with Android.
     func getShowableInappIds(_ ids: [String],
                              askedBy requesterInappId: String,
                              _ candidates: ConfigCandidates,
@@ -100,8 +92,6 @@ class InappMapper: InappMapperProtocol {
         runPass("a page of in-app \(requesterInappId) asking about \(ids.count) in-app(s)", event: nil) { finish in
             self.evaluate(self.pageQuery(ids, candidates), event: nil) { verdict in
                 self.evaluate(self.pageTargetingQuery(ids, candidates), event: nil) { offered in
-                    // A page's question selects nothing; false only flushes a buffer this pass
-                    // keeps empty (collectsFailures: false).
                     finish(false)
                     self.vouchOffers(offered, by: requesterInappId)
                     completion(verdict.map(\.inAppId))
@@ -112,9 +102,6 @@ class InappMapper: InappMapperProtocol {
 
     // MARK: - The pass
 
-    /// One serial queue and one shared checker: a pass holds the queue until `finish`, so a place resolve
-    /// cannot land between a trigger's selection and its catch-up and swap the event under it.
-    /// The buffered failures answer "why was nothing shown", so only a pass that selected nothing sends them.
     private func runPass(_ label: String,
                          event: ApplicationEvent?,
                          _ body: @escaping (_ finish: @escaping (_ selected: Bool) -> Void) -> Void) {
@@ -126,7 +113,6 @@ class InappMapper: InappMapperProtocol {
                           level: .debug, category: .inAppMessages)
             self.targetingChecker.event = event
 
-            // A missed finish freezes the queue for good, a second one would crash the leave.
             let finishLock = NSLock()
             var finished = false
 
@@ -153,22 +139,16 @@ class InappMapper: InappMapperProtocol {
         }
     }
 
-    /// One question to the shared checker, inside a pass only.
     private struct TargetingQuery {
 
         let label: String
 
-        /// In-apps the checker learns about before the check — what to fetch, who listens to which operation.
         let prepares: () -> [InApp]
 
-        /// The pass's candidates, decided once the checker has been prepared.
         let candidates: (PreparationContext) -> [InApp]
 
-        /// Fetches geo/segmentations first; off for a follow-up question whose pass already did.
         let fetchesDependencies: Bool
 
-        /// A failed fetch becomes a buffered `Inapp.ShowFailure` for every candidate the pass then cut.
-        /// Off for a page's question: what it cut is not reported in this iteration.
         let collectsFailures: Bool
 
         let pickVariant: (InApp) -> MindboxFormVariant?
@@ -180,15 +160,12 @@ class InappMapper: InappMapperProtocol {
         evaluate(query, event: event) { suitable, _ in completion(suitable) }
     }
 
-    /// The second answer says whether a cut candidate could not be checked at all — its segmentation
-    /// or geo failed to fetch. Only a query that collects failures can say so; the rest answer `false`.
     private func evaluate(_ query: TargetingQuery,
                           event: ApplicationEvent?,
                           completion: @escaping ([InAppTransitionData], _ cutByFetchFailure: Bool) -> Void) {
         let prepared = query.prepares()
         prepared.forEach { targetingChecker.prepare(id: $0.id, targeting: $0.targeting) }
 
-        // Narrowed before the fetch: its completion answers on the main queue, where frequency reads have no business.
         let candidates = query.candidates(targetingChecker.context)
         let startedAt = Date()
 
@@ -251,8 +228,6 @@ class InappMapper: InappMapperProtocol {
         )
     }
 
-    /// The trigger's second question: everyone the event could have targeted, so the funnel hears
-    /// about the in-apps a show would never pick — the A/B pool included.
     private func catchUpQuery(_ event: ApplicationEvent?, _ candidates: ConfigCandidates) -> TargetingQuery {
         TargetingQuery(
             label: "the targeting catch-up",
@@ -266,9 +241,7 @@ class InappMapper: InappMapperProtocol {
                 } else {
                     listening = candidates.renderable
                 }
-                // Not the direct-call in-apps: vouching for them here would offer every one of them on every start.
                 let triggerable = listening.filter { $0.displayConditions != .directCall }
-                // Not the pure-embedded ones either: their place resolve vouches, twice would double the funnel (in sync with Android).
                 return self.inappFilterService.filterOutNonOverlayInapps(triggerable)
             },
             fetchesDependencies: true,
@@ -277,8 +250,6 @@ class InappMapper: InappMapperProtocol {
         )
     }
 
-    /// Prepares everyone, like the trigger: the session's single segmentation fetch is shaped by whoever
-    /// asks first, and a block that waited for the config asks before the start pass does.
     private func placeQuery(_ place: String, _ candidates: ConfigCandidates) -> TargetingQuery {
         TargetingQuery(
             label: "place '\(place)'",
@@ -290,8 +261,6 @@ class InappMapper: InappMapperProtocol {
         )
     }
 
-    /// Everyone the place could have shown — the A/B cut and the spent frequencies in, the direct-call
-    /// in-apps out: the catch-up's rule for one place.
     private func placeTargetingQuery(_ place: String, _ candidates: ConfigCandidates) -> TargetingQuery {
         TargetingQuery(
             label: "targeting at place '\(place)'",
@@ -306,7 +275,6 @@ class InappMapper: InappMapperProtocol {
         )
     }
 
-    /// Fetches like a place resolve — a cold cache may miss the page's deadline, an accepted cost.
     private func pageQuery(_ ids: [String], _ candidates: ConfigCandidates) -> TargetingQuery {
         TargetingQuery(
             label: "a page asking about \(ids.count) in-app(s)",
@@ -318,8 +286,6 @@ class InappMapper: InappMapperProtocol {
         )
     }
 
-    /// Everyone the page could have drawn — the A/B cut and the spent frequencies in, so an A/B test on an
-    /// in-app the page lists hears from both branches (in sync with Android).
     private func pageTargetingQuery(_ ids: [String], _ candidates: ConfigCandidates) -> TargetingQuery {
         TargetingQuery(
             label: "targeting for the page's \(ids.count) in-app(s)",
@@ -370,8 +336,6 @@ class InappMapper: InappMapperProtocol {
         }
     }
 
-    /// Everyone the place could have shown hears its `Inapp.Targeting`: the losers once per session,
-    /// the winner by the place's slot — showing another in-app and coming back is a new offer.
     private func vouch(_ targeted: [InAppTransitionData], winner: InAppTransitionData?, at place: String) {
         for inapp in targeted {
             guard inapp.inAppId == winner?.inAppId else {
@@ -389,7 +353,6 @@ class InappMapper: InappMapperProtocol {
         }
     }
 
-    /// Once per session per block and in-app: the same in-app offered by another block is a new offer.
     private func vouchOffers(_ offered: [InAppTransitionData], by requesterInappId: String) {
         for inapp in offered {
             let offer = PageOffer(requesterInappId: requesterInappId, inappId: inapp.inAppId)
@@ -399,7 +362,6 @@ class InappMapper: InappMapperProtocol {
         }
     }
 
-    /// The losers at a place: their resolves repeat without offering anything new, hence once per session.
     private func vouchOncePerSession(for inapps: [InAppTransitionData]) {
         for inapp in inapps {
             guard SessionTemporaryStorage.shared.$ledger.mutate({ $0.vouch(inapp.inAppId) }) else {

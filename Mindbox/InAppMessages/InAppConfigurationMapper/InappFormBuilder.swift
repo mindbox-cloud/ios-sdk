@@ -9,7 +9,6 @@
 import UIKit
 import MindboxLogger
 
-/// Turns a chosen in-app into what the presentation draws: its variant with the images downloaded.
 struct InappFormBuilder {
 
     private let dataFacade: InAppConfigurationDataFacadeProtocol
@@ -20,8 +19,7 @@ struct InappFormBuilder {
         self.imageFailures = imageFailures
     }
 
-    /// Blocking by design — callers walk a list and stop at the first buildable in-app. Must not run
-    /// on the selection queue: a download wait there would stall every targeting question behind it.
+    // Blocks on image downloads: never call it on main or on a selection queue.
     func makeFormData(_ inapp: InAppTransitionData,
                       extraParams: [String: JSONValue]?,
                       operation: (name: String, body: String)?) -> InAppFormData? {

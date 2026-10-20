@@ -10,7 +10,6 @@ import Foundation
 
 extension MBContainer {
     func registerInappTools() -> Self {
-        // Layers
         register(LayerActionFilterProtocol.self) {
             LayerActionFilterService()
         }
@@ -25,7 +24,6 @@ extension MBContainer {
             return LayersFilterService(actionFilter: actionFilter, sourceFilter: sourceFilter)
         }
 
-        // Elements
         register(ElementsSizeFilterProtocol.self) {
             ElementSizeFilterService()
         }
@@ -45,7 +43,6 @@ extension MBContainer {
             return ElementsFilterService(sizeFilter: sizeFilter, positionFilter: positionFilter, colorFilter: colorFilter)
         }
 
-        // Content
         register(ContentPositionFilterProtocol.self) {
             ContentPositionFilterService()
         }

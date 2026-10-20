@@ -9,17 +9,10 @@
 import Foundation
 import MindboxLogger
 
-/// Asks the system for a permission on the page's behalf.
-///
-/// The answer says both what the user's stance is and whether a dialog was actually shown, so
-/// the page can tell a fresh refusal from a standing one and offer settings instead of asking
-/// again into a void.
 final class PermissionActionHandler: WebBridgeActionHandler {
 
     let actions: Set<BridgeMessage.Action> = [.permissionRequest]
 
-    /// Resolved on first use: a handler set is built for every show, and most pages never ask
-    /// for a permission.
     private lazy var registry: PermissionHandlerRegistryProtocol = makeRegistry()
 
     private let makeRegistry: () -> PermissionHandlerRegistryProtocol
@@ -48,17 +41,11 @@ final class PermissionActionHandler: WebBridgeActionHandler {
             return
         }
 
-        // Asking without the usage description in place would kill the host app rather than
-        // return a refusal, so the request is refused before the system is asked.
         for key in handler.requiredInfoPlistKeys where infoPlistValue(key) == nil {
             host.respondError(.permissionFailed, detail: "missing Info.plist key \(key)", to: message)
             return
         }
 
-        // The page is held weakly. A system dialog stands for as long as the user leaves it
-        // standing, and waiting on it must not be what keeps a finished show alive — with it
-        // would stay the whole handler set, an uncancelled ready checker and a live sensor
-        // subscription. A show that ended by the time the system answers gets no answer.
         handler.request { [weak host] result in
             DispatchQueue.main.async {
                 guard let host else { return }

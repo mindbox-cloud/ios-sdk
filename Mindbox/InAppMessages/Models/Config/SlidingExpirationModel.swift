@@ -27,7 +27,6 @@ extension Settings.SlidingExpiration {
         self.pushTokenKeepalive = try? container.decodeIfPresent(String.self, forKey: .pushTokenKeepalive)
 
         if config == nil && pushTokenKeepalive == nil {
-            // Will never be caught because of `try?` in `Settings.init`
             throw DecodingError.dataCorruptedError(forKey: .config, in: container, debugDescription: "The `operation` type could not be decoded because `config` and `pushTokenKeepalive` are nil")
         }
     }

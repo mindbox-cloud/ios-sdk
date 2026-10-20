@@ -26,25 +26,15 @@ final class TransparentView: UIView {
     private let inappRequests: InappRequestServing
     private var lastReadyCheckedUrl: String?
     private var readyChecker: WebViewReadyChecker?
-    /// Why the ready check gave up (native bridge vs. page handlers), `nil` while it hasn't —
-    /// lets the init timeout report the accurate failure category and say which half is missing.
     private(set) var readyCheckFailure: String?
-    /// True once the page has sent `init`. After that the init timeout is cancelled, so a
-    /// later ready-check give-up (a post-load navigation dropped the bridge) has no other
-    /// closing authority — it must close the show itself.
     private var hasReceivedInit = false
-    /// When the current wait for `init` started; nil once `init` came or the wait timed out.
     private var initWaitStartedAt: TimeInterval?
     private var hasEndedBridgeSession = false
     private var hasCapturedObservedHosts = false
     private let noCacheRetryPolicy: WebViewNoCacheRetryPolicy
     lazy var webPageRegistry = MindboxWebPageRegistry.shared
-    /// A page joins the broadcast set on its first `ready`: registering earlier would aim
-    /// `localState.changed` at a document that has no bridge yet.
     private var isRegisteredForBroadcasts = false
 
-    /// - Parameter actionRegistry: The handlers this show runs with. Injectable so a test can
-    ///   drive the real dispatch path with doubles behind it.
     init(frame: CGRect,
          params: [String: JSONValue],
          userAgent: String,
@@ -146,8 +136,6 @@ final class TransparentView: UIView {
         facade?.endShow()
     }
 
-    /// Persists the hosts this show's resources actually came from so the next launch's
-    /// prewarm can preconnect to them.
     private func captureObservedResourceHosts() {
         guard !hasCapturedObservedHosts else { return }
         hasCapturedObservedHosts = true
@@ -183,7 +171,6 @@ final class TransparentView: UIView {
         DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(Constants.WebView.timeoutSeconds), execute: workItem)
     }
 
-    /// How long the page has been waited for, as "2.37s", or nil when no wait is running; ends the wait.
     private func takeInitWait() -> String? {
         guard let startedAt = initWaitStartedAt else { return nil }
         initWaitStartedAt = nil
@@ -215,8 +202,6 @@ extension TransparentView: WebBridgeHost {
 
     var presentingViewController: UIViewController? { delegate as? UIViewController }
 
-    /// A modal in-app exists only while it is on screen — unlike an embedded block, it has no
-    /// off-screen life in which its page could keep talking.
     var isUserPresent: Bool { true }
 
     func send(_ message: BridgeMessage) {
@@ -242,16 +227,11 @@ extension TransparentView: WebBridgeHost {
 extension TransparentView: WebBridgeLifecycleHosting {
 
     func bridgeDidInit() {
-        // First, before anything else can read it: the no-cache retry policy decides whether a
-        // failed subresource is worth healing by asking whether the page ever booted, and a
-        // late flag silently disables that.
         if !hasReceivedInit, let waited = takeInitWait() {
             Logger.common(message: "[WebView] In-app \(inAppId): init received after \(waited)", category: .webViewInAppMessages)
         }
         hasReceivedInit = true
         quizInitTimeoutWorkItem?.cancel()
-        // The page has proven it can boot — drop the retained retry content (mirror of
-        // Android's handleInitAction cleanup; the policy's one-shot state stays).
         facade?.releaseRetainedContent()
         actionRegistry.handler(ofType: HapticActionHandler.self)?.prepare()
         webViewAction?.onInit()
@@ -324,7 +304,6 @@ extension TransparentView: WebBridgeMessageDelegate {
 extension TransparentView: WebBridgeNavigationDelegate {
     func webBridge(_ bridge: MindboxWebBridge, didStartProvisionalNavigation url: URL?) {
         Logger.common(message: "[WebView] WKNavigationDelegate: start loading URL \(url?.absoluteString ?? "unknown")", category: .webViewInAppMessages)
-        // Reset per-navigation checks (e.g. redirects / re-loads).
         lastReadyCheckedUrl = nil
         readyCheckFailure = nil
         readyChecker?.cancel()
@@ -336,13 +315,11 @@ extension TransparentView: WebBridgeNavigationDelegate {
         Logger.common(message: "[WebView] WKNavigationDelegate: finished loading \(urlString)", category: .webViewInAppMessages)
         guard !hasEndedBridgeSession else { return }
 
-        // Avoid duplicate checks on multiple didFinish calls for the same URL.
         guard lastReadyCheckedUrl != urlString else { return }
         lastReadyCheckedUrl = urlString
 
         readyChecker?.cancel()
         let checker = WebViewReadyChecker(evaluate: { [weak self] script, completion in
-            // Teardown: abandon the poll silently, exactly like cancel().
             guard let facade = self?.facade else { return }
             facade.evaluateJavaScript(script, completion: completion)
         })
@@ -359,12 +336,6 @@ extension TransparentView: WebBridgeNavigationDelegate {
                 message: "[WebView] JS ready check gave up for URL \(urlString): \(lastFailure)",
                 category: .webViewInAppMessages
             )
-            // Before `init` the 7s timeout owns closing: its budget can expire while a slow
-            // page is still booting the bridge, and the window is invisible until `init`
-            // anyway; the flag above lets that timeout report the real category. After
-            // `init` the timeout is already cancelled, so a give-up here (a post-load
-            // navigation dropped the bridge) is the only signal left — close now, else the
-            // in-app stays up with a dead bridge, reported as webview_presentation_failed.
             if self.hasReceivedInit {
                 self.delegate?.closeBridgeLostWebViewVC()
             }
@@ -459,8 +430,6 @@ extension TransparentView: MindboxWebPage {
 
 extension TransparentView {
 
-    /// A shake is detected by the system and arrives at the view controller, so it is handed
-    /// down to whoever is monitoring motion for this show.
     func handleSystemShake() {
         actionRegistry.handler(ofType: MotionActionHandler.self)?.handleSystemShake()
     }

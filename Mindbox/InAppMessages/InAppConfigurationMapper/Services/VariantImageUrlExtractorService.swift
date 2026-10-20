@@ -23,7 +23,6 @@ class VariantImageUrlExtractorService: VariantImageUrlExtractorServiceProtocol {
             elements = modalModel.content.background.layers
         case .snackbar(let snackbarModel):
             elements = snackbarModel.content.background.layers
-        // An embedded block is one webview layer by contract — nothing to preload.
         case .embedded:
             return []
         case .unknown:

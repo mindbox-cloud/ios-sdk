@@ -9,8 +9,6 @@
 import Foundation
 import MindboxLogger
 
-/// An unreadable question is refused rather than answered with an empty list: the page can
-/// retry a refusal, while an empty answer it would take for the truth.
 final class FilterShowableInappsActionHandler: WebBridgeActionHandler {
 
     let actions: Set<BridgeMessage.Action> = [.filterShowableInapps]

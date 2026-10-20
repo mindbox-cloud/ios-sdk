@@ -12,24 +12,17 @@ import MindboxLogger
 protocol InappShowFailureManagerProtocol {
     func addFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?)
 
-    /// The buffer answers "why was nothing shown": a pass that picked nothing sends it, a pass that
-    /// picked something drops it (in sync with Android).
     func sendFailures()
     func clearFailures()
 
-    /// The SDK never answered a block within its wait budget — a failure with no in-app to pin it on, so
-    /// it names the place instead. Sent at once, past the buffer, like the other block failures.
     func sendWaitBudgetExceeded(place: String, waited: TimeInterval, phase: EmbeddedBlockShowFailure.Phase)
 
-    /// Past the buffer, once per in-app and reason per session.
     func sendBlockFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?)
 
-    /// Past the buffer, every time: the overlay's own failure to show, in sync with Android.
     func sendFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?)
 }
 
 final class InappShowFailureManager: InappShowFailureManagerProtocol {
-    /// Backend payload limit for errorDetails.
     static let errorDetailsLimit = 1000
 
     private struct InAppShowErrorsBody: Encodable {
@@ -142,8 +135,7 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
         }
     }
 
-    /// On `queue`. The check and the record share one ledger lock; a failed enqueue un-records, so the retry
-    /// is not taken for a duplicate. Nil when the enqueue failed.
+    // On queue only: record, enqueue and rollback form one step only because queue is serial.
     private func enqueueOncePerSession(_ candidates: [InAppShowFailure],
                                        where isReportedOnce: (InAppShowFailureReason) -> Bool) -> [InAppShowFailure]? {
         let toSend = SessionTemporaryStorage.shared.$ledger.mutate { ledger in
@@ -166,7 +158,7 @@ final class InappShowFailureManager: InappShowFailureManagerProtocol {
         return toSend
     }
 
-    /// Must be called on `queue`.
+    // On queue only.
     private func enqueue(_ errors: [InAppShowError]) -> Bool {
         let eventBody = InAppShowErrorsBody(errors: errors)
         let event = Event(type: .inAppShowFailureEvent, body: BodyEncoder(encodable: eventBody).body)

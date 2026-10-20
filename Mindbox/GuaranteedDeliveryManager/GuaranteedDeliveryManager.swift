@@ -33,8 +33,6 @@ final class GuaranteedDeliveryManager: NSObject {
 
     @objc dynamic var stateObserver: NSString
 
-    // @Locked: `performScheduleIfNeeded` reads it from database-notification and retry threads
-    // while the delivery flow writes it.
     @Locked private(set) var state: State = .idle {
         didSet {
             stateObserver = NSString(string: state.rawValue)
@@ -42,8 +40,6 @@ final class GuaranteedDeliveryManager: NSObject {
         }
     }
 
-    // @Locked: written from the SDK's init path, read by `performScheduleIfNeeded` from
-    // database-notification threads (TSan-confirmed race).
     @Locked var canScheduleOperations = false {
         didSet {
             Logger.common(message: "[GD] Scheduling of operations is now \(canScheduleOperations ? "enabled" : "disabled")", level: .info, category: .delivery)
@@ -68,7 +64,6 @@ final class GuaranteedDeliveryManager: NSObject {
         )
         self.retryDeadline = retryDeadline
         self.fetchLimit = fetchLimit
-        // `state`'s locked accessor cannot be called before super.init.
         stateObserver = NSString(string: State.idle.description)
         super.init()
         databaseRepository.onObjectsDidChange = performScheduleIfNeeded
@@ -145,13 +140,12 @@ final class GuaranteedDeliveryManager: NSObject {
         Logger.common(message: "[GD] Enqueued events count: \(delivery.count)", level: .info, category: .delivery)
         delivery.forEach {
             completion.addDependency($0)
-            $0.onCompleted = onCompletedEvent // TODO: - remove
+            $0.onCompleted = onCompletedEvent
         }
         let operations = delivery + [completion]
         queue.addOperations(operations, waitUntilFinished: false)
     }
 
-    /// Cancels all queued and executing operations
     func cancelAllOperations() {
         queue.cancelAllOperations()
         eventRepository.cancelAllRequests()

@@ -11,7 +11,6 @@ import UIKit
 import MindboxLogger
 
 protocol InAppPresentationManagerProtocol: AnyObject {
-    /// Closes the overlay already up, as a user's close would, then shows this one. Main thread only.
     func present(
         inAppFormData: InAppFormData,
         onPresented: @escaping () -> Void,
@@ -20,8 +19,6 @@ protocol InAppPresentationManagerProtocol: AnyObject {
         onError: @escaping (InAppPresentationError) -> Void
     )
 
-    /// The session is over: closes the overlay through the show's completion, so a waiting request is answered,
-    /// but not as the user's close: no cooldown, no dismissed callback to the host, in sync with Android. Main thread only.
     func discardActiveInApp()
 
     var isPresenting: Bool { get }
@@ -76,7 +73,7 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
 
     private let displayUseCase: PresentationDisplayUseCaseProtocol
 
-    /// Main-confined, like the shows.
+    // Main-confined: isPresenting and discardActiveInApp read it without hopping to main.
     private var activePresentation: ActivePresentation?
 
     var isPresenting: Bool { activePresentation != nil }
@@ -148,7 +145,6 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
 
         let callbackGuard = PresentationCallbackGuard()
         let token = UUID()
-        // Releasing the completion also releases the form data — images included — that it holds.
         let releaseActivePresentation: () -> Void = { [weak self] in
             guard self?.activePresentation?.token == token else { return }
 

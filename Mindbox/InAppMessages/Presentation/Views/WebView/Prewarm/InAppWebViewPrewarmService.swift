@@ -12,30 +12,16 @@ import WebKit
 import MindboxLogger
 
 protocol InAppWebViewPrewarmServiceProtocol: AnyObject {
-    /// Stage 1, at SDK initialization: when the previous launch left a cached config with
-    /// webview in-apps, creates the warm instance and starts the resource prewarm ahead of
-    /// the fresh config download. Hosts without webview in-apps never pay for a
-    /// web-content process — nothing is created until a config proves it's needed.
     func prewarmProcess()
 
-    /// Stage 2, when a freshly downloaded config has been parsed: starts the resource
-    /// prewarm if it hasn't run from the cached config yet, or releases the stage-1
-    /// instance when the config has no webview in-apps.
     func prewarmResources(for config: ConfigResponse)
 
-    /// Hands the warm instance to a show (borrow, not consume — the same live instance
-    /// serves subsequent shows). Any prewarm page is torn down first.
     func borrowWarmWebView() -> WKWebView?
 
-    /// Called when a show is torn down: navigates the parked instance to a blank page so
-    /// the closed in-app's JS stops running hidden, keeping the process warm for the next show.
     func parkWarmWebView()
 
-    /// Takes the lent instance back at once, so the next show can borrow it in the same turn.
     func returnWarmWebView(_ webView: WKWebView)
 
-    /// Called by a show when its page is done: persists the observed resource hosts for
-    /// the next launch's preconnect.
     func rememberObservedHosts(_ hosts: [String])
 }
 
@@ -47,38 +33,22 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
     private let fetchHTML: (URL, @escaping (String?) -> Void) -> Void
     private let loadCachedConfig: () -> ConfigResponse?
 
-    // Main-thread confined (WKWebView requirement); all mutations hop to main. The flags
-    // latch for the rest of the launch by design: after the first borrow the cache is
-    // warmer than any prewarm could make it, and re-running the prewarm would navigate a
-    // live show's webview.
+    // Main thread only, like the WKWebView it holds: entry points hop to main or refuse off-main callers.
     private var warmWebView: WKWebView?
     private var hasBeenBorrowed = false
-    // Write-once, decided on the main hop: set when the resource prewarm starts OR when a
-    // config-driven release fires. The release must latch too — one that lands on main
-    // before the slow stage-1 hop has nothing to drop yet, and without the latch the stale
-    // stage-1 block would then create the instance a fresh config already said to kill.
     private var resourcePrewarmLatched = false
-    // True between borrow and park: `superview` alone can't tell (there is a window
-    // between borrow and addSubview).
     private var isLentToShow = false
-    // True while the only navigation in flight is our own blank page — without telling it apart,
-    // every show after the first is refused: parking itself starts a navigation.
     private var isSettlingToBlank = false
     private var memoryWarningObserver: NSObjectProtocol?
-    // Retained here because navigationDelegate is weak; armed until the first borrow.
     private let prewarmNavigationPolicy = InAppWebViewPrewarmNavigationPolicy()
 
     private var lastPrewarmContentPage: (html: String, baseURL: URL)?
-    // Heal attempt bookkeeping — same scheme as WebViewNoCacheRetryPolicy (spec D2):
-    // a purge that provably removed nothing keeps the heal armed for one more attempt
-    // (WebKit's write-behind cache persistence races the first purge), hard-capped.
     private var healAttemptsUsed = 0
     private var healPurgeRemovedEntry = false
     private var isHealPurgeInFlight = false
     private static let maxHealAttempts = WebViewNoCacheRetryPolicy.maxAttempts
     private let isCacheEnabled: () -> Bool
-    // Contract: must call `completion` on the main thread — the reload it sequences
-    // navigates the webview. The default (`InAppWebViewDataStore.purgeCache`) guarantees it.
+    // Must call completion on main: the reload it sequences navigates the web view.
     private let purgeCache: (_ failedURL: String?, _ completion: @escaping (_ didRemoveAnything: Bool) -> Void) -> Void
     private let httpErrorMonitor = PrewarmHTTPErrorMonitor()
 
@@ -102,16 +72,11 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
     }
 
     deinit {
-        // Block-based observers are not auto-removed. The token is optional solely
-        // because its block captures self and can't be created during two-phase init.
         if let memoryWarningObserver {
             NotificationCenter.default.removeObserver(memoryWarningObserver)
         }
     }
 
-    /// Frees the parked warm instance under memory pressure: the HTTP cache is disk-level
-    /// and survives, so the next show only re-pays the web-content process spin-up. An
-    /// instance lent to a live show is left alone — the show owns it.
     private func startMemoryWarningObserver() {
         memoryWarningObserver = NotificationCenter.default.addObserver(
             forName: UIApplication.didReceiveMemoryWarningNotification,
@@ -128,12 +93,8 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
     }
 
     func prewarmProcess() {
-        // Boots from the PREVIOUS launch's cached config: waiting for the fresh one would
-        // lose the race to a launch-triggered show. A stale URL is harmless — the next
-        // launch picks up the fresh config.
         DispatchQueue.global(qos: .utility).async { [weak self] in
-            // Warm the cache-toggle latch here: its initializer reads and decodes the
-            // cached config, and every other first-access path runs on the main thread.
+            // Pays the latch's cached-config decode here, off the main thread.
             _ = InAppWebViewDataStore.isCacheFeatureEnabled
             guard let self, let config = self.loadCachedConfig() else { return }
             guard Self.isPrewarmEnabled(in: config) else { return }
@@ -144,8 +105,6 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
     }
 
     func prewarmResources(for config: ConfigResponse) {
-        // A fresh config that turns the toggle off also kills a stage-1 instance started
-        // under the previous launch's config.
         guard Self.isPrewarmEnabled(in: config) else {
             releaseUnusedWarmWebView(reason: .featureToggleOff)
             return
@@ -158,35 +117,21 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
         startResourcePrewarm(layers: layers)
     }
 
-    /// The prewarm half of the WebView feature toggles, read from the config each stage
-    /// works with: stage 1 sees the previous launch's cached toggles, stage 2 the fresh
-    /// ones. An absent key or section means "enabled" — a kill switch, not an opt-in.
     private static func isPrewarmEnabled(in config: ConfigResponse) -> Bool {
         config.settings?.featureToggles?.shouldPrewarmInAppWebView
             ?? FeatureFlag.shouldPrewarmInAppWebView.defaultValue
     }
 
     func borrowWarmWebView() -> WKWebView? {
-        // Never trap in a host app: an off-main caller just doesn't get the warm
-        // instance — returning nil is always correct (the show creates its own WebView
-        // on the shared store) and touches none of the main-confined state.
         guard Thread.isMainThread else {
             Logger.common(message: "[WebView] Prewarm: borrowWarmWebView() called off the main thread — ignoring",
                           level: .error, category: .webViewInAppMessages)
             return nil
         }
-        // Latch even when there is nothing to hand out: a show is starting, and a
-        // resource prewarm kicked off after this point would compete with it.
         hasBeenBorrowed = true
-        // The prewarm's healing days are over (the show runs its own retry policy);
-        // don't keep the page HTML reachable for the rest of the process.
         lastPrewarmContentPage = nil
         guard let webView = warmWebView else { return nil }
         guard !isLentToShow else { return nil }
-        // Never hand out an instance mid-navigation: the show's load would land on a
-        // half-committed document and its didFinish can fire before the page's module
-        // scripts evaluate. Park it instead; the show creates a fresh WKWebView on the
-        // same shared store (pays process spin-up, keeps the HTTP cache).
         guard !webView.isLoading || isSettlingToBlank else {
             webView.stopLoading()
             loadBlank(on: webView)
@@ -194,9 +139,6 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
                           level: .info, category: .webViewInAppMessages)
             return nil
         }
-        // The instance belongs to the show from here; the blank load tears down the
-        // prewarm page so its JS can't compete with the show for bandwidth. The bridge's
-        // staleness filter ignores both leftovers' callbacks.
         webView.stopLoading()
         loadBlank(on: webView)
         webView.removeFromSuperview()
@@ -210,8 +152,6 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
                 self.isLentToShow = false
                 return
             }
-            // Only park an instance no live show is presenting (a newer show may have
-            // borrowed it before this teardown arrived).
             guard self.isLentToShow, webView.superview == nil else { return }
             self.park(webView)
         }
@@ -231,9 +171,6 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
     private func park(_ webView: WKWebView) {
         webView.removeFromSuperview()
         isLentToShow = false
-        // Fully detach the finished show: WKUserContentController retains its script
-        // handlers, so the previous show's bridge would otherwise stay on the
-        // parked instance until the next show replaces it.
         if #available(iOS 14.0, *) {
             webView.configuration.userContentController.removeAllScriptMessageHandlers()
         } else {
@@ -251,11 +188,6 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
 
     // MARK: Resource prewarm
 
-    /// Two loads on the warm instance, both under the shows' cache partition (`baseUrl`
-    /// from the config's webview layer): a preconnect page (DNS+TCP+TLS to every known
-    /// host), then the real content page with the official prewarm parameters on its
-    /// baseURL — a runtime that knows the contract downloads its bundles straight into
-    /// the HTTP cache; an older runtime degrades to a plain page warm.
     private func startResourcePrewarm(layers: [WebviewContentBackgroundLayerDTO]) {
         guard let configuration = persistenceStorage.configuration,
               let (baseURL, contentURL) = InAppWebViewPrewarmPlanner.prewarmSource(for: layers) else { return }
@@ -293,14 +225,10 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
 
     private func loadPrewarmContentPage(html: String?, baseURL: URL, endpoint: String, deviceUUID: String) {
         guard let html else {
-            // No retry by design (the latch stands): this launch degrades to preconnect-only.
             Logger.common(message: "[WebView] Prewarm: content page fetch failed, launch degrades to preconnect-only",
                           level: .info, category: .webViewInAppMessages)
             return
         }
-        // The instance can be gone by now — borrowed by a show, or dropped by a
-        // config-driven release that landed while the fetch was in flight. Either way there
-        // is nothing to warm, and logging success would misreport it.
         guard !hasBeenBorrowed, let warmWebView else { return }
         let prewarmBaseURL = InAppWebViewPrewarmPlanner.prewarmContentBaseURL(
             from: baseURL, endpoint: endpoint, deviceUUID: deviceUUID
@@ -315,15 +243,12 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
                       level: .info, category: .webViewInAppMessages)
     }
 
-    /// Every content-page load goes through here so the settle budget cannot be forgotten.
     private func loadContentPage(_ html: String, baseURL: URL, on webView: WKWebView) {
         isSettlingToBlank = false
         webView.loadHTMLString(html, baseURL: baseURL)
         settleContentPage(after: Self.contentPageSettleBudget)
     }
 
-    /// A borrow refuses a mid-navigation instance, so a navigation nothing ever ends would leave
-    /// the warm instance unusable for the rest of the launch.
     private func settleContentPage(after budget: TimeInterval) {
         DispatchQueue.main.asyncAfter(deadline: .now() + budget) { [weak self] in
             guard let self, !self.hasBeenBorrowed, let warmWebView = self.warmWebView else { return }
@@ -336,11 +261,8 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
         }
     }
 
-    /// Long enough for a real page on a slow network, short enough that the instance is idle before a
-    /// first show can plausibly ask for it.
     private static let contentPageSettleBudget: TimeInterval = 5
 
-    /// Every blank load goes through here so the "this navigation is ours" flag is never forgotten.
     private func loadBlank(on webView: WKWebView) {
         isSettlingToBlank = true
         webView.loadHTMLString(Self.blankPage, baseURL: nil)
@@ -348,14 +270,11 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
 
     private func installHTTPErrorMonitor(on webView: WKWebView?) {
         guard let controller = webView?.configuration.userContentController else { return }
-        // Idempotent remove-then-add, same as the bridge: never crash on a leftover handler.
         controller.removeScriptMessageHandler(forName: Constants.WebViewHTTPErrorJS.handlerName)
         controller.add(httpErrorMonitor, name: Constants.WebViewHTTPErrorJS.handlerName)
     }
 
     func healPrewarmContentPage(failedURL: String?) {
-        // Observation log for every incoming report (mirrors the show path): heal
-        // attempts are capped, so later reports would otherwise vanish without a trace.
         Logger.common(message: "[WebView] Prewarm: subresource error — \(InAppWebViewHTTPError.loadFailureDescription) for \(failedURL ?? "nil")",
                       level: .debug, category: .webViewInAppMessages)
         guard InAppWebViewHTTPError.isRecoverable(url: failedURL) else { return }
@@ -370,13 +289,7 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
         purgeCache(failedURL) { [weak self] didRemoveAnything in
             guard let self else { return }
             self.isHealPurgeInFlight = false
-            // A purge that found the host's record latches the heal: the reload it
-            // sequences is the only one that can help. An empty purge is the
-            // write-behind race signal — the next error report may try once more.
             if didRemoveAnything { self.healPurgeRemovedEntry = true }
-            // Re-check after the async purge: a show may have borrowed the instance (or a
-            // release dropped it) while the purge was in flight — the prewarm must never
-            // navigate a webview it no longer owns.
             guard !self.hasBeenBorrowed, let warmWebView = self.warmWebView else { return }
             self.loadContentPage(page.html, baseURL: page.baseURL, on: warmWebView)
         }
@@ -387,13 +300,8 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
         case noWebviewInApps = "no webview in-apps in config"
     }
 
-    /// Most host apps have no webview in-apps: once the config proves that, drop the
-    /// stage-1 instance so they don't keep an idle web-content process. The prewarm does
-    /// not restart within this launch — a show then simply creates its own WebView.
     private func releaseUnusedWarmWebView(reason: ReleaseReason) {
         DispatchQueue.main.async {
-            // Latch before the guard: even with nothing to drop yet, a stage-1 hop that
-            // lands after this release must not start a prewarm the config just killed.
             self.resourcePrewarmLatched = true
             self.lastPrewarmContentPage = nil
             guard !self.hasBeenBorrowed, let webView = self.warmWebView else { return }
@@ -404,12 +312,8 @@ final class InAppWebViewPrewarmService: InAppWebViewPrewarmServiceProtocol {
         }
     }
 
-    // The empty-page skeleton is exactly a preconnect page with no hosts — reuse the
-    // planner so the parked/teardown markup can never drift from the preconnect markup.
     private static let blankPage = InAppWebViewPrewarmPlanner.preconnectHTML(hosts: [])
 
-    /// One transport with the shows' fetch (`InAppWebViewHTMLFetcher`): the prewarm must
-    /// fill exactly the cache the shows read.
     private static func defaultFetchHTML(url: URL, completion: @escaping (String?) -> Void) {
         let (session, request) = InAppWebViewHTMLFetcher.sessionAndRequest(for: url)
         session.dataTask(with: request) { data, response, _ in

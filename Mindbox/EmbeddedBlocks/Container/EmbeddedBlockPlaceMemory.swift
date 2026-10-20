@@ -9,29 +9,17 @@
 import Foundation
 import MindboxLogger
 
-/// What the SDK keeps about a place across launches. The record exists for as long as the place is
-/// known to have shown content; a record is one value so that later fields — the measured height
-/// among them — join it without a second key.
 struct EmbeddedBlockPlaceRecord: Codable, Equatable {
 
-    /// When the place was last written down as one that shows content.
     let rememberedAt: Date
 }
 
-/// The memory outlives the configuration: a change of endpoint or domain keeps every record, the same
-/// as on Android. A record that no longer fits corrects itself — the place answers with nothing to
-/// show and is forgotten.
-///
-/// Safe from any thread: each call holds the memory's lock for its whole read-modify-write.
 protocol EmbeddedBlockPlaceRemembering: AnyObject {
 
-    /// Whether content was shown at the place on this device — what an `automatic` block starts from.
     func hasShownContent(at place: String) -> Bool
 
-    /// The place showed content: it is worth a placeholder from now on.
     func rememberShownContent(at place: String)
 
-    /// The place answered with nothing to show: the next block there starts as if it were new.
     func forgetPlace(_ place: String)
 }
 
@@ -41,8 +29,6 @@ final class EmbeddedBlockPlaceMemory: EmbeddedBlockPlaceRemembering {
 
     private let now: () -> Date
 
-    /// Every call reads the whole dictionary, changes it and writes it back: without the lock two
-    /// calls from different threads would overwrite each other's records.
     private let lock = NSLock()
 
     private let encoder: JSONEncoder = {
@@ -62,14 +48,10 @@ final class EmbeddedBlockPlaceMemory: EmbeddedBlockPlaceRemembering {
         self.now = now
     }
 
-    /// The presence of the record is the fact; what is inside — today only the date it was written —
-    /// is there for the fields that join it later.
     func hasShownContent(at place: String) -> Bool {
         lock.withLock { persistenceStorage.embeddedBlockPlaceRecords?[place] != nil }
     }
 
-    /// Written once: a block shows its content on every return to the screen, and each write is a
-    /// synchronous round-trip to the app-group defaults.
     func rememberShownContent(at place: String) {
         lock.withLock {
             var records = persistenceStorage.embeddedBlockPlaceRecords ?? [:]

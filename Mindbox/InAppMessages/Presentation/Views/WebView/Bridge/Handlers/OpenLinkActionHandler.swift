@@ -10,12 +10,6 @@ import UIKit
 import SafariServices
 import MindboxLogger
 
-/// Opens a link the page asked for.
-///
-/// A web address is offered to the system as a universal link first, so an app that owns the
-/// domain wins; only when nothing claims it does the link open in-app in Safari. Anything else —
-/// `tel:`, `mailto:`, a deep link — goes straight to the system, which is the only thing that
-/// knows what to do with it.
 final class OpenLinkActionHandler: WebBridgeActionHandler {
 
     let actions: Set<BridgeMessage.Action> = [.openLink]
@@ -56,17 +50,10 @@ final class OpenLinkActionHandler: WebBridgeActionHandler {
 
 private extension OpenLinkActionHandler {
 
-    /// The opener is captured, not `self`: handing the URL to the system must not depend on the
-    /// handler still being around, exactly as it did not depend on the view before. The page is
-    /// held weakly for the opposite reason — a show that ended gets no answer, and waiting on
-    /// the system must not be what keeps it alive.
     func openAsUniversalLinkOrSafari(url: URL, message: BridgeMessage, host: WebBridgeHost) {
         let opener = urlOpener
 
         DispatchQueue.main.async { [weak host] in
-            // Presence was checked before this hop, and a block can leave the window inside it.
-            // Asked through the optional on purpose — binding `host` strongly here would hand the
-            // closures below a page they must not keep alive.
             guard host?.requireUserPresence(for: message) == true else { return }
 
             opener.open(url, universalLinksOnly: true) { opened in
@@ -91,9 +78,6 @@ private extension OpenLinkActionHandler {
     }
 
     static func openInSafari(url: URL, message: BridgeMessage, host: WebBridgeHost) {
-        // The last gate, and the one that matters most: the system takes as long as it takes to
-        // decide the link is nobody's, and a block can go off screen while it does. A sheet put up
-        // after that covers a screen the user chose themselves.
         guard host.requireUserPresence(for: message) else { return }
 
         guard var presenter = host.presentingViewController else {
@@ -104,11 +88,6 @@ private extension OpenLinkActionHandler {
             return
         }
 
-        // UIKit silently skips `present` — and with it the completion the answer is sent from —
-        // when the presenter is already presenting. A second link tapped while Safari is up would
-        // leave the page on a promise nothing settles. Walking to the
-        // top of the chain is the same answer the block host gives to "what do I present from",
-        // made here so every host gets it: the protocol promises a controller, not an idle one.
         while let presented = presenter.presentedViewController {
             presenter = presented
         }

@@ -24,7 +24,6 @@ private enum DetailsKey {
     static let limited = "limited"
 }
 
-/// iOS implementation of PermissionProvider
 final class MBPermissionProvider: PermissionProvider {
 
     private let notificationStatus: UNAuthorizationStatusProviding

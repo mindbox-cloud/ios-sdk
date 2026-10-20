@@ -28,8 +28,6 @@ public class MBLoggerCoreDataManager {
         case enabled
         case disabled
     }
-    // @Locked: bootstrap assigns it on the logger queue while public entry points read it from
-    // caller threads (TSan-confirmed race).
     @Locked private(set) var storageState: StorageState
     
     private let osLog = OSLogWriter(
@@ -72,7 +70,6 @@ public class MBLoggerCoreDataManager {
     
     // MARK: CoreData objects
     
-    // @Locked: same bootstrap-vs-caller race as `storageState`.
     @Locked private var persistentContainer: MBPersistentContainer?
     @Locked private var context: NSManagedObjectContext?
     
@@ -175,7 +172,6 @@ public extension MBLoggerCoreDataManager {
                     log(.error, "[MBLoggerCDManager] batch insert failed: \(error.localizedDescription)")
                 }
             } else {
-                // iOS 12 fallback
                 for log in logs {
                     let entity = CDLogMessage(context: context)
                     entity.message   = log.message
@@ -228,7 +224,7 @@ public extension MBLoggerCoreDataManager {
             fetchRequest.propertiesToFetch = ["timestamp", "message", "objectID"]
             fetchRequest.predicate = NSPredicate(format: "timestamp >= %@ AND timestamp <= %@",
                                                  from as NSDate, to as NSDate)
-            fetchRequest.fetchBatchSize = 50 // Setting batchSize for optimal memory consumption
+            fetchRequest.fetchBatchSize = 50
             
             let sortDescriptor = NSSortDescriptor(key: "timestamp", ascending: ascending)
             fetchRequest.sortDescriptors = [sortDescriptor]

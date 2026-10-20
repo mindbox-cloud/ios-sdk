@@ -14,7 +14,6 @@ final class EmbeddedBlockWaitBudget: EmbeddedBlockAppPresenceSubscribing {
 
     var isNeeded: () -> Bool = { false }
 
-    /// Called on the main thread.
     var onExpire: () -> Void = {}
 
     var isRunning: Bool { workItem != nil }
@@ -23,8 +22,6 @@ final class EmbeddedBlockWaitBudget: EmbeddedBlockAppPresenceSubscribing {
 
     private let duration: () -> TimeInterval
 
-    /// Monotonic, not `Date`: an NTP correction or a manual clock change would make a spent stretch
-    /// negative and stretch the wait past its budget.
     private let now: () -> TimeInterval
 
     private let presence: EmbeddedBlockAppPresence
@@ -33,7 +30,6 @@ final class EmbeddedBlockWaitBudget: EmbeddedBlockAppPresenceSubscribing {
 
     private var workItem: DispatchWorkItem?
 
-    /// Foreground time the current attempt has waited so far.
     private(set) var consumed: TimeInterval = 0
 
     private var resumedAt: TimeInterval?
@@ -76,8 +72,6 @@ final class EmbeddedBlockWaitBudget: EmbeddedBlockAppPresenceSubscribing {
             self.onExpire()
         }
 
-        // The work is stored in the property before it is scheduled: the scheduler is free to run
-        // it right away, and it must find the budget in a consistent state.
         resumedAt = now()
         workItem = work
         schedule(remaining, work)

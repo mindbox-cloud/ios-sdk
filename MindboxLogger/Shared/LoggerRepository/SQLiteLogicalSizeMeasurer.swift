@@ -10,11 +10,6 @@ import Foundation
 import SQLite3
 
 protocol DatabaseSizeMeasuring {
-    /// Returns the current logical database size in kilobytes.
-    ///
-    /// The exact definition of “logical” depends on the implementation.
-    /// For SQLite this usually means *used* pages (excluding freelist pages),
-    /// computed from `page_count - freelist_count`, multiplied by `page_size`.
     func sizeKB() -> Int
 }
 

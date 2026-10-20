@@ -8,13 +8,8 @@
 
 import Foundation
 
-/// Derives everything the webview prewarm needs from the in-app config. Pure functions.
 enum InAppWebViewPrewarmPlanner {
 
-    /// WebKit partitions its HTTP cache by the top-level document's host, which for
-    /// `loadHTMLString` is the `baseURL` host — so the prewarm MUST use the same baseUrl
-    /// the shows use, and both URLs MUST come from the same layer (mixing layers would
-    /// warm one layer's content under another layer's partition, invisible to its show).
     static func prewarmSource(for layers: [WebviewContentBackgroundLayerDTO]) -> (baseURL: URL, contentURL: URL)? {
         for layer in layers {
             guard let baseURL = layer.baseUrl.flatMap(URL.init(string:)),
@@ -26,8 +21,6 @@ enum InAppWebViewPrewarmPlanner {
         return nil
     }
 
-    /// Hosts worth opening DNS+TCP+TLS to before the first show: every webview layer's
-    /// `contentUrl` host, the configured API domain, plus hosts learned from previous shows.
     static func preconnectHosts(layers: [WebviewContentBackgroundLayerDTO],
                                 apiDomain: String?,
                                 learnedHosts: [String]) -> [String] {
@@ -42,9 +35,6 @@ enum InAppWebViewPrewarmPlanner {
         return hosts.sorted()
     }
 
-    /// A page of `<link rel="preconnect">` hints: WebKit opens pooled connections to each
-    /// host without downloading anything; the show reuses the pool. Every host is
-    /// re-validated at this single choke point — hosts get interpolated into markup.
     static func preconnectHTML(hosts: [String]) -> String {
         let links = hosts
             .filter(isValidHost)
@@ -53,10 +43,6 @@ enum InAppWebViewPrewarmPlanner {
         return "<html><head><meta charset=\"utf-8\">\(links)</head><body></body></html>"
     }
 
-    /// Accepts only strings that pass the SDK-wide RFC 1123 host validation, so no source
-    /// (page JS, config, API domain) can ever turn a host slot into markup. An explicit
-    /// charset, unlike a `URL(string:)` round-trip, doesn't ride on Foundation's parser
-    /// semantics and rejects sub-delims (`&`, `'`, `;`, …) that survive a URL host slot.
     static func isValidHost(_ host: String) -> Bool {
         URLValidator.isValidHost(host)
     }
@@ -84,8 +70,6 @@ enum InAppWebViewPrewarmPlanner {
                 switch variant {
                 case .modal(let modal): layers = modal.content?.background?.layers
                 case .snackbar(let snackbar): layers = snackbar.content?.background?.layers
-                // Deliberate: prewarm assumes a page that recognises it and boots tracker-only,
-                // and the block page has not been checked against that contract.
                 case .embedded: layers = nil
                 case .unknown: layers = nil
                 }
@@ -99,8 +83,6 @@ enum InAppWebViewPrewarmPlanner {
         return result
     }
 
-    /// JS evaluated in a shown WebView to collect the distinct https hosts its resources
-    /// actually came from. Host names only — no URLs, no payloads.
     static let observedHostsScript = """
     Array.from(new Set(performance.getEntriesByType('resource').map(function (r) {
       try { var u = new URL(r.name); return u.protocol === 'https:' ? u.host : null } catch (e) { return null }

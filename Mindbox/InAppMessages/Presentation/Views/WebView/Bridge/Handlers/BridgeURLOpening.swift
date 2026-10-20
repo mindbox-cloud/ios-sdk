@@ -9,10 +9,6 @@
 import UIKit
 import MindboxLogger
 
-/// Handing a URL to the system.
-///
-/// A seam over `UIApplication.open`, which cannot be exercised in a test: without it the
-/// decision of *which* way a link is opened could only be checked by actually leaving the app.
 protocol BridgeURLOpening: AnyObject {
 
     func open(_ url: URL, universalLinksOnly: Bool, completion: @escaping (Bool) -> Void)
@@ -31,17 +27,8 @@ final class SystemURLOpener: BridgeURLOpening {
 
 extension BridgeURLOpening {
 
-    /// Opens through the system and answers the page with the outcome.
-    ///
-    /// Shared by `openLink` and by `settings.open`, which has always reached the system this
-    /// same way. The log still says "navigate" for both because that is the text it has always
-    /// carried — worth correcting, but not while the point of the change is that nothing moved.
     func open(_ url: URL, answering message: BridgeMessage, host: WebBridgeHost) {
         DispatchQueue.main.async { [weak host] in
-            // The hop above is a turn of the main queue, and a block can leave the window inside
-            // it: whoever routed us here checked presence before that turn, not after it. Asked
-            // through the optional on purpose — binding `host` strongly here would hand the
-            // closures below a page they must not keep alive.
             guard host?.requireUserPresence(for: message) == true else { return }
 
             self.open(url, universalLinksOnly: false) { success in

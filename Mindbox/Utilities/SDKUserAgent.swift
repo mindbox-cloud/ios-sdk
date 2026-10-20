@@ -8,10 +8,6 @@
 
 import Foundation
 
-/// One User-Agent for every SDK surface — API requests and WebView `applicationName` alike.
-/// The backend slices traffic by this string, so transports must not drift apart. All
-/// inputs are static per app run, which also keeps a prewarmed WebView indistinguishable
-/// from a per-show one.
 enum SDKUserAgent {
     static func build(utilitiesFetcher: UtilitiesFetcher = DI.injectOrFail(UtilitiesFetcher.self)) -> String {
         let sdkVersion = utilitiesFetcher.sdkVersion ?? "unknown"

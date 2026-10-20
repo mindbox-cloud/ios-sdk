@@ -41,8 +41,6 @@ public struct MindboxEmbeddedBlockFailReason: RawRepresentable, Hashable, Sendab
 
 extension MindboxEmbeddedBlockFailReason {
 
-    /// Exhaustive on purpose: a new `InAppShowFailureReason` has to decide here what the host hears.
-    /// In sync with Android's `toEmbeddedBlockFailReason`.
     init(_ reason: InAppShowFailureReason) {
         switch reason {
         case .waitBudgetExceeded, .webviewLoadFailed:

@@ -40,7 +40,6 @@ enum InAppTargetingType: String, Decodable {
 
 extension Targeting {
 
-    /// Whether the targeting cannot pass without an event — an operation, a viewed product or category.
     var requiresEvent: Bool {
         switch self {
         case .apiMethodCall, .viewProductId, .viewProductSegment, .viewProductCategoryId, .viewProductCategoryIdIn:

@@ -9,10 +9,6 @@
 import UIKit
 import MindboxLogger
 
-/// Sends the user to the system settings the page asked for.
-///
-/// Notification settings have their own route, because on newer systems they open the app's
-/// notification screen directly rather than its top-level page.
 final class SettingsActionHandler: WebBridgeActionHandler {
 
     let actions: Set<BridgeMessage.Action> = [.settingsOpen]
@@ -44,9 +40,6 @@ final class SettingsActionHandler: WebBridgeActionHandler {
 
         switch target {
         case .notifications:
-            // The outcome is not inspected: the page asked to be sent to settings, and it was.
-            // The page is held weakly, exactly as on the `.application` route below: a show that
-            // ended while the system was switching screens gets no answer.
             openNotificationSettings { [weak host] _ in
                 DispatchQueue.main.async {
                     guard let host else { return }

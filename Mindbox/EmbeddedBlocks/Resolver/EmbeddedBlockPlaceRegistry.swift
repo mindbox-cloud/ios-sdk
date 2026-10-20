@@ -10,8 +10,6 @@ import Foundation
 import QuartzCore
 import MindboxLogger
 
-/// The place map and the router between blocks and the selection — the counterpart of Android's
-/// `EmbeddedBlocksRegistry`.
 final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
 
     typealias EmbeddedPlacesFetching = (@escaping ([String: Set<String>]?) -> Void) -> Void
@@ -25,8 +23,6 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
     private var answeredPasses: [String: AnsweredPass] = [:]
     private var queuedInvalidations: [String: QueuedInvalidation] = [:]
 
-    /// `nil` until a config has been seen: gating on an empty map before that would silently drop
-    /// operations whose resolve would simply have waited for the config.
     private var embeddedPlacesInConfig: [String: Set<String>]?
 
     private var newestConfigVersion: ConfigVersion?
@@ -60,8 +56,6 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
 
         presence.subscribe(self)
 
-        // The registry is created lazily, with the first block — a config may already be in memory,
-        // and its notification is not coming again.
         refreshEmbeddedPlaces()
 
         observers.append(notificationCenter.addObserver(forName: .mobileConfigDownloadConcluded,
@@ -186,8 +180,6 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         resolvingPlaces[place]?.takeOverTheAsk(of: sessionEpoch) ?? answeredPasses[place]?.standsForTheAsk(of: sessionEpoch) ?? false
     }
 
-    /// Gated twice, in sync with Android: the place must be in the config, and some in-app of the
-    /// place must listen to this operation.
     private func operationOccurred(_ event: ApplicationEvent) {
         let operationName = event.name.lowercased()
 
@@ -219,10 +211,6 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
 
     // MARK: - The place slot
 
-    /// One live resolve per place: an invalidation landing mid-flight is queued — the in-flight
-    /// pass may be reading the config it is about — and runs right after. Only the newest trigger
-    /// survives that wait: the place would end up on it anyway, but an in-app targeted at nothing
-    /// but a dropped operation never speaks its own `Inapp.Targeting`.
     private func requestResolve(place: String, cause: ResolveCause) {
         prune(place)
         let isOffScreen = !hasActiveBlocks(place)
@@ -291,8 +279,6 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
                 !pass.isTriggered && queued.trigger == nil)
     }
 
-    /// A winner with `delayTime` waits like an overlay in the schedule queue and the blocks stand their wait
-    /// budget down. A delay served once in the session is not waited again: a block coming back gets the content at once.
     private func handle(_ answer: EmbeddedBlockPlaceAnswer, at place: String, answeringTheQueuedAsk: Bool = false, recording answered: AnsweredPass? = nil) {
         guard !SessionTemporaryStorage.shared.ledger.hasEnded(answer.sessionEpoch) else {
             dropStale(answer, at: place)
@@ -317,15 +303,9 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
 
         guard !keepsForTheSessionCheck(answer, at: place) else { return }
 
-        // A fresh answer without a delay is not held back by the delay it used to have: nothing is
-        // left to wait out, and the user waited for this very answer — it goes below, at once, with
-        // its own selection time, as on Android.
         if isWaitingOutItsDelay {
             Logger.common(message: "[EmbeddedBlock] Place '\(place)': in-app \(content.inAppId) is still waiting out its delay",
                           category: .embeddedBlocks)
-            // The fresh content, with the selection time of the answer that started the delay: this
-            // pass ran inside the delay, which is not the user's waiting, so its own duration says
-            // nothing about how long the user waited.
             delayedDelivery.refresh(place: place) { waiting in
                 answer.replacing(waiting)
             }
@@ -350,7 +330,6 @@ final class EmbeddedBlockPlaceRegistry: EmbeddedBlockPlaceRegistering {
         }
     }
 
-    /// The slot is taken here, at the last point before a page is built, so a budget spent meanwhile costs no page load.
     private func deliverContent(_ content: EmbeddedBlockWebContent,
                                 of answer: EmbeddedBlockPlaceAnswer,
                                 at place: String,

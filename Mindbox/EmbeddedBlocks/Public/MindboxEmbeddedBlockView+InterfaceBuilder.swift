@@ -65,7 +65,6 @@ extension MindboxEmbeddedBlockView {
         buildIfNeeded()
     }
 
-    /// Builds the block from its setup with the SDK's own dependencies, unless it is built already.
     func buildIfNeeded() {
         guard !isBuilt else { return }
 
@@ -76,8 +75,6 @@ extension MindboxEmbeddedBlockView {
               afterMainPass: Self.onTheNextMainPass)
     }
 
-    /// Setup given once the block is built is not obeyed: the dependencies were made for the
-    /// values at hand, and a block that changes its place or look mid-life is not a feature.
     func applyInspectable(_ name: String, _ change: () -> Void) {
         guard !isBuilt else {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)' was given `\(name)` after it was built: ignored. Set it at creation or in Interface Builder.",

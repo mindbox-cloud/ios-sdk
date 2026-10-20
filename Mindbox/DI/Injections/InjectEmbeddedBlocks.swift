@@ -10,7 +10,6 @@ import Foundation
 
 extension MBContainer {
     func registerEmbeddedBlocks() -> Self {
-        // One resolver and one registry per container: blocks of one place share a single resolve.
         register(EmbeddedBlockResolving.self) {
             EmbeddedBlockResolver()
         }
@@ -24,7 +23,6 @@ extension MBContainer {
             InappRequestService()
         }
 
-        // One memory per container: blocks of one place read and write the same record.
         register(EmbeddedBlockPlaceRemembering.self) {
             EmbeddedBlockPlaceMemory(persistenceStorage: DI.injectOrFail(PersistenceStorage.self))
         }

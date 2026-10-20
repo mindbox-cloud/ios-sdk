@@ -9,25 +9,10 @@
 import Foundation
 import MindboxLogger
 
-/// Converts the persisted date strings written by the previous localized
-/// formatter (`dateStyle = .full`, `timeStyle = .full`) into the canonical
-/// fixed-pattern `.utc` representation used after the formatter unification.
-///
-/// - Important: Ordered first in `MigrationManager`'s migration chain (via the lowest
-///   `version`), before any date-consuming migration (e.g. `FirstInitializationDateTimeMigration`,
-///   which reads `installationDate` as a parsed `Date`). Without this conversion
-///   an upgraded user's date strings stay unparseable by `.utc`, so the parsed
-///   `Date` values read as `nil`. `isInstalled` itself is independent of parsing
-///   (it checks the presence of the stored string), so it is unaffected — which is
-///   why gating the whole chain behind the `isInstalled` guard is safe for upgraded users.
 final class DateFormatMigration: MigrationProtocol {
 
     private let defaults = MBPersistenceStorage.defaults
 
-    /// Raw UserDefaults keys of the six persisted dates, derived from the single source of truth
-    /// (`MBPersistenceStorage.UserDefaultsWrapper.Key`) so they cannot drift from the stored
-    /// identifiers. The `<Any>` argument is irrelevant: `Key` does not depend on the wrapper's
-    /// generic parameter.
     private let dateKeys: [String] = {
         let keys: [MBPersistenceStorage.UserDefaultsWrapper<Any>.Key] = [
             .installationData,
@@ -40,20 +25,6 @@ final class DateFormatMigration: MigrationProtocol {
         return keys.map(\.rawValue)
     }()
 
-    /// Replicas of the removed `MBPersistenceStorage` formatter (`.full`/`.full`), used only
-    /// to read legacy values written by that formatter on this device — never to write new
-    /// data (new values go through `.toString(withFormat: .utc)`).
-    ///
-    /// A single `.full`/`.full` formatter follows the device's current 12h/24h setting, so a
-    /// value written under the *other* setting won't parse (the original re-installation bug).
-    /// We therefore try several candidates that keep the device language/region — so the
-    /// weekday, month, the "at" literal and the zone name match how the value was written —
-    /// but pin the hour cycle:
-    ///   - the device locale as-is (matches values written under the current setting);
-    ///   - the device locale forced to 24-hour (`h23`);
-    ///   - the device locale forced to 12-hour (`h12`).
-    /// The first candidate that parses wins; the instant is then re-stored as `.utc` (24h/UTC),
-    /// so legacy 12h values are rescued and normalized.
     private lazy var legacyFormatters: [DateFormatter] = {
         func make(_ identifier: String) -> DateFormatter {
             let formatter = DateFormatter()
@@ -64,12 +35,7 @@ final class DateFormatMigration: MigrationProtocol {
         }
 
         let base = Locale.current.identifier
-        // Rebuild the identifier with the hour cycle forced. iOS encodes the device's 12h/24h
-        // setting straight into `Locale.current` as an `@hours=…` keyword, so naively appending a
-        // second `hours=` would produce a duplicate (`…@hours=h12;hours=h23`) that ICU resolves to
-        // the *first* occurrence — silently defeating the override and leaving every candidate on
-        // the device's own hour cycle. We therefore strip any pre-existing hour-cycle keyword
-        // (`hours`/`hc`) before adding ours, while preserving the rest (language, region, calendar…).
+        // Locale.current may already carry @hours=…; ICU honours the first hours= keyword, so replace it, never append.
         func identifier(forcingHourCycle hourCycle: String) -> String {
             let parts = base.split(separator: "@", maxSplits: 1, omittingEmptySubsequences: false)
             let languageAndRegion = String(parts[0])
@@ -94,9 +60,6 @@ final class DateFormatMigration: MigrationProtocol {
         ]
     }()
 
-    /// Parses a legacy `.full`/`.full` string with the first candidate formatter that succeeds.
-    /// Hour cycles don't cross-contaminate: a 24h string (`13:45:45`) is rejected by the 12h
-    /// formatter and vice versa, so a successful parse always reflects the value's real time.
     private func legacyDate(from raw: String) -> Date? {
         for formatter in legacyFormatters {
             if let date = formatter.date(from: raw) {
@@ -117,9 +80,6 @@ final class DateFormatMigration: MigrationProtocol {
         }
     }
 
-    /// Negative so the ascending sort in `MigrationManager` places this ahead of the historical
-    /// chain (`0…`), guaranteeing date strings are normalized before any date-consuming migration
-    /// (e.g. `FirstInitializationDateTimeMigration`) reads them.
     var version: Int {
         -1
     }
@@ -130,12 +90,10 @@ final class DateFormatMigration: MigrationProtocol {
         var convertedCount = 0
         for key in dateKeys {
             guard let raw = defaults.string(forKey: key) else { continue }
-            // Already migrated (or natively written in the new format) — leave untouched.
             guard raw.toDate(withFormat: .utc) == nil else {
                 Logger.common(message: "[Migrations] Skip DateFormatMigration key '\(key)' — already in .utc format: '\(raw)'", level: .debug, category: .migration)
                 continue
             }
-            // Unparseable by any legacy candidate (e.g. the device language changed) — best-effort skip.
             guard let date = legacyDate(from: raw) else {
                 Logger.common(message: "[Migrations] Skip DateFormatMigration key '\(key)' — value not parseable by any legacy formatter: '\(raw)'", level: .error, category: .migration)
                 continue

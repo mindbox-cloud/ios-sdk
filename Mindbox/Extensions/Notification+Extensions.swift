@@ -17,8 +17,6 @@ extension Notification.Name {
 
     static let inappSessionChecked = Notification.Name("MBNotification-inappSessionChecked")
 
-    /// Carries the handled operation as `object` (an `ApplicationEvent`); live embedded blocks
-    /// re-resolve their place with it, so an operation-targeted in-app can reach them.
     static let inAppOperationOccurred = Notification.Name("MBNotification-inAppOperationOccurred")
     static let receivedPushTokenKeepaliveFromTheMobileConfig = Notification.Name("MBNotification-receivedPushTokenKeepaliveFromTheMobileConfig")
 }

@@ -40,16 +40,11 @@ struct URLRequestBuilder {
     private func makeURLComponents(for route: Route) throws -> URLComponents {
         let baseURL = HostNormalizer.toBaseURLString(resolvedHost(for: route))
 
-        // Fail fast: if the base URL is unparseable, we used to fall back to an
-        // empty `URLComponents()` — `components.url` then returned a relative URL
-        // (just the path), which silently sent the request to a bogus target.
         guard var components = URLComponents(string: baseURL) else {
             Logger.common(message: "Failed to build base URL components. [Base]: \(baseURL)", level: .error, category: .network)
             throw URLError(.badURL)
         }
 
-        // The base may carry a path prefix (anonymizer case: `host/api/mindbox-regular`);
-        // operation endpoints are appended after it, not instead of it.
         components.path += route.path
         components.queryItems = makeQueryItems(for: route.queryParameters)
 

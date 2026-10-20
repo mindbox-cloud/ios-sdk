@@ -131,13 +131,6 @@ public struct JSON {
         }
     }
 
-    /**
-     Creates a JSON using the object.
-
-     - parameter jsonObject:  The object must have the following properties: All objects are NSString/String, NSNumber/Int/Float/Double/Bool, NSArray/Array, NSDictionary/Dictionary, or NSNull; All dictionary keys are NSStrings/String; NSNumbers are not NaN or infinity.
-
-     - returns: The created JSON
-     */
     fileprivate init(jsonObject: Any) {
         object = jsonObject
     }
@@ -170,10 +163,6 @@ public struct JSON {
         return merged
     }
 
-    /**
-     Private woker function which does the actual merging
-     Typecheck is set to true for the first recursion level to prevent total override of the source JSON
-     */
     fileprivate mutating func merge(with other: JSON, typecheck: Bool) throws {
         if type == other.type {
             switch type {
@@ -195,7 +184,6 @@ public struct JSON {
         }
     }
 
-    /// Private object
     fileprivate var rawArray: [Any] = []
     fileprivate var rawDictionary: [String: Any] = [:]
     fileprivate var rawString: String = ""
@@ -256,7 +244,6 @@ public struct JSON {
     public static var null: JSON { return JSON(NSNull()) }
 }
 
-/// Private method to unwarp an object recursively
 private func unwrap(_ object: Any) -> Any {
     switch object {
     case let json as JSON:
@@ -363,7 +350,6 @@ extension String: JSONSubscriptType {
 }
 
 extension JSON {
-    /// If `type` is `.array`, return json whose object is `array[index]`, otherwise return null json with error.
     fileprivate subscript(index index: Int) -> JSON {
         get {
             if type != .array {
@@ -387,7 +373,6 @@ extension JSON {
         }
     }
 
-    /// If `type` is `.dictionary`, return json whose object is `dictionary[key]` , otherwise return null json with error.
     fileprivate subscript(key key: String) -> JSON {
         get {
             var r = JSON.null
@@ -409,7 +394,6 @@ extension JSON {
         }
     }
 
-    /// If `sub` is `Int`, return `subscript(index:)`; If `sub` is `String`,  return `subscript(key:)`.
     fileprivate subscript(sub sub: JSONSubscriptType) -> JSON {
         get {
             switch sub.jsonKey {
@@ -663,17 +647,14 @@ extension JSON: Swift.CustomStringConvertible, Swift.CustomDebugStringConvertibl
 // MARK: - Array
 
 extension JSON {
-    // Optional [JSON]
     public var array: [JSON]? {
         return type == .array ? rawArray.map { JSON($0) } : nil
     }
 
-    // Non-optional [JSON]
     public var arrayValue: [JSON] {
         return array ?? []
     }
 
-    // Optional [Any]
     public var arrayObject: [Any]? {
         get {
             switch type {
@@ -690,7 +671,6 @@ extension JSON {
 // MARK: - Dictionary
 
 extension JSON {
-    // Optional [String : JSON]
     public var dictionary: [String: JSON]? {
         if type == .dictionary {
             var d = [String: JSON](minimumCapacity: rawDictionary.count)
@@ -703,12 +683,9 @@ extension JSON {
         }
     }
 
-    // Non-optional [String : JSON]
     public var dictionaryValue: [String: JSON] {
         return dictionary ?? [:]
     }
-
-    // Optional [String : Any]
 
     public var dictionaryObject: [String: Any]? {
         get {
@@ -725,8 +702,7 @@ extension JSON {
 
 // MARK: - Bool
 
-extension JSON { // : Swift.Bool
-    // Optional bool
+extension JSON {
     public var bool: Bool? {
         get {
             switch type {
@@ -739,7 +715,6 @@ extension JSON { // : Swift.Bool
         }
     }
 
-    // Non-optional bool
     public var boolValue: Bool {
         get {
             switch type {
@@ -758,7 +733,6 @@ extension JSON { // : Swift.Bool
 // MARK: - String
 
 extension JSON {
-    // Optional string
     public var string: String? {
         get {
             switch type {
@@ -771,7 +745,6 @@ extension JSON {
         }
     }
 
-    // Non-optional string
     public var stringValue: String {
         get {
             switch type {
@@ -790,7 +763,6 @@ extension JSON {
 // MARK: - Number
 
 extension JSON {
-    // Optional number
     public var number: NSNumber? {
         get {
             switch type {
@@ -804,7 +776,6 @@ extension JSON {
         }
     }
 
-    // Non-optional number
     public var numberValue: NSNumber {
         get {
             switch type {
@@ -848,16 +819,13 @@ extension JSON {
 // MARK: - URL
 
 extension JSON {
-    // Optional URL
     public var url: URL? {
         get {
             switch type {
             case .string:
-                // Check for existing percent escapes first to prevent double-escaping of % character
                 if rawString.range(of: "%[0-9A-Fa-f]{2}", options: .regularExpression, range: nil, locale: nil) != nil {
                     return Foundation.URL(string: rawString)
                 } else if let encodedString_ = rawString.addingPercentEncoding(withAllowedCharacters: CharacterSet.urlQueryAllowed) {
-                    // We have to use `Foundation.URL` otherwise it conflicts with the variable name.
                     return Foundation.URL(string: encodedString_)
                 } else {
                     return nil
@@ -1296,7 +1264,6 @@ extension JSON: Codable {
                 if object != nil {
                     break
                 }
-                // try to decode value
                 switch type {
                 case let boolType as Bool.Type:
                     object = try? container.decode(boolType)
