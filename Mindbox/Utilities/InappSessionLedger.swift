@@ -59,7 +59,6 @@ struct InappSessionLedger: Equatable {
     }
 }
 
-// Each ask-and-record runs inside one $ledger.mutate, so a check cannot straddle a session reset.
 extension InappSessionLedger {
 
     mutating func vouchWinner(_ inappId: String, at place: String) -> Bool {

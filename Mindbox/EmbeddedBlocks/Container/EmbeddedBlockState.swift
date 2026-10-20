@@ -6,10 +6,6 @@
 //  Copyright © 2026 Mindbox. All rights reserved.
 //
 
-/// The container's own view of the block content.
-///
-/// Deliberately internal: the host app hears only the outcomes — shown, empty or failed with a
-/// reason — never the intermediate progress, so the SDK stays free to change the flow later.
 enum EmbeddedBlockState: Equatable {
 
     case loading

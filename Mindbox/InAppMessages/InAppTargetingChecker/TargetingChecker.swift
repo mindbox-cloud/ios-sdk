@@ -54,7 +54,7 @@ final class InAppTargetingChecker: InAppTargetingCheckerProtocol {
         setupCheckerMap()
     }
 
-    // An eraseCache() overlapping a pass at worst answers it from a cleared cache.
+    // Not atomic with a pass: an eraseCache() mid-pass leaves it a cleared cache or is partly undone by its later writes.
     @Locked var context = PreparationContext()
     @Locked var checkedSegmentations: [SegmentationCheckResponse.CustomerSegmentation]?
     @Locked var checkedProductSegmentations: [DictionaryKeyValueModel: [InAppProductSegmentResponse.CustomerSegmentation]] = [:]

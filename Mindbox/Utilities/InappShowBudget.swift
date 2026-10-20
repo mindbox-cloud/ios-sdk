@@ -70,7 +70,6 @@ extension InappShowBudgeting {
     }
 }
 
-// Every read and write goes through one $ledger.mutate: a check and the slot it takes see the same counts.
 final class InappShowBudget: InappShowBudgeting {
 
     private let persistenceStorage: PersistenceStorage

@@ -20,8 +20,6 @@ public protocol InappWebViewFacadeProtocol: AnyObject {
 
     func makeStartPayload(_ completion: @escaping (JSONValue) -> Void)
 
-    /// Pushes the start payload again, unprompted, after the config behind this page changed.
-    /// `params` replace the ones the page was created with — the config owns that part of the payload.
     func sendInitDataUpdated(params: [String: JSONValue])
 
     func sendToJS(_ message: BridgeMessage)

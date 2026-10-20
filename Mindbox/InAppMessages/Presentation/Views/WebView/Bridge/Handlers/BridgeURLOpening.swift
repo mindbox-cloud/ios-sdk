@@ -27,11 +27,6 @@ final class SystemURLOpener: BridgeURLOpening {
 
 extension BridgeURLOpening {
 
-    /// Opens through the system and answers the page with the outcome.
-    ///
-    /// Shared by `openLink` and by `settings.open`, which has always reached the system this
-    /// same way. The log still says "navigate" for both because that is the text it has always
-    /// carried — worth correcting, but not while the point of the change is that nothing moved.
     func open(_ url: URL, answering message: BridgeMessage, host: WebBridgeHost) {
         DispatchQueue.main.async { [weak host] in
             guard host?.requireUserPresence(for: message) == true else { return }

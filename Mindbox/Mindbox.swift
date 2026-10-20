@@ -490,7 +490,7 @@ public class Mindbox: NSObject {
             Logger.common(message: "Track Visit dropped: trackVisitManager is nil", level: .error, category: .visit)
             return
         }
-        // Synchronous on purpose: skipNextDirectTrackVisit relies on it, as for track(_:).
+        // Synchronous on purpose: skipNextDirectTrackVisit relies on it.
         do {
             try trackVisitManager.track(data: data)
         } catch {
@@ -601,7 +601,7 @@ public class Mindbox: NSObject {
         inappMessageEventSender.sendEventIfEnabled(operationSystemName, jsonString: jsonString)
     }
 
-    // Called through NSSelectorFromString by the test apps and one test here; nothing in the SDK calls them.
+    // The test apps call both through NSSelectorFromString; nothing in the SDK does.
 
     @objc
     private func resetShownInApps() {

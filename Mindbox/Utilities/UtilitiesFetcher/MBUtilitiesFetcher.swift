@@ -49,7 +49,6 @@ class MBUtilitiesFetcher: UtilitiesFetcher {
 
     private static func prepareBundle(_ bundle: inout Bundle) {
         if Bundle.main.bundleURL.pathExtension == "appex" {
-            // <App>.app/PlugIns/<Extension>.appex
             let url = bundle.bundleURL.deletingLastPathComponent().deletingLastPathComponent()
             if let otherBundle = Bundle(url: url) {
                 bundle = otherBundle
