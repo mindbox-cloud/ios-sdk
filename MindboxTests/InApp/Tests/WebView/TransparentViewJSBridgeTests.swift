@@ -25,7 +25,7 @@ final class TransparentViewJSBridgeTests {
     private var showEvents: [String] = []
     private var windowLookups = 0
     private var presentations = 0
-    private var viewUnderTest: TransparentView?
+    private var viewRetainedForWeakRegistry: TransparentView?
 
     enum ShowState {
         case open
@@ -370,7 +370,7 @@ final class TransparentViewJSBridgeTests {
 
         autoreleasepool {
             released = makeView(tags: nil, handlers: [handler])
-            viewUnderTest = nil
+            viewRetainedForWeakRegistry = nil
         }
 
         #expect(released == nil)
@@ -458,7 +458,7 @@ final class TransparentViewJSBridgeTests {
         view.webPageRegistry = webPageRegistry
         view.delegate = showController
         view.webViewAction = showController
-        viewUnderTest = view
+        viewRetainedForWeakRegistry = view
         return view
     }
 

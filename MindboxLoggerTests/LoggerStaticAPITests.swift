@@ -9,7 +9,7 @@ import Testing
 import Foundation
 @testable import MindboxLogger
 
-@Suite("Logger static API", .tags(.loggingAPI))
+@Suite("Logger static API smoke tests: every input shape dispatches without trapping", .tags(.loggingAPI))
 struct LoggerStaticAPITests {
 
     @Test("error(LoggerErrorModel) traverses the optional description/status/statusCode branches")

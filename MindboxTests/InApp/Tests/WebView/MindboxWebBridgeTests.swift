@@ -75,7 +75,7 @@ struct MindboxWebBridgeStalenessTests {
     private let webView: WKWebView
     private let bridge: MindboxWebBridge
     private let spy: DelegateSpy
-    private let navigationFactory = WKWebView(frame: .zero, configuration: WKWebViewConfiguration())
+    private let bridgelessNavigationFactory = WKWebView(frame: .zero, configuration: WKWebViewConfiguration())
 
     init() {
         webView = WKWebView(frame: .zero, configuration: WKWebViewConfiguration())
@@ -86,7 +86,7 @@ struct MindboxWebBridgeStalenessTests {
 
     private func makeNavigation() -> WKNavigation {
         // swiftlint:disable:next force_unwrapping
-        navigationFactory.loadHTMLString("<html></html>", baseURL: nil)!
+        bridgelessNavigationFactory.loadHTMLString("<html></html>", baseURL: nil)!
     }
 
     @Test("Before the show's own load every navigation callback is stale")
@@ -212,7 +212,7 @@ struct MindboxWebBridgeMessageGateTests {
     private let webView: WKWebView
     private let bridge: MindboxWebBridge
     private let spy: MessageSpy
-    private let navigationFactory = WKWebView(frame: .zero, configuration: WKWebViewConfiguration())
+    private let bridgelessNavigationFactory = WKWebView(frame: .zero, configuration: WKWebViewConfiguration())
 
     init() {
         webView = WKWebView(frame: .zero, configuration: WKWebViewConfiguration())
@@ -223,7 +223,7 @@ struct MindboxWebBridgeMessageGateTests {
 
     private func makeNavigation() -> WKNavigation {
         // swiftlint:disable:next force_unwrapping
-        navigationFactory.loadHTMLString("<html></html>", baseURL: nil)!
+        bridgelessNavigationFactory.loadHTMLString("<html></html>", baseURL: nil)!
     }
 
     private func postValidMessage() throws {
@@ -704,7 +704,7 @@ private final class AnswerBed {
     private(set) var dataPushConfirmations = 0
 
     private let webView: EvaluationSpyWebView
-    private let navigationFactory = WKWebView(frame: .zero, configuration: WKWebViewConfiguration())
+    private let bridgelessNavigationFactory = WKWebView(frame: .zero, configuration: WKWebViewConfiguration())
     private var host: WebBridgeHost?
 
     var overlay: TransparentView? { host as? TransparentView }
@@ -747,7 +747,7 @@ private final class AnswerBed {
 
         bridge.expectContentNavigation(nil)
         // swiftlint:disable:next force_unwrapping
-        bridge.webView(webView, didCommit: navigationFactory.loadHTMLString("<html></html>", baseURL: nil)!)
+        bridge.webView(webView, didCommit: bridgelessNavigationFactory.loadHTMLString("<html></html>", baseURL: nil)!)
     }
 
     func post(_ message: BridgeMessage) throws {

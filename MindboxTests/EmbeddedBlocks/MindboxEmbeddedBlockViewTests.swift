@@ -2459,7 +2459,7 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(released == nil)
     }
 
-    @Test("A hidden block grows to its height with animation when its content arrives")
+    @Test("A hidden block fades in and grows to its height with animation when its content arrives; the host's own pending layout settles first, outside the animation")
     func hiddenBlockGrowsWithAnimation() {
         let block = BlockFixture(loadingStrategy: .hidden)
         let host = LayoutRecordingHost()

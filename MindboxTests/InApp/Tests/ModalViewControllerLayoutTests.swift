@@ -97,8 +97,8 @@ struct ModalViewControllerLayoutTests {
         #expect(vc.elements.count == 1, "elements array must not grow on stable-size layout passes")
     }
 
-    @Test("Stable size does not re-run setupElements (element instance is reused)")
-    func setupElementsNoGrowthOnStableSize() throws {
+    @Test("Stable size does not re-run setupElements: the element instance is reused, which the count alone cannot show")
+    func stableSizeReusesTheElementInstance() throws {
         let key = "image-key"
         let vc = makeController(model: try makeModel(imageKey: key), imagesDict: [key: makeImage()])
         let window = host(vc, size: CGSize(width: 320, height: 568))

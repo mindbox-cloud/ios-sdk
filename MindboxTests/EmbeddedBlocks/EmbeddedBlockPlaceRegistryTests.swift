@@ -1731,7 +1731,7 @@ struct EmbeddedBlockPlaceRegistryTests {
         #expect(block.answers.map(\.isOperationTriggered) == [false, true, false])
     }
 
-    @Test("An operation that happened off screen is not replayed on return")
+    @Test("An operation that happened off screen is not replayed on return, as on Android")
     func operationOffScreenIsNotReplayed() {
         let rig = Rig()
         let block = BlockFake()

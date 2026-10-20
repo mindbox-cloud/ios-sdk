@@ -28,7 +28,7 @@ final class TestProtocolMigration_1: MigrationProtocol {
     }
 }
 
-final class TestProtocolMigration_2: MigrationProtocol {
+final class TestProtocolMigration_2_IncrementsVersionCodeInRun: MigrationProtocol {
 
     private var persistenceStorage: PersistenceStorage
 
@@ -54,7 +54,7 @@ final class TestProtocolMigration_2: MigrationProtocol {
     }
 }
 
-final class TestProtocolMigration_3: MigrationProtocol {
+final class TestProtocolMigration_3_WithRunError: MigrationProtocol {
 
     private var persistenceStorage: PersistenceStorage
 

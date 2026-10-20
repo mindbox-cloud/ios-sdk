@@ -21,7 +21,7 @@ struct SDKUserAgentTests {
         func getDeviceUUID(completion: @escaping (String) -> Void) { completion("") }
     }
 
-    @Test
+    @Test("Keeps the segment order the backend slices traffic by: mindbox.sdk/<sdk> (<os> <ver>; <model>) <app>/<appVer>")
     func buildKeepsSegmentOrderAndFormat() {
         let fetcher = StubUtilitiesFetcher(sdkVersion: "9.9.9", appVerson: "1.2.3", hostApplicationName: "com.test.app")
         let ua = SDKUserAgent.build(utilitiesFetcher: fetcher)

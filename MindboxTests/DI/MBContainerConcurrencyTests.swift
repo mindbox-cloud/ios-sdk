@@ -21,8 +21,9 @@ struct MBContainerConcurrencyTests {
         let counterLock = NSLock()
         var factoryCalls = 0
 
+        let factoryDelayThatMakesAMissingLockRace: TimeInterval = 0.02
         container.register(Service.self, scope: .container) {
-            Thread.sleep(forTimeInterval: 0.02)
+            Thread.sleep(forTimeInterval: factoryDelayThatMakesAMissingLockRace)
             counterLock.lock()
             factoryCalls += 1
             counterLock.unlock()

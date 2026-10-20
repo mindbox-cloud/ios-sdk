@@ -283,7 +283,7 @@ struct MBConfigurationTests {
 
     // MARK: - Init: plist
 
-    @Test("Plist init succeeds for valid configurations", .tags(.decoding))
+    @Test("Plist init succeeds for valid configurations and for TestConfig_Invalid_3/4, whose invalid previous IDs are coerced, not thrown", .tags(.decoding))
     func plistInitSucceedsForValidConfigs() throws {
         for plist in ["TestConfig1", "TestConfig2", "TestConfig3", "TestConfig_Invalid_3", "TestConfig_Invalid_4"] {
             #expect(throws: Never.self) { try MBConfiguration(plistName: plist) }

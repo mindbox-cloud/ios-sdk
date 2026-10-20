@@ -101,7 +101,7 @@ struct OperationResponseTests {
         #expect(!dict.keys.contains("productListItems"))
     }
 
-    @Test("An object productList re-encodes under the productListItems key")
+    @Test("An object productList keeps its legacy productListItems key in the bridge JSON")
     func productListObjectKeepsItemsKey() throws {
         let response = try JSONDecoder().decode(
             OperationResponse.self,
@@ -162,7 +162,7 @@ struct OperationResponseTests {
     }
     """.utf8)
 
-    @Test("A production-shaped payload decodes and survives re-encoding")
+    @Test("A production-shaped payload with 5- and 6-digit fractional seconds decodes and survives re-encoding")
     func decodesProductionShapedPayload() throws {
         let response = try JSONDecoder().decode(OperationResponse.self, from: Self.productionShapedJSON)
 

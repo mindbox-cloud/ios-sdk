@@ -53,15 +53,15 @@ struct OperationNameValidatorTests {
     }
 
     @Test("Rejects unicode lookalikes and invisible characters", arguments: [
-        "Ｏｐ",
-        "１２３",
-        "évent",
-        "e\u{0301}vent",
-        "op\u{00A0}name",
-        "op\tname",
-        "op\u{200B}name"
+        ("fullwidth latin", "Ｏｐ"),
+        ("fullwidth digits", "１２３"),
+        ("precomposed e-acute", "évent"),
+        ("e plus combining acute accent", "e\u{0301}vent"),
+        ("no-break space", "op\u{00A0}name"),
+        ("tab", "op\tname"),
+        ("zero-width space", "op\u{200B}name")
     ])
-    func rejectsUnicodeLookalikes(_ name: String) {
+    func rejectsUnicodeLookalikes(_ kind: String, _ name: String) {
         #expect(!OperationNameValidator.isValid(name))
     }
 

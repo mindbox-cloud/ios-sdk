@@ -30,7 +30,7 @@ final class MockDatabaseRepository: MBDatabaseRepository {
     }
 }
 
-final class FakeDatabaseRepository: MBDatabaseRepository {
+final class RetryByTimerScriptedDatabaseRepository: MBDatabaseRepository {
     
     private var queryCalls = 0
     

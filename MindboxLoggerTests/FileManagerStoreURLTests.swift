@@ -15,8 +15,9 @@ struct FileManagerStoreURLTests {
 
     @Test("storeURL throws .containerUnavailable instead of crashing when the container is unavailable")
     func throwsWhenContainerUnavailable() {
-        #expect(throws: FileManager.StoreURLError.containerUnavailable(appGroup: "")) {
-            try FileManager.storeURL(for: "", databaseName: "CDLogMessage")
+        let appGroupTheSimulatorCannotResolve = ""
+        #expect(throws: FileManager.StoreURLError.containerUnavailable(appGroup: appGroupTheSimulatorCannotResolve)) {
+            try FileManager.storeURL(for: appGroupTheSimulatorCannotResolve, databaseName: "CDLogMessage")
         }
     }
 
@@ -38,8 +39,8 @@ struct FileManagerStoreURLTests {
             storeURL: nil,
             descriptions: nil
         )
-        let loader = LoggerDatabaseLoader(config)
-        let (container, _) = try loader.loadContainer()
+        let sharedCachesStoreLoader = LoggerDatabaseLoader(config)
+        let (container, _) = try sharedCachesStoreLoader.loadContainer()
 
         let stores = container.persistentStoreCoordinator.persistentStores
         #expect(!stores.isEmpty)

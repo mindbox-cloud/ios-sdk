@@ -11,7 +11,7 @@ import Foundation
 import UIKit
 @preconcurrency @testable import MindboxLogger
 
-@Suite("MBLoggerCoreDataManager", .tags(.storage, .storageState), .serialized)
+@Suite("MBLoggerCoreDataManager, serialized: background/foreground posts reach every live manager", .tags(.storage, .storageState), .serialized)
 struct MBLoggerCoreDataManagerTests {
 
     let manager: MBLoggerCoreDataManager
