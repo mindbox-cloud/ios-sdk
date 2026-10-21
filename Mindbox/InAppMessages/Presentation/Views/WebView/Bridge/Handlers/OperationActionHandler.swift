@@ -96,9 +96,6 @@ private extension OperationActionHandler {
                       level: .info,
                       category: host.logCategory)
 
-        // HTTP 2xx → forward the raw body to JS as a Response so the JS Tracker
-        // can dispatch onSuccess / onValidationError by the body's `status`.
-        // 4xx, 5xx and network failures stay on the MindboxError → Error path.
         eventRepository.sendRaw(event: event) { [weak host] result in
             DispatchQueue.main.async {
                 guard let host else { return }

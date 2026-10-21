@@ -86,12 +86,9 @@ public class Mindbox: NSObject {
     /**
      Method to obtain deviceUUID.
 
-     - Returns:
-     -  completion: @escaping closure of apnsToken string
-
-     - Important:
-     The block to execute asynchronously with the results
-
+     - Parameters:
+        - completion: Receives the deviceUUID: before this method returns when it is already stored,
+          otherwise once the SDK stores it.
      */
     public func getDeviceUUID(_ completion: @escaping (String) -> Void) {
         if let value = persistenceStorage?.deviceUUID {
@@ -104,12 +101,9 @@ public class Mindbox: NSObject {
     /**
      Method to obtain apnsToken.
 
-     - Returns:
-     -  completion: @escaping closure of apnsToken string
-
-     - Important:
-     The block to execute asynchronously with the results
-
+     - Parameters:
+        - completion: Receives the APNs token: before this method returns when it is already stored,
+          otherwise once the SDK stores it.
      */
     public func getAPNSToken(_ completion: @escaping (String) -> Void) {
         if let value = persistenceStorage?.apnsToken {
@@ -258,8 +252,8 @@ public class Mindbox: NSObject {
      Method for register a custom event.
 
      - Parameters:
-        - operationSystemName: Name of custom operation. Only "A-Z", "a-z", ".", "-" characters are allowed.
-        - operationBody: Provided `OperationBodyRequestBase` payload to send.
+        - operationSystemName: Name of custom operation. Only "A-Z", "a-z", "0-9", ".", "-" characters are allowed.
+        - operationBody: Provided `OperationBodyRequestType` payload to send.
      */
     public func executeAsyncOperation<T: OperationBodyRequestType>(operationSystemName: String, operationBody: T) {
         guard validateOperationName(operationSystemName) else { return }
@@ -271,7 +265,7 @@ public class Mindbox: NSObject {
      Method for register a custom event.
 
      - Parameters:
-        - operationSystemName: Name of custom operation. Only "A-Z", "a-z", ".", "-" characters are allowed.
+        - operationSystemName: Name of custom operation. Only "A-Z", "a-z", "0-9", ".", "-" characters are allowed.
         - json: String which contains JSON to send.
      */
     public func executeAsyncOperation(operationSystemName: String, json: String) {
@@ -283,7 +277,7 @@ public class Mindbox: NSObject {
      Method for executing an operation synchronously.
 
      - Parameters:
-        - operationSystemName: Name of custom operation. Only "A-Z", "a-z", ".", "-" characters are allowed.
+        - operationSystemName: Name of custom operation. Only "A-Z", "a-z", "0-9", ".", "-" characters are allowed.
         - operationBody: Provided `OperationBodyRequestType` payload to send
         - completion: Result of sending operation. Contains `OperationResponse` or `MindboxError`.
      */
@@ -304,7 +298,7 @@ public class Mindbox: NSObject {
      Method for executing an operation synchronously.
 
      - Parameters:
-        - operationSystemName: Name of custom operation. Only "A-Z", "a-z", ".", "-" characters are allowed.
+        - operationSystemName: Name of custom operation. Only "A-Z", "a-z", "0-9", ".", "-" characters are allowed.
         - json: String which contains JSON to send.
         - completion: Result of sending operation. Contains `OperationResponse` or `MindboxError`.
      */
@@ -326,7 +320,7 @@ public class Mindbox: NSObject {
      - Note: use this method if you have your own object that extends `OperationResponseType`.
 
      - Parameters:
-        - operationSystemName: Name of custom operation. Only "A-Z", "a-z", ".", "-" characters are allowed.
+        - operationSystemName: Name of custom operation. Only "A-Z", "a-z", "0-9", ".", "-" characters are allowed.
         - operationBody: Provided `OperationBodyRequestType` payload to send.
         - customResponseType: Expected result type in completion.
         - completion: Result of sending operation. Contains `OperationResponseType` or `MindboxError`.
@@ -347,13 +341,13 @@ public class Mindbox: NSObject {
 
     /**
      - Warning:
-     Deprecated. Use `executeAsyncOperation<T: OperationBodyRequestBase>(operationSystemName:operationBody:)` instead.
+     Deprecated. Use `executeAsyncOperation<T: OperationBodyRequestType>(operationSystemName:operationBody:)` instead.
 
      - Note:
      Method for register a custom event.
 
      - Parameters:
-        - operationSystemName: Name of custom operation. Only "A-Z", "a-z", ".", "-" characters are allowed.
+        - operationSystemName: Name of custom operation. Only "A-Z", "a-z", "0-9", ".", "-" characters are allowed.
         - operationBody: Provided `Encodable` payload to send
      */
     @available(*, deprecated, message: "Use `executeAsyncOperation<T: OperationBodyRequestBase>(operationSystemName: String, operationBody: T)` instead.")
@@ -482,7 +476,7 @@ public class Mindbox: NSObject {
      Objc method for tracking application activities.
 
      - Parameters:
-        - type: `TrackVisitType`
+        - data: `TrackVisitData`
 
      */
     public func track(data: TrackVisitData) {

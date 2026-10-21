@@ -8,30 +8,16 @@
 
 import Foundation
 
-/// What the block shows until the SDK has decided what goes into it — given at creation.
-///
-/// Every place marked up in the app waits for the SDK on every launch, and a place with no campaign
-/// behind it would flash a placeholder and collapse each time. The strategy decides whether the block
-/// takes its space before the answer, and the SDK remembers per place whether content was ever shown
-/// there, so the layout does not jump where content is expected and does not flash where it is not.
-///
-/// `automatic` is the default.
+/// What a block shows while it loads, set when the block is created.
 public enum MindboxEmbeddedBlockLoadingStrategy: Sendable {
 
-    /// Hidden until the place has shown content once on this device; a placeholder from then on.
-    ///
-    /// The memory is per `placeSystemName` and survives a restart. It is dropped when the place
-    /// answers with nothing to show — the campaign was switched off, the targeting did not match, the
-    /// page rendered nothing — so the next launch starts hidden again. A failure keeps the memory:
-    /// that is "could not", not "nothing here".
+    /// ``MindboxEmbeddedBlockLoadingStrategy/placeholder`` if the place has shown content on this device
+    /// and has not come out empty since, otherwise ``MindboxEmbeddedBlockLoadingStrategy/hidden``.
     case automatic
 
-    /// Always a placeholder until the answer: the SDK shimmer or the host's `placeholderView`.
+    /// A placeholder at the block's height: the host's own or the SDK's shimmer.
     case placeholder
 
-    /// Hidden until the content is shown once: zero height, no placeholder, and no `errorView` on a
-    /// failure — a block that never took its space does not take it for an error screen either.
-    /// The outcome still arrives through `onFail`. A block that shows content keeps its space in
-    /// a placeholder while its page is replaced; only the next creation starts hidden again.
+    /// Zero height until the content is shown.
     case hidden
 }

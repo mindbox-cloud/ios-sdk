@@ -26,12 +26,6 @@ struct PermissionStatus: Codable {
     }
 }
 
-/// Unified permission status values for cross-platform compatibility
-/// - granted: Permission is granted
-/// - denied: Permission is denied by user
-/// - notDetermined: Permission has not been requested yet
-/// - restricted: Permission is restricted by system (iOS: parental controls, MDM; Android: may map to denied)
-/// - limited: Limited access granted (iOS: photos limited access; Android: not applicable)
 enum PermissionStatusValue: String, Codable {
     case granted
     case denied

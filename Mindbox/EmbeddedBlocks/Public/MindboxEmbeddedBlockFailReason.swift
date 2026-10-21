@@ -8,12 +8,7 @@
 
 import Foundation
 
-/// Why a block could not be shown — the payload of `onFail`.
-///
-/// Meant for logs and analytics on the host side, not for branching: whatever the reason, the
-/// container has already collapsed or switched to `errorView`. A string-backed struct rather than
-/// an enum so a later SDK can add a reason without breaking an exhaustive `switch` — keep a
-/// `default` when matching. The raw values are the same on every platform.
+/// Why a block failed, for logs and analytics. Later SDK versions may add reasons.
 public struct MindboxEmbeddedBlockFailReason: RawRepresentable, Hashable, Sendable, CustomStringConvertible {
 
     public let rawValue: String
@@ -22,16 +17,11 @@ public struct MindboxEmbeddedBlockFailReason: RawRepresentable, Hashable, Sendab
         self.rawValue = rawValue
     }
 
-    /// The content is unavailable because of the environment: the config could not be downloaded
-    /// and nothing is cached, the SDK gave no answer within the block's wait budget, the block's
-    /// page could not be loaded, or the segmentation, product segmentation or geo the targeting
-    /// needs could not be fetched — typically a network problem. A segmentation or geo fetch that
-    /// failed is not asked again within the session, whatever the reason; a block at that place
-    /// fails the same way until the next launch.
+    /// The SDK could not get the content, typically because of the network or the block's `timeout`.
     public static let networkError = MindboxEmbeddedBlockFailReason(rawValue: "networkError")
 
-    /// An error on the Mindbox side: the page loaded but never reported its content or reported
-    /// something unusable, or the SDK failed inside.
+    /// The campaign at the place is not a valid embedded block, or its page did not report its content
+    /// in time or in a form the SDK can read.
     public static let internalError = MindboxEmbeddedBlockFailReason(rawValue: "internalError")
 
     public var description: String { rawValue }

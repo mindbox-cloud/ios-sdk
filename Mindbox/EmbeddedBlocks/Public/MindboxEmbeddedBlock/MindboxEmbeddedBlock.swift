@@ -10,50 +10,17 @@
 import SwiftUI
 import UIKit
 
-/// SwiftUI wrapper over `MindboxEmbeddedBlockView`.
+/// A SwiftUI view that shows the Mindbox embedded block configured for a place in the admin panel.
 ///
-/// Created with the `placeSystemName` of the place from the admin panel and the `height` the
-/// block should occupy.
-/// Place it anywhere in a layout — the caller decides only the position and the width. The block
-/// takes the given height when its content is shown; a block with nothing to show collapses to
-/// zero height. Whether it takes that height while the content is loading is decided by
-/// `loadingStrategy`: a placeholder, nothing, or — by default — nothing until the place has shown
-/// content once on this device and a placeholder from then on. The first look is known before the
-/// first frame, so a block that waits hidden never flashes reserved space.
-///
-/// A different place is a different block, built from scratch in place of the old one; a
-/// `placeSystemName` that differs only in padding or letter case is the same place and the same block.
-/// A different `height` resizes the block where it stands — the same content, no reload. The
-/// strategy and `animatesReveal` are read once, when the block is created.
-///
-/// Both looks can be customized the same way as in UIKit, through modifiers on the block
-/// itself: `placeholder` replaces the stock loading shimmer, and `errorView` opts into showing a
-/// failure instead of collapsing. Both stay ordinary SwiftUI views drawn in place, so they see the
-/// environment of the tree they were written in — objects, fonts, locale, color scheme.
-///
-/// The outcome arrives through three closures: `onLoad` when the content is shown, `onEmpty` when
-/// there is nothing to show at the place, and `onFail` with a reason when the block could not be
-/// shown. An empty or failed outcome the block holds back while it keeps shown content on screen —
-/// see `MindboxEmbeddedBlockView` — arrives when the user leaves. When leaving removes the block from
-/// the view tree, that call comes on a later turn of the main queue, after SwiftUI has removed the
-/// block — never inside SwiftUI's update.
+/// Give it a height and let the layout set its position and width. Keep it in the layout rather than
+/// removing it in `onEmpty`: a collapsed block still shows content the place gets later.
+/// `loadingStrategy`, `timeout` and `animatesReveal` are read only when the block is created.
 ///
 /// ```swift
 /// MindboxEmbeddedBlock(placeSystemName: "stories", height: 104,
-///                      loadingStrategy: .automatic,
-///                      onEmpty: hideSection,
 ///                      onFail: { reason in log("stories failed: \(reason)") })
+///     .placeholder { StoriesSkeleton() }
 /// ```
-///
-/// Both modifiers return the block itself, so they come before any SwiftUI modifier: after
-/// `.frame(…)` or `.padding(…)` the value is no longer a `MindboxEmbeddedBlock`. Neither shows until
-/// the block has taken its place: with `hidden`, or `automatic` at a place with no record yet, the
-/// first wait and a failure on it show nothing. Once content was shown, the block waits in the
-/// `placeholder` while its page is replaced and shows the `errorView` on a failure.
-///
-/// A collapsed block is zero points tall, but a stack still pays its spacing around it. To hand the
-/// space back completely, drop the whole section from the layout in `onEmpty` — as in the example
-/// above — and in `onFail` when no `errorView` is set.
 @available(iOS 13.0, *)
 public struct MindboxEmbeddedBlock: View {
 
@@ -61,11 +28,11 @@ public struct MindboxEmbeddedBlock: View {
     private let height: CGFloat
     private let timeout: TimeInterval?
 
-    /// What the block shows until the SDK answers, given at creation. See `MindboxEmbeddedBlockLoadingStrategy`.
+    /// What the block shows while it loads.
     public let loadingStrategy: MindboxEmbeddedBlockLoadingStrategy
 
-    /// Whether the SDK animates the reveal of the content, given at creation. The system's Reduce
-    /// Motion setting turns the animation off as well.
+    /// Whether the SDK animates the content's appearance; set `false` to animate the block's container
+    /// yourself in `onLoad`.
     public let animatesReveal: Bool
 
     private let onLoad: (() -> Void)?
@@ -75,34 +42,19 @@ public struct MindboxEmbeddedBlock: View {
     private(set) var placeholderBuilder: (() -> AnyView)?
     private(set) var errorBuilder: (() -> AnyView)?
 
+    /// Creates a block for a place.
+    ///
     /// - Parameters:
-    ///   - placeSystemName: The system name of the place from the admin panel. Matched with the
-    ///     surrounding whitespace trimmed and the letter case ignored, the way an operation system
-    ///     name is: `Main-Screen-Top` and `main-screen-top` are the same place.
-    ///   - height: The height the block occupies when shown — and while loading, unless it waits
-    ///     hidden by its `loadingStrategy`. A new value resizes the block in place, without
-    ///     reloading its content.
-    ///   - loadingStrategy: What the block shows until the SDK answers: a placeholder, nothing, or
-    ///     `automatic` — the default — hidden until the place has shown content once on this device
-    ///     and a placeholder from then on. Read once, when the block is created.
-    ///   - timeout: How long the block waits to learn what it shows before failing as
-    ///     `networkError`, in seconds; `errorView` applies unless the block waited hidden. `nil`
-    ///     means the SDK default of 30. An answer that arrives after
-    ///     that no longer expands the block; the next attempt starts when the block enters the
-    ///     window again, or when the app comes back from the background with the block on screen.
-    ///   - animatesReveal: Whether the SDK animates the reveal of the content — a fade, and the
-    ///     growth of a block that waited hidden. `true` by default; the system's Reduce Motion
-    ///     setting turns the animation off as well. Turn it off to animate the block's container
-    ///     yourself in `onLoad`. Read once, when the block is created.
-    ///   - onLoad: The block content is shown and the container is visible. A block that waited
-    ///     hidden grows from 0 to `height` here; a `List` row that holds it changes its height on
-    ///     this call.
-    ///   - onEmpty: There is nothing to show at the place — no campaign, targeting or A/B group not
-    ///     matched, show budget spent, or the page rendered nothing. The block collapses; `errorView`
-    ///     does not apply.
-    ///   - onFail: The block could not be shown. The block collapses or shows `errorView` — unless it
-    ///     waited hidden: a block that never took its space does not take it for an error screen. The
-    ///     reason is for logs and analytics — match it with a `default`, a later SDK may add reasons.
+    ///   - placeSystemName: The place's system name from the admin panel, matched ignoring letter case
+    ///     and surrounding whitespace.
+    ///   - height: The block's height, in points, while it is not collapsed.
+    ///   - loadingStrategy: What the block shows while it loads.
+    ///   - timeout: How long, in seconds, the block waits for the SDK to choose its content before it
+    ///     fails with ``MindboxEmbeddedBlockFailReason/networkError``; `nil` means 30.
+    ///   - animatesReveal: Whether the SDK animates the content's appearance.
+    ///   - onLoad: Called when the content is shown.
+    ///   - onEmpty: Called when the place has nothing to show; the block collapses.
+    ///   - onFail: Called when the block fails; it collapses or shows its error view.
     public init(placeSystemName: String,
                 height: CGFloat,
                 loadingStrategy: MindboxEmbeddedBlockLoadingStrategy = .automatic,
@@ -121,22 +73,14 @@ public struct MindboxEmbeddedBlock: View {
         self.onFail = onFail
     }
 
-    /// Shows this view instead of the SDK shimmer while the block is loading.
-    ///
-    /// Called again, it replaces the previous placeholder. A block that waits hidden shows neither
-    /// until it has shown content; from then on it keeps its space in the placeholder while its
-    /// page is replaced.
+    /// Shows this view instead of the SDK's shimmer while the block loads.
     public func placeholder<Content: View>(@ViewBuilder _ build: @escaping () -> Content) -> Self {
         var block = self
         block.placeholderBuilder = { AnyView(build()) }
         return block
     }
 
-    /// Shows this view instead of collapsing when the block cannot be shown.
-    ///
-    /// Applies only to failures: an empty block — one with nothing behind its place system name — always
-    /// collapses, so a host cannot fill the space of a block that was never meant to be there. A block
-    /// that waited hidden stays hidden on a failure for the same reason.
+    /// Shows this view, instead of collapsing, when the block fails while it takes its height.
     public func errorView<Content: View>(@ViewBuilder _ build: @escaping () -> Content) -> Self {
         var block = self
         block.errorBuilder = { AnyView(build()) }
