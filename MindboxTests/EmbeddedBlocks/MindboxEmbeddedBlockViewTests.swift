@@ -1716,6 +1716,73 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.scheduler.lastDelay == 7)
     }
 
+    @Test("A shown block whose new session answers at once while the app is not active spends no wait budget until its page is sent the data")
+    func coveredBlockAnsweredWhileTheAppIsNotActiveWaitsForThePush() {
+        let block = OwnBudgetBlockFixture(timeout: 5)
+        block.attachToWindow()
+        block.bed.page?.reportRendered(1)
+        block.bed.applicationState = .inactive
+
+        block.bed.renewSession()
+        block.scheduler.fireAll()
+
+        #expect(block.bed.page?.initDataPushes.isEmpty == true)
+        #expect(block.bed.failureReporter.reasons.isEmpty)
+
+        block.bed.becomeActive()
+
+        #expect(block.bed.page?.initDataPushes.count == 1)
+        #expect(block.scheduler.lastDelay == 7)
+    }
+
+    @Test("A covered block whose page took the session's data keeps the page's budget running when an answer brings the same data again")
+    func coveredBlockKeepsThePagesBudgetForTheSameDataAgain() {
+        let block = OwnBudgetBlockFixture(timeout: 5)
+        block.attachToWindow()
+        block.bed.page?.reportRendered(1)
+        block.bed.renewSession()
+        block.bed.page?.confirmInitData()
+
+        block.bed.announceNewConfig()
+        block.scheduler.fireAll()
+
+        #expect(block.bed.failureReporter.reasons == [.presentationFailed])
+    }
+
+    @Test("A covered block the host hides and shows again resumes the session's wait from the remainder")
+    func coveredBlockHiddenAndShownResumesTheWaitFromTheRemainder() {
+        let block = OwnBudgetBlockFixture(timeout: 5)
+        block.attachToWindow()
+        block.bed.page?.reportRendered(1)
+        block.bed.resolver.isDeferred = true
+        block.bed.renewSession()
+        #expect(block.scheduler.lastDelay == 5)
+
+        block.bed.clock.advance(2)
+        block.view.setHostVisible(false)
+        block.view.setHostVisible(true)
+
+        #expect(block.scheduler.lastDelay == 3)
+    }
+
+    @Test("A covered block whose session's answer was delayed waits the answer timeout once a later session begins")
+    func coveredBlockDelayedInAnEndedSessionWaitsTheAnswerTimeout() {
+        let block = OwnBudgetBlockFixture(timeout: 5)
+        block.attachToWindow()
+        block.bed.page?.reportRendered(1)
+        block.bed.resolver.resolution = .content(.delayed())
+        block.bed.renewSession()
+        let armsDuringTheDelay = block.scheduler.armCount
+        block.bed.enterBackground()
+        block.bed.returnToApp()
+        block.bed.resolver.isDeferred = true
+
+        block.bed.renewSession()
+
+        #expect(block.scheduler.armCount > armsDuringTheDelay)
+        #expect(block.scheduler.lastDelay == 5)
+    }
+
     @Test("A block a later session covers again while its page draws the previous session's data waits the answer timeout for the later session's answer")
     func blockCoveredAgainByALaterSessionWaitsTheAnswerTimeout() {
         let block = OwnBudgetBlockFixture(timeout: 5)
