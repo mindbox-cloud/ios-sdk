@@ -2952,7 +2952,7 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.page?.isClosed == false)
     }
 
-    @Test("A page that draws nothing for the new session collapses the block at once, unshown, giving the place's slot back, and the block stays collapsed through the background and as the user leaves")
+    @Test("A page that draws nothing for the new session collapses the block at once, unshown, letting the page go and giving the place's slot back, and the block stays collapsed through the background and as the user leaves")
     func pageThatDrawsNothingForTheNewSessionCollapsesAtOnce() {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
@@ -2967,6 +2967,7 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(states == [.empty])
         #expect(bed.provider.contentView == nil)
         #expect(bed.provider.heldCollapse == nil)
+        #expect(bed.page?.isClosed == true)
         #expect(bed.budget.releases == releasesBefore + [.place("block-id")])
 
         bed.enterBackground()
@@ -3045,7 +3046,7 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.page?.isClosed == true)
     }
 
-    @Test("A page that draws nothing for the data an operation of a new session handed it collapses the block at once: no show goes for that session and leaving adds nothing")
+    @Test("A page that draws nothing for the data an operation of a new session handed it collapses the block at once and is let go: no show goes for that session and leaving adds nothing")
     func pageThatDrawsNothingAfterANewSessionsOperationCollapsesAtOnce() {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
@@ -3062,6 +3063,7 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(states == [.empty])
         #expect(bed.provider.contentView == nil)
         #expect(bed.provider.heldCollapse == nil)
+        #expect(bed.page?.isClosed == true)
         #expect(bed.accounting.shows.count == 1)
 
         bed.provider.stop()
@@ -3069,18 +3071,18 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(states == [.empty])
     }
 
-    @Test("A page that draws nothing and then draws something takes its report back: the new session's show goes and leaving collapses nothing")
+    @Test("A page that draws nothing for new data and then draws something takes its report back: no second show goes and leaving collapses nothing")
     func pageThatDrawsAgainLiftsItsHold() {
         let bed = EmbeddedBlockTestBed()
         let first = bed.resolver.sessionEpoch
         bed.provider.start()
         bed.page?.reportRendered(1)
-        bed.announceNewSession()
+        bed.deliverSamePageWithNewData()
         bed.page?.reportRendered(0)
 
         bed.page?.reportRendered(2)
 
-        #expect(bed.accounting.sessionEpochs == [first, first + 1])
+        #expect(bed.accounting.sessionEpochs == [first])
 
         var states: [EmbeddedBlockState] = []
         bed.provider.onStateChange = { states.append($0) }
@@ -3155,7 +3157,7 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.start()
         bed.page?.reportRendered(1)
         if isPageHold {
-            bed.announceNewSession()
+            bed.deliverSamePageWithNewData()
             bed.page?.reportRendered(0)
         } else {
             bed.resolver.resolution = .empty

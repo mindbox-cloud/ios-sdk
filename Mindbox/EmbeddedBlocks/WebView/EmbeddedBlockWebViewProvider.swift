@@ -450,6 +450,7 @@ final class EmbeddedBlockWebViewProvider {
         guard renderedCount > 0 else {
             guard isStarted || isStartPending, isReady, !isCoveredForTheSession else {
                 Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': page rendered nothing", category: .embeddedBlocks)
+                if isCoveredForTheSession { dropPage() }
                 settle(.empty)
                 return
             }

@@ -32,7 +32,11 @@ extension EmbeddedBlockWebViewProvider {
     private var shownPageShow: EmbeddedBlockPageShow? { isReady && page != nil ? pageShow : nil }
 
     func sessionChecked(startedAt: TimeInterval?, startsNewSession: Bool) {
-        guard startsNewSession, isStarted, isCoveredForTheSession else { return }
+        guard startsNewSession, isCoveredForTheSession else { return }
+        guard isStarted else {
+            onContentDelayed?()
+            return
+        }
 
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': a new session began — the placeholder covers its content until the session's content is drawn",
                       category: .embeddedBlocks)
