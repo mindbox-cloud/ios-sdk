@@ -831,6 +831,32 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(memory.shownPlaces.isEmpty)
     }
 
+    @Test("A shown block is covered by the placeholder in a new session and shows the same page again once it draws that session's data, with one show for the session and no second load event")
+    func shownBlockIsCoveredInANewSessionUntilItsPageDrawsTheSessionsData() async throws {
+        let block = BlockFixture()
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.attachToWindow()
+        block.page?.reportRendered(1)
+        let content = try #require(block.page?.view)
+        await mainQueueTurn()
+
+        block.bed.renewSession()
+
+        #expect(content.superview == nil)
+        #expect(block.view.subviews.contains { $0 is EmbeddedBlockShimmerView })
+        #expect(block.page?.initDataPushes.count == 1)
+
+        block.page?.reportRendered(1)
+        await mainQueueTurn()
+
+        #expect(content.superview === block.view)
+        #expect(block.view.subviews.contains { $0 is EmbeddedBlockShimmerView } == false)
+        #expect(block.bed.pageFactory.pages.count == 1)
+        #expect(block.bed.accounting.shows.count == 2)
+        #expect(delegate.events == [.loaded])
+    }
+
     @Test("A block its place can no longer check keeps its content on screen and collapses as the user leaves: the host hears it empty out of the window, and the place's memory stays as it was")
     func heldUncheckedPlaceLandsAsTheUserLeavesAndKeepsTheMemory() async throws {
         let memory = EmbeddedBlockPlaceMemoryMock()
@@ -1502,6 +1528,29 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(delegate.events == [.failed(.networkError)])
     }
 
+    @Test("A shown block covered for a new session that never answers fails as networkError and shows the error view")
+    func coveredBlockTheNewSessionNeverAnswersFailsAsNoResponse() async {
+        let block = BlockFixture()
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        let errorView = UIView()
+        block.view.errorView = errorView
+        block.attachToWindow()
+        block.page?.reportRendered(1)
+        await mainQueueTurn()
+        block.bed.resolver.isDeferred = true
+        block.bed.renewSession()
+
+        block.expireTimeout()
+        await mainQueueTurn()
+
+        #expect(block.view.intrinsicContentSize.height == 120)
+        #expect(block.view.subviews.contains(errorView))
+        #expect(delegate.events == [.loaded, .failed(.networkError)])
+        #expect(block.bed.failureReporter.unansweredWaits == [block.waitBudgetBed.duration])
+        #expect(block.bed.failureReporter.reported.isEmpty)
+    }
+
     @Test("A different failure reason on a silent retry is not re-delivered")
     func differentReasonOnSilentRetryIsNotRedelivered() async {
         let block = BlockFixture()
@@ -1539,6 +1588,27 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.bed.failureReporter.unansweredWaits.isEmpty)
     }
 
+    @Test("A shown block whose new session answered fails its page as presentation_failed when the page stays silent under the placeholder")
+    func coveredBlockWhosePageStaysSilentForTheNewSessionFails() async {
+        let block = BlockFixture()
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        let errorView = UIView()
+        block.view.errorView = errorView
+        block.attachToWindow()
+        block.page?.reportRendered(1)
+        await mainQueueTurn()
+        block.bed.renewSession()
+
+        block.expireTimeout()
+        await mainQueueTurn()
+
+        #expect(block.view.subviews.contains(errorView))
+        #expect(delegate.events == [.loaded, .failed(.internalError)])
+        #expect(block.bed.failureReporter.reasons == [.presentationFailed])
+        #expect(block.bed.failureReporter.unansweredWaits.isEmpty)
+    }
+
     @Test("A delayed answer stands the wait budget down and keeps the placeholder")
     func delayedAnswerStandsTheBudgetDown() async {
         let block = BlockFixture(resolution: .content(.delayed()))
@@ -1554,6 +1624,28 @@ struct MindboxEmbeddedBlockViewTests {
         await mainQueueTurn()
 
         #expect(delegate.events.isEmpty)
+        #expect(block.bed.failureReporter.unansweredWaits.isEmpty)
+    }
+
+    @Test("A shown block covered for a new session whose answer comes after its delay keeps the placeholder through the delay and spends no wait budget on it")
+    func coveredBlockWaitsOutTheNewSessionsDelayWithoutItsBudget() async {
+        let block = BlockFixture()
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.attachToWindow()
+        block.page?.reportRendered(1)
+        await mainQueueTurn()
+        block.bed.resolver.resolution = .content(.delayed())
+
+        block.bed.renewSession()
+
+        #expect(!block.waitBudgetBed.budget.isRunning)
+        #expect(block.view.subviews.contains { $0 is EmbeddedBlockShimmerView })
+
+        block.expireTimeout()
+        await mainQueueTurn()
+
+        #expect(delegate.events == [.loaded])
         #expect(block.bed.failureReporter.unansweredWaits.isEmpty)
     }
 
@@ -1586,6 +1678,71 @@ struct MindboxEmbeddedBlockViewTests {
 
         #expect(withPage.scheduler.lastDelay == 7)
         #expect(withPage.view.intrinsicContentSize.height == 120)
+    }
+
+    @Test("A shown block covered for a new session waits the answer timeout for that session's answer and the page's own budget for the page to draw it")
+    func coveredBlockWaitsTheAnswerTimeoutThenThePagesBudget() {
+        let block = OwnBudgetBlockFixture(timeout: 5)
+        block.attachToWindow()
+        block.bed.page?.reportRendered(1)
+        block.bed.resolver.isDeferred = true
+
+        block.bed.renewSession()
+        #expect(block.scheduler.lastDelay == 5)
+
+        block.bed.resolver.flush()
+        #expect(block.scheduler.lastDelay == 7)
+    }
+
+    @Test("A shown block covered for a new session spends no wait budget while the app is not active and its page still waits for the session's data, and gives the page its own budget once the data goes")
+    func coveredBlockSpendsNoBudgetWhileItsPageWaitsForTheAppToBeActive() {
+        let block = OwnBudgetBlockFixture(timeout: 5)
+        block.attachToWindow()
+        block.bed.page?.reportRendered(1)
+        block.bed.resolver.isDeferred = true
+        block.bed.renewSession()
+        block.bed.applicationState = .inactive
+
+        block.bed.resolver.flush()
+        block.scheduler.fireAll()
+
+        #expect(block.bed.page?.initDataPushes.isEmpty == true)
+        #expect(block.bed.failureReporter.reasons.isEmpty)
+        #expect(block.bed.page?.isClosed == false)
+
+        block.bed.becomeActive()
+
+        #expect(block.bed.page?.initDataPushes.count == 1)
+        #expect(block.scheduler.lastDelay == 7)
+    }
+
+    @Test("A block a later session covers again while its page draws the previous session's data waits the answer timeout for the later session's answer")
+    func blockCoveredAgainByALaterSessionWaitsTheAnswerTimeout() {
+        let block = OwnBudgetBlockFixture(timeout: 5)
+        block.attachToWindow()
+        block.bed.page?.reportRendered(1)
+        block.bed.renewSession()
+        #expect(block.scheduler.lastDelay == 7)
+        block.bed.enterBackground()
+        block.bed.returnToApp()
+        block.bed.resolver.isDeferred = true
+
+        block.bed.renewSession()
+
+        #expect(block.scheduler.lastDelay == 5)
+    }
+
+    @Test("A page still loading when a new session begins waits the answer timeout for that session's answer once it draws")
+    func pageDrawnAfterANewSessionBeganWaitsTheAnswerTimeout() {
+        let block = OwnBudgetBlockFixture(timeout: 5)
+        block.attachToWindow()
+        block.bed.resolver.isDeferred = true
+        block.bed.renewSession()
+        #expect(block.scheduler.lastDelay == 7)
+
+        block.bed.page?.reportRendered(1)
+
+        #expect(block.scheduler.lastDelay == 5)
     }
 
     @Test("A block that enters the window before the return's session check ends spends no wait budget until its content starts")

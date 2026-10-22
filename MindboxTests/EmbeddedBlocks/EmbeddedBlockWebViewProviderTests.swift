@@ -1358,6 +1358,25 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.accounting.shows.last?.timeToDisplay == 40.75)
     }
 
+    @Test("A page that draws the ended session's data after the new session began stays under the placeholder until that session answers, and no show goes for it")
+    func pageDrawingTheEndedSessionsDataStaysCovered() {
+        let bed = EmbeddedBlockTestBed()
+        let first = bed.resolver.sessionEpoch
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData()
+        bed.resolver.isDeferred = true
+        bed.renewSession()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.page?.reportRendered(1)
+
+        #expect(states.last == .loading)
+        #expect(!states.contains(.ready))
+        #expect(bed.accounting.sessionEpochs == [first])
+    }
+
     @Test("A show that came due in the background goes once the user is back and the session check of the return is over")
     func showDueInTheBackgroundGoesOnReturn() {
         let bed = EmbeddedBlockTestBed()
@@ -3315,6 +3334,7 @@ struct EmbeddedBlockWebViewProviderTests {
         case reloaded
         case collapsed
         case failed
+        case coveredForANewSession
     }
 
     @Test("A show the block asked for may start only while that block is still shown", arguments: BlockExit.allCases)
@@ -3336,6 +3356,10 @@ struct EmbeddedBlockWebViewProviderTests {
             bed.page?.reportRendered(0)
         case .failed:
             bed.page?.failLoad()
+        case .coveredForANewSession:
+            bed.page?.reportRendered(1)
+            bed.resolver.isDeferred = true
+            bed.renewSession()
         }
 
         #expect(!requesterIsActive())
@@ -3387,6 +3411,27 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.page?.send(.showInApp, ["inappId": .string("story-id")])
 
         #expect(bed.inappService.shown.isEmpty)
+        #expect(bed.page?.showInAppRefusals == ["not_visible"])
+    }
+
+    @Test("A shown block covered for a new session refuses a show request as not_visible until its page draws that session's data")
+    func coveredBlockRefusesShowInAppUntilItsPageDrawsTheNewSession() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.resolver.isDeferred = true
+        bed.renewSession()
+
+        bed.page?.send(.showInApp, ["inappId": .string("story-id")])
+
+        #expect(bed.inappService.shown.isEmpty)
+        #expect(bed.page?.showInAppRefusals == ["not_visible"])
+
+        bed.resolver.flush()
+        bed.page?.reportRendered(1)
+        bed.page?.send(.showInApp, ["inappId": .string("story-id")])
+
+        #expect(bed.inappService.shown.map(\.id) == ["story-id"])
         #expect(bed.page?.showInAppRefusals == ["not_visible"])
     }
 
