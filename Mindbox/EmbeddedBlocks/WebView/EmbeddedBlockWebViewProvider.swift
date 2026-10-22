@@ -443,12 +443,12 @@ final class EmbeddedBlockWebViewProvider {
 
     private func applyContentRendered(_ renderedCount: Int) {
         guard !didReportShownContent else {
-            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the page reported itself again with nothing asked of it — ignoring",
-                          category: .embeddedBlocks)
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the page reported itself again with nothing asked of it — ignoring", category: .embeddedBlocks)
             return
         }
 
         guard renderedCount > 0 else {
+            guard !keepsTheCoverOverAnEmptyDraw() else { return }
             guard isStarted || isStartPending, isReady, !isCoveredForTheSession else {
                 Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': page rendered nothing", category: .embeddedBlocks)
                 if isCoveredForTheSession { dropPage() }

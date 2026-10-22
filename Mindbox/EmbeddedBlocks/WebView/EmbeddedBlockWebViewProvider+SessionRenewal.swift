@@ -45,6 +45,14 @@ extension EmbeddedBlockWebViewProvider {
         cover()
     }
 
+    func keepsTheCoverOverAnEmptyDraw() -> Bool {
+        guard isAwaitingTheSessionsAnswer || owesItsPageTheSessionsData else { return false }
+
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the page drew nothing for a session that has ended — the placeholder stays until the new session's content is drawn",
+                      category: .embeddedBlocks)
+        return true
+    }
+
     func report(_ state: EmbeddedBlockState) {
         guard isCoveredForTheSession else {
             onStateChange?(state)
