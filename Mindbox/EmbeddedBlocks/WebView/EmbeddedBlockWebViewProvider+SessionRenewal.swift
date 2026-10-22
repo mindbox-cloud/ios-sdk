@@ -15,6 +15,14 @@ extension EmbeddedBlockWebViewProvider {
 
     var isCoveredForTheSession: Bool { shownPageShow?.isRenewingSession == true || isAwaitingTheSessionsAnswer }
 
+    var owesItsPageTheSessionsData: Bool {
+        guard let shownPageShow, shownPageShow.isRenewingSession, shownPageShow.isRefreshDue else { return false }
+
+        return !isAwaitingTheSessionsAnswer
+    }
+
+    var isAwaitingDelayedContent: Bool { delayedInSession.map { !SessionTemporaryStorage.shared.ledger.hasEnded($0) } == true }
+
     private var isAwaitingTheSessionsAnswer: Bool {
         guard let shownPageShow else { return false }
 

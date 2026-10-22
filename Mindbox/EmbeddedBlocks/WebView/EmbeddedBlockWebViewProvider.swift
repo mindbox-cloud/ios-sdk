@@ -26,7 +26,7 @@ final class EmbeddedBlockWebViewProvider {
 
     var contentView: UIView? { isReady ? page?.view : nil }
 
-    private(set) var isAwaitingDelayedContent = false
+    private(set) var delayedInSession: Int?
 
     var isAwaitingKeptContent: Bool { page == nil && registry.keepsContent(for: placeSystemName) }
 
@@ -140,7 +140,7 @@ final class EmbeddedBlockWebViewProvider {
         if loadGeneration == generation, page != nil, !outcome.isFailed {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': back on screen, resuming its attempt at \(outcome)",
                           category: .embeddedBlocks)
-            report(outcome)
+            onStateChange?(isCoveredForTheSession ? .loading : outcome)
             if outcome == .ready { catchUpShownPage() }
             dataPushWait.resumeIfSuspended()
         }
@@ -204,7 +204,7 @@ final class EmbeddedBlockWebViewProvider {
     private func beginAttempt() {
         onStateChange?(.loading)
         outcome = .loading
-        isAwaitingDelayedContent = false
+        delayedInSession = nil
 
         if page != nil {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the page from the previous attempt cannot be resumed, dropping it",
@@ -233,7 +233,7 @@ final class EmbeddedBlockWebViewProvider {
     }
 
     private func take(_ answer: EmbeddedBlockPlaceAnswer, isParked: Bool) {
-        isAwaitingDelayedContent = false
+        delayedInSession = nil
 
         if answer.resolution.content == nil, !isParked, isReady, !isCoveredForTheSession, !answer.isOperationTriggered {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the place answered without content — keeping what is shown until the user leaves",
@@ -270,7 +270,7 @@ final class EmbeddedBlockWebViewProvider {
 
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': content is coming after its delay — waiting",
                       category: .embeddedBlocks)
-        isAwaitingDelayedContent = true
+        delayedInSession = SessionTemporaryStorage.shared.ledger.sessionEpoch
         onContentDelayed?()
     }
 
@@ -287,7 +287,7 @@ final class EmbeddedBlockWebViewProvider {
                 Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the place resolved to the same page with the same data — nothing to tell the page",
                               category: .embeddedBlocks)
             }
-            if isCoveredForTheSession { onContentDelayed?() }
+            if isCoveredForTheSession, pageShow?.isRefreshDue == true { onContentDelayed?() }
             catchUpShownPage()
             return
         }
