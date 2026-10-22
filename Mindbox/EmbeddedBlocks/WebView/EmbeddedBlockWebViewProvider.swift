@@ -28,7 +28,7 @@ final class EmbeddedBlockWebViewProvider {
 
     private(set) var delayedInSession: Int?
 
-    var isAwaitingKeptContent: Bool { page == nil && registry.keepsContent(for: placeSystemName) }
+    var isAwaitingKeptContent: Bool { isAwaitingAnswer && registry.keepsContent(for: placeSystemName) }
 
     var heldCollapse: EmbeddedBlockState? { deferred.heldOutcome?.state }
 

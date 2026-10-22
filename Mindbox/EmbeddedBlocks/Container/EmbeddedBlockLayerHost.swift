@@ -116,6 +116,7 @@ final class EmbeddedBlockLayerHost {
         hiddenContent = HiddenContent(view: content, alpha: content.alpha, isAccessibilityHidden: content.accessibilityElementsHidden)
         content.alpha = 0
         content.accessibilityElementsHidden = true
+        content.endEditing(true)
     }
 
     private func uncover(animated: Bool) {
