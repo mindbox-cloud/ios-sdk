@@ -814,8 +814,9 @@ struct MindboxEmbeddedBlockViewTests {
 
         block.bed.renewSession()
 
-        #expect(content.superview == nil)
-        #expect(block.view.subviews.contains { $0 is EmbeddedBlockShimmerView })
+        #expect(content.superview === block.view)
+        #expect(content.alpha == 0)
+        #expect(block.view.subviews.last is EmbeddedBlockShimmerView)
         #expect(block.view.intrinsicContentSize.height == 120)
         #expect(delegate.events == [.loaded])
         #expect(memory.shownPlaces == ["block-id"])
@@ -843,15 +844,16 @@ struct MindboxEmbeddedBlockViewTests {
 
         block.bed.renewSession()
 
-        #expect(content.superview == nil)
-        #expect(block.view.subviews.contains { $0 is EmbeddedBlockShimmerView })
+        #expect(content.superview === block.view)
+        #expect(content.alpha == 0)
+        #expect(block.view.subviews.last is EmbeddedBlockShimmerView)
         #expect(block.page?.initDataPushes.count == 1)
 
         block.page?.reportRendered(1)
         await mainQueueTurn()
 
-        #expect(content.superview === block.view)
-        #expect(block.view.subviews.contains { $0 is EmbeddedBlockShimmerView } == false)
+        #expect(block.view.subviews == [content])
+        #expect(content.alpha == 1)
         #expect(block.bed.pageFactory.pages.count == 1)
         #expect(block.bed.accounting.shows.count == 2)
         #expect(delegate.events == [.loaded])
@@ -1175,8 +1177,9 @@ struct MindboxEmbeddedBlockViewTests {
         block.bed.renewSession()
 
         block.attachToWindow()
-        #expect(content.superview == nil)
-        #expect(block.view.subviews.contains { $0 is EmbeddedBlockShimmerView })
+        #expect(content.superview === block.view)
+        #expect(content.alpha == 0)
+        #expect(block.view.subviews.last is EmbeddedBlockShimmerView)
         #expect(block.view.intrinsicContentSize.height == 120)
         #expect(block.bed.pageFactory.pages.count == 1)
 

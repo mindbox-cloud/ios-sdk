@@ -6,7 +6,7 @@
 //  Copyright © 2026 Mindbox. All rights reserved.
 //
 
-import Foundation
+import UIKit
 import MindboxLogger
 
 extension EmbeddedBlockWebViewProvider {
@@ -20,6 +20,8 @@ extension EmbeddedBlockWebViewProvider {
 
         return !isAwaitingTheSessionsAnswer
     }
+
+    var coveredPageView: UIView? { isCoveredForTheSession ? page?.view : nil }
 
     var isAwaitingDelayedContent: Bool { delayedInSession.map { !SessionTemporaryStorage.shared.ledger.hasEnded($0) } == true }
 

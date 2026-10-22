@@ -252,7 +252,7 @@ public final class MindboxEmbeddedBlockView: UIView {
                               revealAnimation: revealAnimation,
                               waitBudget: makeWaitBudget?(placeSystemName, duration)
                                   ?? EmbeddedBlockWaitBudget(placeSystemName: placeSystemName, duration: duration),
-                              layers: EmbeddedBlockLayerHost(container: self, animation: revealAnimation),
+                              layers: EmbeddedBlockLayerHost(container: self, animation: revealAnimation, coveredContent: { [weak contentProvider] in contentProvider?.coveredPageView }),
                               afterMainPass: afterMainPass)
         self.runtime = runtime
 
