@@ -1612,6 +1612,28 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.bed.failureReporter.unansweredWaits.isEmpty)
     }
 
+    @Test("A shown block back on screen with the new session's answer that came while it was away fails its silent page as presentation_failed instead of rebuilding it")
+    func coveredBlockBackWithTheAnswerFailsItsSilentPageWithoutARebuild() async throws {
+        let block = BlockFixture()
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.attachToWindow()
+        block.page?.reportRendered(1)
+        await mainQueueTurn()
+        block.removeFromWindow()
+        block.bed.renewSession()
+
+        block.attachToWindow()
+        try #require(block.page?.initDataPushes.count == 1)
+        block.bed.ackScheduler.fire()
+        block.expireTimeout()
+        await mainQueueTurn()
+
+        #expect(block.bed.pageFactory.pages.count == 1)
+        #expect(delegate.events == [.loaded, .failed(.internalError)])
+        #expect(block.bed.failureReporter.reasons == [.presentationFailed])
+    }
+
     @Test("A delayed answer stands the wait budget down and keeps the placeholder")
     func delayedAnswerStandsTheBudgetDown() async {
         let block = BlockFixture(resolution: .content(.delayed()))

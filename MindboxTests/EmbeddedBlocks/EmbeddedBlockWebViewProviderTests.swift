@@ -1377,6 +1377,29 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.accounting.sessionEpochs == [first])
     }
 
+    @Test("A page that draws nothing for the ended session's data after the new session began keeps its block covered, and the new session's answer is drawn on the same page")
+    func pageDrawingNothingForTheEndedSessionsDataStaysCovered() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData()
+        bed.resolver.isDeferred = true
+        bed.renewSession()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.page?.reportRendered(0)
+
+        #expect(!states.contains(.empty))
+        #expect(bed.provider.isCoveredForTheSession)
+
+        bed.resolver.flush()
+        bed.page?.reportRendered(1)
+
+        #expect(states.last == .ready)
+        #expect(bed.pageFactory.pages.count == 1)
+    }
+
     @Test("A show that came due in the background goes once the user is back and the session check of the return is over")
     func showDueInTheBackgroundGoesOnReturn() {
         let bed = EmbeddedBlockTestBed()
