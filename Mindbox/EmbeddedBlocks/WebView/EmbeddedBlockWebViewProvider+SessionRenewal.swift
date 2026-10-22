@@ -53,6 +53,18 @@ extension EmbeddedBlockWebViewProvider {
         return true
     }
 
+    func handlesUnconfirmedPushUnderTheCover() -> Bool {
+        guard isCoveredForTheSession else { return false }
+        guard !owesItsPageTheSessionsData else {
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': an earlier data push went unconfirmed while the session's data waits to be sent — that send restarts the wait",
+                          category: .embeddedBlocks)
+            return true
+        }
+
+        failSilentPage()
+        return true
+    }
+
     func report(_ state: EmbeddedBlockState) {
         guard isCoveredForTheSession else {
             onStateChange?(state)
