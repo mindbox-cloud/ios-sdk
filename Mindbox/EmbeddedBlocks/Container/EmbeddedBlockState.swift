@@ -16,6 +16,8 @@ enum EmbeddedBlockState: Equatable {
 
     case empty
 
+    case uncheckable
+
     var isFailed: Bool {
         if case .failed = self { return true }
         return false

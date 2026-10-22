@@ -94,7 +94,7 @@ final class EmbeddedBlockResolver: EmbeddedBlockResolving {
         case .configUnavailable:
             return .configUnavailable
         case .targetingUnavailable:
-            Logger.common(message: "[EmbeddedBlock] Place '\(place)' could not be checked: its targeting data failed to fetch — failing the block",
+            Logger.common(message: "[EmbeddedBlock] Place '\(place)' could not be checked: its targeting data failed to fetch — hiding the block",
                           level: .error, category: .embeddedBlocks)
             return .targetingUnavailable
         }

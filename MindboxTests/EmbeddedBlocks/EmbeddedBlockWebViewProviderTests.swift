@@ -644,15 +644,15 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.failureReporter.reported.isEmpty)
     }
 
-    @Test("A place the pass could not check fails the block as networkError without a report of its own")
-    func uncheckedPlaceFailsAsNetworkError() {
+    @Test("A place the pass could not check collapses the block without a report of its own")
+    func uncheckedPlaceCollapsesTheBlock() {
         let bed = EmbeddedBlockTestBed(resolution: .targetingUnavailable)
         var states: [EmbeddedBlockState] = []
         bed.provider.onStateChange = { states.append($0) }
 
         bed.provider.start()
 
-        #expect(states == [.loading, .failed(.networkError)])
+        #expect(states == [.loading, .uncheckable])
         #expect(bed.pageFactory.pages.isEmpty)
         #expect(bed.provider.contentView == nil)
         #expect(bed.failureReporter.reported.isEmpty)
@@ -2520,7 +2520,8 @@ struct EmbeddedBlockWebViewProviderTests {
             switch self {
             case .empty: return .empty
             case .brokenWinner: return .failed(.internalError)
-            case .configUnavailable, .targetingUnavailable: return .failed(.networkError)
+            case .configUnavailable: return .failed(.networkError)
+            case .targetingUnavailable: return .uncheckable
             }
         }
     }

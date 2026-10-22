@@ -53,7 +53,8 @@ public struct MindboxEmbeddedBlock: View {
     ///     fails with ``MindboxEmbeddedBlockFailReason/networkError``; `nil` means 30.
     ///   - animatesReveal: Whether the SDK animates the content's appearance.
     ///   - onLoad: Called when the content is shown.
-    ///   - onEmpty: Called when the place has nothing to show; the block collapses.
+    ///   - onEmpty: Called when the block collapses because the place has nothing to show or the data its
+    ///     targeting needs could not be fetched.
     ///   - onFail: Called when the block fails; it collapses or shows its error view.
     public init(placeSystemName: String,
                 height: CGFloat,

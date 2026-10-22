@@ -121,7 +121,7 @@ struct EmbeddedBlockCoordinatorTests {
         #expect(heard == ["load"])
         coordinator = nil
         scheduled.forEach { $0() }
-        #expect(heard == ["load", placeCannotBeChecked ? "fail:networkError" : "empty"])
+        #expect(heard == ["load", "empty"])
     }
 
     @Test("A look the container calls the reveal is written under the animation")
