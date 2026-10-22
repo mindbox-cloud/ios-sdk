@@ -264,6 +264,26 @@ struct EmbeddedBlockLayerHostTests {
         #expect(container.constraints.count == 8)
     }
 
+    @Test("Covering the content takes the keyboard focus from it")
+    func coverTakesTheKeyboardFocusFromTheContent() throws {
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 320, height: 120))
+        window.makeKeyAndVisible()
+        let container = UIView(frame: window.bounds)
+        window.addSubview(container)
+        var covered: UIView?
+        let host = EmbeddedBlockLayerHost(container: container, coveredContent: { covered })
+        let content = UIView()
+        let field = UITextField()
+        content.addSubview(field)
+        host.show(content)
+        try #require(field.becomeFirstResponder())
+
+        covered = content
+        host.show(UIView())
+
+        #expect(!field.isFirstResponder)
+    }
+
     @Test("Another placeholder over the covered content replaces the cover and leaves the content as it is")
     func newPlaceholderReplacesTheCover() {
         let container = UIView()

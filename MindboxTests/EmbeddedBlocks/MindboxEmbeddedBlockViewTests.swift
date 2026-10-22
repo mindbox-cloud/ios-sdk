@@ -1939,6 +1939,31 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.bed.failureReporter.unansweredWaits.isEmpty)
     }
 
+    @Test("A shown block covered in a new session spends no wait budget while its answer is kept for a return's session check that ended with the app inactive")
+    func coveredBlockSpendsNoBudgetWhileItsAnswerIsKept() async {
+        let block = BlockFixture()
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        block.attachToWindow()
+        block.page?.reportRendered(1)
+        await mainQueueTurn()
+        block.bed.resolver.isDeferred = true
+        block.bed.announceNewConfig()
+        block.goToTheBackgroundAndBack()
+        block.bed.resolver.flush()
+        block.bed.expireSession()
+        block.bed.applicationState = .inactive
+        block.bed.finishSessionCheck(startsNewSession: true)
+
+        #expect(block.view.subviews.last is EmbeddedBlockShimmerView)
+
+        block.expireTimeout()
+        await mainQueueTurn()
+
+        #expect(delegate.events == [.loaded])
+        #expect(block.bed.failureReporter.unansweredWaits.isEmpty)
+    }
+
     @Test("A kept answer that the return's session check drops leaves the block the rest of its wait budget")
     func droppedKeptAnswerResumesTheBudget() async {
         let block = BlockFixture()
