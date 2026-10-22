@@ -467,7 +467,7 @@ public final class MindboxEmbeddedBlockView: UIView {
             runtime?.placeMemory.rememberShownContent(at: placeKey)
         case .empty:
             runtime?.placeMemory.forgetPlace(placeKey)
-        case .loading, .failed:
+        case .loading, .failed, .uncheckable:
             break
         }
     }
@@ -476,7 +476,7 @@ public final class MindboxEmbeddedBlockView: UIView {
         switch state {
         case .ready:
             return .content
-        case .empty:
+        case .empty, .uncheckable:
             return .collapsed
         case .loading:
             return hasSettled ? settledAppearance : .placeholder
@@ -538,7 +538,7 @@ public final class MindboxEmbeddedBlockView: UIView {
         switch state {
             case .loading: break
             case .ready: delegate.mindboxEmbeddedBlockViewDidLoad(self)
-            case .empty: delegate.mindboxEmbeddedBlockViewDidBecomeEmpty(self)
+            case .empty, .uncheckable: delegate.mindboxEmbeddedBlockViewDidBecomeEmpty(self)
             case .failed(let reason): delegate.mindboxEmbeddedBlockViewDidFail(self, reason: reason)
         }
     }
@@ -547,7 +547,7 @@ public final class MindboxEmbeddedBlockView: UIView {
         switch state {
             case .loading: return nil
             case .ready: return .loaded
-            case .empty: return .empty
+            case .empty, .uncheckable: return .empty
             case .failed: return .failed
         }
     }

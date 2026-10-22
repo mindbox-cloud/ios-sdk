@@ -12,7 +12,8 @@ import Foundation
 public enum MindboxEmbeddedBlockLoadingStrategy: Sendable {
 
     /// ``MindboxEmbeddedBlockLoadingStrategy/placeholder`` if the place has shown content on this device
-    /// and has not come out empty since, otherwise ``MindboxEmbeddedBlockLoadingStrategy/hidden``.
+    /// and has not come out empty since, otherwise ``MindboxEmbeddedBlockLoadingStrategy/hidden``. A failed
+    /// fetch of the place's targeting data collapses the block but keeps the placeholder for the next one.
     case automatic
 
     /// A placeholder at the block's height: the host's own or the SDK's shimmer.

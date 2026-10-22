@@ -573,6 +573,31 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(appearance.values.allSatisfy { $0 == .error })
     }
 
+    @Test("A block showing the host's error view collapses without it when a retry finds its place could not be checked, and keeps the place's memory")
+    func blockShowingItsErrorViewCollapsesWhenItsPlaceCannotBeChecked() async {
+        let memory = EmbeddedBlockPlaceMemoryMock(shownPlaces: ["block-id"])
+        let block = BlockFixture(loadingStrategy: .automatic, memory: memory)
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        let errorView = UIView()
+        block.view.errorView = errorView
+        block.attachToWindow()
+        block.page?.failLoad()
+        await mainQueueTurn()
+        #expect(errorView.superview != nil)
+
+        block.removeFromWindow()
+        block.bed.resolver.resolution = .targetingUnavailable
+        block.attachToWindow()
+        await mainQueueTurn()
+
+        #expect(errorView.superview == nil)
+        #expect(block.view.intrinsicContentSize.height == 0)
+        #expect(delegate.events == [.failed(.networkError), .empty])
+        #expect(memory.hasShownContent(at: "block-id"))
+        #expect(memory.forgotten.isEmpty)
+    }
+
     @Test("A collapsed settled block stays collapsed on retry even if errorView is assigned after collapse")
     func collapsedSettledBlockStaysCollapsedEvenWithLateErrorView() {
         let block = BlockFixture()
@@ -804,8 +829,8 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(memory.shownPlaces.isEmpty)
     }
 
-    @Test("A block its place can no longer check keeps its content on screen and fails as the user leaves: the host hears the failure out of the window, and the place's memory stays as it was")
-    func heldFailureLandsAsTheUserLeavesAndKeepsTheMemory() async throws {
+    @Test("A block its place can no longer check keeps its content on screen and collapses as the user leaves: the host hears it empty out of the window, and the place's memory stays as it was")
+    func heldUncheckedPlaceLandsAsTheUserLeavesAndKeepsTheMemory() async throws {
         let memory = EmbeddedBlockPlaceMemoryMock()
         let block = BlockFixture(loadingStrategy: .automatic, memory: memory)
         let delegate = EmbeddedBlockViewDelegateMock()
@@ -821,7 +846,7 @@ struct MindboxEmbeddedBlockViewTests {
         block.removeFromWindow()
         await mainQueueTurn()
 
-        #expect(delegate.events == [.loaded, .failed(.networkError)])
+        #expect(delegate.events == [.loaded, .empty])
         #expect(memory.shownPlaces == ["block-id"])
         #expect(memory.forgotten.isEmpty)
     }
@@ -854,8 +879,8 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(memory.shownPlaces.isEmpty)
     }
 
-    @Test("A block let go within the pass of main it left the window in keeps the place's memory when what it held was a failure")
-    func blockLetGoBeforeItStopsKeepsTheMemoryForAHeldFailure() {
+    @Test("A block let go within the pass of main it left the window in keeps the place's memory when what it held was a place it could not check")
+    func blockLetGoBeforeItStopsKeepsTheMemoryForAHeldUncheckedPlace() {
         let memory = EmbeddedBlockPlaceMemoryMock()
         let bed = EmbeddedBlockTestBed()
         let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 320, height: 480))
@@ -873,7 +898,7 @@ struct MindboxEmbeddedBlockViewTests {
             bed.page?.reportRendered(1)
             bed.resolver.resolution = .targetingUnavailable
             bed.announceNewConfig()
-            #expect(bed.provider.heldCollapse == .failed(.networkError))
+            #expect(bed.provider.heldCollapse == .uncheckable)
 
             view.removeFromSuperview()
         }
@@ -1042,7 +1067,7 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.bed.resolver.resolveCount == resolvesBefore + 1)
         #expect(block.bed.budget.reservations.count == reservationsBefore)
         #expect(block.bed.accounting.shows.count == 1)
-        #expect(delegate.events == [.loaded, placeCannotBeChecked ? .failed(.networkError) : .empty])
+        #expect(delegate.events == [.loaded, .empty])
     }
 
     @Test("A block collapsed before its first frame by a refusal parked off screen is asked anew when the return's session check starts another session, and shows what that session lets in")
@@ -2026,7 +2051,7 @@ struct MindboxEmbeddedBlockViewTests {
 
         block.view.release()
 
-        let heard: EmbeddedBlockViewDelegateMock.Event = placeCannotBeChecked ? .failed(.networkError) : .empty
+        let heard: EmbeddedBlockViewDelegateMock.Event = .empty
         let shownPlaces: Set<String> = placeCannotBeChecked ? ["block-id"] : []
         let forgotten: [String] = placeCannotBeChecked ? [] : ["block-id"]
         #expect(delegate.events == [.loaded, heard])
@@ -2380,8 +2405,8 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(memory.remembered.isEmpty)
     }
 
-    @Test("A place the pass could not check fails the automatic block and keeps its record")
-    func uncheckedPlaceKeepsTheMemoryAndFails() async {
+    @Test("A place the pass could not check collapses the automatic block instead of showing the host's error view, and keeps its record")
+    func uncheckedPlaceKeepsTheMemoryAndCollapses() async {
         let memory = EmbeddedBlockPlaceMemoryMock(shownPlaces: ["block-id"])
         let block = BlockFixture(resolution: .targetingUnavailable, loadingStrategy: .automatic, memory: memory)
         let delegate = EmbeddedBlockViewDelegateMock()
@@ -2392,10 +2417,11 @@ struct MindboxEmbeddedBlockViewTests {
         block.attachToWindow()
         await mainQueueTurn()
 
-        #expect(delegate.events == [.failed(.networkError)])
+        #expect(delegate.events == [.empty])
         #expect(memory.hasShownContent(at: "block-id"))
         #expect(memory.forgotten.isEmpty)
-        #expect(block.view.subviews.contains(errorView))
+        #expect(!block.view.subviews.contains(errorView))
+        #expect(block.view.intrinsicContentSize.height == 0)
     }
 
     @Test("A block the SDK never answered leaves the memory as it is")

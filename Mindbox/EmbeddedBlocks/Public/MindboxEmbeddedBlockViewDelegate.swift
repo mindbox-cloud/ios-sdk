@@ -18,7 +18,8 @@ public protocol MindboxEmbeddedBlockViewDelegate: AnyObject {
     /// The content is shown.
     func mindboxEmbeddedBlockViewDidLoad(_ blockView: MindboxEmbeddedBlockView)
 
-    /// The place has nothing to show; the block collapses.
+    /// The block collapses: the place has nothing to show, or the data its targeting needs could not be
+    /// fetched.
     func mindboxEmbeddedBlockViewDidBecomeEmpty(_ blockView: MindboxEmbeddedBlockView)
 
     /// The block failed; it collapses or shows ``MindboxEmbeddedBlockView/errorView``.

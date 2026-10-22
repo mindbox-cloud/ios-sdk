@@ -21,7 +21,7 @@ extension EmbeddedBlockResolution {
         case .configUnavailable:
             return (.failed(MindboxEmbeddedBlockFailReason(.waitBudgetExceeded)), "the SDK has no config to answer with — failing")
         case .targetingUnavailable:
-            return (.failed(.networkError), "the place could not be checked — failing")
+            return (.uncheckable, "the place could not be checked — collapsing, keeping its memory")
         }
     }
 }
