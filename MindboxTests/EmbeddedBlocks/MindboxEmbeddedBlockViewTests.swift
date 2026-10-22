@@ -573,6 +573,31 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(appearance.values.allSatisfy { $0 == .error })
     }
 
+    @Test("A block showing the host's error view collapses without it when a retry finds its place could not be checked, and keeps the place's memory")
+    func blockShowingItsErrorViewCollapsesWhenItsPlaceCannotBeChecked() async {
+        let memory = EmbeddedBlockPlaceMemoryMock(shownPlaces: ["block-id"])
+        let block = BlockFixture(loadingStrategy: .automatic, memory: memory)
+        let delegate = EmbeddedBlockViewDelegateMock()
+        block.view.delegate = delegate
+        let errorView = UIView()
+        block.view.errorView = errorView
+        block.attachToWindow()
+        block.page?.failLoad()
+        await mainQueueTurn()
+        #expect(errorView.superview != nil)
+
+        block.removeFromWindow()
+        block.bed.resolver.resolution = .targetingUnavailable
+        block.attachToWindow()
+        await mainQueueTurn()
+
+        #expect(errorView.superview == nil)
+        #expect(block.view.intrinsicContentSize.height == 0)
+        #expect(delegate.events == [.failed(.networkError), .empty])
+        #expect(memory.hasShownContent(at: "block-id"))
+        #expect(memory.forgotten.isEmpty)
+    }
+
     @Test("A collapsed settled block stays collapsed on retry even if errorView is assigned after collapse")
     func collapsedSettledBlockStaysCollapsedEvenWithLateErrorView() {
         let block = BlockFixture()
