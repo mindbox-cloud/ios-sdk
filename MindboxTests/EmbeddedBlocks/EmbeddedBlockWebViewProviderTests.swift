@@ -2488,6 +2488,26 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.accounting.sessionEpochs == [first])
     }
 
+    @Test("A covered page whose earlier push goes unconfirmed while the new session's data waits for the app to be active is neither failed nor rebuilt, and takes that data once the app is active")
+    func unconfirmedEarlierPushDoesNotFailTheCoverBeforeTheSessionsDataGoes() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData()
+        bed.applicationState = .inactive
+        bed.announceNewSession()
+
+        bed.ackScheduler.fire()
+
+        #expect(bed.failureReporter.reasons.isEmpty)
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.page?.initDataPushes.count == 1)
+
+        bed.becomeActive()
+
+        #expect(bed.page?.initDataPushes.count == 2)
+    }
+
     @Test("A page rebuilt after an unconfirmed push within a session times its show from the stored selection")
     func rebuiltPageTimesItsShowFromTheStoredSelection() {
         let bed = EmbeddedBlockTestBed()
