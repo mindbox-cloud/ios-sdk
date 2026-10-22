@@ -47,8 +47,7 @@ public final class MindboxEmbeddedBlockView: UIView {
         }
     }
 
-    /// The view shown while the block loads, and over its content from the start of a new session until
-    /// that session's content is drawn; `nil` shows the SDK's shimmer.
+    /// The view shown while the block loads; `nil` shows the SDK's shimmer.
     public var placeholderView: UIView? {
         didSet {
             guard placeholderView !== oldValue else { return }
