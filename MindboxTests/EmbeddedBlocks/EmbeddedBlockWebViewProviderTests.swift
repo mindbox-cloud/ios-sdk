@@ -3071,6 +3071,23 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(states == [.empty])
     }
 
+    @Test("A page that drew nothing under the placeholder cannot bring its block back by drawing later unasked")
+    func pageThatDrewNothingUnderTheCoverCannotReviveTheBlock() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.announceNewSession()
+        let page = bed.page
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        page?.reportRendered(0)
+        page?.reportRendered(1)
+
+        #expect(states == [.empty])
+        #expect(bed.accounting.shows.count == 1)
+    }
+
     @Test("A page that draws nothing for new data and then draws something takes its report back: no second show goes and leaving collapses nothing")
     func pageThatDrawsAgainLiftsItsHold() {
         let bed = EmbeddedBlockTestBed()

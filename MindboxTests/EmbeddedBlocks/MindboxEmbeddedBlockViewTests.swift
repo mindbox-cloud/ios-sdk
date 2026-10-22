@@ -1765,6 +1765,22 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(block.scheduler.lastDelay == 3)
     }
 
+    @Test("A covered block hidden when a later session begins waits that session's whole answer timeout once shown again")
+    func coveredBlockHiddenThroughALaterSessionWaitsTheWholeAnswerTimeout() {
+        let block = OwnBudgetBlockFixture(timeout: 5)
+        block.attachToWindow()
+        block.bed.page?.reportRendered(1)
+        block.bed.resolver.isDeferred = true
+        block.bed.renewSession()
+        block.bed.clock.advance(2)
+        block.view.setHostVisible(false)
+
+        block.bed.renewSession()
+        block.view.setHostVisible(true)
+
+        #expect(block.scheduler.lastDelay == 5)
+    }
+
     @Test("A covered block whose session's answer was delayed waits the answer timeout once a later session begins")
     func coveredBlockDelayedInAnEndedSessionWaitsTheAnswerTimeout() {
         let block = OwnBudgetBlockFixture(timeout: 5)
