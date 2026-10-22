@@ -801,8 +801,8 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(BlockFixture(loadingStrategy: .automatic, memory: memory).view.intrinsicContentSize.height == 0)
     }
 
-    @Test("A shown block whose page draws nothing for the new session keeps its content on screen and collapses as the user leaves")
-    func pageThatDrawsNothingCollapsesTheBlockAsTheUserLeaves() async throws {
+    @Test("A shown block whose page draws nothing for the new session is covered by the placeholder and collapses at once, while the user is still on it")
+    func pageThatDrawsNothingForTheNewSessionCollapsesTheBlockAtOnce() async throws {
         let memory = EmbeddedBlockPlaceMemoryMock()
         let block = BlockFixture(memory: memory)
         let delegate = EmbeddedBlockViewDelegateMock()
@@ -810,21 +810,23 @@ struct MindboxEmbeddedBlockViewTests {
         block.attachToWindow()
         block.page?.reportRendered(1)
         let content = try #require(block.page?.view)
-        block.bed.announceNewSession()
-
-        block.page?.reportRendered(0)
         await mainQueueTurn()
 
-        #expect(content.superview === block.view)
+        block.bed.renewSession()
+
+        #expect(content.superview == nil)
+        #expect(block.view.subviews.contains { $0 is EmbeddedBlockShimmerView })
         #expect(block.view.intrinsicContentSize.height == 120)
         #expect(delegate.events == [.loaded])
         #expect(memory.shownPlaces == ["block-id"])
 
-        block.removeFromWindow()
+        block.page?.reportRendered(0)
         await mainQueueTurn()
 
         #expect(content.superview == nil)
+        #expect(block.view.subviews.contains { $0 is EmbeddedBlockShimmerView } == false)
         #expect(block.view.intrinsicContentSize.height == 0)
+        #expect(block.bed.accounting.shows.count == 1)
         #expect(delegate.events == [.loaded, .empty])
         #expect(memory.shownPlaces.isEmpty)
     }
@@ -1132,8 +1134,8 @@ struct MindboxEmbeddedBlockViewTests {
         #expect(delegate.events == [.loaded, .empty, .loaded])
     }
 
-    @Test("A shown block the user comes back to before the new session answers stays as it was, and a refusal landing then waits for the user to leave")
-    func blockBackBeforeTheNewSessionAnswersHoldsTheRefusal() async throws {
+    @Test("A shown block the user comes back to before the new session answers is covered by the placeholder over the same page, and a refusal landing then collapses it at once")
+    func blockBackBeforeTheNewSessionAnswersIsCoveredAndCollapsesOnTheRefusal() async throws {
         let block = BlockFixture()
         let delegate = EmbeddedBlockViewDelegateMock()
         block.view.delegate = delegate
@@ -1147,19 +1149,16 @@ struct MindboxEmbeddedBlockViewTests {
         block.bed.renewSession()
 
         block.attachToWindow()
-        #expect(content.superview === block.view)
-        #expect(block.view.subviews.contains { $0 is EmbeddedBlockShimmerView } == false)
+        #expect(content.superview == nil)
+        #expect(block.view.subviews.contains { $0 is EmbeddedBlockShimmerView })
+        #expect(block.view.intrinsicContentSize.height == 120)
+        #expect(block.bed.pageFactory.pages.count == 1)
 
         block.bed.resolver.flush()
         await mainQueueTurn()
-        #expect(content.superview === block.view)
-        #expect(block.view.intrinsicContentSize.height == 120)
-        #expect(delegate.events == [.loaded])
-
-        block.removeFromWindow()
-        block.attachToWindow()
-
+        #expect(content.superview == nil)
         #expect(block.view.intrinsicContentSize.height == 0)
+        #expect(delegate.events == [.loaded, .empty])
     }
 
     @Test("A block that failed on its wait budget, its answer late, is asked again once the user is back from the background and the return's session check has ended, in the same session or the new one, and shows the feed",

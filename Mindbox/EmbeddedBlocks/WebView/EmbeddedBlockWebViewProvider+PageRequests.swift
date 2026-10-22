@@ -25,7 +25,9 @@ extension EmbeddedBlockWebViewProvider {
         inappService.showInapp(id: inappId, params: params, proceedIf: { [weak self, weak page] in self?.isShowing(page) ?? false }, completion: completion)
     }
 
-    private func isShowing(_ page: EmbeddedBlockPageHosting?) -> Bool { isStarted && isAttemptAlive && page != nil && self.page === page }
+    private func isShowing(_ page: EmbeddedBlockPageHosting?) -> Bool {
+        isStarted && isAttemptAlive && !isCoveredForTheSession && page != nil && self.page === page
+    }
 
     func answerShowableQuestion(_ ids: [String], askedFrom page: EmbeddedBlockPageHosting?, completion: @escaping ([String]) -> Void) {
         guard let content, page != nil, self.page === page else { return }

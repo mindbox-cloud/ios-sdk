@@ -74,7 +74,8 @@ public struct MindboxEmbeddedBlock: View {
         self.onFail = onFail
     }
 
-    /// Shows this view instead of the SDK's shimmer while the block loads.
+    /// Shows this view instead of the SDK's shimmer while the block loads, and over its content from the
+    /// start of a new session until that session's content is drawn.
     public func placeholder<Content: View>(@ViewBuilder _ build: @escaping () -> Content) -> Self {
         var block = self
         block.placeholderBuilder = { AnyView(build()) }

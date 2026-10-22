@@ -26,8 +26,6 @@ final class EmbeddedBlockWebViewProvider {
 
     var contentView: UIView? { isReady ? page?.view : nil }
 
-    var isAwaitingAnswer: Bool { page == nil }
-
     private(set) var isAwaitingDelayedContent = false
 
     var isAwaitingKeptContent: Bool { page == nil && registry.keepsContent(for: placeSystemName) }
@@ -55,13 +53,13 @@ final class EmbeddedBlockWebViewProvider {
 
     private var outcome: EmbeddedBlockState = .loading
 
-    private var isReady: Bool { outcome == .ready }
+    var isReady: Bool { outcome == .ready }
 
     private var loadGeneration = 0
 
     private var didReportShownContent = false
 
-    private var pageShow: EmbeddedBlockPageShow?
+    private(set) var pageShow: EmbeddedBlockPageShow?
 
     private let makeStopwatch: () -> ForegroundStopwatch
 
@@ -142,10 +140,8 @@ final class EmbeddedBlockWebViewProvider {
         if loadGeneration == generation, page != nil, !outcome.isFailed {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': back on screen, resuming its attempt at \(outcome)",
                           category: .embeddedBlocks)
-            onStateChange?(outcome)
-            if outcome == .ready {
-                catchUpShownPage()
-            }
+            report(outcome)
+            if outcome == .ready { catchUpShownPage() }
             dataPushWait.resumeIfSuspended()
         }
 
@@ -239,7 +235,7 @@ final class EmbeddedBlockWebViewProvider {
     private func take(_ answer: EmbeddedBlockPlaceAnswer, isParked: Bool) {
         isAwaitingDelayedContent = false
 
-        if answer.resolution.content == nil, !isParked, isReady, !answer.isOperationTriggered {
+        if answer.resolution.content == nil, !isParked, isReady, !isCoveredForTheSession, !answer.isOperationTriggered {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the place answered without content — keeping what is shown until the user leaves",
                           category: .embeddedBlocks)
             failures.report(failureOf: answer)
@@ -270,7 +266,7 @@ final class EmbeddedBlockWebViewProvider {
     }
 
     func contentIsDelayed() {
-        guard isStarted, page == nil else { return }
+        guard isStarted, page == nil || isCoveredForTheSession else { return }
 
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': content is coming after its delay — waiting",
                       category: .embeddedBlocks)
@@ -291,6 +287,7 @@ final class EmbeddedBlockWebViewProvider {
                 Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the place resolved to the same page with the same data — nothing to tell the page",
                               category: .embeddedBlocks)
             }
+            if isCoveredForTheSession { onContentDelayed?() }
             catchUpShownPage()
             return
         }
@@ -379,6 +376,7 @@ final class EmbeddedBlockWebViewProvider {
     // MARK: - The data push's confirmation
 
     private func armDataPushAck() {
+        if isCoveredForTheSession { onContentArrived?() }
         dataPushWait.arm { [weak self] in
             guard let self, let content = self.content, let pageShow = self.pageShow else { return }
 
@@ -410,7 +408,7 @@ final class EmbeddedBlockWebViewProvider {
 
         guard isStarted || isUserLeaving else { return }
 
-        onStateChange?(newOutcome)
+        report(newOutcome)
     }
 
     func handleLoadFailure(_ details: String) {
@@ -450,7 +448,7 @@ final class EmbeddedBlockWebViewProvider {
         }
 
         guard renderedCount > 0 else {
-            guard isStarted || isStartPending, isReady else {
+            guard isStarted || isStartPending, isReady, !isCoveredForTheSession else {
                 Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': page rendered nothing", category: .embeddedBlocks)
                 settle(.empty)
                 return
