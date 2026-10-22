@@ -391,8 +391,9 @@ final class EmbeddedBlockWebViewProvider {
                 return
             }
 
-            Logger.common(message: "[EmbeddedBlock] Block '\(self.placeSystemName)': the page never confirmed the data push — rebuilding it",
-                          level: .error, category: .embeddedBlocks)
+            guard !self.isCoveredForTheSession else { return self.failSilentPage() }
+
+            Logger.common(message: "[EmbeddedBlock] Block '\(self.placeSystemName)': the page never confirmed the data push — rebuilding it", level: .error, category: .embeddedBlocks)
             self.buildPage(with: content, sessionEpoch: pageShow.confirmedEpoch, processingDuration: pageShow.processingDurationOfARebuild)
         }
     }

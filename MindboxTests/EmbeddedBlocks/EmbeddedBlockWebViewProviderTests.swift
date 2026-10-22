@@ -2450,8 +2450,8 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.accounting.shows.map(\.timeToDisplay) == [2.75])
     }
 
-    @Test("A page rebuilt after an unconfirmed push is shown in the session it was pushed for")
-    func rebuiltPageIsShownInThePushedSession() {
+    @Test("A covered page that never confirms the new session's push fails as presentation_failed and is not rebuilt")
+    func coveredPageThatNeverConfirmsTheNewSessionsPushFails() {
         let bed = EmbeddedBlockTestBed()
         let first = bed.resolver.sessionEpoch
         bed.provider.start()
@@ -2459,34 +2459,28 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.announceNewSession()
 
         bed.ackScheduler.fire()
-        bed.page?.reportRendered(1)
 
-        #expect(bed.pageFactory.pages.count == 2)
-        #expect(bed.accounting.sessionEpochs == [first, first + 1])
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.failureReporter.reasons == [.presentationFailed])
+        #expect(bed.accounting.sessionEpochs == [first])
     }
 
-    @Test("A page rebuilt after an unconfirmed push times its show from the selection of the session it was pushed for; within a session, from the stored selection",
-          arguments: [(isNewSession: true, timeToDisplay: 7.75), (isNewSession: false, timeToDisplay: 2.25)])
-    func rebuiltPageTimesItsShowFromThePushedSelection(isNewSession: Bool, timeToDisplay: TimeInterval) {
+    @Test("A page rebuilt after an unconfirmed push within a session times its show from the stored selection")
+    func rebuiltPageTimesItsShowFromTheStoredSelection() {
         let bed = EmbeddedBlockTestBed()
         bed.resolver.processingDuration = 2
         bed.provider.start()
         bed.page?.reportRendered(1)
         bed.clock.advance(100)
 
-        if isNewSession {
-            bed.resolver.processingDuration = 0.5
-            bed.announceNewSession()
-        } else {
-            bed.deliverSamePageWithNewData()
-        }
+        bed.deliverSamePageWithNewData()
         bed.clock.advance(7)
         bed.ackScheduler.fire()
         bed.clock.advance(0.25)
         bed.page?.reportRendered(1)
 
         #expect(bed.pageFactory.pages.count == 2)
-        #expect(bed.accounting.shows.map(\.timeToDisplay) == [2, timeToDisplay])
+        #expect(bed.accounting.shows.map(\.timeToDisplay) == [2, 2.25])
     }
 
     @Test("A session that lands while the page has not redrawn the previous one's push takes over: one more push, and one show, for the newest session")
