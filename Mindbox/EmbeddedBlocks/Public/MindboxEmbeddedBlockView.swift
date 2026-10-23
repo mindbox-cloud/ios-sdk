@@ -252,7 +252,7 @@ public final class MindboxEmbeddedBlockView: UIView {
                               revealAnimation: revealAnimation,
                               waitBudget: makeWaitBudget?(placeSystemName, duration)
                                   ?? EmbeddedBlockWaitBudget(placeSystemName: placeSystemName, duration: duration),
-                              layers: EmbeddedBlockLayerHost(container: self, animation: revealAnimation),
+                              layers: EmbeddedBlockLayerHost(container: self, animation: revealAnimation, coveredContent: { [weak contentProvider] in contentProvider?.coveredPageView }),
                               afterMainPass: afterMainPass)
         self.runtime = runtime
 
@@ -309,7 +309,7 @@ public final class MindboxEmbeddedBlockView: UIView {
         waitBudget.isNeeded = { [weak self, weak contentProvider] in
             guard let self, let contentProvider else { return false }
             return self.isContentRunning && self.state == .loading && !contentProvider.isAwaitingDelayedContent
-                && !contentProvider.isStartPending && !contentProvider.isAwaitingKeptContent
+                && !contentProvider.isStartPending && !contentProvider.isAwaitingKeptContent && !contentProvider.owesItsPageTheSessionsData
         }
         waitBudget.onExpire = { [weak self] in
             self?.handleTimeout()

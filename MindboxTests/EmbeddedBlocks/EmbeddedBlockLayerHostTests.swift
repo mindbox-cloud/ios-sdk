@@ -243,4 +243,135 @@ struct EmbeddedBlockLayerHostTests {
         #expect(container.subviews == [third])
         #expect(container.constraints.count == 4)
     }
+
+    // MARK: - The cover
+
+    @Test("A placeholder covering the content lies on top of it, with the content kept in place, unseen and hidden from accessibility")
+    func coverKeepsTheContentInPlaceUnderThePlaceholder() {
+        let container = UIView()
+        var covered: UIView?
+        let host = EmbeddedBlockLayerHost(container: container, coveredContent: { covered })
+        let content = UIView()
+        let placeholder = UIView()
+
+        host.show(content)
+        covered = content
+        host.show(placeholder)
+
+        #expect(container.subviews == [content, placeholder])
+        #expect(content.alpha == 0)
+        #expect(content.accessibilityElementsHidden)
+        #expect(container.constraints.count == 8)
+    }
+
+    @Test("Covering the content takes the keyboard focus from it")
+    func coverTakesTheKeyboardFocusFromTheContent() throws {
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 320, height: 120))
+        window.makeKeyAndVisible()
+        let container = UIView(frame: window.bounds)
+        window.addSubview(container)
+        var covered: UIView?
+        let host = EmbeddedBlockLayerHost(container: container, coveredContent: { covered })
+        let content = UIView()
+        let field = UITextField()
+        content.addSubview(field)
+        host.show(content)
+        try #require(field.becomeFirstResponder())
+
+        covered = content
+        host.show(UIView())
+
+        #expect(!field.isFirstResponder)
+    }
+
+    @Test("Another placeholder over the covered content replaces the cover and leaves the content as it is")
+    func newPlaceholderReplacesTheCover() {
+        let container = UIView()
+        let content = UIView()
+        let host = EmbeddedBlockLayerHost(container: container, coveredContent: { content })
+        let first = UIView()
+        first.alpha = 0.5
+        let second = UIView()
+
+        host.show(first)
+        host.show(second)
+
+        #expect(container.subviews == [content, second])
+        #expect(first.superview == nil)
+        #expect(first.alpha == 0.5)
+        #expect(content.alpha == 0)
+    }
+
+    @Test("Lifting the cover fades the placeholder out over the content, which never leaves the container")
+    func liftingTheCoverFadesThePlaceholderOutOverTheContent() {
+        let container = UIView()
+        let spy = EmbeddedBlockRevealAnimationSpy()
+        spy.holdsAnimations = true
+        spy.isDeferred = true
+        var covered: UIView?
+        let host = EmbeddedBlockLayerHost(container: container, animation: spy.animation, coveredContent: { covered })
+        let content = UIView()
+        let placeholder = UIView()
+        host.show(content)
+        covered = content
+        host.show(placeholder)
+
+        covered = nil
+        host.show(content, animated: true)
+
+        #expect(container.subviews == [content, placeholder])
+        #expect(!content.accessibilityElementsHidden)
+
+        spy.applyAnimations()
+
+        #expect(content.alpha == 1)
+        #expect(placeholder.alpha == 0)
+
+        spy.finish()
+
+        #expect(container.subviews == [content])
+        #expect(placeholder.alpha == 1)
+        #expect(container.constraints.count == 4)
+    }
+
+    @Test("Lifting the cover without the fade drops the placeholder at once")
+    func liftingTheCoverWithoutTheFadeDropsThePlaceholderAtOnce() {
+        let container = UIView()
+        var covered: UIView?
+        let host = EmbeddedBlockLayerHost(container: container, coveredContent: { covered })
+        let content = UIView()
+        let placeholder = UIView()
+        host.show(content)
+        covered = content
+        host.show(placeholder)
+
+        covered = nil
+        host.show(content)
+
+        #expect(container.subviews == [content])
+        #expect(content.alpha == 1)
+        #expect(!content.accessibilityElementsHidden)
+    }
+
+    @Test("Showing nothing or another view over the covered content drops both and gives the content back its look", arguments: [true, false])
+    func showingSomethingElseOverTheCoverDropsBoth(showsAnotherView: Bool) {
+        let container = UIView()
+        var covered: UIView?
+        let host = EmbeddedBlockLayerHost(container: container, coveredContent: { covered })
+        let content = UIView()
+        let placeholder = UIView()
+        let other = UIView()
+        host.show(content)
+        covered = content
+        host.show(placeholder)
+
+        covered = nil
+        host.show(showsAnotherView ? other : nil)
+
+        #expect(container.subviews == (showsAnotherView ? [other] : []))
+        #expect(content.superview == nil)
+        #expect(placeholder.superview == nil)
+        #expect(content.alpha == 1)
+        #expect(!content.accessibilityElementsHidden)
+    }
 }

@@ -14,18 +14,33 @@ final class EmbeddedBlockLayerHost {
 
     private let animation: EmbeddedBlockRevealAnimation
 
+    private let coveredContent: () -> UIView?
+
     private var attachedView: UIView?
 
     private var fadingOut: FadingLayer?
+
+    private var cover: FadingLayer?
+
+    private var hiddenContent: HiddenContent?
 
     private struct FadingLayer {
         let view: UIView
         let alpha: CGFloat
     }
 
-    init(container: UIView, animation: EmbeddedBlockRevealAnimation = EmbeddedBlockRevealAnimation()) {
+    private struct HiddenContent {
+        let view: UIView
+        let alpha: CGFloat
+        let isAccessibilityHidden: Bool
+    }
+
+    init(container: UIView,
+         animation: EmbeddedBlockRevealAnimation = EmbeddedBlockRevealAnimation(),
+         coveredContent: @escaping () -> UIView? = { nil }) {
         self.container = container
         self.animation = animation
+        self.coveredContent = coveredContent
     }
 
     func show(_ view: UIView?, animated: Bool = false) {
@@ -33,6 +48,18 @@ final class EmbeddedBlockLayerHost {
             drop(fadingOut)
             self.fadingOut = nil
         }
+
+        if let view, let content = coveredContent(), view !== content {
+            cover(content, with: view)
+            return
+        }
+
+        if cover != nil, let view, view === attachedView, view.superview === container {
+            uncover(animated: animated)
+            return
+        }
+
+        dropCover()
 
         guard let view else {
             attachedView?.removeFromSuperview()
@@ -68,6 +95,69 @@ final class EmbeddedBlockLayerHost {
             self.fadingOut = nil
             fading.map(self.drop)
         })
+    }
+
+    private func cover(_ content: UIView, with placeholder: UIView) {
+        if attachedView !== content || content.superview !== container {
+            dropCover()
+            attachedView?.removeFromSuperview()
+            attachedView = content
+            attach(content)
+        }
+
+        guard cover?.view !== placeholder || placeholder.superview !== container else { return }
+
+        cover.map(drop)
+        cover = FadingLayer(view: placeholder, alpha: placeholder.alpha)
+        attach(placeholder)
+
+        guard hiddenContent == nil else { return }
+
+        hiddenContent = HiddenContent(view: content, alpha: content.alpha, isAccessibilityHidden: content.accessibilityElementsHidden)
+        content.alpha = 0
+        content.accessibilityElementsHidden = true
+        content.endEditing(true)
+    }
+
+    private func uncover(animated: Bool) {
+        guard let cover else { return }
+
+        self.cover = nil
+        let content = hiddenContent
+        hiddenContent = nil
+        content.map { $0.view.accessibilityElementsHidden = $0.isAccessibilityHidden }
+
+        guard animated else {
+            drop(cover)
+            content.map { $0.view.alpha = $0.alpha }
+            return
+        }
+
+        fadingOut = cover
+        animation.run(animation.duration, {
+            content.map { $0.view.alpha = $0.alpha }
+            cover.view.alpha = 0
+        }, { [weak self] in
+            guard let self else {
+                Self.restoreAlpha(cover)
+                return
+            }
+
+            guard self.fadingOut?.view === cover.view else { return }
+
+            self.fadingOut = nil
+            self.drop(cover)
+        })
+    }
+
+    private func dropCover() {
+        cover.map(drop)
+        cover = nil
+        hiddenContent.map {
+            $0.view.alpha = $0.alpha
+            $0.view.accessibilityElementsHidden = $0.isAccessibilityHidden
+        }
+        hiddenContent = nil
     }
 
     private func drop(_ layer: FadingLayer) {

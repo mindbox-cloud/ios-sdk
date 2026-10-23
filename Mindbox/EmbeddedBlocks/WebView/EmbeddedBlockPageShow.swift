@@ -20,6 +20,8 @@ struct EmbeddedBlockPageShow {
 
     private var isAwaitingRefreshRender = false
 
+    private(set) var isRenewingSession = false
+
     private(set) var processingDuration: TimeInterval
 
     private var stopwatch: ForegroundStopwatch
@@ -46,6 +48,7 @@ struct EmbeddedBlockPageShow {
         renderedElapsed = nil
         isRefreshDue = true
         isSessionClockRunning = true
+        isRenewingSession = true
     }
 
     mutating func suspend() {
@@ -72,6 +75,7 @@ struct EmbeddedBlockPageShow {
     mutating func pageRendered() {
         renderedElapsed = processingDuration + stopwatch.elapsed
         isAwaitingRefreshRender = false
+        if !isRefreshDue { isRenewingSession = false }
     }
 
     mutating func takeDueShow() -> (sessionEpoch: Int, timeToDisplay: TimeInterval)? {
