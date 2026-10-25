@@ -1,0 +1,15 @@
+{
+  "calls": [
+    {
+      "module": "Mindbox",
+      "file": "Mindbox/Database/DatabaseLoader/DatabaseLoader.swift",
+      "api": "systemFreeSize",
+      "reason": "E174.1",
+      "purpose": "Check free space before reopening the store; fall back to an in-memory store when space is low"
+    }
+  ],
+  "privateUserDefaultsSuites": [
+    "cloud.Mindbox.webview.localState"
+  ],
+  "overrides": []
+}

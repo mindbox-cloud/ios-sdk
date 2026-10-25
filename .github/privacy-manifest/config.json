@@ -1,0 +1,8 @@
+{
+  "usage": "usage.json",
+  "packagePath": "../..",
+  "policy": {
+    "userDefaultsAppGroup": true,
+    "trackingDisabled": true
+  }
+}
