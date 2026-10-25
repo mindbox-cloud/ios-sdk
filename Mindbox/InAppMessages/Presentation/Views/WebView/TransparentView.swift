@@ -167,14 +167,14 @@ final class TransparentView: UIView {
             self?.delegate?.closeTimeoutWebViewVC()
         }
         quizInitTimeoutWorkItem = workItem
-        if initWaitStartedAt == nil { initWaitStartedAt = ProcessInfo.processInfo.systemUptime }
+        if initWaitStartedAt == nil { initWaitStartedAt = CACurrentMediaTime() }
         DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(Constants.WebView.timeoutSeconds), execute: workItem)
     }
 
     private func takeInitWait() -> String? {
         guard let startedAt = initWaitStartedAt else { return nil }
         initWaitStartedAt = nil
-        return String(format: "%.2fs", ProcessInfo.processInfo.systemUptime - startedAt)
+        return String(format: "%.2fs", CACurrentMediaTime() - startedAt)
     }
 }
 
