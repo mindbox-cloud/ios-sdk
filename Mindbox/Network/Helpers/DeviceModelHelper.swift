@@ -7,12 +7,16 @@
 //
 
 import Foundation
-import UIKit.UIDevice
+import UIKit
 
 struct DeviceModelHelper {
 
     static let os = UIDevice.current.systemName
     static let iOSVersion = UIDevice.current.systemVersion
+
+    @MainActor static var keyboardLanguages: [String] {
+        UITextInputMode.activeInputModes.compactMap(\.primaryLanguage)
+    }
 
     static let model: String = {
         var systemInfo = utsname()
