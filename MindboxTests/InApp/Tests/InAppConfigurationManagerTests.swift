@@ -1,0 +1,946 @@
+//
+//  InAppConfigurationManagerTests.swift
+//  MindboxTests
+//
+//  Created by Sergei Semko on 13.08.2026.
+//  Copyright © 2026 Mindbox. All rights reserved.
+//
+
+import Foundation
+import Testing
+import QuartzCore
+import class MindboxLogger.Locked
+@testable import Mindbox
+
+private let configVersionKey = Constants.Notification.configVersion
+
+@Suite("In-app configuration manager", .tags(.embeddedBlocks))
+struct InAppConfigurationManagerTests {
+
+    private enum Constants {
+        static let liveStoryId = "55555555-5555-5555-5555-555555555555"
+        static let fixtureLimits = Settings.InAppSettings(maxInappsPerSession: 3, maxInappsPerDay: 50, minIntervalBetweenShows: "00:00:10")
+    }
+
+    private final class Answers<Value> {
+        @Locked private var storage: [Value] = []
+
+        var all: [Value] { storage }
+        var first: Value? { storage.first }
+        var isEmpty: Bool { storage.isEmpty }
+
+        func append(_ value: Value) {
+            storage.append(value)
+        }
+    }
+
+    private final class ConclusionLog {
+        let center = NotificationCenter()
+        let announcedVersions = Answers<ConfigVersion?>()
+        private var observer: NSObjectProtocol?
+
+        init() {
+            observer = center.addObserver(forName: .mobileConfigDownloadConcluded, object: nil, queue: nil) { [announcedVersions] in
+                announcedVersions.append($0.userInfo?[configVersionKey] as? ConfigVersion)
+            }
+        }
+
+        deinit {
+            if let observer {
+                center.removeObserver(observer)
+            }
+        }
+    }
+
+    private final class HeldConfigAPI: InAppConfigurationAPI {
+        private let lock = NSLock()
+        private var held: [(InAppConfigurationAPIResult) -> Void] = []
+
+        var pendingFetches: Int {
+            lock.lock()
+            defer { lock.unlock() }
+            return held.count
+        }
+
+        var isFetchPending: Bool { pendingFetches > 0 }
+
+        init() {
+            super.init(persistenceStorage: MockPersistenceStorage())
+        }
+
+        override func fetchConfig(completionQueue: DispatchQueue, completion: @escaping (InAppConfigurationAPIResult) -> Void) {
+            lock.lock()
+            held.append { result in completionQueue.async { completion(result) } }
+            lock.unlock()
+        }
+
+        func deliver(_ result: InAppConfigurationAPIResult) {
+            deliver(result, takingNewest: false)
+        }
+
+        func deliverToNewest(_ result: InAppConfigurationAPIResult) {
+            deliver(result, takingNewest: true)
+        }
+
+        private func deliver(_ result: InAppConfigurationAPIResult, takingNewest: Bool) {
+            lock.lock()
+            let pending = held.isEmpty ? nil : (takingNewest ? held.removeLast() : held.removeFirst())
+            lock.unlock()
+
+            pending?(result)
+        }
+    }
+
+    private final class EmptyConfigRepository: InAppConfigurationRepository {
+        override func fetchConfigFromCache() -> Data? { nil }
+        override func saveConfigToCache(_ data: Data) {}
+        override func clean() {}
+    }
+
+    private final class InMemoryConfigRepository: InAppConfigurationRepository {
+        @Locked private var cached: Data?
+
+        init(cached: Data?) {
+            self.cached = cached
+        }
+
+        override func fetchConfigFromCache() -> Data? { cached }
+        override func saveConfigToCache(_ data: Data) { cached = data }
+        override func clean() { cached = nil }
+    }
+
+    private final class CountingFilterService: InappFilterProtocol {
+        private let wrapped = DI.injectOrFail(InappFilterProtocol.self)
+        @Locked private(set) var prepareCount = 0
+
+        func candidates(from response: ConfigResponse) -> ConfigCandidates {
+            prepareCount += 1
+            return wrapped.candidates(from: response)
+        }
+
+        func filterForTrigger(in candidates: ConfigCandidates) -> [InApp] {
+            wrapped.filterForTrigger(in: candidates)
+        }
+
+        func filter(place: String, in candidates: ConfigCandidates) -> [InApp] {
+            wrapped.filter(place: place, in: candidates)
+        }
+
+        func inapps(addressedTo place: String, in candidates: ConfigCandidates) -> [InApp] {
+            wrapped.inapps(addressedTo: place, in: candidates)
+        }
+
+        func inapps(askedAbout ids: [String], in candidates: ConfigCandidates) -> [InApp] {
+            wrapped.inapps(askedAbout: ids, in: candidates)
+        }
+
+        func filter(requestedIds ids: [String], in candidates: ConfigCandidates) -> [InApp] {
+            wrapped.filter(requestedIds: ids, in: candidates)
+        }
+
+        func filter(id: String, in candidates: ConfigCandidates) -> InApp? {
+            wrapped.filter(id: id, in: candidates)
+        }
+
+        func filterInappsByOperation(event: ApplicationEvent?,
+                                     operationInapps: [String: Set<String>],
+                                     in candidates: ConfigCandidates) -> [InApp] {
+            wrapped.filterInappsByOperation(event: event, operationInapps: operationInapps, in: candidates)
+        }
+
+        func filterOutNonOverlayInapps(_ inapps: [InApp]) -> [InApp] {
+            wrapped.filterOutNonOverlayInapps(inapps)
+        }
+
+        func filterInappsByOperationForShow(event: ApplicationEvent?,
+                                            operationInapps: [String: Set<String>],
+                                            in candidates: ConfigCandidates) -> [InApp] {
+            wrapped.filterInappsByOperationForShow(event: event, operationInapps: operationInapps, in: candidates)
+        }
+
+        func filterInappsByTargeting(inapps: [InApp],
+                                     targetingChecker: InAppTargetingCheckerProtocol,
+                                     pickVariant: (InApp) -> MindboxFormVariant?) -> [InAppTransitionData] {
+            wrapped.filterInappsByTargeting(inapps: inapps, targetingChecker: targetingChecker, pickVariant: pickVariant)
+        }
+    }
+
+    private let api = HeldConfigAPI()
+    private let manager: InAppConfigurationManager
+
+    init() {
+        TestConfiguration.configure()
+        SessionTemporaryStorage.shared.erase()
+
+        let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+        persistenceStorage.shownDatesByInApp = [:]
+        persistenceStorage.deviceUUID = "00000000-0000-0000-0000-000000000000"
+
+        manager = Self.makeManager(api: api, configWaitBudget: 0.2)
+    }
+
+    private static func makeManager(api: InAppConfigurationAPI,
+                                    configWaitBudget: TimeInterval,
+                                    repository: InAppConfigurationRepository = EmptyConfigRepository(),
+                                    inappFilterService: InappFilterProtocol = DI.injectOrFail(InappFilterProtocol.self),
+                                    now: @escaping () -> TimeInterval = { CACurrentMediaTime() },
+                                    notificationCenter: NotificationCenter = .default) -> InAppConfigurationManager {
+        InAppConfigurationManager(
+            inAppConfigAPI: api,
+            inAppConfigRepository: repository,
+            inappMapper: DI.injectOrFail(InappMapperProtocol.self),
+            persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
+            featureToggleManager: DI.injectOrFail(FeatureToggleManager.self),
+            webViewPrewarmService: DI.injectOrFail(InAppWebViewPrewarmServiceProtocol.self),
+            inappFilterService: inappFilterService,
+            requestedInappBuilder: RequestedInappBuilder(inappFilterService: inappFilterService,
+                                                         dataFacade: DI.injectOrFail(InAppConfigurationDataFacadeProtocol.self)),
+            configWaitBudget: configWaitBudget,
+            now: now,
+            notificationCenter: notificationCenter
+        )
+    }
+
+    private func fixtureData() throws -> Data {
+        let bundle = Bundle(for: MindboxTests.self)
+        let url = try #require(bundle.url(forResource: "EmbeddedBlockConfig", withExtension: "json"))
+        return try Data(contentsOf: url)
+    }
+
+    private func fixtureData(editingInapps edit: (inout [[String: Any]]) throws -> Void) throws -> Data {
+        var root = try #require(try JSONSerialization.jsonObject(with: fixtureData()) as? [String: Any])
+        var inapps = try #require(root["inapps"] as? [[String: Any]])
+        try edit(&inapps)
+        root["inapps"] = inapps
+        return try JSONSerialization.data(withJSONObject: root)
+    }
+
+    private func fixtureDataWithOtherCasePlace() throws -> Data {
+        let json = try #require(String(data: try fixtureData(), encoding: .utf8))
+        let otherCase = json.replacingOccurrences(of: "\"stories-list-container\"", with: "\"Stories-List-Container\"")
+        try #require(otherCase != json, "the fixture is expected to address the place in lowercase")
+        return Data(otherCase.utf8)
+    }
+
+    private func fixtureDataWithProductOperations() throws -> Data {
+        var root = try #require(try JSONSerialization.jsonObject(with: fixtureData()) as? [String: Any])
+        var settings = try #require(root["settings"] as? [String: Any])
+        settings["operations"] = ["viewProduct": ["systemName": "ViewProduct"], "viewCategory": ["systemName": "ViewCategory"]]
+        root["settings"] = settings
+        return try JSONSerialization.data(withJSONObject: root)
+    }
+
+    enum FailedDownload: CaseIterable {
+        case connectionFailure
+        case undecodableConfig
+
+        var result: InAppConfigurationAPIResult {
+            switch self {
+            case .connectionFailure:
+                return .error(MindboxError.connectionError)
+            case .undecodableConfig:
+                return .data(Data("not a config".utf8))
+            }
+        }
+    }
+
+    enum DownloadOutcome: CaseIterable {
+        case config
+        case configWithoutSettings
+        case nothing
+        case failure
+    }
+
+    private func result(_ outcome: DownloadOutcome) throws -> InAppConfigurationAPIResult {
+        switch outcome {
+        case .config:
+            return .data(try fixtureData())
+        case .configWithoutSettings:
+            var root = try #require(try JSONSerialization.jsonObject(with: fixtureData()) as? [String: Any])
+            root["settings"] = nil
+            return .data(try JSONSerialization.data(withJSONObject: root))
+        case .nothing:
+            return .empty
+        case .failure:
+            return .error(MindboxError.connectionError)
+        }
+    }
+
+    private func waitUntil(_ condition: @autoclosure () -> Bool,
+                           sourceLocation: SourceLocation = #_sourceLocation) async throws {
+        let step: UInt64 = 20_000_000
+        let ceiling = 200
+
+        for _ in 0..<ceiling where !condition() {
+            try await Task.sleep(nanoseconds: step)
+        }
+
+        #expect(condition(), "gave up after \(Double(ceiling) * Double(step) / 1_000_000_000)s", sourceLocation: sourceLocation)
+    }
+
+    @Test("A caller arriving before the config is answered when it lands")
+    func callerBeforeConfigIsAnsweredOnArrival() async throws {
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+
+        let answers = Answers<[String]>()
+        manager.getShowableInappIds([Constants.liveStoryId], askedBy: "a-block") { answers.append($0) }
+
+        api.deliver(.data(try fixtureData()))
+
+        try await waitUntil(!answers.isEmpty)
+        #expect(answers.all == [[Constants.liveStoryId]])
+    }
+
+    @Test("A caller arriving after the config is answered from it")
+    func callerAfterConfigIsAnsweredRightAway() async throws {
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.data(try fixtureData()))
+
+        let answers = Answers<[String]>()
+        manager.getShowableInappIds([Constants.liveStoryId], askedBy: "a-block") { answers.append($0) }
+
+        try await waitUntil(!answers.isEmpty)
+        #expect(answers.all == [[Constants.liveStoryId]])
+    }
+
+    @Test("A config that never arrives answers with nothing after the budget")
+    func neverArrivingConfigAnswersNothingAfterTheBudget() async throws {
+        manager.prepareConfiguration()
+
+        let answers = Answers<[String]>()
+        manager.getShowableInappIds([Constants.liveStoryId], askedBy: "a-block") { answers.append($0) }
+
+        try await waitUntil(!answers.isEmpty)
+        #expect(answers.all == [[]])
+    }
+
+    @Test("A config is in hand only once the download concluded with one")
+    func hasConfigFollowsTheDownload() async throws {
+        #expect(!manager.hasConfig)
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        #expect(!manager.hasConfig)
+
+        api.deliver(.data(try fixtureData()))
+
+        try await waitUntil(manager.hasConfig)
+    }
+
+    @Test("An earlier session's config is not in hand: a new session has one only once its own download concludes")
+    func hasConfigFollowsTheSessionsDownload() async throws {
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.data(try fixtureData()))
+        try await waitUntil(manager.hasConfig)
+
+        SessionTemporaryStorage.shared.erase()
+        #expect(!manager.hasConfig)
+
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        #expect(!manager.hasConfig)
+        api.deliver(.data(try fixtureData()))
+
+        try await waitUntil(manager.hasConfig)
+    }
+
+    @Test("A failed download with no cache answers with nothing at once")
+    func failedDownloadAnswersWithoutWaitingOutTheBudget() async throws {
+        let slowBudgetManager = Self.makeManager(api: api, configWaitBudget: 60)
+        slowBudgetManager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+
+        let answers = Answers<[String]>()
+        slowBudgetManager.getShowableInappIds([Constants.liveStoryId], askedBy: "a-block") { answers.append($0) }
+        api.deliver(.error(MindboxError.connectionError))
+
+        try await waitUntil(!answers.isEmpty)
+        #expect(answers.all == [[]])
+    }
+
+    @Test("A caller who gave up waiting is not answered again when the config lands")
+    func callerThatGaveUpIsNotAnsweredTwice() async throws {
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+
+        let answers = Answers<[String]>()
+        manager.getShowableInappIds([Constants.liveStoryId], askedBy: "a-block") { answers.append($0) }
+        try await waitUntil(!answers.isEmpty)
+
+        api.deliver(.data(try fixtureData()))
+        try await waitUntil(self.api.isFetchPending == false)
+
+        #expect(answers.all == [[]])
+    }
+
+    @Test("A caller arriving after a failed download is answered with nothing at once")
+    func callerAfterFailedDownloadDoesNotWaitOutTheBudget() async throws {
+        let slowBudgetManager = Self.makeManager(api: api, configWaitBudget: 60)
+        slowBudgetManager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.error(MindboxError.connectionError))
+
+        let answers = Answers<[String]>()
+        slowBudgetManager.getShowableInappIds([Constants.liveStoryId], askedBy: "a-block") { answers.append($0) }
+
+        try await waitUntil(!answers.isEmpty)
+        #expect(answers.all == [[]])
+    }
+
+    @Test("A place asked while a download fails without a cache hears that the config is unavailable")
+    func placeHearsConfigUnavailableWhenTheDownloadFails() async throws {
+        let slowBudgetManager = Self.makeManager(api: api, configWaitBudget: 60)
+        slowBudgetManager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+
+        let answers = Answers<EmbeddedPlaceSelection>()
+        slowBudgetManager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, _, _ in answers.append(answer) }
+        api.deliver(.error(MindboxError.connectionError))
+
+        try await waitUntil(!answers.isEmpty)
+        #expect(answers.all == [.configUnavailable])
+    }
+
+    @Test("A place asked after a failed download hears that the config is unavailable at once")
+    func placeAfterFailedDownloadHearsConfigUnavailable() async throws {
+        let slowBudgetManager = Self.makeManager(api: api, configWaitBudget: 60)
+        slowBudgetManager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.error(MindboxError.connectionError))
+
+        let answers = Answers<EmbeddedPlaceSelection>()
+        slowBudgetManager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, _, _ in answers.append(answer) }
+
+        try await waitUntil(!answers.isEmpty)
+        #expect(answers.all == [.configUnavailable])
+    }
+
+    @Test("An unavailable config carries how long the place actually waited for it")
+    func unavailableConfigCarriesTheRealWait() async throws {
+        let clock = TestClock()
+        let patientManager = Self.makeManager(api: api, configWaitBudget: 60, now: { clock.now })
+        patientManager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+
+        let answers = Answers<(selection: EmbeddedPlaceSelection, duration: TimeInterval)>()
+        patientManager.selectInappForPlace("stories-list-container", trigger: nil) { answer, processingDuration, _, _ in
+            answers.append((answer, processingDuration))
+        }
+        clock.advance(12.5)
+        api.deliver(.error(MindboxError.connectionError))
+
+        try await waitUntil(!answers.isEmpty)
+        let answer = try #require(answers.first)
+        #expect(answer.selection == .configUnavailable)
+        #expect(answer.duration == 12.5)
+    }
+
+    @Test("An empty config from the server is a decided place, not an unavailable one")
+    func emptyConfigIsDecidedNotUnavailable() async throws {
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.empty)
+
+        let answers = Answers<EmbeddedPlaceSelection>()
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, _, _ in answers.append(answer) }
+
+        try await waitUntil(!answers.isEmpty)
+        #expect(answers.all == [.decided(nil)])
+    }
+
+    @Test("A place the pass could not check is passed on as unavailable, not as decided")
+    func uncheckedPlaceIsPassedOnAsUnavailable() async throws {
+        let facade = try #require(DI.injectOrFail(InAppConfigurationDataFacadeProtocol.self) as? MockInAppConfigurationDataFacade)
+        facade.cutByFetchFailure = true
+        defer { facade.cutByFetchFailure = false }
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.data(try fixtureData()))
+
+        let answers = Answers<EmbeddedPlaceSelection>()
+        manager.selectInappForPlace("no-such-place", trigger: nil) { answer, _, _, _ in answers.append(answer) }
+
+        try await waitUntil(!answers.isEmpty)
+        #expect(answers.all == [.targetingUnavailable])
+    }
+
+    @Test("A place asked before the config resolves once it lands")
+    func placeAskedBeforeConfigResolvesOnArrival() async throws {
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+
+        let answers = Answers<InAppTransitionData?>()
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, _, _ in answers.append(answer.inapp) }
+        api.deliver(.data(try fixtureData()))
+
+        try await waitUntil(!answers.isEmpty)
+        #expect((answers.first ?? nil)?.inAppId == "11111111-1111-1111-1111-111111111111")
+    }
+
+    @Test("A place outlives the wait budget: only the download's conclusion answers it")
+    func placeIsNotAnsweredByTheWaitBudget() async throws {
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+
+        let answers = Answers<InAppTransitionData?>()
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, _, _ in answers.append(answer.inapp) }
+
+        try await Task.sleep(nanoseconds: 600_000_000)
+        #expect(answers.isEmpty, "the config wait budget must not answer a place — the block owns the give-up")
+
+        api.deliver(.data(try fixtureData()))
+
+        try await waitUntil(!answers.isEmpty)
+        #expect((answers.first ?? nil)?.inAppId == "11111111-1111-1111-1111-111111111111")
+    }
+
+    @Test("The place's processing time runs from the block's request, the wait for the config included")
+    func placeProcessingTimeIncludesTheWaitForTheConfig() async throws {
+        let clock = TestClock()
+        let patientManager = Self.makeManager(api: api, configWaitBudget: 60, now: { clock.now })
+        patientManager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+
+        let answers = Answers<(inapp: InAppTransitionData?, duration: TimeInterval)>()
+        patientManager.selectInappForPlace("stories-list-container", trigger: nil) { answer, processingDuration, _, _ in
+            answers.append((answer.inapp, processingDuration))
+        }
+        clock.advance(12.5)
+        api.deliver(.data(try fixtureData()))
+
+        try await waitUntil(!answers.isEmpty)
+        let answer = try #require(answers.first)
+        #expect(answer.inapp != nil, "the place was not answered from the config")
+        #expect(answer.duration == 12.5)
+    }
+
+    @Test("One applied config is prepared once, however many blocks and pages ask")
+    func configIsPreparedOncePerDownload() async throws {
+        let counting = CountingFilterService()
+        let manager = Self.makeManager(api: api, configWaitBudget: 0.2, inappFilterService: counting)
+
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.data(try fixtureData()))
+
+        let pages = Answers<[String]>()
+        let places = Answers<InAppTransitionData?>()
+        manager.getShowableInappIds([Constants.liveStoryId], askedBy: "a-block") { pages.append($0) }
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, _, _ in places.append(answer.inapp) }
+        manager.getShowableInappIds([Constants.liveStoryId], askedBy: "a-block") { pages.append($0) }
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, _, _ in places.append(answer.inapp) }
+
+        try await waitUntil(pages.all.count == 2 && places.all.count == 2)
+        #expect(counting.prepareCount == 1)
+    }
+
+    @Test("An in-app asked by id is answered with nothing until a config lands, then from that config")
+    func inappInCurrentConfigAnswersFromTheLandedConfig() async throws {
+        #expect(manager.inappInCurrentConfig(withId: Constants.liveStoryId) == nil)
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.data(try fixtureData()))
+        try await waitUntil(manager.hasConfig)
+
+        let inapp = try #require(manager.inappInCurrentConfig(withId: Constants.liveStoryId))
+        #expect(inapp.id == Constants.liveStoryId)
+        #expect(inapp.tags == ["templateType": "Popup"])
+        #expect(manager.inappInCurrentConfig(withId: "no-such-inapp") == nil)
+    }
+
+    @Test("An id the config carries twice is answered with its first copy")
+    func inappInCurrentConfigTakesTheFirstCopy() async throws {
+        let data = try fixtureData { inapps in
+            var copy = try #require(inapps.first { $0["id"] as? String == Constants.liveStoryId })
+            copy["tags"] = ["templateType": "SecondCopy"]
+            inapps.append(copy)
+        }
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.data(data))
+        try await waitUntil(manager.hasConfig)
+
+        #expect(manager.inappInCurrentConfig(withId: Constants.liveStoryId)?.tags == ["templateType": "Popup"])
+    }
+
+    @Test("An id whose first copy is meant for another SDK version is answered with the copy for this one")
+    func inappInCurrentConfigSkipsACopyForAnotherSDK() async throws {
+        let data = try fixtureData { inapps in
+            let index = try #require(inapps.firstIndex { $0["id"] as? String == Constants.liveStoryId })
+            var otherSDKCopy = inapps[index]
+            otherSDKCopy["sdkVersion"] = ["min": 9999, "max": NSNull()]
+            otherSDKCopy["tags"] = ["templateType": "OtherSDK"]
+            inapps.insert(otherSDKCopy, at: index)
+        }
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.data(data))
+        try await waitUntil(manager.hasConfig)
+
+        #expect(manager.inappInCurrentConfig(withId: Constants.liveStoryId)?.tags == ["templateType": "Popup"])
+    }
+
+    @Test("A config arriving later replaces the in-app an id is answered with")
+    func laterConfigReplacesTheRenderableInapp() async throws {
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.data(try fixtureData()))
+        try await waitUntil(manager.hasConfig)
+        #expect(manager.inappInCurrentConfig(withId: Constants.liveStoryId)?.tags == ["templateType": "Popup"])
+
+        let replaced = try fixtureData { inapps in
+            let index = try #require(inapps.firstIndex { $0["id"] as? String == Constants.liveStoryId })
+            inapps[index]["tags"] = ["templateType": "Replaced"]
+        }
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.data(replaced))
+
+        try await waitUntil(manager.inappInCurrentConfig(withId: Constants.liveStoryId)?.tags == ["templateType": "Replaced"])
+    }
+
+    // MARK: - The place name's letter case
+
+    @Test("A config spelling the place in another letter case still answers the block")
+    func placeInAnotherLetterCaseStillResolves() async throws {
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.data(try fixtureDataWithOtherCasePlace()))
+
+        let answers = Answers<InAppTransitionData?>()
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, _, _ in answers.append(answer.inapp) }
+
+        try await waitUntil(!answers.isEmpty)
+        #expect((answers.first ?? nil)?.inAppId == "11111111-1111-1111-1111-111111111111")
+    }
+
+    @Test("The operation gate knows the places by their canonical name, whatever case the config uses")
+    func embeddedPlacesAreKeyedByCanonicalName() async throws {
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.data(try fixtureDataWithOtherCasePlace()))
+
+        let answers = Answers<[String: Set<String>]?>()
+        manager.getEmbeddedPlaces { answers.append($0) }
+
+        try await waitUntil(!answers.isEmpty)
+        let places = try #require(answers.first ?? nil)
+        #expect(places["stories-list-container"] != nil)
+        #expect(places["Stories-List-Container"] == nil)
+    }
+
+    @Test("A config arriving later replaces the models the previous one left")
+    func laterConfigReplacesThePreparedModels() async throws {
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.data(try fixtureData()))
+
+        let withBlock = Answers<InAppTransitionData?>()
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, _, _ in withBlock.append(answer.inapp) }
+        try await waitUntil(!withBlock.isEmpty)
+        #expect((withBlock.first ?? nil)?.inAppId == "11111111-1111-1111-1111-111111111111")
+
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.empty)
+
+        let withoutBlock = Answers<InAppTransitionData?>()
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, _, _ in withoutBlock.append(answer.inapp) }
+        try await waitUntil(!withoutBlock.isEmpty)
+        #expect((withoutBlock.first ?? nil)?.inAppId == nil)
+    }
+
+    @Test("Every download announces it concluded, with the version of the config it published", arguments: DownloadOutcome.allCases)
+    func everyDownloadAnnouncesItsConclusion(_ outcome: DownloadOutcome) async throws {
+        let log = ConclusionLog()
+        let manager = Self.makeManager(api: api, configWaitBudget: 0.2, notificationCenter: log.center)
+
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(try result(outcome))
+
+        try await waitUntil(!log.announcedVersions.isEmpty)
+        #expect(log.announcedVersions.all == [ConfigVersion(number: 1)])
+    }
+
+    @Test("A place waiting for a download is answered with the version of the config its conclusion announces, a newer one at every download, whatever the download brought",
+          arguments: DownloadOutcome.allCases)
+    func placeAnswerCarriesTheVersionItsDownloadAnnounces(_ outcome: DownloadOutcome) async throws {
+        let log = ConclusionLog()
+        let manager = Self.makeManager(api: api, configWaitBudget: 0.2, notificationCenter: log.center)
+        var answered: [ConfigVersion?] = []
+
+        for _ in 0..<2 {
+            SessionTemporaryStorage.shared.erase()
+            let versions = Answers<ConfigVersion?>()
+            manager.selectInappForPlace("stories-list-container", trigger: nil) { _, _, _, version in versions.append(version) }
+            manager.prepareConfiguration()
+            try await waitUntil(api.isFetchPending)
+            api.deliver(try result(outcome))
+            try await waitUntil(!versions.isEmpty)
+            answered.append(versions.first ?? nil)
+        }
+
+        try await waitUntil(log.announcedVersions.all.count == 2)
+        #expect(log.announcedVersions.all == answered)
+        let first = try #require(answered.first ?? nil)
+        let second = try #require(answered.last ?? nil)
+        #expect(first < second)
+    }
+
+    @Test("A place waiting for a download is answered with the session the download started in, not the one it lands in")
+    func placeAnswerCarriesTheSessionOfItsConfig() async throws {
+        let startedIn = SessionTemporaryStorage.shared.ledger.sessionEpoch
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+
+        let sessions = Answers<Int>()
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { _, _, sessionEpoch, _ in sessions.append(sessionEpoch) }
+        SessionTemporaryStorage.shared.erase()
+        api.deliver(.data(try fixtureData()))
+
+        try await waitUntil(!sessions.isEmpty)
+        #expect(sessions.all == [startedIn])
+    }
+
+    @Test("A place asked with an earlier session's config in hand waits for this session's download")
+    func placeWaitsPastAnEarlierSessionsConfig() async throws {
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.data(try fixtureData()))
+        try await waitUntil(manager.hasConfig)
+        SessionTemporaryStorage.shared.erase()
+        let current = SessionTemporaryStorage.shared.ledger.sessionEpoch
+
+        let answers = Answers<(inappId: String?, sessionEpoch: Int)>()
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, sessionEpoch, _ in
+            answers.append((answer.inapp?.inAppId, sessionEpoch))
+        }
+        try await Task.sleep(nanoseconds: 300_000_000)
+        #expect(answers.isEmpty, "the place must not be answered from the previous session's config")
+
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.data(try fixtureData()))
+
+        try await waitUntil(!answers.isEmpty)
+        let answer = try #require(answers.first)
+        #expect(answer.inappId == "11111111-1111-1111-1111-111111111111")
+        #expect(answer.sessionEpoch == current)
+    }
+
+    @Test("Offline across a new session, a place of that session is answered from the config an earlier launch cached, stamped with the session")
+    func newSessionPlaceIsAnsweredFromTheCacheWhenItsDownloadFails() async throws {
+        let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+        let downloadedBefore = persistenceStorage.configDownloadDate
+        persistenceStorage.configDownloadDate = Date()
+        defer { persistenceStorage.configDownloadDate = downloadedBefore }
+        let offlineManager = Self.makeManager(api: api, configWaitBudget: 60, repository: InMemoryConfigRepository(cached: try fixtureData()))
+        offlineManager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.error(MindboxError.connectionError))
+        try await waitUntil(offlineManager.hasConfig)
+        SessionTemporaryStorage.shared.erase()
+        let current = SessionTemporaryStorage.shared.ledger.sessionEpoch
+
+        let answers = Answers<(selection: EmbeddedPlaceSelection, sessionEpoch: Int)>()
+        offlineManager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, sessionEpoch, _ in
+            answers.append((answer, sessionEpoch))
+        }
+        offlineManager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.error(MindboxError.connectionError))
+
+        try await waitUntil(!answers.isEmpty)
+        let answer = try #require(answers.first)
+        #expect(answer.selection.inapp?.inAppId == "11111111-1111-1111-1111-111111111111")
+        #expect(answer.sessionEpoch == current)
+    }
+
+    @Test("A download that fails or does not decode applies the in-app limits and product operations of the config an earlier launch cached: at launch, and again in a new session",
+          arguments: FailedDownload.allCases)
+    func failedDownloadAppliesTheCachedConfigsLimits(_ failure: FailedDownload) async throws {
+        let storage = SessionTemporaryStorage.shared
+        let offlineManager = Self.makeManager(api: api, configWaitBudget: 60, repository: InMemoryConfigRepository(cached: try fixtureDataWithProductOperations()))
+        offlineManager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(failure.result)
+        try await waitUntil(storage.inAppSettings != nil)
+        #expect(storage.inAppSettings == Constants.fixtureLimits)
+        storage.erase()
+
+        let answers = Answers<EmbeddedPlaceSelection>()
+        offlineManager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, _, _ in answers.append(answer) }
+        offlineManager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(failure.result)
+
+        try await waitUntil(!answers.isEmpty)
+        #expect(storage.inAppSettings == Constants.fixtureLimits)
+        #expect(storage.viewProductOperation == "viewproduct")
+        #expect(storage.viewCategoryOperation == "viewcategory")
+    }
+
+    @Test("A page asked with an earlier session's config in hand is answered from it at once")
+    func pageIsAnsweredFromAnEarlierSessionsConfig() async throws {
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.data(try fixtureData()))
+        try await waitUntil(manager.hasConfig)
+        SessionTemporaryStorage.shared.erase()
+
+        let answers = Answers<[String]>()
+        manager.getShowableInappIds([Constants.liveStoryId], askedBy: "a-block") { answers.append($0) }
+
+        try await waitUntil(!answers.isEmpty)
+        #expect(answers.all == [[Constants.liveStoryId]])
+    }
+
+    @Test("A download that fails with nothing cached keeps the config an earlier download brought: a page and a place of the new session are answered from it")
+    func failedDownloadWithoutCacheKeepsTheEarlierConfig() async throws {
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.data(try fixtureData()))
+        try await waitUntil(manager.hasConfig)
+        SessionTemporaryStorage.shared.erase()
+        let current = SessionTemporaryStorage.shared.ledger.sessionEpoch
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.error(MindboxError.connectionError))
+
+        let place = Answers<(inappId: String?, sessionEpoch: Int)>()
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, sessionEpoch, _ in
+            place.append((answer.inapp?.inAppId, sessionEpoch))
+        }
+        let page = Answers<[String]>()
+        manager.getShowableInappIds([Constants.liveStoryId], askedBy: "a-block") { page.append($0) }
+
+        try await waitUntil(!place.isEmpty && !page.isEmpty)
+        let answer = try #require(place.first)
+        #expect(answer.inappId == "11111111-1111-1111-1111-111111111111")
+        #expect(answer.sessionEpoch == current)
+        #expect(page.all == [[Constants.liveStoryId]])
+    }
+
+    @Test("A download that fails with nothing cached keeps the in-app limits and product operations of the config an earlier download brought, in a new session too")
+    func failedDownloadWithoutCacheKeepsTheEarlierConfigsLimits() async throws {
+        let storage = SessionTemporaryStorage.shared
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.data(try fixtureDataWithProductOperations()))
+        try await waitUntil(manager.hasConfig)
+        storage.erase()
+
+        let answers = Answers<EmbeddedPlaceSelection>()
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, _, _ in answers.append(answer) }
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.error(MindboxError.connectionError))
+
+        try await waitUntil(!answers.isEmpty)
+        #expect(storage.inAppSettings == Constants.fixtureLimits)
+        #expect(storage.viewProductOperation == "viewproduct")
+        #expect(storage.viewCategoryOperation == "viewcategory")
+    }
+
+    @Test("A download a later one superseded leaves the later one's config and conclusion in place when it lands last")
+    func supersededDownloadLandingLastChangesNothing() async throws {
+        let log = ConclusionLog()
+        let manager = Self.makeManager(api: api, configWaitBudget: 0.2, notificationCenter: log.center)
+        manager.prepareConfiguration()
+        try await waitUntil(api.pendingFetches == 1)
+        SessionTemporaryStorage.shared.erase()
+        let later = SessionTemporaryStorage.shared.ledger.sessionEpoch
+        manager.prepareConfiguration()
+        try await waitUntil(api.pendingFetches == 2)
+
+        api.deliverToNewest(.data(try fixtureData()))
+        try await waitUntil(!log.announcedVersions.isEmpty)
+        api.deliver(.empty)
+        try await waitUntil(api.pendingFetches == 0)
+
+        let answers = Answers<(inappId: String?, sessionEpoch: Int)>()
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, sessionEpoch, _ in
+            answers.append((answer.inapp?.inAppId, sessionEpoch))
+        }
+        try await waitUntil(!answers.isEmpty)
+        let answer = try #require(answers.first)
+        #expect(answer.inappId == "11111111-1111-1111-1111-111111111111")
+        #expect(answer.sessionEpoch == later)
+        #expect(log.announcedVersions.all == [ConfigVersion(number: 1)])
+    }
+
+    @Test("A download a later one superseded leaves its waiters to the later one when it lands first")
+    func supersededDownloadLandingFirstLeavesItsWaiters() async throws {
+        manager.prepareConfiguration()
+        try await waitUntil(api.pendingFetches == 1)
+        SessionTemporaryStorage.shared.erase()
+        let later = SessionTemporaryStorage.shared.ledger.sessionEpoch
+        manager.prepareConfiguration()
+        try await waitUntil(api.pendingFetches == 2)
+
+        let answers = Answers<(selection: EmbeddedPlaceSelection, sessionEpoch: Int)>()
+        manager.selectInappForPlace("stories-list-container", trigger: nil) { answer, _, sessionEpoch, _ in
+            answers.append((answer, sessionEpoch))
+        }
+        api.deliver(.data(try fixtureData()))
+        try await Task.sleep(nanoseconds: 300_000_000)
+        #expect(answers.isEmpty, "the superseded download must not answer the waiting place")
+
+        api.deliver(.empty)
+
+        try await waitUntil(!answers.isEmpty)
+        let answer = try #require(answers.first)
+        #expect(answer.selection == .decided(nil))
+        #expect(answer.sessionEpoch == later)
+    }
+
+    private func heldTriggerPass(event: ApplicationEvent?) async throws -> (facade: MockInAppConfigurationDataFacade, passAnswers: Answers<String?>) {
+        let facade = try #require(DI.injectOrFail(InAppConfigurationDataFacadeProtocol.self) as? MockInAppConfigurationDataFacade)
+        manager.prepareConfiguration()
+        try await waitUntil(api.isFetchPending)
+        api.deliver(.data(try fixtureData()))
+        try await waitUntil(manager.hasConfig)
+
+        facade.holdsFetches = true
+        let passAnswers = Answers<String?>()
+        manager.handleInapps(event: event) { passAnswers.append($0?.inAppId) }
+        try await waitUntil(facade.heldFetchCount == 1)
+        return (facade, passAnswers)
+    }
+
+    @Test("A requested show is answered while a trigger pass still waits for its segment check")
+    func requestedShowDoesNotWaitForAHeldPass() async throws {
+        let (facade, passAnswers) = try await heldTriggerPass(event: nil)
+
+        let shown = Answers<String?>()
+        manager.getInAppToShowById(Constants.liveStoryId, params: [:]) { shown.append($0?.inAppId) }
+
+        try await waitUntil(!shown.isEmpty)
+        #expect(shown.all == [Constants.liveStoryId])
+        #expect(passAnswers.isEmpty)
+
+        facade.releaseHeldFetches()
+        try await waitUntil(!passAnswers.isEmpty)
+    }
+
+    @Test("A requested show leaves the event and the failure buffer of a pass it overtakes alone")
+    func requestedShowLeavesAHeldPassAlone() async throws {
+        let event = ApplicationEvent(name: "nobody.listens", model: nil)
+        let (facade, passAnswers) = try await heldTriggerPass(event: event)
+        let checker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
+
+        let shown = Answers<String?>()
+        manager.getInAppToShowById(Constants.liveStoryId, params: [:]) { shown.append($0?.inAppId) }
+
+        try await waitUntil(!shown.isEmpty)
+        #expect(checker.event?.name == event.name)
+        #expect(facade.sendCollectedFailuresCalls == 0)
+        #expect(facade.discardCollectedFailuresCalls == 0)
+
+        facade.releaseHeldFetches()
+        try await waitUntil(!passAnswers.isEmpty)
+    }
+}

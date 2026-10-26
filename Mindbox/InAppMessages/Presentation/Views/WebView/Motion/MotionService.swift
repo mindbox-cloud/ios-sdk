@@ -11,81 +11,36 @@ import UIKit
 import CoreMotion
 import MindboxLogger
 
-/// Motion gestures that can be monitored via the bridge `motion.start` action.
-///
-/// - `shake`: Device was shaken. Detected via system `UIResponder.motionEnded`.
-/// - `flip`: Device changed orientation (one of 6 faces). Detected via `CMMotionManager` gravity.
 enum MotionGesture: String, CaseIterable {
     case shake
     case flip
 }
 
-/// Device orientation based on dominant gravity axis (6 faces of a cube).
-///
-/// Each face corresponds to one axis exceeding the gravity threshold:
-///
-/// | Position | Axis | Condition |
-/// |---|---|---|
-/// | `faceUp` | Z | `gravity.z < -0.8` |
-/// | `faceDown` | Z | `gravity.z > +0.8` |
-/// | `portrait` | Y | `gravity.y < -0.8` |
-/// | `portraitUpsideDown` | Y | `gravity.y > +0.8` |
-/// | `landscapeLeft` | X | `gravity.x < -0.8` |
-/// | `landscapeRight` | X | `gravity.x > +0.8` |
 enum DevicePosition: String, CaseIterable {
-    /// Lying screen up (e.g. on a table). `gravity.z < -threshold`.
     case faceUp
-    /// Lying screen down (flipped on a table). `gravity.z > +threshold`.
     case faceDown
-    /// Upright, normal orientation (held in hand). `gravity.y < -threshold`.
     case portrait
-    /// Upright, flipped upside down. `gravity.y > +threshold`.
     case portraitUpsideDown
-    /// Rotated left (landscape, volume buttons on top). `gravity.x < -threshold`.
     case landscapeLeft
-    /// Rotated right (landscape, volume buttons on bottom). `gravity.x > +threshold`.
     case landscapeRight
 }
 
-/// Result of ``MotionServiceProtocol/startMonitoring(gestures:)``.
-///
-/// Reports which gestures were successfully started and which were unavailable
-/// (e.g. flip on a device without gyroscope).
 struct MotionStartResult {
-    /// Gestures that were successfully started.
     let started: Set<MotionGesture>
-    /// Gestures that could not be started (sensor unavailable).
     let unavailable: Set<MotionGesture>
 
-    /// `true` if no gestures could be started at all.
     var allUnavailable: Bool { started.isEmpty && !unavailable.isEmpty }
 }
 
-/// Monitors device motion gestures (shake, flip) and reports events via callback.
-///
-/// - Shake is detected via system `UIResponder.motionEnded(.motionShake)`.
-///   The host app's `applicationSupportsShakeToEdit` is temporarily disabled while shake is active.
-/// - Flip is detected via `CMMotionManager.deviceMotion` gravity vector across 3 axes,
-///   using hysteresis (enter 0.8g / exit 0.6g) to prevent flickering at axis boundaries.
-/// - Sensors auto-suspend on app background and resume on foreground.
 protocol MotionServiceProtocol: AnyObject {
-    /// Called on main thread when a gesture is detected.
-    /// - Parameters:
-    ///   - gesture: The detected gesture type.
-    ///   - data: Gesture-specific payload (e.g. `["from": "portrait", "to": "faceDown"]` for flip).
+    // Called on the main thread.
     var onGestureDetected: ((MotionGesture, [String: Any]) -> Void)? { get set }
 
-    /// Starts monitoring the specified gestures. Replaces any previous subscription.
-    ///
-    /// - Parameter gestures: Set of gestures to monitor.
-    /// - Returns: Result indicating which gestures started and which were unavailable.
     @discardableResult
     func startMonitoring(gestures: Set<MotionGesture>) -> MotionStartResult
 
-    /// Stops all gesture monitoring, restores system settings, and releases sensors.
     func stopMonitoring()
 
-    /// Called by `WebViewController.motionEnded` when system detects a shake.
     func handleSystemShake()
 }
 
@@ -94,18 +49,10 @@ final class MotionService: MotionServiceProtocol {
     // MARK: - Constants
 
     private enum Constants {
-        /// How often deviceMotion data is sampled, in seconds.
-        /// 0.2s = 5 times per second (5 Hz). Sufficient for flip detection (a flip takes ~0.5–1s).
-        /// For continuous streaming (e.g. tilt games), use 1/30 or 1/60.
         static let sampleInterval: TimeInterval = 0.2
 
-        /// Gravity magnitude required to enter a new position.
-        /// Must be exceeded for the device to switch to a different face.
         static let enterThreshold: Double = 0.8
 
-        /// Gravity magnitude below which the current position is released.
-        /// The gap between enter (0.8) and exit (0.6) creates a dead zone
-        /// that prevents flickering when the device is tilted between two faces (~45°).
         static let exitThreshold: Double = 0.6
     }
 
@@ -307,10 +254,6 @@ final class MotionService: MotionServiceProtocol {
         }
     }
 
-    /// Hysteresis-based position detection.
-    /// Requires `enterThreshold` to switch to a new position,
-    /// but keeps the current position until gravity drops below `exitThreshold`.
-    /// This prevents flickering at axis boundaries without needing time-based cooldown.
     func resolvePosition(gravity: CMAcceleration, current: DevicePosition?) -> DevicePosition? {
         let axes: [(value: Double, negative: DevicePosition, positive: DevicePosition)] = [
             (gravity.z, .faceUp, .faceDown),
@@ -318,7 +261,6 @@ final class MotionService: MotionServiceProtocol {
             (gravity.x, .landscapeLeft, .landscapeRight)
         ]
 
-        // Check if current position still holds (above exit threshold)
         if let current {
             for axis in axes {
                 let position = axis.value > 0 ? axis.positive : axis.negative
@@ -328,7 +270,6 @@ final class MotionService: MotionServiceProtocol {
             }
         }
 
-        // Current position lost — find new dominant position (above enter threshold)
         var best: DevicePosition?
         var bestMagnitude: Double = Constants.enterThreshold
 

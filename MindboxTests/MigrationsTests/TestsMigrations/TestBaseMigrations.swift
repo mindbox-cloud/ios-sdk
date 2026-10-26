@@ -23,7 +23,6 @@ final class TestBaseMigration_1: BaseMigration {
     }
 
     override func performMigration() throws {
-        // Do some code
     }
 }
 
@@ -41,7 +40,6 @@ final class TestBaseMigration_2: BaseMigration {
     }
 
     override func performMigration() throws {
-        // Do some code
     }
 }
 
@@ -59,7 +57,6 @@ final class TestBaseMigration_3_IsNeeded_False: BaseMigration {
     }
 
     override func performMigration() throws {
-        // Do some code
     }
 }
 
@@ -77,7 +74,6 @@ final class TestBaseMigration_4_WithPerfomError: BaseMigration {
     }
 
     override func performMigration() throws {
-        // Do some code
         throw NSError(domain: "com.sdk.migration", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid version for migration"])
     }
 }

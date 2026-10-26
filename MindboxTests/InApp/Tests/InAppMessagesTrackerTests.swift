@@ -26,8 +26,6 @@ final class InAppMessagesTrackerTests {
         return BodyDecoder<DecodedBody>(decodable: event.body)?.body
     }
 
-    /// Returns the top-level keys of the encoded event body. Used to assert that the
-    /// `tags` key is entirely absent (not merely `null`), which is what the contract requires.
     private func bodyKeys() -> Set<String>? {
         guard let event = databaseRepository.createdEvents.first,
               let data = event.body.data(using: .utf8),

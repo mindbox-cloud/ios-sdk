@@ -136,11 +136,6 @@ public enum JSONValue: Codable, Equatable {
         anyValue ?? NSNull()
     }
 
-    /// Merges in-app tags into the root of a custom operation `body`.
-    ///
-    /// - No `tags` key (or `null`) in `body` → sets it to the tags object.
-    /// - `tags` already an object → adds only missing keys; existing client keys win.
-    /// - `tags` present but not an object (string/array/etc.) → left untouched.
     static func mergingInAppTags(_ tags: [String: String]?, into body: JSONValue) -> JSONValue {
         guard let tags, !tags.isEmpty else { return body }
         guard case .object(var dict) = body else { return body }
@@ -171,6 +166,16 @@ public enum JSONValue: Codable, Equatable {
     }
 }
 
+/// A message between the SDK and a page over the JS bridge.
+///
+/// ```json
+/// { "version": 1, "type": "request", "action": "ready", "payload": "{}", "id": "<UUID>", "timestamp": 1760950000000 }
+/// ```
+///
+/// A page's message without `version`, `type`, `action`, a UUID `id` or an integer `timestamp` gets no
+/// answer. A page may send `payload` as a JSON string or an object; the SDK always sends a JSON string,
+/// so parse it with `JSON.parse()`. An answer carries the request's `id` in lowercase. An overlay that
+/// answers an SDK request with an `error` is closed.
 @_spi(Internal)
 public struct BridgeMessage: Codable {
     public enum MessageType: String, Codable {
@@ -183,9 +188,7 @@ public struct BridgeMessage: Codable {
 
         // MARK: JS → Native: Lifecycle
 
-        /// JS requests to close the in-app and trigger dismiss callback.
-        ///
-        /// Stops haptic patterns and motion monitoring. Triggers ``WebViewAction/onClose()``.
+        /// Closes the overlay; on a block page it does nothing.
         ///
         /// - Payload:
         ///   ```json
@@ -197,9 +200,8 @@ public struct BridgeMessage: Codable {
         ///   ```
         case close
 
-        /// JS signals that the in-app content is initialized.
-        ///
-        /// Prepares the haptic engine for upcoming feedback. Triggers ``WebViewAction/onInit()``.
+        /// Shows the overlay once its content is ready; an overlay that does not send it within 7 s is
+        /// closed. On a block page it does nothing.
         ///
         /// - Payload:
         ///   ```json
@@ -211,14 +213,15 @@ public struct BridgeMessage: Codable {
         ///   ```
         case `init`
 
-        /// JS reports a user click with navigation intent.
+        /// Runs an in-app action as a tap on a native in-app does, without sending `Inapp.Click`; the
+        /// overlay stays open until ``close``. On a block page it does nothing.
         ///
-        /// The raw payload string is forwarded as-is to ``WebViewAction/onCompleted(data:)``
-        /// without parsing or validation on the native side.
-        ///
-        /// - Payload (typical):
+        /// - Payload:
         ///   ```json
         ///   { "$type": "redirectUrl", "value": "https://example.com", "intentPayload": "promo123" }
+        ///   ```
+        ///   ```json
+        ///   { "$type": "pushPermission", "intentPayload": "promo123" }
         ///   ```
         /// - Response:
         ///   ```json
@@ -226,9 +229,7 @@ public struct BridgeMessage: Codable {
         ///   ```
         case click
 
-        /// JS requests to hide the WebView without fully closing it.
-        ///
-        /// Triggers ``WebViewAction/onHide()``.
+        /// Hides the overlay without closing it; ``init`` shows it again. On a block page it does nothing.
         ///
         /// - Payload:
         ///   ```json
@@ -240,16 +241,13 @@ public struct BridgeMessage: Codable {
         ///   ```
         case hide
 
-        /// JS confirms the bridge is ready to receive messages.
-        ///
-        /// Native responds with a JSON string containing all init parameters
-        /// needed by the web content to configure itself.
+        /// Asks for the start data once the page's bridge can take messages.
         ///
         /// - Payload:
         ///   ```json
         ///   {}
         ///   ```
-        /// - Response: JSON string with the following fields:
+        /// - Response:
         ///   ```json
         ///   {
         ///     "sdkVersion": "2.15.0",
@@ -257,7 +255,7 @@ public struct BridgeMessage: Codable {
         ///     "endpointId": "my-app-endpoint",
         ///     "deviceUUID": "A1B2C3D4-E5F6-7890-ABCD-EF1234567890",
         ///     "userVisitCount": "41",
-        ///     "inAppId": "65f3a8b9-2c4d-4e5f-a6b7-c8d9e0f12345",
+        ///     "inappId": "65f3a8b9-2c4d-4e5f-a6b7-c8d9e0f12345",
         ///     "firstInitializationDateTime": "2025-01-15T10:30:00Z",
         ///     "localStateVersion": 1,
         ///     "operationName": "Inapp.Click",
@@ -265,7 +263,7 @@ public struct BridgeMessage: Codable {
         ///     "trackVisitSource": "link",
         ///     "trackVisitRequestUrl": "https://example.com/page",
         ///     "permissions": {
-        ///       "pushNotifications": { "granted": true }
+        ///       "notifications": { "status": "granted" }
         ///     },
         ///     "insets": { "top": 47, "left": 0, "bottom": 34, "right": 0 },
         ///     "theme": "light",
@@ -275,20 +273,15 @@ public struct BridgeMessage: Codable {
         ///   }
         ///   ```
         ///
-        /// > Note: The response payload is a **JSON-encoded string**, not a raw object.
-        /// > JS must parse it with `JSON.parse()` to access the fields.
-        /// >
-        /// > Fields `operationName`, `operationBody`, `trackVisitSource`,
-        /// > `trackVisitRequestUrl`, `permissions`, `firstInitializationDateTime`,
-        /// > `version` (app version) are optional and included only when available.
-        /// > Custom params from in-app configuration are merged at root level.
+        /// `operationName`, `operationBody`, `trackVisitSource`, `trackVisitRequestUrl`,
+        /// `firstInitializationDateTime` and `version` (the app version) are present only when known.
+        /// `permissions` lists only granted ones, under `notifications`, `camera`, `microphone`,
+        /// `photoLibrary` and `location`. Params from the in-app config are added at the root.
         case ready
 
         // MARK: JS → Native: Info
 
-        /// JS sends a message to native SDK logger.
-        ///
-        /// Triggers ``WebViewAction/onLog(message:)``.
+        /// Writes the payload to the SDK log.
         ///
         /// - Payload:
         ///   ```json
@@ -302,39 +295,47 @@ public struct BridgeMessage: Codable {
 
         // MARK: JS → Native: Operations
 
-        /// JS triggers an asynchronous Mindbox operation (fire-and-forget).
+        /// Queues a Mindbox operation; `success` means queued, not delivered.
         ///
-        /// The operation is sent to the Mindbox backend.
+        /// `inappId`, this page's in-app when omitted, names the in-app whose tags the SDK adds to
+        /// `body.tags` when in-app tags are enabled.
         ///
         /// - Payload:
         ///   ```json
-        ///   { "operation": "<string>", "body": { ... } }
+        ///   { "operation": "<string>", "body": { ... }, "inappId": "<string, optional>" }
         ///   ```
         /// - Response:
         ///   ```json
         ///   { "success": true }
         ///   ```
+        /// - Errors: `invalid_payload`, `operation_failed`.
         case asyncOperation
 
-        /// JS triggers a synchronous Mindbox operation and expects a response body.
+        /// Sends a Mindbox operation and answers with the backend's response; `inappId` works as in
+        /// ``asyncOperation``.
         ///
         /// - Payload:
         ///   ```json
-        ///   { "operation": "<string>", "body": { ... } }
+        ///   { "operation": "<string>", "body": { ... }, "inappId": "<string, optional>" }
         ///   ```
-        /// - Response: operation response JSON from Mindbox backend
+        /// - Response, on HTTP 2xx: the response body as received, a `ValidationError` one included:
+        ///   ```json
+        ///   { "status": "Success", ... }
+        ///   ```
+        /// - Error, on HTTP 3xx–5xx, no connection or an SDK failure, for example:
+        ///   ```json
+        ///   { "status": "ProtocolError", "errorMessage": "<string>", "errorId": "<string>", "httpStatusCode": "400" }
+        ///   ```
+        ///   ```json
+        ///   { "errorMessage": "Connection error", "httpStatusCode": "null" }
+        ///   ```
+        /// - Errors: also `invalid_payload`.
         case syncOperation
 
         // MARK: JS → Native: Navigation, Settings & Permissions
 
-        /// JS requests to open a URL in an external handler.
-        ///
-        /// For `http`/`https` URLs: first tries to open as a universal link
-        /// (another app that handles this domain). If no app claims it,
-        /// falls back to in-app `SFSafariViewController`.
-        ///
-        /// For custom schemes (e.g. `tel:`, `mailto:`, deep links):
-        /// opens via `UIApplication.open`.
+        /// Opens a URL outside the page: `http` and `https` in the app that claims the link or in an
+        /// in-app Safari sheet, other schemes through the system. Answers once the URL is open.
         ///
         /// - Payload:
         ///   ```json
@@ -344,9 +345,11 @@ public struct BridgeMessage: Codable {
         ///   ```json
         ///   { "success": true }
         ///   ```
+        /// - Errors: `invalid_payload`, `invalid_url`, `open_failed`, `not_visible`.
         case openLink
 
-        /// JS requests to open device or app settings.
+        /// Opens the app's notification settings (`notifications`) or its settings page (`application`)
+        /// in the Settings app.
         ///
         /// - Payload:
         ///   ```json
@@ -356,16 +359,11 @@ public struct BridgeMessage: Codable {
         ///   ```json
         ///   { "success": true }
         ///   ```
-        ///
-        /// > Note: `"notifications"` opens system notification settings for the app.
-        /// > `"application"` opens the app's page in Settings.
+        /// - Errors: `invalid_payload`, `unsupported_value`, `open_failed`, `not_visible`.
         case settingsOpen = "settings.open"
 
-        /// JS requests a device permission.
-        ///
-        /// Currently only push notifications are supported.
-        /// Shows the system permission dialog if status is `.notDetermined`,
-        /// otherwise returns current authorization status without a dialog.
+        /// Requests the push notification permission. The system dialog appears only until the user
+        /// decides; after that only Settings can change it, see ``settingsOpen``.
         ///
         /// - Payload:
         ///   ```json
@@ -375,16 +373,13 @@ public struct BridgeMessage: Codable {
         ///   ```json
         ///   { "result": "granted" | "denied", "dialogShown": true | false }
         ///   ```
-        ///
-        /// > Note: If the user previously denied notifications, `"denied"` is returned
-        /// > with `"dialogShown": false`. Use `settingsOpen` to redirect the user to Settings.
+        /// - Errors: `invalid_payload`, `unsupported_value`, `permission_failed`, `not_visible`.
         case permissionRequest = "permission.request"
 
         // MARK: JS → Native: Local State
 
-        /// JS retrieves saved values from on-device key-value storage.
-        ///
-        /// If `data` array is empty or omitted, **all** stored values are returned.
+        /// Reads string values from the key-value storage shared by the app's pages; an empty `data` list
+        /// reads all of them.
         ///
         /// - Payload:
         ///   ```json
@@ -396,53 +391,49 @@ public struct BridgeMessage: Codable {
         ///   ```
         /// - Response:
         ///   ```json
-        ///   { "data": { "key1": "value1", "key2": "value2" }, "version": 1 }
+        ///   { "data": { "key1": "value1", "key2": null }, "version": 1 }
         ///   ```
+        /// - Errors: `invalid_payload`.
         case localStateGet = "localState.get"
 
-        /// JS saves values to on-device key-value storage by key.
+        /// Writes values: `null` deletes a key, a value that is not a string is stored as its JSON text.
+        /// Other open pages get ``localStateChanged``.
         ///
         /// - Payload:
         ///   ```json
-        ///   { "data": { "key1": "value1", "key2": "value2" } }
+        ///   { "data": { "key1": "value1", "key2": null } }
         ///   ```
-        /// - Response: echoes the saved keys with current version:
+        /// - Response: the written keys with the current version:
         ///   ```json
-        ///   { "data": { "key1": "value1", "key2": "value2" }, "version": 1 }
+        ///   { "data": { "key1": "value1", "key2": null }, "version": 1 }
         ///   ```
-        ///
-        /// > Note: Only the keys from the request are returned, not the full stored state.
+        /// - Errors: `invalid_payload`.
         case localStateSet = "localState.set"
 
-        /// JS initializes local state and updates schema version.
-        ///
-        /// Merges provided data into storage and sets the version number.
-        /// Always applies data regardless of current version — version is overwritten, not compared.
+        /// Sets the storage version and writes values without telling other pages; the version is
+        /// overwritten, not compared.
         ///
         /// - Payload:
         ///   ```json
         ///   { "data": { "key1": "defaultValue1" }, "version": 1 }
         ///   ```
-        /// - Response: echoes the initialized keys with the set version:
+        /// - Response: the written keys with the new version:
         ///   ```json
         ///   { "data": { "key1": "defaultValue1" }, "version": 1 }
         ///   ```
-        ///
-        /// > Note: Only the keys from the request are returned, not the full stored state.
+        /// - Errors: `invalid_payload`.
         case localStateInit = "localState.init"
 
         // MARK: JS → Native: Haptic
 
-        /// JS triggers haptic feedback.
+        /// Plays haptic feedback; answers `success` even when nothing plays.
         ///
-        /// Four feedback types are supported:
-        ///
-        /// **Selection** — light tick (e.g. scrolling a picker):
+        /// **Selection** — light tick:
         /// ```json
         /// { "type": "selection" }
         /// ```
         ///
-        /// **Impact** — single tap with configurable intensity:
+        /// **Impact** — single tap:
         /// ```json
         /// { "type": "impact", "style": "light" | "medium" | "heavy" | "soft" | "rigid" }
         /// ```
@@ -452,7 +443,8 @@ public struct BridgeMessage: Codable {
         /// { "type": "notification", "style": "success" | "warning" | "error" }
         /// ```
         ///
-        /// **Custom pattern** — sequence of haptic events:
+        /// **Pattern** — `time` and `duration` in ms, `intensity` and `sharpness` from 0 to 1; up to 128
+        /// events, each at most 5 s long, all within 30 s:
         /// ```json
         /// {
         ///   "type": "pattern",
@@ -467,41 +459,34 @@ public struct BridgeMessage: Codable {
         ///   ```json
         ///   { "success": true }
         ///   ```
-        ///
-        /// > Note: `"soft"` and `"rigid"` impact styles require iOS 13+.
-        /// > On older versions they fall back to `"light"` and `"heavy"` respectively.
+        /// - Errors: `not_visible`.
         case haptic
 
         // MARK: JS → Native: Motion
 
-        /// JS subscribes to motion gestures (shake, flip).
-        ///
-        /// Replaces any previous subscription. Starts device sensors as needed.
+        /// Starts reporting the listed gestures through ``motionEvent``, replacing the previous
+        /// subscription; `shake` reaches overlays only.
         ///
         /// - Payload:
         ///   ```json
         ///   { "gestures": ["shake", "flip"] }
         ///   ```
-        /// - Response (all gestures available):
+        /// - Response (all gestures started):
         ///   ```json
         ///   { "success": true }
         ///   ```
-        /// - Response (some gestures unavailable, rest started):
+        /// - Response (some gestures unavailable, the rest started):
         ///   ```json
         ///   { "success": true, "unavailable": ["flip"] }
         ///   ```
-        /// - Error (all requested gestures unavailable):
+        /// - Error, when no requested gesture is available on the device:
         ///   ```json
-        ///   { "error": "No sensors available for requested gestures: flip" }
+        ///   { "error": "gestures_unavailable" }
         ///   ```
-        ///
-        /// > Note: When shake is active, the system "Undo Typing" alert is suppressed
-        /// > via `applicationSupportsShakeToEdit`. The original setting is restored on stop.
+        /// - Errors: also `invalid_payload`, `unsupported_value`, `not_visible`.
         case motionStart = "motion.start"
 
-        /// JS stops all motion gesture monitoring.
-        ///
-        /// Stops device sensors and restores `applicationSupportsShakeToEdit`.
+        /// Stops all motion reporting.
         ///
         /// - Payload:
         ///   ```json
@@ -515,32 +500,23 @@ public struct BridgeMessage: Codable {
 
         // MARK: Native → JS: Motion
 
-        /// SDK notifies JS about a detected motion gesture.
+        /// Reports a gesture the page subscribed to with ``motionStart``.
         ///
-        /// Fired for each gesture event while monitoring is active.
-        ///
-        /// **Shake** — device was shaken (system detection via `UIResponder.motionEnded`):
+        /// **Shake**:
         /// ```json
         /// { "gesture": "shake" }
         /// ```
         ///
-        /// **Flip** — device changed orientation (gravity-based, 6 positions):
+        /// **Flip** — sent on every change between `faceUp`, `faceDown`, `portrait`, `portraitUpsideDown`,
+        /// `landscapeLeft` and `landscapeRight`, not for the position at start; filter by `to`:
         /// ```json
         /// { "gesture": "flip", "from": "portrait", "to": "faceDown" }
         /// ```
-        ///
-        /// Positions: `faceUp`, `faceDown`, `portrait`, `portraitUpsideDown`,
-        /// `landscapeLeft`, `landscapeRight`.
-        ///
-        /// > Note: Flip fires on every position change. JS should filter
-        /// > by `to` field to match the desired target (e.g. `to == "faceDown"`).
         case motionEvent = "motion.event"
-        
+
         // MARK: Native → JS: Navigation
 
-        /// SDK notifies JS about an intercepted main frame navigation.
-        ///
-        /// Fired when WKWebView attempts to navigate away from the in-app content.
+        /// Reports a link or form navigation the SDK cancelled in the page.
         ///
         /// - Payload:
         ///   ```json
@@ -548,46 +524,107 @@ public struct BridgeMessage: Codable {
         ///   ```
         case navigationIntercepted
 
-        /// Actions that send their own bridge responses (no auto-response from dispatcher).
-        var isDeferred: Bool {
+        // MARK: JS → Native: Embedded pages
+
+        /// Asks which of the listed in-apps the page may show; the answer can wait for a network request.
+        ///
+        /// - Payload:
+        ///   ```json
+        ///   { "inappIds": ["<string>", "..."] }
+        ///   ```
+        /// - Response: the ids that may be shown, in any order:
+        ///   ```json
+        ///   { "inappIds": ["<string>", "..."] }
+        ///   ```
+        /// - Errors: `invalid_payload`.
+        case filterShowableInapps
+
+        /// Reports how many items the page rendered, once per load and after each ``initDataUpdated``;
+        /// zero means nothing to show. A block whose page sends no count within 7 s of starting to load
+        /// fails.
+        ///
+        /// - Payload:
+        ///   ```json
+        ///   { "count": <int> }
+        ///   ```
+        /// - Response:
+        ///   ```json
+        ///   { "success": true }
+        ///   ```
+        /// - Errors: `invalid_payload` (`count` is not a whole number of zero or more), which can fail the
+        ///   block.
+        case contentRendered
+
+        /// Shows an in-app over the screen by id; `params` override the in-app's own params in its start
+        /// data (see ``ready``). An overlay that asks closes when the new in-app starts to show, without an
+        /// answer.
+        ///
+        /// - Payload:
+        ///   ```json
+        ///   { "inappId": "<string>", "params": { } }
+        ///   ```
+        /// - Response, once the in-app is on screen:
+        ///   ```json
+        ///   { "success": true }
+        ///   ```
+        /// - Errors: `invalid_payload`, `unknown_inapp`, `show_failed`, `not_visible`.
+        case showInApp
+
+        // MARK: Native → JS: Embedded pages
+
+        /// Sends a block page the full start data again without reloading it. Confirm it with a
+        /// `response`: with no confirmation after 7 s on screen, the SDK may rebuild the page.
+        ///
+        /// - Payload: the same JSON as the ``ready`` response.
+        /// - Response:
+        ///   ```json
+        ///   { "success": true }
+        ///   ```
+        /// - Error, when the page cannot use the payload:
+        ///   ```json
+        ///   { "error": "<string>" }
+        ///   ```
+        case initDataUpdated
+
+        /// Tells every other open page that has sent ``ready`` about a ``localStateSet`` write.
+        ///
+        /// - Payload: the ``localStateSet`` response; `null` means the key was deleted.
+        ///   ```json
+        ///   { "data": { "<key>": "<string>" }, "version": <int> }
+        ///   ```
+        /// - Response:
+        ///   ```json
+        ///   { "success": true }
+        ///   ```
+        /// - Error, when the page cannot use the payload:
+        ///   ```json
+        ///   { "error": "<string>" }
+        ///   ```
+        case localStateChanged = "localState.changed"
+
+        var requiresUserPresence: Bool {
             switch self {
-            // Lifecycle
-            case .ready:
-                return true
-            case .close, .`init`, .click, .hide, .log:
-                return false
-
-            // Operations
-            case .asyncOperation, .syncOperation:
-                return true
-
-            // Navigation, Settings & Permissions
             case .openLink, .settingsOpen, .permissionRequest:
                 return true
 
-            // Local State
-            case .localStateGet, .localStateSet, .localStateInit:
-                return true
-
-            // Haptic
             case .haptic:
                 return true
 
-            // Motion
-            case .motionStart, .motionStop:
+            case .motionStart:
                 return true
 
-            // Native → JS: Motion
-            case .motionEvent:
-                return false
-                
-            // Native → JS: Navigation
-            case .navigationIntercepted:
+            case .showInApp:
+                return true
+
+            case .motionStop, .ready, .close, .`init`, .click, .hide, .log,
+                 .contentRendered, .filterShowableInapps,
+                 .asyncOperation, .syncOperation,
+                 .localStateGet, .localStateSet, .localStateInit,
+                 .motionEvent, .navigationIntercepted,
+                 .initDataUpdated, .localStateChanged:
                 return false
             }
         }
-
-        static let deferredActions: Set<Action> = Set(allCases.filter(\.isDeferred))
     }
 
     enum CodingKeys: String, CodingKey {
@@ -603,13 +640,40 @@ public struct BridgeMessage: Codable {
 
     var parsedAction: Action? { Action(rawValue: action) }
 
+    var payloadObject: [String: JSONValue]? {
+        if case .string(let string) = payload,
+           let data = string.data(using: .utf8),
+           let object = try? JSONDecoder().decode([String: JSONValue].self, from: data) {
+            return object
+        }
+
+        if case .object(let object) = payload {
+            return object
+        }
+
+        return nil
+    }
+
+    var payloadString: String {
+        if case .string(let value) = payload {
+            return value
+        }
+
+        if let payload,
+           let data = try? JSONEncoder().encode(payload),
+           let string = String(data: data, encoding: .utf8) {
+            return string
+        }
+
+        return ""
+    }
+
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(version, forKey: .version)
         try container.encode(type, forKey: .type)
         try container.encode(action, forKey: .action)
 
-        // JS bridge protocol requires payload as a JSON string (JS does JSON.parse(message.payload))
         if let payload {
             switch payload {
             case .string(let value):
@@ -628,7 +692,6 @@ public struct BridgeMessage: Codable {
             try container.encodeNil(forKey: .payload)
         }
 
-        // JS generates lowercase UUIDs; Map lookup is case-sensitive
         try container.encode(id.uuidString.lowercased(), forKey: .id)
         try container.encode(timestamp, forKey: .timestamp)
     }
@@ -716,7 +779,6 @@ public struct BridgeMessage: Codable {
             return "nil"
         }
 
-        // Helper to format JSON with pretty print
         func prettyJSON(from data: Data) -> String? {
             guard let jsonObject = try? JSONSerialization.jsonObject(with: data),
                   let prettyData = try? JSONSerialization.data(
@@ -731,7 +793,6 @@ public struct BridgeMessage: Codable {
 
         switch payload {
         case .string(let stringValue):
-            // If it's a JSON string, try to parse and pretty print it
             if let data = stringValue.data(using: .utf8),
                let pretty = prettyJSON(from: data) {
                 return pretty
@@ -739,7 +800,6 @@ public struct BridgeMessage: Codable {
             return stringValue
 
         case .object, .array:
-            // Serialize JSONValue to pretty JSON
             if let data = try? JSONEncoder().encode(payload),
                let pretty = prettyJSON(from: data) {
                 return pretty

@@ -8,7 +8,6 @@
 
 import Foundation
 
-/// Contains data needed to request in-app messages that should be shown
 struct InAppsCheckRequest: Equatable {
     let triggerEvent: InAppMessageTriggerEvent
     var possibleInApps: [InAppInfo]

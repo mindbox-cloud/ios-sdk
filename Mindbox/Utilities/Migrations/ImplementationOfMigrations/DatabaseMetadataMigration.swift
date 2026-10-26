@@ -8,7 +8,7 @@
 
 import Foundation
 import CoreData
-import MindboxLogger // MBPersistentContainer
+import MindboxLogger
 
 final class DatabaseMetadataMigration: MigrationProtocol {
     
@@ -19,11 +19,8 @@ final class DatabaseMetadataMigration: MigrationProtocol {
     private lazy var candidateStoreURLs: [URL] = {
         let fileName = "\(Constants.Database.mombName).sqlite"
         var urls: [URL] = []
-        // 1) App Group base directory provided by our container
         urls.append(MBPersistentContainer.defaultDirectoryURL().appendingPathComponent(fileName))
-        // 2) Default Application Support directory used by NSPersistentContainer
         urls.append(NSPersistentContainer.defaultDirectoryURL().appendingPathComponent(fileName))
-        // Deduplicate and standardize
         return Array(Set(urls.map { $0.standardizedFileURL }))
     }()
     
@@ -70,7 +67,6 @@ final class DatabaseMetadataMigration: MigrationProtocol {
     
     // MARK: - I/O helpers (disk-only, no live PSC dependency)
 
-    /// Typed metadata read. Iterates existing candidate files and returns the first typed match.
     private func read<T>(_ type: T.Type, _ key: MDKey) -> T? {
         for url in existingStoreURLs {
             do {
@@ -81,14 +77,11 @@ final class DatabaseMetadataMigration: MigrationProtocol {
                 )
                 if let value = md[key.rawValue] as? T { return value }
             } catch {
-                // Ignore and try the next candidate.
             }
         }
         return nil
     }
 
-    /// Removes the metadata key from *all* existing candidate store files.
-    /// Uses class-level Core Data APIs to avoid loading the store into memory.
     private func clear(_ key: MDKey) {
         for url in existingStoreURLs {
             do {
@@ -106,7 +99,6 @@ final class DatabaseMetadataMigration: MigrationProtocol {
                     )
                 }
             } catch {
-                // Best effort: do not block SDK startup if cleanup fails.
             }
         }
     }

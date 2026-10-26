@@ -50,8 +50,6 @@ extension String {
 }
 
 extension String {
-    /// Truncates the string so its UTF-8 byte representation does not exceed `limit`.
-    /// Cuts at extended grapheme cluster boundaries to keep multi-byte characters intact.
     func truncated(toUTF8ByteLimit limit: Int) -> String {
         guard limit >= 0 else { return "" }
         guard utf8.count > limit else { return self }

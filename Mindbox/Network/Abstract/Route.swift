@@ -10,7 +10,6 @@ import Foundation
 
 enum RouteBaseURL {
     case domain
-    /// Falls back to `domain` when no operations host is configured.
     case operations
 }
 

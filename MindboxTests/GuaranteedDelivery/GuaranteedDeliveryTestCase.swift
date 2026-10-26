@@ -35,7 +35,6 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         persistenceStorage.configuration?.previousDeviceUUID = configuration.previousDeviceUUID
         persistenceStorage.deviceUUID = "0593B5CC-1479-4E45-A7D3-F0E8F9B40898"
         try! databaseRepository.erase()
-        // Put setup code here. This method is called before the invocation of each test method in the class.
     }
 
     override func tearDown() {
@@ -107,15 +106,11 @@ class GuaranteedDeliveryTestCase: XCTestCase {
     }
     
     func test_dateTimeOffset_WhenRetry_usingMockClock() {
-        // 1) Set a fixed enqueueTimeStamp (for example, 1,000 seconds from the epoch)
         let fixedEnqueue: Double = 1_000
         
-        // 2) Create a “dummy” current time using MockClock
-        // let it be 1,000.500 seconds (i.e., +500 ms)
         let mockNow = Date(timeIntervalSince1970: 1_000.5)
         let clock = MockClock(now: mockNow)
         
-        // 3) Creating an event as a retry
         let event = MockEvent(
             type: .installed,
             body: "baz",
@@ -124,7 +119,6 @@ class GuaranteedDeliveryTestCase: XCTestCase {
             clock: clock
         )
         
-        // 4) The offset in ms will be (1,000.5 - 1,000) * 1,000 = 500 ms
         let offset = event.dateTimeOffset
         
         XCTAssertEqual(offset, 500,
@@ -162,7 +156,6 @@ class GuaranteedDeliveryTestCase: XCTestCase {
             expectations[idx].fulfill()
             idx += 1
             
-            // As soon as we “catch” idle, we suppress further cycles
             if idx == expectedStates.count {
                 mgr.canScheduleOperations = false
                 token?.invalidate()
@@ -175,9 +168,8 @@ class GuaranteedDeliveryTestCase: XCTestCase {
     }
 
     func testFailureAndRetryScheduleByTimer() throws {
-        // 1) Setup: first delivery attempt fails, then all subsequent attempts succeed
         let fetcher = MockFailureNetworkFetcher()
-        let fakeDB  = FakeDatabaseRepository()
+        let fakeDB  = RetryByTimerScriptedDatabaseRepository()
         let eventRepo = MBEventRepository(
             fetcher: fetcher,
             persistenceStorage: DI.injectOrFail(PersistenceStorage.self)
@@ -186,15 +178,13 @@ class GuaranteedDeliveryTestCase: XCTestCase {
             persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
             databaseRepository: fakeDB,
             eventRepository: eventRepo,
-            retryDeadline: 2 // Short deadline so that the retry cycle happens within the test
+            retryDeadline: 2
         )
 
-        // 2) Populate fakeDB with 10 events
         try fakeDB.erase()
         let events = eventGenerator.generateEvents(count: 10)
         try events.forEach { try fakeDB.create(event: $0) }
 
-        // 3) Record state transitions without enforcing an exact order
         var seenStates = [GuaranteedDeliveryManager.State]()
         var deliveringCount = 0
         var didSeeWaitingForRetry = false
@@ -222,7 +212,6 @@ class GuaranteedDeliveryTestCase: XCTestCase {
                 didSeeWaitingForRetry = true
 
             case .idle:
-                // Success condition: at least two `.delivering` states and a `.waitingForRetry` in between
                 if deliveringCount >= 2 && didSeeWaitingForRetry {
                     mgr.canScheduleOperations = false
                     token?.invalidate()
@@ -232,11 +221,9 @@ class GuaranteedDeliveryTestCase: XCTestCase {
             }
         }
 
-        // 4) Start scheduling and wait until our condition is met
         manager.canScheduleOperations = true
         wait(for: [expectation], timeout: 60)
 
-        // 5) Final assertions: we only check aggregated behavior, not an exact state sequence
         XCTAssertGreaterThanOrEqual(
             deliveringCount,
             2,

@@ -122,7 +122,6 @@ extension InAppConfigStub {
             baseAddresses: nil
         )
         
-        // Mock method setupSettingsFromConfig.
         SessionTemporaryStorage.shared.viewProductOperation = "Mobile.ViewProduct"
         SessionTemporaryStorage.shared.viewCategoryOperation = "Mobile.ViewCategory"
         
@@ -140,6 +139,7 @@ extension InAppConfigStub {
                          delayTime: nil,
                          sdkVersion: .init(min: 8, max: nil),
                          frequency: .once(.init(kind: .session)),
+                         displayConditions: .unrestricted,
                          targeting: targeting,
                          form: try getForm(),
                          tags: nil)]
@@ -198,5 +198,11 @@ extension InAppConfigStub {
         let decoder = JSONDecoder()
         let formDTO = try decoder.decode(InAppFormDTO.self, from: jsonData)
         return formDTO
+    }
+}
+
+extension ConfigResponse {
+    var candidates: ConfigCandidates {
+        DI.injectOrFail(InappFilterProtocol.self).candidates(from: self)
     }
 }

@@ -30,7 +30,6 @@ final class DatabaseLoaderFlowTests: XCTestCase {
         super.tearDown()
     }
 
-    // Factory to create a loader pointing to a real SQLite URL
     private func makeDescAndURL(dbName: String) -> (NSPersistentStoreDescription, URL) {
         let url = tempDir.appendingPathComponent("\(dbName).sqlite")
         let desc = NSPersistentStoreDescription(url: url)
@@ -38,7 +37,6 @@ final class DatabaseLoaderFlowTests: XCTestCase {
         return (desc, url)
     }
 
-    // Spy/Stub loader that mirrors real salvage/apply behavior
     final class SpyDatabaseLoader: DatabaseLoader {
         enum LoadMode { case succeed, failAlways, failThenSucceed }
 
@@ -80,7 +78,6 @@ final class DatabaseLoaderFlowTests: XCTestCase {
 
         override func salvageMetadataFromOnDiskStore() -> [String : Any]? {
             salvageCalled = true
-            // emulate real filtering by DatabaseLoader.metadataKeysToPreserve
             guard let raw = stubPreserved else { return nil }
             let filtered = raw.filter { Self.metadataKeysToPreserve.contains($0.key) }
             return filtered.isEmpty ? nil : filtered
@@ -98,14 +95,12 @@ final class DatabaseLoaderFlowTests: XCTestCase {
         return (loader, url)
     }
 
-    // Helpers to read current store metadata
     private func currentStoreMetadata(on container: NSPersistentContainer) throws -> [String: Any] {
         let psc = container.persistentStoreCoordinator
         let store = try XCTUnwrap(psc.persistentStores.first, "Expected a persistent store")
         return psc.metadata(for: store)
     }
 
-    // 1) Straight success: no salvage, no destroy
     func test_Flow_StraightSuccess_SkipsRepair() throws {
         let (loader, _) = try makeSpyLoader(dbName: "Straight")
         loader.loadMode = .succeed
@@ -121,13 +116,11 @@ final class DatabaseLoaderFlowTests: XCTestCase {
         XCTAssertNil(loader.applyCaptured, "applyMetadata must not be called on straight success")
     }
 
-    // 2) Load fails + low disk → in-memory + metadata applied
     func test_Flow_LowDiskSpace_UsesInMemory_AndAppliesMetadata() throws {
         let (loader, _) = try makeSpyLoader(dbName: "LowDisk")
         loader.loadMode = .failAlways
-        loader.stubFreeSize = 1 // definitely below threshold
+        loader.stubFreeSize = 1
 
-        // Only keys that are actually preserved by DatabaseLoader.metadataKeysToPreserve
         let preserved: [String: Any] = [
             MDKey.infoUpdate.rawValue: 7,
             MDKey.instanceId.rawValue: "im-low-disk"
@@ -148,11 +141,10 @@ final class DatabaseLoaderFlowTests: XCTestCase {
         }
     }
 
-    // 3) Load fails + enough disk → destroy+retry succeeds, metadata applied to new on-disk store
     func test_Flow_DestroyAndRetry_Succeeds_AppliesMetadata() throws {
         let (loader, _) = try makeSpyLoader(dbName: "RepairSuccess")
         loader.loadMode = .failThenSucceed
-        loader.stubFreeSize = .max // not low
+        loader.stubFreeSize = .max
 
         let preserved: [String: Any] = [
             MDKey.infoUpdate.rawValue: 3,
@@ -174,16 +166,13 @@ final class DatabaseLoaderFlowTests: XCTestCase {
         }
     }
 
-    // 4) Repair attempt fails → in-memory fallback (no apply required by current implementation)
     func test_Flow_DestroyAndRetry_Fails_FallsBackToInMemory() throws {
         let (loader, _) = try makeSpyLoader(dbName: "RepairFails")
         loader.loadMode = .failAlways
-        loader.stubFreeSize = .max // not low → go to repair path
+        loader.stubFreeSize = .max
         loader.stubPreserved = [
             MDKey.instanceId.rawValue: "will-fallback"
         ]
-        // If you want to test the branch where destroy throws instead of load failing, uncomment:
-        // loader.shouldDestroyThrow = true
 
         let container = try loader.loadPersistentContainer()
         let psc = container.persistentStoreCoordinator
@@ -191,6 +180,5 @@ final class DatabaseLoaderFlowTests: XCTestCase {
         XCTAssertEqual(store.type, NSInMemoryStoreType, "Should fall back to in-memory when repair fails")
         XCTAssertGreaterThanOrEqual(loader.destroyCallCount, 1, "destroy should be attempted on repair path")
         XCTAssertTrue(loader.salvageCalled, "salvage must be called on repair path")
-        // No strict expectation on apply: current implementation does not re-apply on this branch.
     }
 }

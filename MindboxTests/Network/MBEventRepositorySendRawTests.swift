@@ -29,7 +29,6 @@ struct MBEventRepositorySendRawTests {
             capturedRoute = route
             switch requestTypedRawResponse {
             case .success(let data):
-                // A fixture/type mismatch is a test bug - crash loudly rather than mask it.
                 completion(.success(try! JSONDecoder().decode(T.self, from: data)))
             case .failure(let error):
                 completion(.failure(error))
@@ -37,7 +36,6 @@ struct MBEventRepositorySendRawTests {
         }
 
         func request(route: Route, completion: @escaping ((Result<Void, MindboxError>) -> Void)) {
-            // not used by sendRaw
         }
 
         func requestRaw(route: Route, completion: @escaping ((Result<Data, MindboxError>) -> Void)) {
@@ -113,7 +111,6 @@ struct MBEventRepositorySendRawTests {
 
         let route = try #require(fetcher.capturedRoute as? EventRoute)
         if case .syncEvent = route {
-            // expected
         } else {
             Issue.record("Expected EventRoute.syncEvent, got \(route)")
         }

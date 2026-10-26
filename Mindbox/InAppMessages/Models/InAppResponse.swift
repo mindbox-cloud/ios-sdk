@@ -8,7 +8,6 @@
 
 import Foundation
 
-/// Contains information of what in-apps should be shown in the app
 struct InAppResponse {
     let triggerEvent: InAppMessageTriggerEvent
     let inAppToShowId: String

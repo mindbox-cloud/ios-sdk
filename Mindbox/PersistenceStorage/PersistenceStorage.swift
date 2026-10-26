@@ -11,9 +11,6 @@ import Foundation
 protocol PersistenceStorage: AnyObject {
     var installationDate: Date? { get set }
 
-    /// The date when the SDK was first initialized. Write-once, set during the first `install()` call
-    /// and never overwritten. For existing users upgrading to this SDK version, the value is
-    /// populated from `installationDate` by migration on app startup.
     var firstInitializationDateTime: Date? { get set }
 
     var deviceUUID: String? { get set }
@@ -48,50 +45,29 @@ protocol PersistenceStorage: AnyObject {
 
     var userVisitCount: Int? { get set }
 
-    /// The date when the InApps configuration was last downloaded.
-    /// It is optional and can be set to `nil` if the configuration has not yet been downloaded yet or reset.
     var configDownloadDate: Date? { get set }
 
-    /// Operations host cached from `settings.baseAddresses.operations` in the mobile
-    /// JSON config. Persisted across launches; takes precedence over the init-time
-    /// `MBConfiguration.operationsDomain` at request time.
-    /// Excluded from `softReset()` on purpose: clearing it on a migration reset would
-    /// route operations to `domain` until the next config load, breaking the
-    /// PD-safety guarantee.
     var operationsDomainFromConfig: String? { get set }
 
-    /// The version code used to track the current state of migrations.
-    /// This value is compared to `Constants.Migration.sdkVersionCode` to determine
-    /// if migrations need to be performed. If a migration fails, and the `versionCodeForMigration`
-    /// does not match the `Constants.Migration.sdkVersionCode`, a `softReset()` is performed to
-    /// ensure that the system remains in a consistent state.
     var versionCodeForMigration: Int? { get set }
     
-    // Metadata from the `DatabaseRepository`. Check `DatabaseMetadataMigration`.
     var applicationInfoUpdateVersion: Int? { get set }
     
     var applicationInstanceId: String? { get set }
 
-    /// Version of the WebView localState, managed by JS via localState.init
     var webViewLocalStateVersion: Int? { get set }
 
-    /// Resource hosts observed by webview in-app shows, keyed by endpoint — feeds the next
-    /// launch's preconnect. See `InAppWebViewLearnedHostsStore`.
     var webViewLearnedHosts: [String: [String]]? { get set }
 
-    // Reset functions
+    var embeddedBlockPlaceRecords: [String: Data]? { get set }
 
     func softReset()
     
-    /// Metadata: `ApplicationInfoUpdateVersion` and `InstanceId`
     func eraseMetadata()
 
-    /// Hard reset for test purposes
     func reset()
 
     // MARK: - Deprecated Properties
-    // These properties are deprecated and will be removed in future versions.
-    // Please use the recommended alternatives instead.
     
     @available(*, deprecated, renamed: "shownInappsDictionary", message: "Use shownInappsDictionary since version 2.10.0")
     var shownInAppsIds: [String]? { get set }
@@ -135,5 +111,6 @@ extension PersistenceStorage {
         applicationInstanceId = nil
         applicationInfoUpdateVersion = nil
         webViewLearnedHosts = nil
+        embeddedBlockPlaceRecords = nil
     }
 }

@@ -25,11 +25,10 @@ final class TestProtocolMigration_1: MigrationProtocol {
     }
 
     func run() throws {
-        // Do some code
     }
 }
 
-final class TestProtocolMigration_2: MigrationProtocol {
+final class TestProtocolMigration_2_IncrementsVersionCodeInRun: MigrationProtocol {
 
     private var persistenceStorage: PersistenceStorage
 
@@ -46,7 +45,6 @@ final class TestProtocolMigration_2: MigrationProtocol {
     }
 
     func run() throws {
-        // Do some code
         let versionCodeForMigration = persistenceStorage.versionCodeForMigration!
         persistenceStorage.versionCodeForMigration = versionCodeForMigration + 1
     }
@@ -56,7 +54,7 @@ final class TestProtocolMigration_2: MigrationProtocol {
     }
 }
 
-final class TestProtocolMigration_3: MigrationProtocol {
+final class TestProtocolMigration_3_WithRunError: MigrationProtocol {
 
     private var persistenceStorage: PersistenceStorage
 
@@ -73,10 +71,7 @@ final class TestProtocolMigration_3: MigrationProtocol {
     }
 
     func run() throws {
-        // Do some code
         throw NSError(domain: "com.sdk.migration", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid version for migration"])
-        // let versionCodeForMigration = persistenceStorage.versionCodeForMigration!
-        // persistenceStorage.versionCodeForMigration = versionCodeForMigration + 1
     }
 
     init(persistenceStorage: PersistenceStorage) {

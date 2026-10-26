@@ -50,13 +50,11 @@ struct URLValidatorTests {
 
     @Test("Three numeric labels are NOT treated as IPv4 — fall through to hostname rules")
     func threeNumericLabelsAreHostname() {
-        // 1.2.3 is not IPv4 (3 labels, not 4) and remains structurally a valid hostname.
         #expect(URLValidator.isValidHost("1.2.3"))
     }
 
     @Test("Five numeric labels are NOT treated as IPv4 — fall through to hostname rules")
     func fiveNumericLabelsAreHostname() {
-        // 5 labels of digits are structurally a valid hostname even though not IPv4.
         #expect(URLValidator.isValidHost("1.2.3.4.5"))
     }
 
@@ -108,8 +106,8 @@ struct URLValidatorTests {
 
     @Test("Total length over 253 fails")
     func tooLongFails() {
-        let label = String(repeating: "a", count: 60) // 60 chars per label, well-formed
-        let host = (1...5).map { _ in label }.joined(separator: ".") // 5*60 + 4 = 304 chars
+        let label = String(repeating: "a", count: 60)
+        let host = (1...5).map { _ in label }.joined(separator: ".")
         #expect(!URLValidator.isValidHost(host))
     }
 
@@ -123,13 +121,11 @@ struct URLValidatorTests {
 
     @Test("253-char total length is the max accepted")
     func totalLengthBoundary() {
-        // 4 × 63-char labels + 3 dots = 255 → too long
         let label63 = String(repeating: "a", count: 63)
         let invalid = (1...4).map { _ in label63 }.joined(separator: ".")
         #expect(invalid.count == 255)
         #expect(!URLValidator.isValidHost(invalid))
 
-        // 3 × 63-char labels + 1 × 61-char label + 3 dots = 253 → valid
         let label61 = String(repeating: "b", count: 61)
         let valid = [label63, label63, label63, label61].joined(separator: ".")
         #expect(valid.count == 253)

@@ -79,6 +79,4 @@ class TestModeRegistrationTests: XCTestCase {
         XCTAssertNotNil(manager)
         XCTAssert(manager is InAppCoreManagerMock)
     }
-
-    // Добавьте тесты для всех остальных классов
 }

@@ -11,12 +11,14 @@ import UIKit
 @testable import Mindbox
 
 @Suite("TimeToDisplay excludes background time")
+@MainActor
 struct TimeToDisplayBackgroundTests {
 
     private var scheduleManager: InappScheduleManager
     private var presentationManagerMock: InAppPresentationManagerMock
     private var trackerMock: InAppMessagesTrackerSpyMock
     private let notificationCenter = NotificationCenter()
+    private let clock = TestClock()
 
     init() {
         TestConfiguration.configure()
@@ -26,9 +28,8 @@ struct TimeToDisplayBackgroundTests {
 
         scheduleManager = InappScheduleManager(
             presentationManager: presentationManagerMock,
-            presentationValidator: DI.injectOrFail(InAppPresentationValidatorProtocol.self),
-            trackingService: InAppTrackingServiceMock(),
-            tracker: trackerMock,
+            budget: DI.injectOrFail(InappShowBudgeting.self),
+            accountant: InappShowAccountant(tracker: trackerMock, budget: DI.injectOrFail(InappShowBudgeting.self)),
             failureManager: InappShowFailureManagerMock()
         )
 
@@ -37,87 +38,58 @@ struct TimeToDisplayBackgroundTests {
 
     // MARK: - Tests
 
-    @Test("No background — timeToDisplay matches real elapsed time", .tags(.inAppSchedule))
+    @Test("No background — timeToDisplay is the elapsed time", .tags(.inAppSchedule))
     func timeToDisplay_noBackground_matchesElapsedTime() throws {
-        let stopwatch = ForegroundStopwatch(notificationCenter: notificationCenter)
+        let stopwatch = ForegroundStopwatch(notificationCenter: notificationCenter, now: { clock.now })
         let inapp = createInAppFormData(id: "no-bg")
 
-        Thread.sleep(forTimeInterval: 0.1)
+        clock.advance(0.5)
 
         scheduleManager.presentInapp(inapp, stopwatch: stopwatch, processingDuration: 0)
         presentationManagerMock.receivedOnPresent?()
 
-        let seconds = try parseTimeToDisplay()
-
-        #expect(seconds >= 0.1, "Expected timeToDisplay >= 0.1s, got \(seconds)s")
-        #expect(seconds < 0.2, "Expected timeToDisplay < 0.2s (no background time to subtract), got \(seconds)s")
+        #expect(try parseTimeToDisplay() == 0.5)
     }
 
     @Test("Single background session — background time is excluded from timeToDisplay", .tags(.inAppSchedule))
     func timeToDisplay_singleBackground_excludesBackgroundTime() throws {
-        let stopwatch = ForegroundStopwatch(notificationCenter: notificationCenter)
+        let stopwatch = ForegroundStopwatch(notificationCenter: notificationCenter, now: { clock.now })
         let inapp = createInAppFormData(id: "single-bg")
 
-        // ~0.05s foreground
-        Thread.sleep(forTimeInterval: 0.05)
-
-        // ~0.3s background (should be excluded)
-        notificationCenter.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
-        Thread.sleep(forTimeInterval: 0.3)
-        notificationCenter.post(name: UIApplication.willEnterForegroundNotification, object: nil)
-
-        // ~0.05s foreground
-        Thread.sleep(forTimeInterval: 0.05)
+        clock.advance(0.25)
+        enterBackground(for: 2)
+        clock.advance(0.25)
 
         scheduleManager.presentInapp(inapp, stopwatch: stopwatch, processingDuration: 0)
         presentationManagerMock.receivedOnPresent?()
 
-        let seconds = try parseTimeToDisplay()
-
-        // Foreground time: ~0.05 + ~0.05 = ~0.1s
-        // Background time: ~0.3s (excluded)
-        // Total wall time: ~0.4s, but timeToDisplay should be ~0.1s
-        #expect(seconds >= 0.05, "Expected timeToDisplay >= 0.05s (foreground time), got \(seconds)s")
-        #expect(seconds < 0.2, "Expected timeToDisplay < 0.2s (excluding ~0.3s background), got \(seconds)s")
+        #expect(try parseTimeToDisplay() == 0.5)
     }
 
     @Test("Multiple background sessions — all background time excluded, all foreground time counted", .tags(.inAppSchedule))
     func timeToDisplay_multipleBackgrounds_onlyForegroundCounted() throws {
-        let stopwatch = ForegroundStopwatch(notificationCenter: notificationCenter)
+        let stopwatch = ForegroundStopwatch(notificationCenter: notificationCenter, now: { clock.now })
         let inapp = createInAppFormData(id: "multi-bg")
 
-        // ~0.05s foreground
-        Thread.sleep(forTimeInterval: 0.05)
-
-        // ~0.2s background #1 (excluded)
-        notificationCenter.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
-        Thread.sleep(forTimeInterval: 0.2)
-        notificationCenter.post(name: UIApplication.willEnterForegroundNotification, object: nil)
-
-        // ~0.05s foreground
-        Thread.sleep(forTimeInterval: 0.05)
-
-        // ~0.2s background #2 (excluded)
-        notificationCenter.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
-        Thread.sleep(forTimeInterval: 0.2)
-        notificationCenter.post(name: UIApplication.willEnterForegroundNotification, object: nil)
-
-        // ~0.05s foreground
-        Thread.sleep(forTimeInterval: 0.05)
+        clock.advance(0.25)
+        enterBackground(for: 2)
+        clock.advance(0.25)
+        enterBackground(for: 4)
+        clock.advance(0.25)
 
         scheduleManager.presentInapp(inapp, stopwatch: stopwatch, processingDuration: 0)
         presentationManagerMock.receivedOnPresent?()
 
-        let seconds = try parseTimeToDisplay()
-
-        // Foreground time: ~0.05 + ~0.05 + ~0.05 = ~0.15s
-        // Background time: ~0.2 + ~0.2 = ~0.4s (excluded)
-        // Total wall time: ~0.55s, but timeToDisplay should be ~0.15s
-        #expect(seconds >= 0.1, "Expected timeToDisplay >= 0.1s (foreground time), got \(seconds)s")
-        #expect(seconds < 0.25, "Expected timeToDisplay < 0.25s (excluding ~0.4s background), got \(seconds)s")
+        #expect(try parseTimeToDisplay() == 0.75)
     }
 
     // MARK: - Helpers
+
+    private func enterBackground(for seconds: TimeInterval) {
+        notificationCenter.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
+        clock.advance(seconds)
+        notificationCenter.post(name: UIApplication.willEnterForegroundNotification, object: nil)
+    }
 
     private func parseTimeToDisplay() throws -> Double {
         let timeToDisplayString = try #require(trackerMock.lastTimeToDisplay)
@@ -141,8 +113,10 @@ struct TimeToDisplayBackgroundTests {
 
 final class InAppMessagesTrackerSpyMock: InAppMessagesTrackerProtocol {
     private(set) var trackViewCallCount = 0
+    private(set) var trackTargetingCallCount = 0
     private(set) var lastTimeToDisplay: String?
     private(set) var lastTrackedId: String?
+    private(set) var lastTargetedId: String?
 
     func trackView(id: String, timeToDisplay: String?, tags: [String: String]?) throws {
         trackViewCallCount += 1
@@ -151,4 +125,9 @@ final class InAppMessagesTrackerSpyMock: InAppMessagesTrackerProtocol {
     }
 
     func trackClick(id: String, tags: [String: String]?) throws {}
+
+    func trackTargeting(id: String, tags: [String: String]?) throws {
+        trackTargetingCallCount += 1
+        lastTargetedId = id
+    }
 }

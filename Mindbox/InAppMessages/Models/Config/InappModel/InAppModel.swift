@@ -15,6 +15,7 @@ struct InAppDTO: Decodable, Equatable {
     let delayTime: String?
     let sdkVersion: SdkVersion
     var frequency: InappFrequency?
+    let displayConditions: DisplayConditions
     let targeting: Targeting
     let form: InAppFormDTO
     let tags: [String: String]?
@@ -25,6 +26,7 @@ struct InAppDTO: Decodable, Equatable {
         case delayTime
         case sdkVersion
         case frequency
+        case displayConditions
         case targeting
         case form
         case tags
@@ -37,7 +39,6 @@ extension InAppDTO {
         self.id = try container.decode(String.self, forKey: .id)
         self.isPriority = (try? container.decode(Bool.self, forKey: .isPriority)) ?? false
         
-        // Логирование для delayTime
         do {
             self.delayTime = try container.decodeIfPresent(String.self, forKey: .delayTime)
             if let delayTime = self.delayTime {
@@ -59,6 +60,8 @@ extension InAppDTO {
             frequency = .once(OnceFrequency(kind: .lifetime))
         }
 
+        self.displayConditions = (try? container.decode(DisplayConditions.self, forKey: .displayConditions)) ?? .unrestricted
+
         self.targeting = try container.decode(Targeting.self, forKey: .targeting)
         self.form = try container.decode(InAppFormDTO.self, forKey: .form)
 
@@ -73,6 +76,7 @@ struct InApp: Decodable, Equatable {
     let sdkVersion: SdkVersion
     let targeting: Targeting
     var frequency: InappFrequency?
+    let displayConditions: DisplayConditions
     let form: InAppForm
     let tags: [String: String]?
 }

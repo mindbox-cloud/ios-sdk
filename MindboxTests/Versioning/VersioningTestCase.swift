@@ -16,7 +16,6 @@ class VersioningTestCase: XCTestCase {
 
     var persistenceStorage: PersistenceStorage!
     var databaseRepository: DatabaseRepositoryProtocol!
-    var guaranteedDeliveryManager: GuaranteedDeliveryManager!
 
     override func setUp() {
         super.setUp()
@@ -27,8 +26,8 @@ class VersioningTestCase: XCTestCase {
         databaseRepository = DI.injectOrFail(DatabaseRepositoryProtocol.self)
         try! databaseRepository.erase()
 
-        guaranteedDeliveryManager = DI.injectOrFail(GuaranteedDeliveryManager.self)
         Mindbox.shared.assembly()
+        EmbeddedBlockAppPresence.shared.reset()
         let timer = DI.injectOrFail(TimerManager.self)
         timer.invalidate()
 
@@ -38,7 +37,6 @@ class VersioningTestCase: XCTestCase {
     override func tearDown() {
         persistenceStorage = nil
         databaseRepository = nil
-        guaranteedDeliveryManager = nil
         queues.removeAll()
         super.tearDown()
     }
@@ -46,7 +44,6 @@ class VersioningTestCase: XCTestCase {
     func testInfoUpdateVersioningByAPNSToken() {
         initConfiguration(delay: .default)
 
-        self.guaranteedDeliveryManager.canScheduleOperations = false
         let infoUpdateLimit = 50
 
         makeMockAsyncCallWithDelay(limit: infoUpdateLimit) { _ in
@@ -83,7 +80,6 @@ class VersioningTestCase: XCTestCase {
         setupCyclicStatusProvider()
         initConfiguration(delay: .default)
 
-        self.guaranteedDeliveryManager.canScheduleOperations = false
         let infoUpdateLimit = 50
 
         makeMockSequentialCall(limit: infoUpdateLimit) { _ in
@@ -97,7 +93,6 @@ class VersioningTestCase: XCTestCase {
         setupCyclicStatusProvider()
         initConfiguration(delay: .default)
 
-        self.guaranteedDeliveryManager.canScheduleOperations = false
         let infoUpdateLimit = 50
 
         makeMockSequentialCall(limit: infoUpdateLimit) { _ in
@@ -126,7 +121,7 @@ private extension VersioningTestCase {
         var timeInterval: TimeInterval {
             switch self {
             case .default:
-                return 3.5 // 1.5 секунды
+                return 3.5
             case .custom(let interval):
                 switch interval {
                 case .seconds(let seconds):
@@ -156,6 +151,7 @@ private extension VersioningTestCase {
         }
 
         wait(for: [delayExpectation], timeout: of.timeInterval * 2)
+        try! databaseRepository.erase()
     }
 
     func initConfiguration() {
@@ -180,11 +176,9 @@ private extension VersioningTestCase {
             }
         }
 
-        // Явное ожидание завершения всех задач
         let result = dispatchGroup.wait(timeout: .now() + TimeInterval(limit / 2))
         XCTAssertEqual(result, .success, "Timeout while waiting for async calls")
 
-        // Проверяем, что все вызовы произошли
         XCTAssertEqual(dispatchGroup.wait(timeout: .now()), .success, "Not all calls completed")
     }
 
@@ -224,8 +218,6 @@ private extension VersioningTestCase {
         wait(for: [delayExpectation], timeout: of.timeInterval * 2)
     }
     
-    /// Sets up CyclicUNAuthorizationStatusProvider for versioning tests.
-    /// Must use .container scope (singleton) to preserve state between calls.
     func setupCyclicStatusProvider() {
         MBInject.container.register(
             UNAuthorizationStatusProviding.self,
@@ -236,7 +228,6 @@ private extension VersioningTestCase {
         }
     }
     
-    /// Verifies that events are properly versioned with sequential version numbers.
     func verifyVersioning(limit: Int, file: StaticString = #file, line: UInt = #line) {
         delay(of: .default)
 

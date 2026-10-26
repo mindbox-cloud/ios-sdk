@@ -9,7 +9,7 @@
 import XCTest
 import CoreData.NSPersistentContainer
 @testable import Mindbox
-@testable import MindboxLogger // MBPersistentContainer
+@testable import MindboxLogger
 
 final class MigrationManagerTests: XCTestCase {
 
@@ -48,7 +48,7 @@ final class MigrationManagerTests: XCTestCase {
     }
 
     @available(*, deprecated, message: "Suppress deprecated `shownInAppsIds` and `shownInappsDictionary` warning")
-    func testProductionMigrations() { // Check list of migrations in MigrationManager - self.migration
+    func testProductionMigrations() {
         let initialInstallationDate = persistenceStorageMock.installationDate
         
         setUpForRemoveBackgroundTaskDataMigration()
@@ -110,7 +110,6 @@ extension MigrationManagerTests {
          var urls: [URL] = []
          urls.append(MBPersistentContainer.defaultDirectoryURL().appendingPathComponent(fileName))
          urls.append(NSPersistentContainer.defaultDirectoryURL().appendingPathComponent(fileName))
-         // De-duplicate & standardize
          return Array(Set(urls.map { $0.standardizedFileURL }))
      }
 
@@ -126,19 +125,15 @@ extension MigrationManagerTests {
          }
      }
 
-     /// Seeds metadata directly into the SQLite file(s) the migration will read,
-     /// without going through the live repository.
      private func setUpForDatabaseMetadataMigration(
          infoUpdate: Int = 3,
          instanceId: String = "test-instance-id",
          file: StaticString = #file,
          line: UInt = #line
      ) {
-         // Reset destination so migration has work to do
          persistenceStorageMock.applicationInfoUpdateVersion = nil
          persistenceStorageMock.applicationInstanceId = nil
 
-         // Load the Core Data model so we can create a real store file
          let modelName = Constants.Database.mombName
          let modelURLs = [
              Bundle(for: MBDatabaseRepository.self).url(forResource: modelName, withExtension: "momd"),
@@ -158,7 +153,6 @@ extension MigrationManagerTests {
              do {
                  try fm.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
 
-                 // Create a SQLite store
                  let psc = NSPersistentStoreCoordinator(managedObjectModel: model)
                  let store = try psc.addPersistentStore(
                      ofType: NSSQLiteStoreType,
@@ -166,16 +160,13 @@ extension MigrationManagerTests {
                      at: url
                  )
 
-                 // Merge & set metadata via PSC first
                  var md = psc.metadata(for: store)
                  md[Constants.StoreMetadataKey.infoUpdate.rawValue] = infoUpdate
                  md[Constants.StoreMetadataKey.instanceId.rawValue] = instanceId
                  psc.setMetadata(md, for: store)
 
-                 // Close the store to flush
                  try? psc.remove(store)
 
-                 // And write the same metadata via the class API to the file path to be 100% sure
                  try NSPersistentStoreCoordinator.setMetadata(
                      md,
                      forPersistentStoreOfType: NSSQLiteStoreType,
@@ -236,7 +227,6 @@ extension MigrationManagerTests {
     }
     
     private func createDummyFile() throws {
-        // Просто создаём пустой файл в Documents
         FileManager.default.createFile(atPath: fileURL.path, contents: Data(), attributes: nil)
     }
 }
@@ -273,7 +263,7 @@ extension MigrationManagerTests {
         let testMigrations: [MigrationProtocol] = [
             TestBaseMigration_1(),
             TestBaseMigration_2(),
-            TestBaseMigration_3_IsNeeded_False() // IsNeeded == false -> No auto increment in BaseMigration
+            TestBaseMigration_3_IsNeeded_False()
         ]
 
         let expectedSdkVersionCodeAfterMigrations = 2
@@ -355,7 +345,7 @@ extension MigrationManagerTests {
     func testPerformTwoTestProtocolMigrations() {
         let testMigrations: [MigrationProtocol] = [
             TestProtocolMigration_1(),
-            TestProtocolMigration_2(persistenceStorage: persistenceStorageMock) // Used increment sdkVersionCode into `run`
+            TestProtocolMigration_2_IncrementsVersionCodeInRun(persistenceStorage: persistenceStorageMock)
         ]
 
         let expectedSdkVersionCodeAfterMigrations = 1
@@ -372,8 +362,8 @@ extension MigrationManagerTests {
     func testPerformThreeTestProtocolMigrations() {
         let testMigrations: [MigrationProtocol] = [
             TestProtocolMigration_1(),
-            TestProtocolMigration_2(persistenceStorage: persistenceStorageMock), // Used increment sdkVersionCode into `run`
-            TestProtocolMigration_3(persistenceStorage: persistenceStorageMock) // Throw error into `run`
+            TestProtocolMigration_2_IncrementsVersionCodeInRun(persistenceStorage: persistenceStorageMock),
+            TestProtocolMigration_3_WithRunError(persistenceStorage: persistenceStorageMock)
         ]
 
         let expectedSdkVersionCodeAfterMigrations = 2
@@ -399,10 +389,10 @@ extension MigrationManagerTests {
 
     func testPerformMixedTestMigrations() {
         let testMigrations: [MigrationProtocol] = [
-            TestBaseMigration_1(), // Auto Increment sdkVersionCode
-            TestBaseMigration_2(), // Auto Increment sdkVersionCode
+            TestBaseMigration_1(),
+            TestBaseMigration_2(),
             TestProtocolMigration_1(),
-            TestProtocolMigration_2(persistenceStorage: persistenceStorageMock) // Used increment sdkVersionCode into `run`
+            TestProtocolMigration_2_IncrementsVersionCodeInRun(persistenceStorage: persistenceStorageMock)
         ]
 
         let expectedSdkVersionCodeAfterMigrations = 3

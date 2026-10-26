@@ -77,15 +77,12 @@ struct MotionServiceResolvePositionTests {
 
     @Test("Current position holds while gravity stays above exitThreshold")
     func positionHoldsAboveExitThreshold() {
-        // Gravity weakens to 0.65 — still above exitThreshold (0.6)
         let result = sut.resolvePosition(gravity: gravity(z: -0.65), current: .faceUp)
         #expect(result == .faceUp)
     }
 
     @Test("Current position lost when gravity drops below exitThreshold")
     func positionLostBelowExitThreshold() {
-        // Gravity drops to 0.5 — below exitThreshold (0.6)
-        // No other axis above enterThreshold — returns nil
         let result = sut.resolvePosition(gravity: gravity(y: -0.5, z: -0.5), current: .faceUp)
         #expect(result == nil)
     }
@@ -94,7 +91,6 @@ struct MotionServiceResolvePositionTests {
 
     @Test("Transitions from faceUp to faceDown")
     func transitionFaceUpToFaceDown() {
-        // Gravity flips: z goes from negative to positive > 0.8
         let result = sut.resolvePosition(gravity: gravity(z: 0.9), current: .faceUp)
         #expect(result == .faceDown)
     }
@@ -107,11 +103,9 @@ struct MotionServiceResolvePositionTests {
 
     @Test("Transitions from portrait through intermediate to faceDown")
     func transitionWithIntermediate() {
-        // Phone tilts — exits portrait, enters faceUp
         let step1 = sut.resolvePosition(gravity: gravity(z: -0.9), current: .portrait)
         #expect(step1 == .faceUp)
 
-        // Continues to faceDown
         let step2 = sut.resolvePosition(gravity: gravity(z: 0.9), current: .faceUp)
         #expect(step2 == .faceDown)
     }
@@ -120,7 +114,6 @@ struct MotionServiceResolvePositionTests {
 
     @Test("Selects dominant axis when multiple exceed enterThreshold")
     func dominantAxisSelection() {
-        // Both z and y exceed 0.8, but z is stronger
         let result = sut.resolvePosition(gravity: gravity(y: -0.85, z: -0.9), current: nil)
         #expect(result == .faceUp)
     }
@@ -135,8 +128,6 @@ struct MotionServiceResolvePositionTests {
 
     @Test("No flickering at boundary — current position wins in dead zone")
     func noFlickeringAtBoundary() {
-        // gravity.y = -0.65 (above exit 0.6), gravity.z = -0.7 (below enter 0.8)
-        // portrait should hold because it's still above exitThreshold
         let result = sut.resolvePosition(gravity: gravity(y: -0.65, z: -0.7), current: .portrait)
         #expect(result == .portrait)
     }

@@ -168,20 +168,12 @@ public class Logger {
             responseLog += "[Host]: \(host)\n"
         }
 
-//        for (key, value) in (response as? HTTPURLResponse)?.allHeaderFields ?? [:] {
-//            responseLog += "\(key): \(value)\n"
-//        }
-
         if let body = data,
            let object = try? JSONSerialization.jsonObject(with: body, options: []),
            let data = try? JSONSerialization.data(withJSONObject: object, options: [.prettyPrinted]),
            let prettyPrintedString = NSString(data: data, encoding: String.Encoding.utf8.rawValue) {
             responseLog += "[Body]: \n\(prettyPrintedString)\n"
         }
-//
-//        if let body = data {
-//            responseLog += "[Body]: \n\(String(data: body, encoding: .utf8) ?? "")\n"
-//        }
 
         var level: LogLevel = .debug
         if let error = error {
@@ -209,10 +201,6 @@ public class Logger {
 
 // MARK: - Private Functions
 private extension Logger {
-    /// Extract the file name from the file path
-    ///
-    /// - Parameter filePath: Full file path in bundle
-    /// - Returns: File Name with extension
     static func sourceFileName(filePath: String) -> String {
         let components = filePath.components(separatedBy: "/")
         return components.last ?? ""

@@ -9,7 +9,6 @@
 import Foundation
 import UIKit
 
-/// Domain model that contains all data needed to show inapp on screen
 struct InAppFormData {
     let inAppId: String
     let isPriority: Bool
@@ -21,6 +20,8 @@ struct InAppFormData {
     let tags: [String: String]?
     var operation: (name: String, body: String)?
 
+    let extraParams: [String: JSONValue]?
+
     init(
         inAppId: String,
         isPriority: Bool,
@@ -30,7 +31,8 @@ struct InAppFormData {
         content: MindboxFormVariant,
         frequency: InappFrequency?,
         tags: [String: String]? = nil,
-        operation: (name: String, body: String)? = nil
+        operation: (name: String, body: String)? = nil,
+        extraParams: [String: JSONValue]? = nil
     ) {
         self.inAppId = inAppId
         self.isPriority = isPriority
@@ -41,10 +43,10 @@ struct InAppFormData {
         self.frequency = frequency
         self.tags = tags
         self.operation = operation
+        self.extraParams = extraParams
     }
 }
 
-// TODO: - Need to remove this struct and use only InappFormData.
 struct InAppTransitionData: Equatable {
     let inAppId: String
     let isPriority: Bool

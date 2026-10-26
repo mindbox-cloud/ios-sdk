@@ -33,14 +33,14 @@ final class GuaranteedDeliveryManager: NSObject {
 
     @objc dynamic var stateObserver: NSString
 
-    private(set) var state: State = .idle {
+    @Locked private(set) var state: State = .idle {
         didSet {
             stateObserver = NSString(string: state.rawValue)
             Logger.common(message: "[GD] State did set to value: \(state.description)", level: .info, category: .delivery)
         }
     }
 
-    var canScheduleOperations = false {
+    @Locked var canScheduleOperations = false {
         didSet {
             Logger.common(message: "[GD] Scheduling of operations is now \(canScheduleOperations ? "enabled" : "disabled")", level: .info, category: .delivery)
             performScheduleIfNeeded()
@@ -64,7 +64,7 @@ final class GuaranteedDeliveryManager: NSObject {
         )
         self.retryDeadline = retryDeadline
         self.fetchLimit = fetchLimit
-        stateObserver = NSString(string: state.description)
+        stateObserver = NSString(string: State.idle.description)
         super.init()
         databaseRepository.onObjectsDidChange = performScheduleIfNeeded
         performScheduleIfNeeded()
@@ -140,13 +140,12 @@ final class GuaranteedDeliveryManager: NSObject {
         Logger.common(message: "[GD] Enqueued events count: \(delivery.count)", level: .info, category: .delivery)
         delivery.forEach {
             completion.addDependency($0)
-            $0.onCompleted = onCompletedEvent // TODO: - remove
+            $0.onCompleted = onCompletedEvent
         }
         let operations = delivery + [completion]
         queue.addOperations(operations, waitUntilFinished: false)
     }
 
-    /// Cancels all queued and executing operations
     func cancelAllOperations() {
         queue.cancelAllOperations()
         eventRepository.cancelAllRequests()

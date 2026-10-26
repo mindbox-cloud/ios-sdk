@@ -16,7 +16,7 @@ final class WebViewNoCacheRetryPolicy {
 
     var hasRetried: Bool { attemptsUsed > 0 }
 
-    init(isCacheFeatureEnabled: @escaping () -> Bool) {
+    init(isCacheFeatureEnabled: @escaping () -> Bool = { InAppWebViewDataStore.isCacheFeatureEnabled }) {
         self.isCacheFeatureEnabled = isCacheFeatureEnabled
     }
 

@@ -72,7 +72,6 @@ final class MBSystemInfoProvider: SystemInfoProvider {
             return view.safeAreaInsets
         }
 
-        // Fallback to key window if view is not provided
         if #available(iOS 13.0, *) {
             let window = UIApplication.shared.windows.first { $0.isKeyWindow }
             return window?.safeAreaInsets ?? .zero
@@ -82,8 +81,8 @@ final class MBSystemInfoProvider: SystemInfoProvider {
         }
     }
 
-    func getGrantedPermissions() -> [String: PermissionStatus] {
-        return permissionProvider.getGrantedPermissions()
+    func getGrantedPermissions(_ completion: @escaping ([String: PermissionStatus]) -> Void) {
+        permissionProvider.getGrantedPermissions(completion)
     }
 
     func getBasicSystemInfo() -> [String: Any] {

@@ -9,7 +9,7 @@
 import Foundation
 import Testing
 import WebKit
-@testable import Mindbox
+@_spi(Internal) @testable import Mindbox
 
 @MainActor
 @Suite("InApp WebView prewarm service guards", .tags(.webView))
@@ -18,7 +18,9 @@ struct InAppWebViewPrewarmServiceTests {
     private final class SpyWebView: WKWebView {
         private(set) var loadedHTMLCount = 0
         private(set) var loadedBaseURLs: [URL?] = []
+        private(set) var loadedWithNavigationDelegate: [Bool] = []
         private(set) var stopLoadingCount = 0
+        private(set) var evaluatedScriptCount = 0
         var stubbedIsLoading = false
 
         override var isLoading: Bool { stubbedIsLoading }
@@ -26,11 +28,17 @@ struct InAppWebViewPrewarmServiceTests {
         override func loadHTMLString(_ string: String, baseURL: URL?) -> WKNavigation? {
             loadedHTMLCount += 1
             loadedBaseURLs.append(baseURL)
-            return nil // spy only — keep WebKit from actually navigating in unit tests
+            loadedWithNavigationDelegate.append(navigationDelegate != nil)
+            return nil
         }
 
         override func stopLoading() {
             stopLoadingCount += 1
+        }
+
+        override func evaluateJavaScript(_ javaScriptString: String,
+                                         completionHandler: (@MainActor (Any?, (any Error)?) -> Void)? = nil) {
+            evaluatedScriptCount += 1
         }
     }
 
@@ -57,16 +65,12 @@ struct InAppWebViewPrewarmServiceTests {
         )
     }
 
-    /// The service hops its mutations through `DispatchQueue.main.async`; one more hop
-    /// behind them guarantees they have run.
     private func drainMainQueue() async {
         await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
             DispatchQueue.main.async { continuation.resume() }
         }
     }
 
-    /// The cached-config head start hops through a background queue first — poll for its
-    /// main-queue effects instead of assuming scheduling order.
     private func waitUntil(_ condition: @autoclosure () -> Bool) async throws {
         for _ in 0..<100 where !condition() {
             try await Task.sleep(nanoseconds: 20_000_000)
@@ -91,7 +95,6 @@ struct InAppWebViewPrewarmServiceTests {
 
         suite.service.prewarmProcess()
 
-        // preconnect + content page (the instance is created lazily by the prewarm itself)
         try await suite.waitUntil(suite.spy.loadedHTMLCount == 2)
     }
 
@@ -103,7 +106,7 @@ struct InAppWebViewPrewarmServiceTests {
         await drainMainQueue()
         await drainMainQueue()
 
-        #expect(spy.loadedHTMLCount == 2) // one preconnect + one content page
+        #expect(spy.loadedHTMLCount == 2)
 
         let contentBaseURL = try #require(spy.loadedBaseURLs.last ?? nil)
         #expect(contentBaseURL.host == "inapp.local")
@@ -112,9 +115,8 @@ struct InAppWebViewPrewarmServiceTests {
         #expect(query.contains(URLQueryItem(name: "endpointId", value: "Test.Endpoint")))
         #expect(query.contains(URLQueryItem(name: "deviceUuid", value: "test-device-uuid")))
 
-        // The prewarm injects nothing into the page: user scripts persist across
-        // navigations and would leak into the borrowed instance's shows.
-        #expect(spy.configuration.userContentController.userScripts.isEmpty)
+        let scriptsThatWouldLeakIntoABorrowedShow = spy.configuration.userContentController.userScripts
+        #expect(scriptsThatWouldLeakIntoABorrowedShow.isEmpty)
     }
 
     @Test("The prewarm instance is pinned by the navigation policy until a show takes over")
@@ -136,9 +138,8 @@ struct InAppWebViewPrewarmServiceTests {
 
         #expect(borrowed === suite.spy)
         #expect(suite.spy.stopLoadingCount == 1)
-        #expect(suite.spy.loadedHTMLCount == 3) // preconnect + content + the hard-kill blank at borrow
+        #expect(suite.spy.loadedHTMLCount == 3)
 
-        // While lent to a live show the instance must never be stolen by a second borrow.
         #expect(suite.service.borrowWarmWebView() == nil)
 
         suite.service.parkWarmWebView()
@@ -153,13 +154,25 @@ struct InAppWebViewPrewarmServiceTests {
         try await suite.waitUntil(suite.spy.loadedHTMLCount == 2)
         suite.spy.stubbedIsLoading = true
 
-        // A mid-navigation document must never reach a show: its didFinish can fire
-        // before module scripts evaluate.
         #expect(suite.service.borrowWarmWebView() == nil)
         #expect(suite.spy.stopLoadingCount == 1)
-        #expect(suite.spy.loadedHTMLCount == 3) // head start (2) + park blank
+        #expect(suite.spy.loadedHTMLCount == 3)
 
         suite.spy.stubbedIsLoading = false
+        #expect(suite.service.borrowWarmWebView() === suite.spy)
+    }
+
+    @Test("Our own blank page in flight does not refuse the next borrow")
+    func borrowAcceptsAnInstanceSettlingToOurOwnBlankPage() async throws {
+        let suite = try Self.init(cachedConfig: loadPrewarmTestConfig("InAppWebviewValid"))
+        suite.service.prewarmProcess()
+        try await suite.waitUntil(suite.spy.loadedHTMLCount == 2)
+
+        _ = suite.service.borrowWarmWebView()
+        suite.service.parkWarmWebView()
+        await suite.drainMainQueue()
+        suite.spy.stubbedIsLoading = true
+
         #expect(suite.service.borrowWarmWebView() === suite.spy)
     }
 
@@ -174,7 +187,7 @@ struct InAppWebViewPrewarmServiceTests {
         await suite.drainMainQueue()
         await suite.drainMainQueue()
 
-        #expect(suite.spy.loadedHTMLCount == 3) // head start + borrow hard-kill; nothing more
+        #expect(suite.spy.loadedHTMLCount == 3)
     }
 
     @Test("A show starting before any prewarm blocks later resource prewarms")
@@ -197,8 +210,6 @@ struct InAppWebViewPrewarmServiceTests {
         suite.service.prewarmResources(for: ConfigResponse())
         await suite.drainMainQueue()
 
-        // An in-flight prewarm navigation must not keep burning bandwidth if anything
-        // briefly retains the dropped instance.
         #expect(suite.spy.stopLoadingCount == 1)
         #expect(suite.service.borrowWarmWebView() == nil)
     }
@@ -213,7 +224,7 @@ struct InAppWebViewPrewarmServiceTests {
         suite.service.parkWarmWebView()
         await suite.drainMainQueue()
 
-        #expect(suite.spy.loadedHTMLCount == 4) // head start (2) + borrow hard-kill + park blank
+        #expect(suite.spy.loadedHTMLCount == 4)
     }
 
     @Test("An off-main borrow is refused without touching the warm instance")
@@ -222,7 +233,6 @@ struct InAppWebViewPrewarmServiceTests {
         suite.service.prewarmProcess()
         try await suite.waitUntil(suite.spy.loadedHTMLCount == 2)
 
-        // Deliberate off-main access — exactly what the guard under test refuses.
         nonisolated(unsafe) let service = suite.service
         let refused = await withCheckedContinuation { (continuation: CheckedContinuation<Bool, Never>) in
             DispatchQueue.global().async {
@@ -231,7 +241,6 @@ struct InAppWebViewPrewarmServiceTests {
         }
 
         #expect(refused)
-        // Main-confined state untouched: the instance still serves a main-thread borrow.
         #expect(suite.service.borrowWarmWebView() === suite.spy)
     }
 
@@ -245,7 +254,6 @@ struct InAppWebViewPrewarmServiceTests {
         await suite.drainMainQueue()
 
         #expect(suite.spy.stopLoadingCount == 1)
-        // The next show creates its own WKWebView on the shared store instead.
         #expect(suite.service.borrowWarmWebView() == nil)
     }
 
@@ -262,6 +270,140 @@ struct InAppWebViewPrewarmServiceTests {
         suite.service.parkWarmWebView()
         await suite.drainMainQueue()
         #expect(suite.service.borrowWarmWebView() === suite.spy)
+    }
+
+    @Test("A page that ends hands its warm instance back in the same turn, and the next page borrows it at once")
+    func endedPageHandsTheWarmInstanceToTheNextPageInTheSameTurn() async throws {
+        let suite = try await Self.prewarmed()
+        let first = suite.makePage()
+        #expect(first.makeView() === suite.spy)
+
+        first.endShow()
+        let second = suite.makePage()
+
+        #expect(second.makeView() === suite.spy)
+    }
+
+    @Test("A page that ends gives its instance back with its bridge taken off before the blank page loads")
+    func endedPageLoadsTheBlankPageWithoutItsBridgeAsDelegate() async throws {
+        let suite = try await Self.prewarmed()
+        let page = suite.makePage()
+        #expect(suite.spy.navigationDelegate != nil)
+
+        page.endShow()
+
+        #expect(suite.spy.navigationDelegate == nil)
+        #expect(suite.spy.loadedWithNavigationDelegate.last == false)
+    }
+
+    @Test("A late cleanup from an ended page leaves the instance the next page took alone")
+    func lateCleanupFromAnEndedPageLeavesTheNextPagesInstanceAlone() async throws {
+        let suite = try await Self.prewarmed()
+        let first = suite.makePage()
+        first.endShow()
+        _ = suite.makePage()
+        let stopsByTheNextPage = suite.spy.stopLoadingCount
+
+        first.cleanWebView()
+        await suite.drainMainQueue()
+
+        #expect(suite.spy.stopLoadingCount == stopsByTheNextPage)
+    }
+
+    @Test("An ended page runs no script on the instance it gave back")
+    func endedPageRunsNoScript() async throws {
+        let suite = try await Self.prewarmed()
+        let first = suite.makePage()
+        first.endShow()
+        var failed = false
+
+        first.evaluateJavaScript("1") { result in
+            if case .failure = result { failed = true }
+        }
+
+        #expect(failed)
+    }
+
+    @Test("A script asked on main reaches the page in the same turn, before the page can end and give its instance away")
+    func scriptAskedOnMainReachesThePageInTheSameTurn() async throws {
+        let suite = try await Self.prewarmed()
+        let page = suite.makePage()
+
+        page.evaluateJavaScript("1") { _ in }
+        page.endShow()
+
+        #expect(suite.spy.evaluatedScriptCount == 1)
+    }
+
+    @Test("An ended page sends its page no message through the instance it gave back")
+    func endedPageSendsNoMessage() async throws {
+        let suite = try await Self.prewarmed()
+        let first = suite.makePage()
+        first.endShow()
+
+        first.sendToJS(BridgeMessage(type: .request, action: .localStateChanged, payload: .object([:])))
+
+        #expect(suite.spy.evaluatedScriptCount == 0)
+    }
+
+    @Test("A late park from a show that already gave its instance back loads no second blank page")
+    func lateParkAfterAReturnLoadsNothing() async throws {
+        let suite = try await Self.prewarmed()
+        let borrowed = try #require(suite.service.borrowWarmWebView())
+        suite.service.returnWarmWebView(borrowed)
+        let loadsAfterTheReturn = suite.spy.loadedHTMLCount
+
+        suite.service.parkWarmWebView()
+        await suite.drainMainQueue()
+
+        #expect(suite.spy.loadedHTMLCount == loadsAfterTheReturn)
+    }
+
+    @Test("A late park from a show that gave its instance back leaves it alone once a newer show holds it")
+    func lateParkLeavesTheNewerShowsInstanceAlone() async throws {
+        let suite = try await Self.prewarmed()
+        let borrowed = try #require(suite.service.borrowWarmWebView())
+        suite.service.returnWarmWebView(borrowed)
+        let reborrowed = try #require(suite.service.borrowWarmWebView())
+        let newerPage = UIView()
+        newerPage.addSubview(reborrowed)
+        let loadsByTheNewerShow = suite.spy.loadedHTMLCount
+
+        suite.service.parkWarmWebView()
+        await suite.drainMainQueue()
+
+        #expect(suite.spy.loadedHTMLCount == loadsByTheNewerShow)
+        #expect(suite.service.borrowWarmWebView() == nil)
+        withExtendedLifetime(newerPage) {}
+    }
+
+    @Test("Only the instance lent out can be returned")
+    func onlyTheLentInstanceCanBeReturned() async throws {
+        let suite = try await Self.prewarmed()
+        suite.service.returnWarmWebView(suite.spy)
+        #expect(suite.spy.loadedHTMLCount == 2)
+
+        _ = suite.service.borrowWarmWebView()
+        suite.service.returnWarmWebView(WKWebView())
+
+        #expect(suite.service.borrowWarmWebView() == nil)
+    }
+
+    private static func prewarmed() async throws -> Self {
+        let suite = try Self.init(cachedConfig: loadPrewarmTestConfig("InAppWebviewValid"))
+        suite.service.prewarmProcess()
+        try await suite.waitUntil(suite.spy.loadedHTMLCount == 2)
+        return suite
+    }
+
+    private func makePage() -> MindboxWebViewFacade {
+        MindboxWebViewFacade(params: nil,
+                             operation: nil,
+                             userAgent: SDKUserAgent.build(),
+                             inAppId: "inapp-1",
+                             prewarmService: service,
+                             log: { _ in },
+                             logError: { _ in })
     }
 
     @Test("Observed hosts are persisted under the configuration endpoint")
@@ -296,13 +438,11 @@ struct InAppWebViewPrewarmServiceTests {
         await drainMainQueue()
         await drainMainQueue()
 
-        // Preconnect page loaded; the failed content fetch adds nothing.
         #expect(spy.loadedHTMLCount == 1)
     }
 
     // MARK: Feature toggle
 
-    /// The valid webview config with an explicit `featureToggles` section.
     private static func config(prewarmToggle: Bool?) throws -> ConfigResponse {
         let base = try loadPrewarmTestConfig("InAppWebviewValid")
         let toggles = Settings.FeatureToggles(
@@ -382,7 +522,6 @@ struct InAppWebViewPrewarmServiceTests {
     }
 }
 
-/// A hidden prewarm WebView must never be able to wander off to arbitrary URLs.
 @Suite("InApp WebView prewarm navigation policy", .tags(.webView))
 @MainActor
 struct InAppWebViewPrewarmNavigationPolicyTests {
@@ -396,7 +535,6 @@ struct InAppWebViewPrewarmNavigationPolicyTests {
 
         #expect(policy.decision(for: issued, targetIsMainFrame: true) == .allow)
         #expect(policy.decision(for: URL(string: "https://evil.example/landing"), targetIsMainFrame: true) == .cancel)
-        // The park/borrow blank load is always ours.
         #expect(policy.decision(for: URL(string: "about:blank"), targetIsMainFrame: true) == .allow)
     }
 

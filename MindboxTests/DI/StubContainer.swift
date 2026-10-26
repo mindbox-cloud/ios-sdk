@@ -19,6 +19,7 @@ enum TestConfiguration {
                 .registerABTestUtilities()
                 .registerInappTools()
                 .registerInappPresentation()
+                .registerEmbeddedBlocks()
                 .registerMocks()
         }
 

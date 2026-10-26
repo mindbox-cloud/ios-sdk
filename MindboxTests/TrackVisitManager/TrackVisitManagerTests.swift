@@ -10,11 +10,6 @@ import Testing
 import Foundation
 @testable import Mindbox
 
-// Note: Push deduplication is not tested directly because UNNotificationResponse
-// has no public initializers. The skip-flag mechanism is identical for push and
-// universal link (both set skipNextDirectTrackVisit = true), so universal link
-// tests fully cover the shared deduplication logic.
-
 @Suite("TrackVisitManager", .tags(.trackVisit))
 struct TrackVisitManagerTests {
 
@@ -23,6 +18,7 @@ struct TrackVisitManagerTests {
         let sessionSpy = SpyInappSessionManager()
         let sut = TrackVisitManager(databaseRepository: dbSpy, inappSessionManager: sessionSpy)
         SessionTemporaryStorage.shared.erase()
+        SessionTemporaryStorage.shared.lastTrackVisit = nil
         return (sut, dbSpy, sessionSpy)
     }
 
@@ -60,13 +56,12 @@ struct TrackVisitManagerTests {
     func trackForegroundDoesNotOverwriteLastTrackVisit() throws {
         let (sut, dbSpy, _) = makeSUT()
 
-        // Simulate a prior universal link track visit
         try sut.track(.universalLink(makeUserActivity()))
         let savedTrackVisit = SessionTemporaryStorage.shared.lastTrackVisit
 
         try sut.trackForeground()
 
-        #expect(dbSpy.createdEvents.count == 2) // link + foreground
+        #expect(dbSpy.createdEvents.count == 2)
         let foregroundBody = try decodeTrackVisit(from: dbSpy.createdEvents[1])
         #expect(foregroundBody.source == nil)
         #expect(SessionTemporaryStorage.shared.lastTrackVisit?.source == savedTrackVisit?.source)
@@ -80,7 +75,6 @@ struct TrackVisitManagerTests {
         try sut.trackForeground()
         try sut.trackDirect()
 
-        // Both should send — foreground should not set skip flag
         #expect(dbSpy.createdEvents.count == 2)
     }
 
@@ -93,7 +87,6 @@ struct TrackVisitManagerTests {
         try sut.track(.universalLink(makeUserActivity()))
         try sut.trackDirect()
 
-        // Only universal link event, direct is skipped
         #expect(dbSpy.createdEvents.count == 1)
         let body = try decodeTrackVisit(from: dbSpy.createdEvents[0])
         #expect(body.source == .link)
@@ -120,10 +113,10 @@ struct TrackVisitManagerTests {
         let (sut, dbSpy, _) = makeSUT()
 
         try sut.track(.universalLink(makeUserActivity()))
-        try sut.trackDirect()  // skipped
-        try sut.trackDirect()  // should send
+        try sut.trackDirect()
+        try sut.trackDirect()
 
-        #expect(dbSpy.createdEvents.count == 2) // link + second direct
+        #expect(dbSpy.createdEvents.count == 2)
         let firstBody = try decodeTrackVisit(from: dbSpy.createdEvents[0])
         let secondBody = try decodeTrackVisit(from: dbSpy.createdEvents[1])
         #expect(firstBody.source == .link)
@@ -138,10 +131,9 @@ struct TrackVisitManagerTests {
 
         try sut.track(.universalLink(makeUserActivity()))
         try sut.track(.universalLink(makeUserActivity(url: "https://test-site.g.mindbox.ru")))
-        try sut.trackDirect()  // skipped
-        try sut.trackDirect()  // should send
+        try sut.trackDirect()
+        try sut.trackDirect()
 
-        // 2 links + 1 direct
         #expect(dbSpy.createdEvents.count == 3)
         let sources = try dbSpy.createdEvents.map { try decodeTrackVisit(from: $0).source }
         #expect(sources == [.link, .link, .direct])
@@ -154,10 +146,9 @@ struct TrackVisitManagerTests {
         let (sut, dbSpy, _) = makeSUT()
 
         try sut.track(.universalLink(makeUserActivity()))
-        try sut.trackForeground()  // keepalive — should not consume flag
-        try sut.trackDirect()      // should still be skipped
+        try sut.trackForeground()
+        try sut.trackDirect()
 
-        // link + foreground, direct is skipped
         #expect(dbSpy.createdEvents.count == 2)
         let sources = try dbSpy.createdEvents.map { try decodeTrackVisit(from: $0).source }
         #expect(sources == [.link, nil])
@@ -172,10 +163,21 @@ struct TrackVisitManagerTests {
         try sut.track(.universalLink(makeUserActivity()))
         let countAfterLink = sessionSpy.checkInappSessionCallCount
 
-        try sut.trackDirect()  // skipped, but checkInappSession should still be called
+        try sut.trackDirect()
 
-        #expect(dbSpy.createdEvents.count == 1) // only link event
+        #expect(dbSpy.createdEvents.count == 1)
         #expect(sessionSpy.checkInappSessionCallCount == countAfterLink + 1)
+    }
+
+    @Test("A visit whose write fails still runs the session check, and the failure still reaches the caller")
+    func failedWriteStillChecksTheSession() {
+        let (sut, dbSpy, sessionSpy) = makeSUT()
+        dbSpy.failsToCreate = true
+
+        #expect(throws: SpyDatabaseRepository.WriteFailed.self) {
+            try sut.trackDirect()
+        }
+        #expect(sessionSpy.checkInappSessionCallCount == 1)
     }
 
     // MARK: - Normal foreground without push/link
@@ -207,7 +209,11 @@ struct TrackVisitManagerTests {
 // MARK: - Test doubles
 
 private final class SpyDatabaseRepository: DatabaseRepositoryProtocol {
+    struct WriteFailed: Error {}
+
     var createdEvents: [Event] = []
+
+    var failsToCreate = false
 
     var limit: Int { 100 }
     var lifeLimitDate: Date? { nil }
@@ -215,6 +221,8 @@ private final class SpyDatabaseRepository: DatabaseRepositoryProtocol {
     var onObjectsDidChange: (() -> Void)?
 
     func create(event: Event) throws {
+        guard !failsToCreate else { throw WriteFailed() }
+
         createdEvents.append(event)
     }
 

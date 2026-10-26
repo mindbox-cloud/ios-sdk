@@ -14,8 +14,8 @@ enum Constants {
 
         static let removeDeprecatedEventsInterval = TimeInterval(7 * 24 * 60 * 60)
 
-        static let refreshTaskInterval = TimeInterval(6 * 60 * 60) // 6 hours
-        static let processingTaskInterval = TimeInterval(12 * 60 * 60) // 12 hours
+        static let refreshTaskInterval = TimeInterval(6 * 60 * 60)
+        static let processingTaskInterval = TimeInterval(12 * 60 * 60)
     }
 
     enum Database {
@@ -28,12 +28,14 @@ enum Constants {
 
         static let mindBoxIdentifireKey = "uniqueKey"
         static let pushTokenKeepalive = "pushTokenKeepalive"
+        static let configVersion = "configVersion"
+        static let sessionCheckStartedAt = "sessionCheckStartedAt"
+        static let startsNewSession = "startsNewSession"
     }
 
-    /// Mobile configuration sdkVersion.
     enum Versions {
         static let webBridgeVersion = 1
-        static let sdkVersionNumeric = 12
+        static let sdkVersionNumeric = 13
     }
 
     enum WebViewLocalState {
@@ -57,8 +59,6 @@ enum Constants {
             return "(()=>{try{\(bridgeFunction)(\(quoted));return!0}catch(_){return!1}})()"
         }
 
-        // Returns a status, not a boolean: the give-up failure carries it into errorDetails, so a
-        // missing native handler is told apart from page JS that never booted.
         static let bridgeReady = "ok"
         static let bridgeNoNativeHandler = "no-native-bridge"
         static let bridgeNoPageHandlers = "no-handlers"
@@ -95,20 +95,15 @@ enum Constants {
         """
     }
 
-    /// Constants used for migration management.
     enum Migration {
 
-        /// The current SDK version code used for comparison in migrations.
         static let sdkVersionCode = 0
     }
     
-    /// Constants helper. Operations used for update push-notifications data on the server
     enum InfoUpdateVersions {
         
-        /// Operation for the “application info updated” event.
         case infoUpdated
         
-        /// Operation for the “application keep-alive” event.
         case keepAlive
         
         var operation: Event.Operation {
@@ -123,6 +118,14 @@ enum Constants {
     
     enum WebView {
         static let timeoutSeconds = 7
+    }
+
+    enum EmbeddedBlock {
+        static let readyTimeoutSeconds = 7
+
+        static let answerTimeoutSeconds = 30
+
+        static let revealAnimationDuration: TimeInterval = 0.25
     }
 
     enum MagicNumbers {

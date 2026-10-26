@@ -27,6 +27,7 @@ struct DeviceUUIDInitializationTests {
         controllerQueue = coreController.controllerQueue
         let databaseRepository = DI.injectOrFail(DatabaseRepositoryProtocol.self)
         try? databaseRepository.erase()
+        EmbeddedBlockAppPresence.shared.reset()
     }
 
     @Test("Honest reinstall: empty storage generates a deviceUUID and an applicationInstanceId")
@@ -58,9 +59,6 @@ struct DeviceUUIDInitializationTests {
     @Test("Persisted deviceUUID is reused on install, not regenerated")
     func persistedDeviceUUIDIsReused() async throws {
         storage.reset()
-        // Simulate a locale-driven re-installation: `isInstalled` became false (installationDate
-        // absent), yet a deviceUUID from a previous installation is still persisted. The fix must
-        // reuse that deviceUUID instead of generating a new one.
         let persistedUUID = "00000000-0000-0000-0000-0000000000AA"
         storage.deviceUUID = persistedUUID
         #expect(storage.installationDate == nil)
@@ -94,8 +92,6 @@ struct DeviceUUIDInitializationTests {
         )
         #expect(storage.isInstalled, "Storage must be installed after the first initialization.")
 
-        // Re-initialize with a configuration whose endpoint differs: changedState becomes `.rest`,
-        // so repeatInitialization runs install() again over the existing installation.
         let changedConfiguration = try MBConfiguration(
             endpoint: "app-with-hub-IOS-reinstall",
             domain: "api.mindbox.ru"

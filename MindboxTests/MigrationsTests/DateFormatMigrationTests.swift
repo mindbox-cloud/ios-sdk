@@ -11,8 +11,6 @@ import Foundation
 @testable import Mindbox
 import MindboxLogger
 
-// A class-based suite so `deinit` can restore the global `MBPersistenceStorage.defaults`
-// after every test. `.serialized` because the tests mutate that shared global.
 @Suite(.serialized)
 final class DateFormatMigrationTests {
 
@@ -42,14 +40,11 @@ final class DateFormatMigrationTests {
 
     deinit {
         userDefaults.removePersistentDomain(forName: userDefaultsSuiteName)
-        // Restore the global so this suite never leaks its private suite into other tests.
         MBPersistenceStorage.defaults = originalDefaults
     }
 
     // MARK: - Helpers
 
-    /// Produces a string in the legacy format (replica of the removed MBPersistenceStorage
-    /// formatter) under the device's current 12h/24h setting.
     private func legacyString(from date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateStyle = .full
@@ -57,13 +52,6 @@ final class DateFormatMigrationTests {
         return formatter.string(from: date)
     }
 
-    /// Independent oracle for the hour-cycle rescue: builds a legacy `.full`/`.full` string with the
-    /// hour cycle pinned through the structured `Locale.Components` API — a *different* mechanism than
-    /// the `@hours=` identifier `DateFormatMigration` assembles itself. The base stays `Locale.current`
-    /// so only the hour cycle differs from the migration's candidates (the date layout still matches).
-    /// If the migration's hour-cycle keyword were wrong, this independently-built opposite-cycle string
-    /// would fail to parse — so the test proves the rescue works, not just that both sides build the
-    /// same identifier.
     @available(iOS 16.0, *)
     private func independentLegacyString(from date: Date, hourCycle: Locale.HourCycle) -> String {
         var components = Locale.Components(locale: .current)
@@ -75,7 +63,6 @@ final class DateFormatMigrationTests {
         return formatter.string(from: date)
     }
 
-    /// Whole-second instant so legacy (`.full`) and `.utc` representations round-trip exactly.
     private var fixedDate: Date {
         Date(timeIntervalSince1970: 1_700_000_000)
     }
@@ -101,16 +88,12 @@ extension DateFormatMigrationTests {
     func runConvertsLegacyInstallationDateAndKeepsIsInstalledStable() throws {
         userDefaults.set(legacyString(from: fixedDate), forKey: installationKey)
 
-        // Before migration: the legacy string is unparseable by the new `.utc` reader,
-        // so the parsed `installationDate` is nil — but `isInstalled` stays true because
-        // it depends on the stored string's presence, not on parsing it.
         let storageBefore = MBPersistenceStorage(defaults: userDefaults)
         #expect(storageBefore.installationDate == nil)
         #expect(storageBefore.isInstalled)
 
         try migration.run()
 
-        // After migration: the date value parses again, and `isInstalled` is unchanged.
         let storageAfter = MBPersistenceStorage(defaults: userDefaults)
         #expect(storageAfter.installationDate != nil)
         #expect(storageAfter.isInstalled)
@@ -121,8 +104,6 @@ extension DateFormatMigrationTests {
         #expect(migration.isNeeded == false)
     }
 
-    /// The original re-installation bug: a value written under 12h must still convert when the
-    /// migration runs (even if the device is now in 24h). The 12h candidate rescues it.
     @available(iOS 16.0, *)
     @Test("run() converts a legacy installation date written in 12h format")
     func runConvertsLegacyInstallationDateWrittenIn12hFormat() throws {
@@ -143,7 +124,6 @@ extension DateFormatMigrationTests {
         #expect(migration.isNeeded == false)
     }
 
-    /// Symmetric to the 12h case: a value written under 24h converts as well.
     @available(iOS 16.0, *)
     @Test("run() converts a legacy installation date written in 24h format")
     func runConvertsLegacyInstallationDateWrittenIn24hFormat() throws {
@@ -199,10 +179,6 @@ extension DateFormatMigrationTests {
         #expect(userDefaults.string(forKey: installationKey) == garbage)
     }
 
-    /// Regression: an installed user must stay installed even when the stored installation
-    /// date string cannot be parsed (e.g. a region / 12h↔24h time-format change made a
-    /// legacy localized string unreadable). `isInstalled` depends on the string's presence,
-    /// not on parsing it, so it stays true without any migration having run.
     @Test("isInstalled stays true for an unparseable installation date, without migration")
     func isInstalledTrueForUnparseableInstallationDateWithoutMigration() {
         userDefaults.set("definitely not a parseable date", forKey: installationKey)
@@ -213,10 +189,6 @@ extension DateFormatMigrationTests {
         #expect(storage.isInstalled)
     }
 
-    /// Ordering contract: `DateFormatMigration` must sort ahead of any date-consuming migration
-    /// in `MigrationManager`'s ascending-by-`version` chain. If this regresses (e.g. a renumber),
-    /// `FirstInitializationDateTimeMigration` would read an unparseable legacy `installationDate`
-    /// as `nil` and silently skip — the original upgrade bug.
     @Test("version sorts before any date-consuming migration")
     func versionSortsBeforeDateConsumingMigration() {
         #expect(

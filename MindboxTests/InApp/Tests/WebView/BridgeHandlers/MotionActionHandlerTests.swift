@@ -1,0 +1,253 @@
+//
+//  MotionActionHandlerTests.swift
+//  MindboxTests
+//
+//  Created by Akylbek Utekeshev on 13.08.2026.
+//  Copyright © 2026 Mindbox. All rights reserved.
+//
+
+import Testing
+@_spi(Internal) @testable import Mindbox
+
+@Suite("MotionActionHandler", .tags(.webView))
+@MainActor
+struct MotionActionHandlerTests {
+
+    private func makeSUT(started: Set<MotionGesture> = [.shake],
+                         unavailable: Set<MotionGesture> = [])
+    -> (handler: MotionActionHandler, service: MotionServiceSpy, host: HostSpy) {
+        let service = MotionServiceSpy(result: MotionStartResult(started: started, unavailable: unavailable))
+        return (MotionActionHandler(makeService: { service }), service, HostSpy())
+    }
+
+    private func startRequest(_ gestures: [String]) -> BridgeMessage {
+        .request(.motionStart, payload: .object(["gestures": .array(gestures.map { .string($0) })]))
+    }
+
+    @Test("Owns both motion actions")
+    func ownsMotionActions() {
+        #expect(MotionActionHandler().actions == [.motionStart, .motionStop])
+    }
+
+    // MARK: - Starting
+
+    @Test("Requested gestures are passed to the service and confirmed")
+    func startsRequestedGestures() throws {
+        let (handler, service, host) = makeSUT(started: [.shake, .flip])
+
+        handler.handle(startRequest(["shake", "flip"]), host: host)
+
+        #expect(service.started == [.shake, .flip])
+        #expect(host.sent.first?.payload == .object(["success": .bool(true)]))
+    }
+
+    @Test("A partial start succeeds and names what is unavailable")
+    func partialStartNamesUnavailable() throws {
+        let (handler, _, host) = makeSUT(started: [.shake], unavailable: [.flip])
+
+        handler.handle(startRequest(["shake", "flip"]), host: host)
+
+        let response = try #require(host.sent.first)
+        #expect(response.type == .response)
+        #expect(response.payload == .object([
+            "success": .bool(true),
+            "unavailable": .array([.string("flip")])
+        ]))
+    }
+
+    @Test("A start where nothing is available is an error")
+    func fullyUnavailableStartIsAnError() throws {
+        let (handler, _, host) = makeSUT(started: [], unavailable: [.flip])
+
+        handler.handle(startRequest(["flip"]), host: host)
+
+        let response = try #require(host.sent.first)
+        #expect(response.type == .error)
+        #expect(response.payload == .object(["error": .string("gestures_unavailable")]))
+    }
+
+    @Test("Unknown gesture names are dropped, and asking only for those is refused as an unsupported value",
+          arguments: [["somersault"], ["wave"], [" "]])
+    func unknownGesturesAreRefused(gestures: [String]) throws {
+        let (handler, service, host) = makeSUT()
+
+        handler.handle(startRequest(gestures), host: host)
+
+        #expect(service.started == nil)
+        #expect(host.sent.first?.payload == .object(["error": .string("unsupported_value")]))
+    }
+
+    @Test("A gesture list that is empty or holds anything but non-empty names is refused as an invalid payload",
+          arguments: [#"[]"#, #"[""]"#, #"[1]"#, #"[1,"wave"]"#, #"["wave",1]"#])
+    func unreadableGestureListIsRefused(gestures: String) throws {
+        let (handler, service, host) = makeSUT()
+
+        handler.handle(.request(.motionStart, payload: .string(#"{"gestures":\#(gestures)}"#)), host: host)
+
+        #expect(service.started == nil)
+        #expect(host.sent.first?.payload == .object(["error": .string("invalid_payload")]))
+    }
+
+    @Test("A known gesture next to an element that is not a name still starts")
+    func knownGestureNextToUnreadableElementStarts() throws {
+        let (handler, service, host) = makeSUT(started: [.flip])
+
+        handler.handle(.request(.motionStart, payload: .object(["gestures": .array([.string("flip"), .int(1)])])),
+                       host: host)
+
+        #expect(service.started == [.flip])
+        #expect(host.sent.first?.type == .response)
+    }
+
+    @Test("A payload without gestures is refused")
+    func missingGesturesIsRefused() throws {
+        let (handler, service, host) = makeSUT()
+
+        handler.handle(.request(.motionStart, payload: .object([:])), host: host)
+
+        #expect(service.started == nil)
+        #expect(host.sent.first?.payload == .object(["error": .string("invalid_payload")]))
+    }
+
+    @Test("A request with no payload at all is refused as an invalid payload")
+    func missingPayloadIsRefused() throws {
+        let (handler, service, host) = makeSUT()
+
+        handler.handle(.request(.motionStart), host: host)
+
+        #expect(service.started == nil)
+        #expect(host.sent.first?.payload == .object(["error": .string("invalid_payload")]))
+    }
+
+    @Test("A payload that is not an object is refused the same way")
+    func nonObjectPayloadIsRefused() throws {
+        let (handler, service, host) = makeSUT()
+
+        handler.handle(.request(.motionStart, payload: .array([.string("shake")])), host: host)
+
+        #expect(service.started == nil)
+        #expect(host.sent.first?.payload == .object(["error": .string("invalid_payload")]))
+    }
+
+    @Test("A gestures field that is not an array is refused")
+    func nonArrayGesturesIsRefused() throws {
+        let (handler, _, host) = makeSUT()
+
+        handler.handle(.request(.motionStart, payload: .object(["gestures": .string("shake")])), host: host)
+
+        #expect(host.sent.first?.payload == .object(["error": .string("invalid_payload")]))
+    }
+
+    // MARK: - Stopping
+
+    @Test("Stopping reaches the service and is confirmed")
+    func stopIsConfirmed() {
+        let (handler, service, host) = makeSUT()
+        handler.handle(startRequest(["shake"]), host: host)
+
+        handler.handle(.request(.motionStop), host: host)
+
+        #expect(service.stopCount == 1)
+        #expect(host.sent.last?.payload == .object(["success": .bool(true)]))
+    }
+
+    // MARK: - Events
+
+    @Test("A detected gesture is pushed to the page as a request")
+    func detectedGestureIsPushed() throws {
+        let (handler, service, host) = makeSUT()
+        handler.handle(startRequest(["flip"]), host: host)
+
+        service.emit(.flip, data: ["from": "portrait", "to": "faceDown"])
+
+        let event = try #require(host.sent.last)
+        #expect(event.type == .request)
+        #expect(event.action == BridgeMessage.Action.motionEvent.rawValue)
+        #expect(event.payload == .object([
+            "gesture": .string("flip"),
+            "from": .string("portrait"),
+            "to": .string("faceDown")
+        ]))
+    }
+
+    @Test("A system shake is forwarded to the service")
+    func systemShakeIsForwarded() {
+        let (handler, service, host) = makeSUT()
+        handler.handle(startRequest(["shake"]), host: host)
+
+        handler.handleSystemShake()
+
+        #expect(service.systemShakeCount == 1)
+    }
+
+    @Test("A system shake before any subscription builds no service")
+    func systemShakeWithoutSubscriptionIsIgnored() {
+        let service = MotionServiceSpy(result: MotionStartResult(started: [.shake], unavailable: []))
+        var built = 0
+        let handler = MotionActionHandler(makeService: { built += 1; return service })
+
+        handler.handleSystemShake()
+
+        #expect(built == 0)
+        #expect(service.systemShakeCount == 0)
+    }
+
+    // MARK: - Teardown
+
+    @Test("Teardown stops monitoring once the sensors were in use")
+    func tearDownStopsMonitoring() {
+        let (handler, service, host) = makeSUT()
+        handler.handle(startRequest(["shake"]), host: host)
+
+        handler.tearDown()
+
+        #expect(service.stopCount == 1)
+    }
+
+    @Test("Teardown builds no service when motion was never used")
+    func tearDownBuildsNothingWhenUnused() {
+        var built = 0
+        let handler = MotionActionHandler(makeService: {
+            built += 1
+            return MotionServiceSpy(result: MotionStartResult(started: [], unavailable: []))
+        })
+
+        handler.tearDown()
+
+        #expect(built == 0)
+    }
+}
+
+// MARK: - Doubles
+
+final class MotionServiceSpy: MotionServiceProtocol {
+
+    var onGestureDetected: ((MotionGesture, [String: Any]) -> Void)?
+
+    private let result: MotionStartResult
+
+    private(set) var started: Set<MotionGesture>?
+    private(set) var stopCount = 0
+    private(set) var systemShakeCount = 0
+
+    init(result: MotionStartResult) {
+        self.result = result
+    }
+
+    func startMonitoring(gestures: Set<MotionGesture>) -> MotionStartResult {
+        started = gestures
+        return result
+    }
+
+    func stopMonitoring() {
+        stopCount += 1
+    }
+
+    func handleSystemShake() {
+        systemShakeCount += 1
+    }
+
+    func emit(_ gesture: MotionGesture, data: [String: Any]) {
+        onGestureDetected?(gesture, data)
+    }
+}

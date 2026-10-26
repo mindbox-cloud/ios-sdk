@@ -8,9 +8,6 @@
 
 import WebKit
 
-/// The single place a Mindbox in-app WKWebView is configured. A borrowed prewarmed
-/// instance and a cold-created one must be indistinguishable — a knob added here
-/// reaches both.
 enum InAppWebViewFactory {
 
     static func make(userAgent: String = SDKUserAgent.build()) -> WKWebView {

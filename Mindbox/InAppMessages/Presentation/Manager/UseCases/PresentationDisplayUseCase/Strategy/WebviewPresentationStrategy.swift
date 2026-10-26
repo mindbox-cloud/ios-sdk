@@ -19,16 +19,12 @@ final class WebviewPresentationStrategy: PresentationStrategyProtocol {
         Logger.common(message: "[WebView] WebviewPresentationStrategy: Starting presentation", category: .webViewInAppMessages)
         window.rootViewController = viewController
         window.backgroundColor = .clear
-        // A near-zero alpha keeps the window in the hierarchy and active, but invisible.
-        // It's important for the WebView to execute JavaScript in the background.
+        // Invisible through alpha, not isHidden: the page must keep running JS before the reveal.
         window.alpha = 0.00
         window.isUserInteractionEnabled = false
         window.isHidden = false
         Logger.common(message: "[WebView] WebviewPresentationStrategy: Window setup completed", category: .webViewInAppMessages)
         
-        // Force view controller to load its view.
-        // Start loading the WebView when it is hidden.
-        // It is necessary that the window is fully initialized before making it further visible.
         _ = viewController.view
         Logger.common(message: "[WebView] WebviewPresentationStrategy: View controller view loaded", category: .webViewInAppMessages)
         
@@ -43,7 +39,6 @@ final class WebviewPresentationStrategy: PresentationStrategyProtocol {
     }
 
     func setupWindowFrame(model: MindboxFormVariant, imageSize: CGSize) {
-        // Not need to setup.
     }
 
     private func makeInAppMessageWindow() -> UIWindow? {

@@ -10,14 +10,9 @@ import Testing
 import Foundation
 @testable import Mindbox
 
-/// Wire-contract tests for `OperationResponse`: the API returns promo
-/// actions under the plural `promoActions` key, and the JSON re-encoded for the
-/// hybrid bridges (`createJSON`) must use the same wire keys as the decoder —
-/// otherwise a field silently vanishes between the API and the JS layer.
 @Suite("OperationResponse wire contract", .tags(.decoding, .customOperation))
 struct OperationResponseTests {
 
-    /// Response shaped like the documented `get-promotions-for-customer` payload.
     private static let responseJSON = Data("""
     {
         "status": "Success",
@@ -94,9 +89,6 @@ struct OperationResponseTests {
         #expect(Set(dict.keys) == ["status", "promoActions", "promoCode", "balances", "discountCards"])
     }
 
-    // The two productList shapes share one wire key on decode, but have always
-    // re-encoded under their own property names (synthesized behavior). Locked
-    // down here so the encode(to:) rewrite changes nothing but promoActions.
     @Test("An array productList re-encodes under the productList key")
     func productListArrayKeepsItsKey() throws {
         let response = try JSONDecoder().decode(
@@ -109,7 +101,7 @@ struct OperationResponseTests {
         #expect(!dict.keys.contains("productListItems"))
     }
 
-    @Test("An object productList re-encodes under the productListItems key")
+    @Test("An object productList keeps its legacy productListItems key in the bridge JSON")
     func productListObjectKeepsItemsKey() throws {
         let response = try JSONDecoder().decode(
             OperationResponse.self,
@@ -121,11 +113,6 @@ struct OperationResponseTests {
         #expect(!dict.keys.contains("productList"))
     }
 
-    /// Shape of a production sync-operation response from a client report, fully
-    /// anonymized: fractional seconds longer than the `.SSS` parse pattern (6 and 5
-    /// digits), sibling non-Utc date keys, `timeZoneMode`, and custom fields mixing
-    /// booleans with strings. All values are synthetic; the key set and the date
-    /// string formats are what mirror the real payload.
     private static let productionShapedJSON = Data("""
     {
         "status": "Success",
@@ -175,7 +162,7 @@ struct OperationResponseTests {
     }
     """.utf8)
 
-    @Test("A production-shaped payload decodes and survives re-encoding")
+    @Test("A production-shaped payload with 5- and 6-digit fractional seconds decodes and survives re-encoding")
     func decodesProductionShapedPayload() throws {
         let response = try JSONDecoder().decode(OperationResponse.self, from: Self.productionShapedJSON)
 
@@ -184,8 +171,6 @@ struct OperationResponseTests {
         #expect(actions[0].name == "First promo")
         #expect(actions[0].ids?["externalId"] == "promo-12345678")
 
-        // ICU truncates fractional seconds beyond 3 digits on parse (.256574 → .256);
-        // a regression to "N digits = N milliseconds" would shift this by ~4 minutes.
         let reference = try #require(ISO8601DateFormatter().date(from: "2026-01-02T03:04:05Z"))
         let start = try #require(actions[0].startDateTimeUtc).date
         #expect(abs(start.timeIntervalSince(reference)) < 1.0)
@@ -193,7 +178,6 @@ struct OperationResponseTests {
         let dict = try reEncodedDictionary(of: response)
         let encodedActions = try #require(dict["promoActions"] as? [[String: Any]])
         try #require(encodedActions.count == 2)
-        // CustomFields must round-trip JSON types untouched — booleans stay booleans.
         let customFields = try #require(encodedActions[0]["customFields"] as? [String: Any])
         #expect(customFields["offerEnabled"] as? Bool == true)
         #expect(customFields["offerPlacement"] as? String == "top")

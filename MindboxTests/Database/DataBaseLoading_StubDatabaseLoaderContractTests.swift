@@ -28,7 +28,6 @@ final class DataBaseLoading_StubDatabaseLoaderContractTests: XCTestCase {
             if let e = error as? MBDatabaseError {
                 switch e {
                 case .unableCreateDatabaseModel:
-                    // ok
                     break
                 default:
                     XCTFail("Expected .unableCreateDatabaseModel, got \(e)")
@@ -44,7 +43,6 @@ final class DataBaseLoading_StubDatabaseLoaderContractTests: XCTestCase {
             if let e = error as? MBDatabaseError {
                 switch e {
                 case .unableCreateDatabaseModel:
-                    // ok
                     break
                 default:
                     XCTFail("Expected .unableCreateDatabaseModel, got \(e)")

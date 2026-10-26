@@ -28,7 +28,7 @@ public class MBLoggerCoreDataManager {
         case enabled
         case disabled
     }
-    private(set) var storageState: StorageState
+    @Locked private(set) var storageState: StorageState
     
     private let osLog = OSLogWriter(
         subsystem: Bundle.main.bundleIdentifier ?? "cloud.Mindbox.UndefinedHostApplication",
@@ -70,8 +70,8 @@ public class MBLoggerCoreDataManager {
     
     // MARK: CoreData objects
     
-    private var persistentContainer: MBPersistentContainer?
-    private var context: NSManagedObjectContext?
+    @Locked private var persistentContainer: MBPersistentContainer?
+    @Locked private var context: NSManagedObjectContext?
     
     // MARK: Initializer
     
@@ -172,7 +172,6 @@ public extension MBLoggerCoreDataManager {
                     log(.error, "[MBLoggerCDManager] batch insert failed: \(error.localizedDescription)")
                 }
             } else {
-                // iOS 12 fallback
                 for log in logs {
                     let entity = CDLogMessage(context: context)
                     entity.message   = log.message
@@ -225,7 +224,7 @@ public extension MBLoggerCoreDataManager {
             fetchRequest.propertiesToFetch = ["timestamp", "message", "objectID"]
             fetchRequest.predicate = NSPredicate(format: "timestamp >= %@ AND timestamp <= %@",
                                                  from as NSDate, to as NSDate)
-            fetchRequest.fetchBatchSize = 50 // Setting batchSize for optimal memory consumption
+            fetchRequest.fetchBatchSize = 50
             
             let sortDescriptor = NSSortDescriptor(key: "timestamp", ascending: ascending)
             fetchRequest.sortDescriptors = [sortDescriptor]

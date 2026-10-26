@@ -63,7 +63,6 @@ struct LogStoreTrimmerTests {
 
     @Test("Clamps to the minimum fraction just over the limit")
     func computeTrimFractionRespectsMin() {
-        // limit=100, lowWater=0.98 -> target=98; size=101 -> raw ≈ 0.0297 < min(0.05) -> 0.05.
         let (trimmer, _, _) = makeTrimmer(size: 0, config: makeConfig(limit: 100, lowWater: 0.98, min: 0.05, max: 0.5))
         let fraction = trimmer.computeTrimFraction(sizeKB: 101, limitKB: 100)
         #expect(fraction != nil)
@@ -74,7 +73,6 @@ struct LogStoreTrimmerTests {
     func computeTrimFractionPassesThrough() {
         let (trimmer, _, _) = makeTrimmer(size: 0, config: makeConfig(limit: 100, lowWater: 0.8, min: 0.05, max: 0.5))
         #expect(trimmer.computeTrimFraction(sizeKB: 100, limitKB: 100) == nil)
-        // raw ≈ (101-80)/101 ≈ 0.2079
         let fraction = trimmer.computeTrimFraction(sizeKB: 101, limitKB: 100)
         #expect(abs((fraction ?? 0) - 0.2079) < 1e-3)
     }
@@ -107,16 +105,13 @@ struct LogStoreTrimmerTests {
         #expect(measurer.calls == 1)
         #expect(calls == 1)
 
-        // Under cooldown — must not trim.
         _ = trimmer.maybeTrim(precomputedSizeKB: nil) { _ in Issue.record("must not trim under cooldown") }
         #expect(calls == 1)
 
-        // 9s in — still under the 10s cooldown.
         clock.advance(9)
         _ = trimmer.maybeTrim(precomputedSizeKB: nil) { _ in Issue.record("must not trim under cooldown") }
         #expect(calls == 1)
 
-        // At 10s the cooldown has elapsed.
         clock.advance(1)
         _ = trimmer.maybeTrim(precomputedSizeKB: nil) { _ in calls += 1 }
         #expect(calls == 2)
@@ -138,7 +133,7 @@ struct LogStoreTrimmerTests {
         _ = trimmer.maybeTrim { _ in count += 1 }
         #expect(count == 1)
 
-        _ = trimmer.maybeTrim { _ in count += 1 } // still under cooldown
+        _ = trimmer.maybeTrim { _ in count += 1 }
         #expect(count == 1)
 
         trimmer.resetCooldown()

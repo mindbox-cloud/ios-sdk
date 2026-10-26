@@ -15,12 +15,16 @@ protocol InAppPresentationManagerProtocol: AnyObject {
         inAppFormData: InAppFormData,
         onPresented: @escaping () -> Void,
         onTapAction: @escaping InAppMessageTapAction,
-        onPresentationCompleted: @escaping () -> Void,
+        onPresentationCompleted: @escaping (_ wasDiscarded: Bool) -> Void,
         onError: @escaping (InAppPresentationError) -> Void
     )
+
+    func discardActiveInApp()
+
+    var isPresenting: Bool { get }
 }
 
-enum InAppPresentationError {
+enum InAppPresentationError: Error {
     case failedToLoadImages
     case failedToLoadWindow
     case webviewLoadFailed(String)
@@ -56,12 +60,48 @@ typealias InAppMessageTapAction = (_ tapLink: URL?, _ payload: String) -> Void
 
 final class InAppPresentationManager: InAppPresentationManagerProtocol {
 
+    private final class ActivePresentation {
+        let token: UUID
+        let complete: (_ wasDiscarded: Bool) -> Void
+        var isClosing = false
+
+        init(token: UUID, complete: @escaping (_ wasDiscarded: Bool) -> Void) {
+            self.token = token
+            self.complete = complete
+        }
+    }
+
     private let displayUseCase: PresentationDisplayUseCaseProtocol
+
+    // Main-confined: isPresenting and discardActiveInApp read it without hopping to main.
+    private var activePresentation: ActivePresentation?
+
+    var isPresenting: Bool { activePresentation != nil }
 
     init(displayUseCase: PresentationDisplayUseCaseProtocol) {
         self.displayUseCase = displayUseCase
 
         addObserverToDismissInApp()
+    }
+
+    func discardActiveInApp() {
+        guard let active = activePresentation else { return }
+
+        finish(active.token, wasDiscarded: true)
+    }
+
+    private func finish(_ token: UUID, wasDiscarded: Bool) {
+        guard let active = activePresentation, active.token == token, !active.isClosing else { return }
+
+        active.isClosing = true
+        displayUseCase.dismissInAppUIModel()
+        active.complete(wasDiscarded)
+    }
+
+    private func isOnScreen(_ token: UUID) -> Bool {
+        guard let active = activePresentation else { return false }
+
+        return active.token == token && !active.isClosing
     }
 
     private func addObserverToDismissInApp() {
@@ -70,9 +110,12 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
             object: nil,
             queue: nil
         ) { [weak self] _ in
-            DispatchQueue.main.async {
-                self?.displayUseCase.dismissInAppUIModel(onClose: { })
+            guard Thread.isMainThread else {
+                DispatchQueue.main.async { self?.discardActiveInApp() }
+                return
             }
+
+            self?.discardActiveInApp()
         }
     }
 
@@ -80,39 +123,65 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
         inAppFormData: InAppFormData,
         onPresented: @escaping () -> Void,
         onTapAction: @escaping InAppMessageTapAction,
-        onPresentationCompleted: @escaping () -> Void,
+        onPresentationCompleted: @escaping (_ wasDiscarded: Bool) -> Void,
         onError: @escaping (InAppPresentationError) -> Void
     ) {
-        let callbackGuard = PresentationCallbackGuard()
-        let safeOnError: (InAppPresentationError) -> Void = { error in
+        guard Thread.isMainThread else {
+            Logger.common(message: "[InAppPresentationManager] present called off the main thread, moving it there",
+                          level: .error, category: .inAppMessages)
             DispatchQueue.main.async {
+                self.present(inAppFormData: inAppFormData,
+                             onPresented: onPresented,
+                             onTapAction: onTapAction,
+                             onPresentationCompleted: onPresentationCompleted,
+                             onError: onError)
+            }
+            return
+        }
+
+        if let active = activePresentation {
+            finish(active.token, wasDiscarded: false)
+        }
+
+        let callbackGuard = PresentationCallbackGuard()
+        let token = UUID()
+        let releaseActivePresentation: () -> Void = { [weak self] in
+            guard self?.activePresentation?.token == token else { return }
+
+            self?.activePresentation = nil
+        }
+        let safeOnError: (InAppPresentationError) -> Void = { [weak self] error in
+            DispatchQueue.main.async {
+                self?.finish(token, wasDiscarded: false)
+                releaseActivePresentation()
                 callbackGuard.finishWithError {
                     onError(error)
                 }
             }
         }
-        let safeOnPresentationCompleted: () -> Void = {
+        let safeOnPresentationCompleted: (Bool) -> Void = { wasDiscarded in
             DispatchQueue.main.async {
+                releaseActivePresentation()
                 callbackGuard.finishSuccessfully {
-                    onPresentationCompleted()
+                    onPresentationCompleted(wasDiscarded)
                 }
             }
         }
 
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else {
-                safeOnError(.failed("[InAppPresentationManager] Self guard not passed."))
-                return
-            }
+        let presentation = ActivePresentation(token: token, complete: safeOnPresentationCompleted)
+        activePresentation = presentation
+        displayUseCase.presentInAppUIModel(model: inAppFormData,
+                                           onPresented: { [weak self] in
+            guard let self, self.isOnScreen(token) else { return }
+            self.displayUseCase.onPresented(id: inAppFormData.inAppId, onPresented)
+        }, onTapAction: onTapAction,
+        onClose: { [weak self] in
+            self?.finish(token, wasDiscarded: false)
+        },
+        onError: safeOnError)
 
-            self.displayUseCase.presentInAppUIModel(model: inAppFormData,
-                                                    onPresented: {
-                self.displayUseCase.onPresented(id: inAppFormData.inAppId, onPresented)
-            }, onTapAction: onTapAction,
-            onClose: {
-                self.displayUseCase.dismissInAppUIModel(onClose: safeOnPresentationCompleted)
-            },
-            onError: safeOnError)
+        if presentation.isClosing {
+            displayUseCase.dismissInAppUIModel()
         }
     }
 }

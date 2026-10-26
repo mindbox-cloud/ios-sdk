@@ -73,7 +73,7 @@ final class MBNetworkFetcherResponseHandlingTests: XCTestCase {
         fetcher.request(route: FetchInAppGeoRoute()) { result in
             switch result {
             case .success:
-                break // expected
+                break
             case .failure(let error):
                 XCTFail("Expected success, got \(error)")
             }
@@ -93,7 +93,7 @@ final class MBNetworkFetcherResponseHandlingTests: XCTestCase {
         fetcher.request(route: FetchInAppGeoRoute()) { result in
             switch result {
             case .success:
-                break // expected
+                break
             case .failure(let error):
                 XCTFail("Expected success, got \(error)")
             }
@@ -286,11 +286,10 @@ final class MBNetworkFetcherResponseHandlingTests: XCTestCase {
         stubResponse(statusCode: 200, body: body)
 
         let expectation = expectation(description: "completion")
-        // Void request uses emptyData=true internally
         fetcher.request(route: FetchInAppGeoRoute()) { result in
             switch result {
             case .success:
-                break // expected — emptyData=true swallows decode errors at 2xx
+                break
             case .failure(let error):
                 XCTFail("Expected success with emptyData=true at 2xx, got \(error)")
             }
@@ -551,7 +550,7 @@ final class MBNetworkFetcherResponseHandlingTests: XCTestCase {
         fetcher.request(route: FetchInAppGeoRoute()) { result in
             switch result {
             case .success:
-                break // expected — emptyData=true at 2xx tolerates unparseable body
+                break
             case .failure(let error):
                 XCTFail("Expected success for 200 + empty body + Void request, got \(error)")
             }
@@ -683,7 +682,6 @@ final class MBNetworkFetcherResponseHandlingTests: XCTestCase {
 
     func test_requestRaw_http200_arbitraryJSON_returnsRawData() throws {
         let fetcher = try makeFetcher()
-        // No `status` field at all — BaseResponse would fail to parse, but requestRaw must not care.
         let body = try XCTUnwrap(#"{"customer":{"email":"a@b.c"},"foo":42}"#.data(using: .utf8))
         stubResponse(statusCode: 200, body: body)
 
@@ -775,7 +773,6 @@ final class MBNetworkFetcherResponseHandlingTests: XCTestCase {
 
     func test_requestRaw_noConfiguration_returnsInvalidConfiguration() throws {
         let persistenceStorage = MockPersistenceStorage()
-        // Intentionally leave persistenceStorage.configuration = nil
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [StubURLProtocol.self]
         let session = URLSession(configuration: configuration)
@@ -803,7 +800,6 @@ final class MBNetworkFetcherResponseHandlingTests: XCTestCase {
 
     func test_typedRequest_http200_invalidTargetType_returnsParsingError() throws {
         let fetcher = try makeFetcher()
-        // Valid base response but missing fields for InAppGeoResponse
         let body = baseResponseData(status: "Success")
         stubResponse(statusCode: 200, body: body)
 

@@ -43,13 +43,18 @@ extension MBContainer {
         register(InAppConfigurationManagerProtocol.self) {
             let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
             let featureToggleManager = DI.injectOrFail(FeatureToggleManager.self)
+            let inappFilterService = DI.injectOrFail(InappFilterProtocol.self)
             return InAppConfigurationManager(
                 inAppConfigAPI: InAppConfigurationAPI(persistenceStorage: persistenceStorage),
                 inAppConfigRepository: InAppConfigurationRepository(),
                 inappMapper: DI.injectOrFail(InappMapperProtocol.self),
                 persistenceStorage: persistenceStorage,
                 featureToggleManager: featureToggleManager,
-                webViewPrewarmService: DI.injectOrFail(InAppWebViewPrewarmServiceProtocol.self))
+                webViewPrewarmService: DI.injectOrFail(InAppWebViewPrewarmServiceProtocol.self),
+                inappFilterService: inappFilterService,
+                requestedInappBuilder: RequestedInappBuilder(
+                    inappFilterService: inappFilterService,
+                    dataFacade: DI.injectOrFail(InAppConfigurationDataFacadeProtocol.self)))
         }
         
         register(CheckNotifWork.self) {
