@@ -10,6 +10,9 @@
   "automergeType": "pr",
   "automergeStrategy": "squash",
   "major": { "automerge": false },
+  "packageRules": [
+    { "matchPackageNames": ["mindbox-cloud/xcprivacy-gate"], "groupName": "xcprivacy-gate", "automerge": false }
+  ],
 
   "lockFileMaintenance": {
     "enabled": true,

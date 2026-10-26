@@ -4,5 +4,9 @@
   "policy": {
     "userDefaultsAppGroup": true,
     "trackingDisabled": true
+  },
+  "appleSdkList": {
+    "name": "Mindbox",
+    "listed": false
   }
 }
