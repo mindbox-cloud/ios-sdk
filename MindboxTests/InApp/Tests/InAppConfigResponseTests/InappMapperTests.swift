@@ -81,6 +81,35 @@ struct InappRemainingTargetingTests {
         }
     }
 
+    private func passParkedAtItsImage(
+        event: ApplicationEvent?,
+        config: ConfigResponse,
+        sourceLocation: SourceLocation = #_sourceLocation
+    ) async throws -> Locked<[String?]> {
+        let passAnswers = Locked<[String?]>(wrappedValue: [])
+        mockDataFacade.holdsNextImageDownload = true
+
+        mapper.handleInapps(event, config.candidates) { formData in
+            passAnswers.mutate { $0.append(formData?.inAppId) }
+        }
+        let parked = await pollUntil(deadline: 5, value: { mockDataFacade.holdsAnImageDownload }, condition: { $0 })
+        try #require(parked, "the pass never reached its image download", sourceLocation: sourceLocation)
+        return passAnswers
+    }
+
+    private func releaseParkedPass(_ passAnswers: Locked<[String?]>) async -> [String?] {
+        mockDataFacade.releaseHeldImageDownload()
+        return await pollUntil(deadline: 5, value: { passAnswers.wrappedValue }, condition: { !$0.isEmpty })
+    }
+
+    private func pageAnswers(asking ids: [String], config: ConfigResponse) async -> [[String]] {
+        let answers = Locked<[[String]]>(wrappedValue: [])
+        mapper.getShowableInappIds(ids, askedBy: "a-block", config.candidates) { answer in
+            answers.mutate { $0.append(answer) }
+        }
+        return await pollUntil(deadline: 2, value: { answers.wrappedValue }, condition: { !$0.isEmpty })
+    }
+
     private func assertTargetingShows(id: String) {
         #expect(
             mockDataFacade.showArray.contains(id),
@@ -222,6 +251,85 @@ struct InappRemainingTargetingTests {
         #expect(answered.place == [.decided(nil)])
         #expect(mockDataFacade.fetchDependenciesCalls == 3)
         #expect(targetingChecker.event?.name == placeTrigger.name)
+    }
+
+    @Test("A page is answered while the start pass waits for its in-app's image", .tags(.remainingTargeting))
+    func page_isAnsweredWhileTheStartPassWaitsForAnImage() async throws {
+        let config = try InappTargetingConfig.oneTargeting.getConfig()
+        let passAnswers = try await passParkedAtItsImage(event: nil, config: config)
+
+        let answered = await pageAnswers(asking: ["1"], config: config)
+        #expect(answered == [["1"]])
+        #expect(passAnswers.wrappedValue.isEmpty)
+
+        let finished = await releaseParkedPass(passAnswers)
+        #expect(finished == ["1"])
+    }
+
+    @Test("A page answered inside a pass's image wait leaves the pass's failures to the pass", .tags(.remainingTargeting))
+    func pageInsideAnImageWait_leavesThePassFailuresToThePass() async throws {
+        let config = try InappTargetingConfig.oneTargeting.getConfig()
+        let passAnswers = try await passParkedAtItsImage(event: nil, config: config)
+
+        let answered = await pageAnswers(asking: ["1"], config: config)
+        try #require(answered.count == 1, "the page was not answered inside the image wait")
+        #expect(mockDataFacade.sendCollectedFailuresCalls == 0)
+        #expect(mockDataFacade.discardCollectedFailuresCalls == 0)
+
+        _ = await releaseParkedPass(passAnswers)
+        #expect(mockDataFacade.discardCollectedFailuresCalls == 1)
+        #expect(mockDataFacade.sendCollectedFailuresCalls == 0)
+    }
+
+    @Test("A page's question neither sends nor drops the failures a pass collects", .tags(.remainingTargeting))
+    func pageQuestion_leavesTheCollectedFailuresAlone() async throws {
+        let config = try InappTargetingConfig.oneTargeting.getConfig()
+
+        let answer = await withCheckedContinuation { continuation in
+            mapper.getShowableInappIds(["1"], askedBy: "a-block", config.candidates) { continuation.resume(returning: $0) }
+        }
+
+        #expect(answer == ["1"])
+        #expect(mockDataFacade.sendCollectedFailuresCalls == 0)
+        #expect(mockDataFacade.discardCollectedFailuresCalls == 0)
+    }
+
+    @Test("An operation pass's catch-up after a page's question still checks against the pass's operation",
+          .tags(.remainingTargeting, .geoTargeting))
+    func operationCatchUp_afterAPageQuestion_checksThePassOperation() async throws {
+        let config = try InappTargetingConfig.fortyFourTargeting.getConfig()
+        targetingChecker.geoModels = .init(city: 1, region: 2, country: 3)
+        SessionTemporaryStorage.shared.geoRequestResult = .success(targetingChecker.geoModels)
+        await handleInapps(event: nil, config: config)
+        mockDataFacade.cleanTargetingArray()
+
+        let passAnswers = try await passParkedAtItsImage(event: ApplicationEvent(name: "test", model: nil), config: config)
+
+        let answered = await pageAnswers(asking: ["4"], config: config)
+        try #require(answered == [[]], "the page was not answered inside the image wait")
+
+        _ = await releaseParkedPass(passAnswers)
+        assertTargetingEquals(ids: ["1", "2", "3"])
+    }
+
+    @Test("A place resolve still waits for a trigger pass that loads its in-app's image", .tags(.remainingTargeting))
+    func placeResolve_waitsForATriggerPassInItsImageWait() async throws {
+        let config = try InappTargetingConfig.oneTargeting.getConfig()
+        let passAnswers = try await passParkedAtItsImage(event: nil, config: config)
+        let placeAnswers = Locked<[EmbeddedPlaceSelection]>(wrappedValue: [])
+
+        mapper.selectInappForPlace("place-nobody-addresses", trigger: nil, config.candidates) { selection in
+            placeAnswers.mutate { $0.append(selection) }
+        }
+        try await Task.sleep(nanoseconds: 300_000_000)
+        #expect(placeAnswers.wrappedValue.isEmpty, "the place resolve overtook the trigger pass")
+
+        mockDataFacade.releaseHeldImageDownload()
+        let answered = await pollUntil(deadline: 5,
+                                       value: { (pass: passAnswers.wrappedValue, place: placeAnswers.wrappedValue) },
+                                       condition: { $0.pass.count == 1 && $0.place.count == 1 })
+        #expect(answered.pass == ["1"])
+        #expect(answered.place == [.decided(nil)])
     }
 
     @Test("Shown in-app propagates its tags into trackTargeting and downloadImage", .tags(.remainingTargeting, .inAppTags))

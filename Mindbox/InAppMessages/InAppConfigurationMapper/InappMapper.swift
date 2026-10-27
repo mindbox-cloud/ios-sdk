@@ -33,7 +33,8 @@ class InappMapper: InappMapperProtocol {
 
     @Locked private var shownInappIDWithHashValue: [String: Int] = [:]
 
-    private let processingQueue = DispatchQueue(label: "com.Mindbox.inAppMapper.processingQueue")
+    private let passQueue = DispatchQueue(label: "com.Mindbox.inAppMapper.passQueue")
+    private let targetingQueue = DispatchQueue(label: "com.Mindbox.inAppMapper.targetingQueue")
 
     init(targetingChecker: InAppTargetingCheckerProtocol,
          inappFilterService: InappFilterProtocol,
@@ -50,12 +51,18 @@ class InappMapper: InappMapperProtocol {
                       _ candidates: ConfigCandidates,
                       _ completion: @escaping (InAppFormData?) -> Void) {
         runPass("the trigger", event: event) { finish in
-            self.evaluate(self.triggerQuery(event, candidates), event: event) { verdict in
-                self.buildFirstShowable(verdict, event: event) { formData in
-                    self.evaluate(self.catchUpQuery(event, candidates), event: event) { catchUp in
-                        self.vouchCatchUp(catchUp, event: event)
-                        finish(formData != nil)
-                        completion(formData)
+            self.withTargeting(event) { release in
+                self.evaluate(self.triggerQuery(event, candidates), event: event) { verdict in
+                    release()
+                    self.buildFirstShowable(verdict, event: event) { formData in
+                        self.withTargeting(event) { release in
+                            self.evaluate(self.catchUpQuery(event, candidates), event: event) { catchUp in
+                                self.vouchCatchUp(catchUp, event: event)
+                                release()
+                                finish(formData != nil)
+                                completion(formData)
+                            }
+                        }
                     }
                 }
             }
@@ -67,19 +74,22 @@ class InappMapper: InappMapperProtocol {
                              _ candidates: ConfigCandidates,
                              _ completion: @escaping (EmbeddedPlaceSelection) -> Void) {
         runPass("place '\(place)'", event: trigger) { finish in
-            self.evaluate(self.placeQuery(place, candidates), event: trigger) { verdict, cutByFetchFailure in
-                self.evaluate(self.placeTargetingQuery(place, candidates), event: trigger) { targeted in
-                    let winner = verdict.first
-                    self.vouch(targeted, winner: winner, at: place)
+            self.withTargeting(trigger) { release in
+                self.evaluate(self.placeQuery(place, candidates), event: trigger) { verdict, cutByFetchFailure in
+                    self.evaluate(self.placeTargetingQuery(place, candidates), event: trigger) { targeted in
+                        let winner = verdict.first
+                        self.vouch(targeted, winner: winner, at: place)
+                        release()
 
-                    guard let winner else {
-                        finish(false)
-                        completion(cutByFetchFailure ? .targetingUnavailable : .decided(nil))
-                        return
+                        guard let winner else {
+                            finish(false)
+                            completion(cutByFetchFailure ? .targetingUnavailable : .decided(nil))
+                            return
+                        }
+
+                        finish(true)
+                        completion(.decided(winner))
                     }
-
-                    finish(true)
-                    completion(.decided(winner))
                 }
             }
         }
@@ -89,11 +99,13 @@ class InappMapper: InappMapperProtocol {
                              askedBy requesterInappId: String,
                              _ candidates: ConfigCandidates,
                              _ completion: @escaping ([String]) -> Void) {
-        runPass("a page of in-app \(requesterInappId) asking about \(ids.count) in-app(s)", event: nil) { finish in
+        Logger.common(message: "[InappMapper] A page of in-app \(requesterInappId) asks about \(ids.count) in-app(s)",
+                      level: .debug, category: .inAppMessages)
+        withTargeting(nil) { release in
             self.evaluate(self.pageQuery(ids, candidates), event: nil) { verdict in
                 self.evaluate(self.pageTargetingQuery(ids, candidates), event: nil) { offered in
-                    finish(false)
                     self.vouchOffers(offered, by: requesterInappId)
+                    release()
                     completion(verdict.map(\.inAppId))
                 }
             }
@@ -105,38 +117,51 @@ class InappMapper: InappMapperProtocol {
     private func runPass(_ label: String,
                          event: ApplicationEvent?,
                          _ body: @escaping (_ finish: @escaping (_ selected: Bool) -> Void) -> Void) {
-        processingQueue.async {
-            let group = DispatchGroup()
-            group.enter()
-
+        passQueue.async {
             Logger.common(message: "[InappMapper] Pass for \(label) by event: \(event?.name ?? "start")",
                           level: .debug, category: .inAppMessages)
-            self.targetingChecker.event = event
 
-            let finishLock = NSLock()
-            var finished = false
+            Self.hold("The pass for \(label)") { release in
+                let finished = Locked(wrappedValue: false)
+                body { selected in
+                    guard !finished.exchange(true) else {
+                        assertionFailure("[InappMapper] The pass for \(label) tried to finish twice")
+                        return
+                    }
 
-            body { selected in
-                finishLock.lock()
-                let alreadyFinished = finished
-                finished = true
-                finishLock.unlock()
-
-                guard !alreadyFinished else {
-                    assertionFailure("[InappMapper] The pass for \(label) tried to finish twice")
-                    return
+                    if selected {
+                        self.dataFacade.discardCollectedFailures()
+                    } else {
+                        self.dataFacade.sendCollectedFailures()
+                    }
+                    release()
                 }
-
-                if selected {
-                    self.dataFacade.discardCollectedFailures()
-                } else {
-                    self.dataFacade.sendCollectedFailures()
-                }
-                group.leave()
             }
-
-            group.wait()
         }
+    }
+
+    private func withTargeting(_ event: ApplicationEvent?,
+                               _ work: @escaping (_ release: @escaping () -> Void) -> Void) {
+        targetingQueue.async {
+            self.targetingChecker.event = event
+            Self.hold("The targeting for event \(event?.name ?? "start")", work)
+        }
+    }
+
+    private static func hold(_ label: String, _ work: (_ release: @escaping () -> Void) -> Void) {
+        let group = DispatchGroup()
+        group.enter()
+        let released = Locked(wrappedValue: false)
+
+        work {
+            guard !released.exchange(true) else {
+                assertionFailure("[InappMapper] \(label) was released twice")
+                return
+            }
+            group.leave()
+        }
+
+        group.wait()
     }
 
     private struct TargetingQuery {
