@@ -904,20 +904,47 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.pageFactory.pages.count == 2)
     }
 
-    @Test("A held page that lost its process while the app was away is not rebuilt when the user is back")
-    func heldPageLostWhileAwayIsNotRebuilt() {
+    @Test("A held page that lost its process while the app was away collapses at once and is not rebuilt when the user is back")
+    func heldPageLostWhileAwayCollapses() {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
         bed.page?.reportRendered(1)
         bed.deliverSamePageWithNewData()
         bed.page?.reportRendered(0)
         bed.presenceBed.enterBackground()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
         bed.page?.loseContentProcess()
+
+        #expect(states == [.empty])
+        #expect(bed.page?.isClosed == true)
 
         bed.presenceBed.returnToApp()
         bed.presenceBed.finishSessionCheck()
 
         #expect(bed.pageFactory.pages.count == 1)
+        #expect(states == [.empty])
+    }
+
+    @Test("A page that lost its process while the app was away collapses on the user's return when its place answered without content meanwhile")
+    func lostPageHeldWhileAwayCollapsesOnReturn() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.presenceBed.enterBackground()
+        bed.page?.loseContentProcess()
+        bed.resolver.resolution = .empty
+        bed.announceNewConfig()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.presenceBed.returnToApp()
+        bed.presenceBed.finishSessionCheck()
+
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.page?.isClosed == true)
+        #expect(states == [.empty])
     }
 
     @Test("A failed or empty block ignores a lost process", arguments: [true, false])
@@ -955,8 +982,8 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.pageFactory.pages.count == 1)
     }
 
-    @Test("A page held on screen after drawing nothing is not rebuilt when it loses its process, and collapses once the user leaves")
-    func heldPageIsNotRebuiltOnALostProcess() {
+    @Test("A page held on screen after drawing nothing collapses at once when it loses its process, without a rebuild")
+    func heldPageCollapsesOnALostProcess() {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
         bed.page?.reportRendered(1)
@@ -966,10 +993,10 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.provider.onStateChange = { states.append($0) }
 
         bed.page?.loseContentProcess()
-        bed.provider.stop()
 
         #expect(bed.pageFactory.pages.count == 1)
-        #expect(states.last == .empty)
+        #expect(bed.page?.isClosed == true)
+        #expect(states == [.empty])
     }
 
     @Test("A page rebuilt after losing its process before its first draw counts the lost page's time in timeToDisplay")
