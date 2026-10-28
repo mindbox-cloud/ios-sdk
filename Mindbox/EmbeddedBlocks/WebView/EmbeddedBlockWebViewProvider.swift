@@ -151,9 +151,7 @@ final class EmbeddedBlockWebViewProvider {
     func stop() {
         deferred.isStartAwaitingSessionCheck = false
         pageShow?.suspend()
-        if let held = deferred.takeHeld() {
-            land(held)
-        }
+        landHeldCollapse(because: "the user left")
         guard isStarted else { return }
 
         isStarted = false
@@ -163,8 +161,10 @@ final class EmbeddedBlockWebViewProvider {
         if let unseen = deferred.parkContentAwaitingTheUser(ifAlive: isAttemptAlive, timedBy: makeStopwatch) { registry.giveSlotBack(unseen, at: placeSystemName) }
     }
 
-    private func land(_ held: EmbeddedBlockDeferredAnswers.HeldCollapse) {
-        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the user left, applying the held answer", category: .embeddedBlocks)
+    func landHeldCollapse(because reason: String) {
+        guard let held = deferred.takeHeld() else { return }
+
+        Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': \(reason), applying the held answer", category: .embeddedBlocks)
         guard case .placeAnswer(let answer) = held else {
             dropPage()
             settle(.empty, isUserLeaving: true)

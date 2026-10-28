@@ -23,7 +23,12 @@ extension EmbeddedBlockWebViewProvider {
             return
         }
 
-        guard appPresence.isPresent, !deferred.isShowWithheld else {
+        guard !deferred.isShowWithheld else {
+            landHeldCollapse(because: "the held page lost its web content process")
+            return
+        }
+
+        guard appPresence.isPresent else {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the page lost its web content process while the user cannot see it — rebuilding it once they can",
                           level: .error, category: .embeddedBlocks)
             return
@@ -40,9 +45,13 @@ extension EmbeddedBlockWebViewProvider {
     }
 
     func rebuildLostPageIfDue() -> Bool {
-        guard isAttemptOnALostPage, !deferred.isShowWithheld else { return false }
+        guard isAttemptOnALostPage else { return false }
 
-        rebuildLostPage()
+        if deferred.isShowWithheld {
+            landHeldCollapse(because: "the held page lost its web content process")
+        } else {
+            rebuildLostPage()
+        }
         return true
     }
 
