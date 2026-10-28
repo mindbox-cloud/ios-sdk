@@ -375,6 +375,11 @@ extension TransparentView: WebBridgeNavigationDelegate {
         }
     }
 
+    func webBridgeWebContentProcessDidTerminate(_ bridge: MindboxWebBridge) {
+        guard !hasEndedBridgeSession else { return }
+        delegate?.closeLoadFailedWebViewVC(reason: "Web content process terminated")
+    }
+
     func webBridge(_ bridge: MindboxWebBridge, didFailProvisionalNavigation url: URL?, error: any Error) {
         Logger.common(message: "[WebView] WKNavigationDelegate: Loading error \(error.localizedDescription)", category: .webViewInAppMessages)
         delegate?.closeLoadFailedWebViewVC(

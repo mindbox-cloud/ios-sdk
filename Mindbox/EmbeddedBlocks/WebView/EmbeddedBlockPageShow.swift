@@ -22,6 +22,10 @@ struct EmbeddedBlockPageShow {
 
     private(set) var isRenewingSession = false
 
+    var isPageLost = false
+
+    var isRebuiltForALostPage = false
+
     private(set) var processingDuration: TimeInterval
 
     private var stopwatch: ForegroundStopwatch
@@ -61,6 +65,10 @@ struct EmbeddedBlockPageShow {
 
     var processingDurationOfARebuild: TimeInterval {
         isSessionClockRunning ? processingDuration + stopwatch.elapsed : processingDuration
+    }
+
+    var processingDurationOfALostPage: TimeInterval {
+        processingDuration + stopwatch.elapsed
     }
 
     mutating func requireRefresh() {

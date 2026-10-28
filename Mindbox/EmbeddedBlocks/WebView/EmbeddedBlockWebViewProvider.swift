@@ -59,11 +59,11 @@ final class EmbeddedBlockWebViewProvider {
 
     private var didReportShownContent = false
 
-    private(set) var pageShow: EmbeddedBlockPageShow?
+    var pageShow: EmbeddedBlockPageShow?
 
     private let makeStopwatch: () -> ForegroundStopwatch
 
-    private let appPresence: EmbeddedBlockAppPresence
+    let appPresence: EmbeddedBlockAppPresence
 
     private let dataPushWait: EmbeddedBlockDataPushWait
 
@@ -132,7 +132,7 @@ final class EmbeddedBlockWebViewProvider {
             take(parked, isParked: true)
         }
 
-        guard parked != nil || (page != nil && !outcome.isFailed) else {
+        guard parked != nil || (page != nil && !outcome.isFailed && pageShow?.isPageLost != true) else {
             beginAttempt()
             return
         }
@@ -276,7 +276,7 @@ final class EmbeddedBlockWebViewProvider {
 
     private func applyContent(_ fresh: EmbeddedBlockWebContent, of answer: EmbeddedBlockPlaceAnswer) {
         defer { deferred.contentAwaitingTheUser = appPresence.isPresent ? nil : answer }
-        if let current = content, page != nil, isAttemptAlive, fresh.isSamePage(as: current) {
+        if let current = content, page != nil, pageShow?.isPageLost != true, isAttemptAlive, fresh.isSamePage(as: current) {
             content = fresh
             pageShow?.confirm(answer)
             if fresh.params != current.params {
@@ -317,14 +317,14 @@ final class EmbeddedBlockWebViewProvider {
     }
 
     private var rebuildReason: String {
-        guard page != nil else { return "building its page" }
+        guard page != nil, pageShow?.isPageLost != true else { return page == nil ? "building its page" : "its page lost its web content process — rebuilding it" }
 
         return isAttemptAlive
             ? "the place points at another page — rebuilding it"
             : "nothing is shown here — rebuilding its page to revive it"
     }
 
-    private func buildPage(with fresh: EmbeddedBlockWebContent, sessionEpoch: Int, processingDuration: TimeInterval) {
+    func buildPage(with fresh: EmbeddedBlockWebContent, sessionEpoch: Int, processingDuration: TimeInterval) {
         dropPage()
 
         if outcome != .loading {
@@ -352,9 +352,8 @@ final class EmbeddedBlockWebViewProvider {
         page.onDataPushConfirmed = { [weak self] in
             self?.dataPushWait.acknowledge()
         }
-        page.onLoadFailure = { [weak self] details in
-            self?.handleLoadFailure(details)
-        }
+        page.onLoadFailure = { [weak self] in self?.handleLoadFailure($0) }
+        page.onContentProcessTerminated = { [weak self] in self?.handleContentProcessTerminated() }
         self.page = page
         self.content = fresh
 
@@ -363,7 +362,7 @@ final class EmbeddedBlockWebViewProvider {
         page.load()
     }
 
-    private func dropPage() {
+    func dropPage() {
         dataPushWait.cancel()
         page?.detachCallbacks()
         page?.cancel()
@@ -518,6 +517,7 @@ extension EmbeddedBlockWebViewProvider: EmbeddedBlockAppPresenceSubscribing {
         guard isStarted else { return }
 
         deferred.contentAwaitingTheUser = nil
+        if rebuildLostPageIfDue() { return }
         dataPushWait.resumeIfSuspended()
         catchUpShownPage()
     }

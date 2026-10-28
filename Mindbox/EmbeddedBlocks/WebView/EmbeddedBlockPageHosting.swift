@@ -24,6 +24,8 @@ protocol EmbeddedBlockPageHosting: AnyObject {
 
     var onLoadFailure: ((String) -> Void)? { get set }
 
+    var onContentProcessTerminated: (() -> Void)? { get set }
+
     var isUserPresent: Bool { get set }
 
     func load()
@@ -42,5 +44,6 @@ extension EmbeddedBlockPageHosting {
         onShowInAppRequest = nil
         onDataPushConfirmed = nil
         onLoadFailure = nil
+        onContentProcessTerminated = nil
     }
 }
