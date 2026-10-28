@@ -926,6 +926,24 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(states == [.loading])
     }
 
+    @Test("A page held after drawing nothing that lost its process while the app was away is rebuilt with the newer content its place sent meanwhile")
+    func emptyHeldPageLostWhileAwayIsRebuiltWithNewerContent() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData()
+        bed.page?.reportRendered(0)
+        bed.presenceBed.enterBackground()
+        bed.deliverSamePageWithNewData("newer")
+        bed.page?.loseContentProcess()
+
+        bed.presenceBed.returnToApp()
+        bed.presenceBed.finishSessionCheck()
+
+        #expect(bed.pageFactory.pages.count == 2)
+        #expect(bed.pageFactory.contents.last?.params["newer"] == .bool(true))
+    }
+
     @Test("A page that lost its process while the app was away collapses on the user's return when its place answered without content meanwhile")
     func lostPageHeldWhileAwayCollapsesOnReturn() {
         let bed = EmbeddedBlockTestBed()
