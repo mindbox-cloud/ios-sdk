@@ -293,7 +293,7 @@ final class EmbeddedBlockWebViewProvider {
         }
 
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': \(rebuildReason)", category: .embeddedBlocks)
-        buildPage(with: fresh, sessionEpoch: answer.sessionEpoch, processingDuration: answer.processingDuration)
+        buildPage(with: fresh, sessionEpoch: answer.sessionEpoch, processingDuration: processingDuration(ofARebuildFor: answer))
     }
 
     private func catchUpShownPage() {

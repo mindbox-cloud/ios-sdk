@@ -63,4 +63,11 @@ extension EmbeddedBlockWebViewProvider {
                       level: .error, category: .embeddedBlocks)
         buildPage(with: content, sessionEpoch: pageShow.confirmedEpoch, processingDuration: pageShow.processingDurationOfALostPage, isRebuildOfALostPage: true)
     }
+
+    func processingDuration(ofARebuildFor answer: EmbeddedBlockPlaceAnswer) -> TimeInterval {
+        guard isAttemptOnALostPage, let pageShow, let content, answer.sessionEpoch == pageShow.confirmedEpoch,
+              answer.resolution.content?.isSamePage(as: content) == true else { return answer.processingDuration }
+
+        return pageShow.processingDurationOfALostPage
+    }
 }
