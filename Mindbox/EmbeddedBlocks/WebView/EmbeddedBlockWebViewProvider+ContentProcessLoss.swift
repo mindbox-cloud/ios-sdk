@@ -23,8 +23,8 @@ extension EmbeddedBlockWebViewProvider {
             return
         }
 
-        guard !deferred.isShowWithheld else {
-            landHeldCollapse(because: "the held page lost its web content process")
+        guard !deferred.isHoldingPlaceAnswer else {
+            landHeldCollapse(because: "the page held over an answer without content lost its web content process")
             return
         }
 
@@ -47,8 +47,8 @@ extension EmbeddedBlockWebViewProvider {
     func rebuildLostPageIfDue() -> Bool {
         guard isAttemptOnALostPage else { return false }
 
-        if deferred.isShowWithheld {
-            landHeldCollapse(because: "the held page lost its web content process")
+        if deferred.isHoldingPlaceAnswer {
+            landHeldCollapse(because: "the page held over an answer without content lost its web content process")
         } else {
             rebuildLostPage()
         }

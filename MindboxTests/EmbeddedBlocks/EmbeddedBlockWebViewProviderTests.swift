@@ -904,8 +904,8 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.pageFactory.pages.count == 2)
     }
 
-    @Test("A held page that lost its process while the app was away collapses at once and is not rebuilt when the user is back")
-    func heldPageLostWhileAwayCollapses() {
+    @Test("A page held after drawing nothing that lost its process while the app was away is rebuilt once the user is back")
+    func emptyHeldPageLostWhileAwayIsRebuiltOnReturn() {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
         bed.page?.reportRendered(1)
@@ -917,14 +917,13 @@ struct EmbeddedBlockWebViewProviderTests {
 
         bed.page?.loseContentProcess()
 
-        #expect(states == [.empty])
-        #expect(bed.page?.isClosed == true)
+        #expect(states.isEmpty)
 
         bed.presenceBed.returnToApp()
         bed.presenceBed.finishSessionCheck()
 
-        #expect(bed.pageFactory.pages.count == 1)
-        #expect(states == [.empty])
+        #expect(bed.pageFactory.pages.count == 2)
+        #expect(states == [.loading])
     }
 
     @Test("A page that lost its process while the app was away collapses on the user's return when its place answered without content meanwhile")
@@ -982,8 +981,8 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.pageFactory.pages.count == 1)
     }
 
-    @Test("A page held on screen after drawing nothing collapses at once when it loses its process, without a rebuild")
-    func heldPageCollapsesOnALostProcess() {
+    @Test("A page held on screen after drawing nothing is rebuilt when it loses its process, and the block collapses when the rebuilt page draws nothing too")
+    func emptyHeldPageIsRebuiltOnALostProcess() {
         let bed = EmbeddedBlockTestBed()
         bed.provider.start()
         bed.page?.reportRendered(1)
@@ -994,9 +993,11 @@ struct EmbeddedBlockWebViewProviderTests {
 
         bed.page?.loseContentProcess()
 
-        #expect(bed.pageFactory.pages.count == 1)
-        #expect(bed.page?.isClosed == true)
-        #expect(states == [.empty])
+        #expect(bed.pageFactory.pages.count == 2)
+
+        bed.page?.reportRendered(0)
+
+        #expect(states == [.loading, .empty])
     }
 
     @Test("A page rebuilt after losing its process before its first draw counts the lost page's time in timeToDisplay")
