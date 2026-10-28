@@ -15,6 +15,7 @@ protocol WebVCDelegate: AnyObject {
     func closeTimeoutWebViewVC()
     func closeBridgeLostWebViewVC()
     func closeLoadFailedWebViewVC(reason: String)
+    func closePresentationFailedWebViewVC(reason: String)
 }
 
 final class WebViewController: UIViewController, InappViewControllerProtocol {
@@ -245,6 +246,11 @@ extension WebViewController: WebVCDelegate {
         reportErrorAndClose(
             .webviewLoadFailed(reason)
         )
+    }
+
+    func closePresentationFailedWebViewVC(reason: String) {
+        Logger.common(message: "[WebView] WebViewVC closePresentationFailedWebViewVC. Reason: \(reason)", category: .webViewInAppMessages)
+        reportErrorAndClose(.webviewPresentationFailed(reason))
     }
 }
 

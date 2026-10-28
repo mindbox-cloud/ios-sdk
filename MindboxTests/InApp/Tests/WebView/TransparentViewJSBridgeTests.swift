@@ -595,6 +595,7 @@ final class ShowControllerSpy: WebViewAction, WebVCDelegate {
     func closeTimeoutWebViewVC() { events.append("closeTimeout") }
     func closeBridgeLostWebViewVC() { events.append("closeBridgeLost") }
     func closeLoadFailedWebViewVC(reason: String) { events.append("closeLoadFailed") }
+    func closePresentationFailedWebViewVC(reason: String) { events.append("closePresentationFailed") }
 }
 
 private final class DatabaseRepositorySpy: DatabaseRepositoryProtocol {

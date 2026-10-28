@@ -377,7 +377,12 @@ extension TransparentView: WebBridgeNavigationDelegate {
 
     func webBridgeWebContentProcessDidTerminate(_ bridge: MindboxWebBridge) {
         guard !hasEndedBridgeSession else { return }
-        delegate?.closeLoadFailedWebViewVC(reason: "Web content process terminated")
+        guard hasReceivedInit else {
+            delegate?.closeLoadFailedWebViewVC(reason: "Web content process terminated")
+            return
+        }
+
+        delegate?.closePresentationFailedWebViewVC(reason: "Web content process terminated after the page was shown")
     }
 
     func webBridge(_ bridge: MindboxWebBridge, didFailProvisionalNavigation url: URL?, error: any Error) {
