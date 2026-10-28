@@ -278,22 +278,27 @@ final class TransparentViewJSBridgeTests {
 
     enum Failure: CaseIterable {
         case loadFailure
+        case presentationFailure
         case timeout
+
+        var reason: InAppShowFailureReason {
+            self == .presentationFailure ? .webviewPresentationFailed : .webviewLoadFailed
+        }
     }
 
-    @Test("A load failure or a timeout that closes the popup reports once, closes once, and reports the error before the close",
+    @Test("A load failure, a presentation failure or a timeout that closes the popup reports its reason once, closes once, and reports the error before the close",
           .tags(.webView), arguments: Failure.allCases)
     func failureThatClosesThePopupIsReportedOnceAndBeforeTheClose(failure: Failure) throws {
         let show = try makeShow()
 
         report(failure, on: show.controller)
 
-        #expect(failures.count == 1)
+        #expect(failures.map(\.failureReason) == [failure.reason])
         #expect(closes == 1)
         #expect(showEvents == ["error", "close"])
     }
 
-    @Test("A load failure or a timeout after the popup closed reports no failure", .tags(.webView), arguments: Failure.allCases)
+    @Test("A load failure, a presentation failure or a timeout after the popup closed reports no failure", .tags(.webView), arguments: Failure.allCases)
     func lateFailureAfterACloseReportsNothing(failure: Failure) throws {
         let show = try makeShow()
 
@@ -406,17 +411,29 @@ final class TransparentViewJSBridgeTests {
         #expect(facade.cacheBypassRetries == expectedRetries)
     }
 
-    @Test("A lost web content process closes the popup as a load failure while it is open, and closes nothing after the page closed it",
-          .tags(.webView), arguments: [(ShowState.open, 1), (.closed, 0)])
-    func lostProcessClosesThePopupOnlyWhileOpen(state: ShowState, expectedCloses: Int) {
+    enum ProcessLoss {
+        case beforeInit
+        case afterInit
+        case afterClose
+    }
+
+    @Test("A lost web content process closes a loading popup as a load failure and a shown one as a presentation failure, and closes nothing after the page closed it",
+          .tags(.webView),
+          arguments: [(ProcessLoss.beforeInit, ["closeLoadFailed"]), (.afterInit, ["init", "closePresentationFailed"]), (.afterClose, ["close"])])
+    func lostProcessClosesThePopupOnlyWhileOpen(loss: ProcessLoss, expectedEvents: [String]) {
         let view = makeView(tags: nil, handlers: [LifecycleActionHandler()])
-        if state == .closed {
+        switch loss {
+        case .beforeInit:
+            break
+        case .afterInit:
+            send(.`init`, payload: "{}", to: view)
+        case .afterClose:
             send(.close, payload: "{}", to: view)
         }
 
         view.webBridgeWebContentProcessDidTerminate(MindboxWebBridge(webView: WKWebView()))
 
-        #expect(showController.events.filter { $0 == "closeLoadFailed" }.count == expectedCloses)
+        #expect(showController.events == expectedEvents)
     }
 
     @Test("A link the page activates is cancelled and decided once either way, and handed to the page only while the popup is open",
@@ -516,6 +533,8 @@ final class TransparentViewJSBridgeTests {
         switch failure {
         case .loadFailure:
             controller.closeLoadFailedWebViewVC(reason: "load failure")
+        case .presentationFailure:
+            controller.closePresentationFailedWebViewVC(reason: "presentation failure")
         case .timeout:
             controller.closeTimeoutWebViewVC()
         }

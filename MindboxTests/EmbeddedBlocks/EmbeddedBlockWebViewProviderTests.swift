@@ -938,6 +938,23 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(states.isEmpty)
     }
 
+    @Test("An empty block whose page lost its process comes back on screen still empty while its place resolves again")
+    func emptyBlockWithALostPageComesBackEmpty() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(0)
+        bed.page?.loseContentProcess()
+        bed.provider.stop()
+        bed.resolver.isDeferred = true
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.start()
+
+        #expect(states == [.empty])
+        #expect(bed.pageFactory.pages.count == 1)
+    }
+
     @Test("A page held on screen after drawing nothing is not rebuilt when it loses its process, and collapses once the user leaves")
     func heldPageIsNotRebuiltOnALostProcess() {
         let bed = EmbeddedBlockTestBed()
@@ -986,6 +1003,26 @@ struct EmbeddedBlockWebViewProviderTests {
         bed.presenceBed.finishSessionCheck()
 
         #expect(bed.pageFactory.pages.count == 2)
+    }
+
+    @Test("A page that lost its process before its first draw keeps that time in timeToDisplay when the place picks the same page again in the session")
+    func lostPageRebuiltForTheSamePageKeepsItsTime() throws {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.processingDuration = 2
+        bed.provider.start()
+        bed.clock.advance(3)
+        bed.presenceBed.enterBackground()
+        bed.page?.loseContentProcess()
+
+        bed.deliverSamePageWithNewData()
+        bed.presenceBed.returnToApp()
+        bed.presenceBed.finishSessionCheck()
+        bed.clock.advance(1)
+        bed.page?.reportRendered(3)
+
+        let show = try #require(bed.accounting.shows.first)
+        #expect(bed.pageFactory.pages.count == 2)
+        #expect(show.timeToDisplay == 6)
     }
 
     // MARK: - The data push's confirmation
