@@ -45,6 +45,16 @@ extension EmbeddedBlockWebViewProvider {
         return true
     }
 
+    func failSilentPageUnlessLost() {
+        guard pageShow?.isPageLost != true else {
+            Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the page lost its web content process — not failing it by its timer, it is rebuilt once the user can see it",
+                          category: .embeddedBlocks)
+            return
+        }
+
+        failSilentPage()
+    }
+
     private func rebuildLostPage() {
         guard let content, let pageShow else { return }
 

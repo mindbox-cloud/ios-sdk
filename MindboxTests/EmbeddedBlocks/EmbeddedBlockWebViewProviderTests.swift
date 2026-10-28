@@ -971,6 +971,23 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(show.timeToDisplay == 6)
     }
 
+    @Test("A page that lost its process while the app was away is not failed by its timers, and is rebuilt once the user is back")
+    func lostPageIsNotFailedByItsTimers() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.presenceBed.enterBackground()
+        bed.page?.loseContentProcess()
+
+        bed.provider.failSilentPageUnlessLost()
+
+        #expect(bed.failureReporter.reported.isEmpty)
+
+        bed.presenceBed.returnToApp()
+        bed.presenceBed.finishSessionCheck()
+
+        #expect(bed.pageFactory.pages.count == 2)
+    }
+
     // MARK: - The data push's confirmation
 
     @Test("A page that never confirms the data push is rebuilt")
