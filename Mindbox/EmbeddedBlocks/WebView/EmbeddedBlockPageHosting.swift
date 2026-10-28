@@ -26,6 +26,8 @@ protocol EmbeddedBlockPageHosting: AnyObject {
 
     var onContentProcessTerminated: (() -> Void)? { get set }
 
+    var isContentProcessLost: Bool { get }
+
     var isUserPresent: Bool { get set }
 
     func load()

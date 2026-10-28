@@ -28,6 +28,8 @@ final class EmbeddedBlockWebViewPage: NSObject, EmbeddedBlockPageHosting {
 
     var onContentProcessTerminated: (() -> Void)?
 
+    private(set) var isContentProcessLost = false
+
     var isUserPresent = true
 
     private let content: EmbeddedBlockWebContent
@@ -219,6 +221,7 @@ extension EmbeddedBlockWebViewPage: WebBridgeNavigationDelegate {
     }
 
     func webBridgeWebContentProcessDidTerminate(_ bridge: MindboxWebBridge) {
+        isContentProcessLost = true
         onContentProcessTerminated?()
     }
 

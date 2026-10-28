@@ -59,7 +59,7 @@ final class EmbeddedBlockWebViewProvider {
 
     private var didReportShownContent = false
 
-    var pageShow: EmbeddedBlockPageShow?
+    private(set) var pageShow: EmbeddedBlockPageShow?
 
     private let makeStopwatch: () -> ForegroundStopwatch
 
@@ -132,7 +132,7 @@ final class EmbeddedBlockWebViewProvider {
             take(parked, isParked: true)
         }
 
-        guard parked != nil || (page != nil && !outcome.isFailed && pageShow?.isPageLost != true) else {
+        guard parked != nil || (page != nil && !outcome.isFailed && !isAttemptOnALostPage) else {
             beginAttempt()
             return
         }
@@ -276,7 +276,7 @@ final class EmbeddedBlockWebViewProvider {
 
     private func applyContent(_ fresh: EmbeddedBlockWebContent, of answer: EmbeddedBlockPlaceAnswer) {
         defer { deferred.contentAwaitingTheUser = appPresence.isPresent ? nil : answer }
-        if let current = content, page != nil, pageShow?.isPageLost != true, isAttemptAlive, fresh.isSamePage(as: current) {
+        if let current = content, page != nil, !isAttemptOnALostPage, isAttemptAlive, fresh.isSamePage(as: current) {
             content = fresh
             pageShow?.confirm(answer)
             if fresh.params != current.params {
@@ -317,14 +317,14 @@ final class EmbeddedBlockWebViewProvider {
     }
 
     private var rebuildReason: String {
-        guard page != nil, pageShow?.isPageLost != true else { return page == nil ? "building its page" : "its page lost its web content process — rebuilding it" }
+        guard page != nil, !isAttemptOnALostPage else { return page == nil ? "building its page" : "its page lost its web content process — rebuilding it" }
 
         return isAttemptAlive
             ? "the place points at another page — rebuilding it"
             : "nothing is shown here — rebuilding its page to revive it"
     }
 
-    func buildPage(with fresh: EmbeddedBlockWebContent, sessionEpoch: Int, processingDuration: TimeInterval) {
+    func buildPage(with fresh: EmbeddedBlockWebContent, sessionEpoch: Int, processingDuration: TimeInterval, isRebuildOfALostPage: Bool = false) {
         dropPage()
 
         if outcome != .loading {
@@ -333,7 +333,7 @@ final class EmbeddedBlockWebViewProvider {
         outcome = .loading
         loadGeneration += 1
         didReportShownContent = false
-        pageShow = EmbeddedBlockPageShow(builtFor: sessionEpoch, processingDuration: processingDuration, makeStopwatch: makeStopwatch)
+        pageShow = EmbeddedBlockPageShow(builtFor: sessionEpoch, processingDuration: processingDuration, isRebuildOfALostPage: isRebuildOfALostPage, makeStopwatch: makeStopwatch)
 
         let page = makePage(fresh)
         page.isUserPresent = true

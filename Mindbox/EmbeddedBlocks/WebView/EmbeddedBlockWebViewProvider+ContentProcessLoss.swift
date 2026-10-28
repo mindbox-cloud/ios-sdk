@@ -11,6 +11,8 @@ import MindboxLogger
 
 extension EmbeddedBlockWebViewProvider {
 
+    var isAttemptOnALostPage: Bool { isAttemptAlive && page?.isContentProcessLost == true }
+
     func handleContentProcessTerminated() {
         guard content != nil, let pageShow, isAttemptAlive else { return }
 
@@ -24,11 +26,10 @@ extension EmbeddedBlockWebViewProvider {
         guard appPresence.isPresent, !deferred.isShowWithheld else {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the page lost its web content process while the user cannot see it — rebuilding it once they can",
                           level: .error, category: .embeddedBlocks)
-            self.pageShow?.isPageLost = true
             return
         }
 
-        guard !pageShow.isRebuiltForALostPage || isReady else {
+        guard !pageShow.isRebuildOfALostPage || isReady else {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the rebuilt page lost its web content process before drawing — failing",
                           level: .error, category: .embeddedBlocks)
             handleLoadFailure("Web content process terminated")
@@ -39,14 +40,14 @@ extension EmbeddedBlockWebViewProvider {
     }
 
     func rebuildLostPageIfDue() -> Bool {
-        guard pageShow?.isPageLost == true, isAttemptAlive, !deferred.isShowWithheld else { return false }
+        guard isAttemptOnALostPage, !deferred.isShowWithheld else { return false }
 
         rebuildLostPage()
         return true
     }
 
     func failSilentPageUnlessLost() {
-        guard pageShow?.isPageLost != true else {
+        guard !isAttemptOnALostPage else {
             Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the page lost its web content process — not failing it by its timer, it is rebuilt once the user can see it",
                           category: .embeddedBlocks)
             return
@@ -60,7 +61,6 @@ extension EmbeddedBlockWebViewProvider {
 
         Logger.common(message: "[EmbeddedBlock] Block '\(placeSystemName)': the page lost its web content process — rebuilding it",
                       level: .error, category: .embeddedBlocks)
-        buildPage(with: content, sessionEpoch: pageShow.confirmedEpoch, processingDuration: pageShow.processingDurationOfALostPage)
-        self.pageShow?.isRebuiltForALostPage = true
+        buildPage(with: content, sessionEpoch: pageShow.confirmedEpoch, processingDuration: pageShow.processingDurationOfALostPage, isRebuildOfALostPage: true)
     }
 }

@@ -186,6 +186,8 @@ final class EmbeddedBlockPageMock: EmbeddedBlockPageHosting {
 
     var onContentProcessTerminated: (() -> Void)?
 
+    private(set) var isContentProcessLost = false
+
     var isUserPresent = true
 
     var loadCount = 0
@@ -231,6 +233,7 @@ final class EmbeddedBlockPageMock: EmbeddedBlockPageHosting {
     }
 
     func loseContentProcess() {
+        isContentProcessLost = true
         onContentProcessTerminated?()
     }
 
