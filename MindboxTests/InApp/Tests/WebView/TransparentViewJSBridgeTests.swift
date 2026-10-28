@@ -406,6 +406,19 @@ final class TransparentViewJSBridgeTests {
         #expect(facade.cacheBypassRetries == expectedRetries)
     }
 
+    @Test("A lost web content process closes the popup as a load failure while it is open, and closes nothing after the page closed it",
+          .tags(.webView), arguments: [(ShowState.open, 1), (.closed, 0)])
+    func lostProcessClosesThePopupOnlyWhileOpen(state: ShowState, expectedCloses: Int) {
+        let view = makeView(tags: nil, handlers: [LifecycleActionHandler()])
+        if state == .closed {
+            send(.close, payload: "{}", to: view)
+        }
+
+        view.webBridgeWebContentProcessDidTerminate(MindboxWebBridge(webView: WKWebView()))
+
+        #expect(showController.events.filter { $0 == "closeLoadFailed" }.count == expectedCloses)
+    }
+
     @Test("A link the page activates is cancelled and decided once either way, and handed to the page only while the popup is open",
           .tags(.webView), arguments: [(ShowState.open, [BridgeMessage.Action.navigationIntercepted]), (.closed, [])])
     func activatedLinkIsCancelledAndHandedToThePageOnlyWhileOpen(state: ShowState, expectedHandOvers: [BridgeMessage.Action]) throws {

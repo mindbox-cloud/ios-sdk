@@ -184,6 +184,8 @@ final class EmbeddedBlockPageMock: EmbeddedBlockPageHosting {
 
     var onLoadFailure: ((String) -> Void)?
 
+    var onContentProcessTerminated: (() -> Void)?
+
     var isUserPresent = true
 
     var loadCount = 0
@@ -226,6 +228,10 @@ final class EmbeddedBlockPageMock: EmbeddedBlockPageHosting {
 
     func failLoad() {
         onLoadFailure?("Failed to fetch page HTML")
+    }
+
+    func loseContentProcess() {
+        onContentProcessTerminated?()
     }
 
     func reportRendered(_ count: Int) {

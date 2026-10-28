@@ -784,6 +784,193 @@ struct EmbeddedBlockWebViewProviderTests {
         #expect(bed.accounting.shows.isEmpty)
     }
 
+    // MARK: - A lost web content process
+
+    @Test("A shown page that lost its web content process is rebuilt for the same content, without a failure")
+    func lostProcessRebuildsThePage() {
+        let bed = EmbeddedBlockTestBed()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+
+        bed.page?.loseContentProcess()
+        bed.page?.reportRendered(1)
+
+        #expect(bed.pageFactory.contents == [.stub, .stub])
+        #expect(bed.page?.loadCount == 1)
+        #expect(bed.resolver.resolveCount == 1)
+        #expect(states == [.loading, .ready, .loading, .ready])
+        #expect(bed.failureReporter.reported.isEmpty)
+    }
+
+    @Test("A rebuilt page that loses its process again before drawing fails the block once")
+    func rebuiltPageLostAgainFailsTheBlock() {
+        let bed = EmbeddedBlockTestBed()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+
+        bed.page?.loseContentProcess()
+        bed.page?.loseContentProcess()
+
+        #expect(bed.pageFactory.pages.count == 2)
+        #expect(states.last == .failed(.networkError))
+        #expect(bed.failureReporter.reasons == [.webviewLoadFailed])
+    }
+
+    @Test("A rebuilt page that drew is rebuilt again on a later loss")
+    func drawnRebuiltPageIsRebuiltAgain() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.page?.loseContentProcess()
+        bed.page?.reportRendered(1)
+
+        bed.page?.loseContentProcess()
+
+        #expect(bed.pageFactory.pages.count == 3)
+        #expect(bed.failureReporter.reported.isEmpty)
+    }
+
+    @Test("A page that lost its process off screen is dropped, and the block's return starts a new attempt")
+    func lostProcessOffScreenDropsThePage() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.provider.stop()
+
+        bed.page?.loseContentProcess()
+
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.page?.isClosed == true)
+
+        bed.provider.start()
+
+        #expect(bed.pageFactory.pages.count == 2)
+        #expect(bed.page?.loadCount == 1)
+        #expect(bed.failureReporter.reported.isEmpty)
+    }
+
+    @Test("A page that lost its process while the app was away is rebuilt once the user is back, and that loss is no failure")
+    func lostProcessWhileAwayIsRebuiltOnReturn() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.page?.loseContentProcess()
+        bed.presenceBed.enterBackground()
+
+        bed.page?.loseContentProcess()
+
+        bed.presenceBed.returnToApp()
+
+        #expect(bed.pageFactory.pages.count == 2)
+
+        bed.presenceBed.finishSessionCheck()
+
+        #expect(bed.pageFactory.pages.count == 3)
+        #expect(bed.page?.loadCount == 1)
+        #expect(bed.failureReporter.reported.isEmpty)
+    }
+
+    @Test("A page that lost its process while the app was away is not reused when the place picks the same page again")
+    func lostPageIsNotReusedForTheSamePage() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.presenceBed.enterBackground()
+        bed.page?.loseContentProcess()
+
+        bed.deliverSamePageWithNewData()
+
+        #expect(bed.pageFactory.pages.count == 2)
+    }
+
+    @Test("A page that lost its process while the app was away is not resumed as ready when its block comes back on screen")
+    func lostPageIsNotResumedOnStart() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.presenceBed.enterBackground()
+        bed.page?.loseContentProcess()
+        bed.provider.stop()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.start()
+
+        #expect(states.first == .loading)
+        #expect(bed.pageFactory.pages.count == 2)
+    }
+
+    @Test("A held page that lost its process while the app was away is not rebuilt when the user is back")
+    func heldPageLostWhileAwayIsNotRebuilt() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData()
+        bed.page?.reportRendered(0)
+        bed.presenceBed.enterBackground()
+        bed.page?.loseContentProcess()
+
+        bed.presenceBed.returnToApp()
+        bed.presenceBed.finishSessionCheck()
+
+        #expect(bed.pageFactory.pages.count == 1)
+    }
+
+    @Test("A failed or empty block ignores a lost process", arguments: [true, false])
+    func settledBlockIgnoresALostProcess(failed: Bool) {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        if failed {
+            bed.page?.failLoad()
+        } else {
+            bed.page?.reportRendered(0)
+        }
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.page?.loseContentProcess()
+
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(states.isEmpty)
+    }
+
+    @Test("A page held on screen after drawing nothing is not rebuilt when it loses its process, and collapses once the user leaves")
+    func heldPageIsNotRebuiltOnALostProcess() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData()
+        bed.page?.reportRendered(0)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.page?.loseContentProcess()
+        bed.provider.stop()
+
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(states.last == .empty)
+    }
+
+    @Test("A page rebuilt after losing its process before its first draw counts the lost page's time in timeToDisplay")
+    func lostProcessBeforeTheFirstDrawKeepsItsTime() throws {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.processingDuration = 2
+        bed.provider.start()
+        bed.clock.advance(3)
+
+        bed.page?.loseContentProcess()
+        bed.clock.advance(1)
+        bed.page?.reportRendered(3)
+
+        let show = try #require(bed.accounting.shows.first)
+        #expect(bed.pageFactory.pages.count == 2)
+        #expect(show.timeToDisplay == 6)
+    }
+
     // MARK: - The data push's confirmation
 
     @Test("A page that never confirms the data push is rebuilt")

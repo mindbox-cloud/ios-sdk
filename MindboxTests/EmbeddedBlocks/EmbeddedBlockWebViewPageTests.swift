@@ -55,6 +55,16 @@ struct EmbeddedBlockWebViewPageTests {
         #expect(bed.facade.initDataPushes == [["stories": .string("fresh")]])
     }
 
+    @Test("A lost web content process reaches the block as such, not as a load failure")
+    func lostProcessReachesTheBlock() {
+        let bed = PageBed()
+
+        bed.loseContentProcess()
+
+        #expect(bed.lostProcesses == 1)
+        #expect(bed.failures == 0)
+    }
+
     @Test("A finished document is not a failure")
     func finishedDocumentIsNotAFailure() {
         let bed = PageBed()
@@ -347,6 +357,7 @@ private final class PageBed {
     let facade = SharedWebLayerMock()
 
     private(set) var failures = 0
+    private(set) var lostProcesses = 0
     private(set) var pageQuestions: [[String]] = []
     private(set) var renderedCounts: [Int] = []
     private(set) var unreadableReports = 0
@@ -371,6 +382,9 @@ private final class PageBed {
                                         noCacheRetryPolicy: WebViewNoCacheRetryPolicy { isCacheFeatureEnabled })
         page.onLoadFailure = { [weak self] _ in
             self?.failures += 1
+        }
+        page.onContentProcessTerminated = { [weak self] in
+            self?.lostProcesses += 1
         }
         page.onShowableQuestion = { [weak self] ids, completion in
             self?.pageQuestions.append(ids)
@@ -418,6 +432,10 @@ private final class PageBed {
 
     func finishNavigation() {
         facade.navigationDelegate?.webBridge(bridge, didFinishNavigation: nil)
+    }
+
+    func loseContentProcess() {
+        facade.navigationDelegate?.webBridgeWebContentProcessDidTerminate(bridge)
     }
 
     func decidePolicy(for url: URL, type: WKNavigationType) -> WKNavigationActionPolicy? {
