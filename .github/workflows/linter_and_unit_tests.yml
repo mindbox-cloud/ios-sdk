@@ -97,9 +97,7 @@ jobs:
     - name: Generate coverage site
       if: ${{ github.ref == 'refs/heads/develop' }}
       run: |
-        curl -fsSL "https://mindbox-cloud.github.io/ios-sdk/coverage/history.json" -o /tmp/prev-history.json \
-          || curl -fsSL "https://mindbox-cloud.github.io/ios-sdk/history.json" -o /tmp/prev-history.json \
-          || echo "[]" > /tmp/prev-history.json
+        curl -fsSL "https://mindbox-cloud.github.io/ios-sdk/coverage/history.json" -o /tmp/prev-history.json || echo "[]" > /tmp/prev-history.json
         python3 .github/scripts/generate_coverage_site.py test_output/Mindbox.xcresult coverage-site /tmp/prev-history.json
 
     - name: Upload coverage site
