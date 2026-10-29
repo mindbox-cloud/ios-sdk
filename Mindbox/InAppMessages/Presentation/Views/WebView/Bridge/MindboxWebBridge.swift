@@ -23,11 +23,13 @@ public protocol WebBridgeNavigationDelegate: AnyObject {
     func webBridge(_ bridge: MindboxWebBridge, didFailProvisionalNavigation url: URL?, error: Error)
     func webBridge(_ bridge: MindboxWebBridge, decidePolicyFor url: URL?, navigationType: WKNavigationType, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void)
     func webBridge(_ bridge: MindboxWebBridge, didReceiveHTTPError url: String?)
+    func webBridgeWebContentProcessDidTerminate(_ bridge: MindboxWebBridge)
 }
 
 @_spi(Internal)
 public extension WebBridgeNavigationDelegate {
     func webBridge(_ bridge: MindboxWebBridge, didReceiveHTTPError url: String?) {}
+    func webBridgeWebContentProcessDidTerminate(_ bridge: MindboxWebBridge) {}
 }
 
 protocol BridgePendingStore: AnyObject {
@@ -283,7 +285,13 @@ extension MindboxWebBridge: WKNavigationDelegate {
         }
         navigationDelegate?.webBridge(self, didFailProvisionalNavigation: webView.url, error: error)
     }
-    
+
+    public func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+        Logger.common(message: "[WebView] Bridge: the page's web content process terminated",
+                      level: .error, category: .webViewInAppMessages)
+        navigationDelegate?.webBridgeWebContentProcessDidTerminate(self)
+    }
+
     public func webView(_ webView: WKWebView,
                         decidePolicyFor navigationAction: WKNavigationAction,
                         decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {

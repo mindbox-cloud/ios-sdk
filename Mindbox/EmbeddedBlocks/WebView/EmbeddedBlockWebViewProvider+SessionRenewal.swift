@@ -61,7 +61,7 @@ extension EmbeddedBlockWebViewProvider {
             return true
         }
 
-        failSilentPage()
+        failSilentPageUnlessLost()
         return true
     }
 

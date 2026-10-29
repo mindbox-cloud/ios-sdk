@@ -58,6 +58,7 @@ struct MindboxWebBridgeStalenessTests {
         private(set) var startCount = 0
         private(set) var finishCount = 0
         private(set) var failCount = 0
+        private(set) var lostProcessCount = 0
         private(set) var finishURLs: [URL?] = []
 
         func webBridge(_ bridge: MindboxWebBridge, didStartProvisionalNavigation url: URL?) { startCount += 1 }
@@ -66,6 +67,7 @@ struct MindboxWebBridgeStalenessTests {
             finishURLs.append(url)
         }
         func webBridge(_ bridge: MindboxWebBridge, didFailProvisionalNavigation url: URL?, error: Error) { failCount += 1 }
+        func webBridgeWebContentProcessDidTerminate(_ bridge: MindboxWebBridge) { lostProcessCount += 1 }
         func webBridge(_ bridge: MindboxWebBridge, decidePolicyFor url: URL?, navigationType: WKNavigationType,
                        decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
             decisionHandler(.allow)
@@ -162,6 +164,14 @@ struct MindboxWebBridgeStalenessTests {
 
         bridge.webView(webView, didFail: makeNavigation(), withError: NSError(domain: "test", code: 3))
 
+        #expect(spy.failCount == 0)
+    }
+
+    @Test("A lost web content process reaches the delegate, even before the show's own load, and is not a navigation failure")
+    func lostProcessReachesTheDelegate() {
+        bridge.webViewWebContentProcessDidTerminate(webView)
+
+        #expect(spy.lostProcessCount == 1)
         #expect(spy.failCount == 0)
     }
 

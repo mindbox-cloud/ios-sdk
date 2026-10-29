@@ -26,6 +26,10 @@ final class EmbeddedBlockWebViewPage: NSObject, EmbeddedBlockPageHosting {
 
     var onLoadFailure: ((String) -> Void)?
 
+    var onContentProcessTerminated: (() -> Void)?
+
+    private(set) var isContentProcessLost = false
+
     var isUserPresent = true
 
     private let content: EmbeddedBlockWebContent
@@ -214,6 +218,11 @@ extension EmbeddedBlockWebViewPage: WebBridgeNavigationDelegate {
         Logger.common(message: "[EmbeddedBlock] Page navigation failed: \(error.localizedDescription)",
                       level: .error, category: .embeddedBlocks)
         onLoadFailure?("Page failed to load: \(error.code) \(error.localizedDescription)")
+    }
+
+    func webBridgeWebContentProcessDidTerminate(_ bridge: MindboxWebBridge) {
+        isContentProcessLost = true
+        onContentProcessTerminated?()
     }
 
     func webBridge(_ bridge: MindboxWebBridge,
