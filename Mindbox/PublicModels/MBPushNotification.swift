@@ -8,7 +8,7 @@
 
 import Foundation
 
-public struct MBPushNotification: Codable {
+public struct MBPushNotification: Codable, Sendable {
     public let aps: MBAps?
     public let clickUrl: String?
     public let imageUrl: String?
@@ -21,7 +21,7 @@ public struct MBPushNotification: Codable {
     }
 }
 
-public struct MBAps: Codable {
+public struct MBAps: Codable, Sendable {
     public let alert: MBApsAlert?
     public let sound: String?
     public let mutableContent: Int?
@@ -34,12 +34,12 @@ public struct MBAps: Codable {
     }
 }
 
-public struct MBApsAlert: Codable {
+public struct MBApsAlert: Codable, Sendable {
     public let title: String?
     public let body: String?
 }
 
-public struct MBPushNotificationButton: Codable {
+public struct MBPushNotificationButton: Codable, Sendable {
     public let text: String?
     public let url: String?
     public let uniqueKey: String?
