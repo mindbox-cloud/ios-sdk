@@ -406,7 +406,7 @@ public final class MindboxEmbeddedBlockView: UIView {
         if runtime.contentProvider.isAwaitingAnswer {
             runtime.contentProvider.failUnanswered(waited: runtime.waitBudget.consumed)
         } else {
-            runtime.contentProvider.failSilentPage()
+            runtime.contentProvider.failSilentPageUnlessLost()
         }
     }
 

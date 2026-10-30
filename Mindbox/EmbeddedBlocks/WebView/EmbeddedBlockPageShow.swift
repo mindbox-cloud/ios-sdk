@@ -22,6 +22,8 @@ struct EmbeddedBlockPageShow {
 
     private(set) var isRenewingSession = false
 
+    let isRebuildOfALostPage: Bool
+
     private(set) var processingDuration: TimeInterval
 
     private var stopwatch: ForegroundStopwatch
@@ -32,9 +34,11 @@ struct EmbeddedBlockPageShow {
 
     init(builtFor sessionEpoch: Int,
          processingDuration: TimeInterval,
+         isRebuildOfALostPage: Bool,
          makeStopwatch: @escaping () -> ForegroundStopwatch) {
         self.confirmedEpoch = sessionEpoch
         self.processingDuration = processingDuration
+        self.isRebuildOfALostPage = isRebuildOfALostPage
         self.makeStopwatch = makeStopwatch
         self.stopwatch = makeStopwatch()
     }
@@ -61,6 +65,10 @@ struct EmbeddedBlockPageShow {
 
     var processingDurationOfARebuild: TimeInterval {
         isSessionClockRunning ? processingDuration + stopwatch.elapsed : processingDuration
+    }
+
+    var processingDurationOfALostPage: TimeInterval {
+        processingDuration + stopwatch.elapsed
     }
 
     mutating func requireRefresh() {
