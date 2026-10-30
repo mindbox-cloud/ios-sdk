@@ -24,7 +24,6 @@ final class CoreController {
     var controllerQueue: DispatchQueue
 
     func initialization(configuration: MBConfiguration) {
-
         controllerQueue.async {
             SessionTemporaryStorage.shared.isInitializationCalled = true
 
@@ -128,11 +127,6 @@ final class CoreController {
             Logger.common(message: "[Core] Set firstInitializationDateTime from currentDate: \(now)")
         }
 
-        // Reuse the deviceUUID generated for a previous installation if present:
-        // once generated, it must stay stable until an explicit reinstall and must
-        // not depend on the ATT state (IDFA ↔ IDFV) or on a transient locale-driven
-        // re-installation. Generate a new one (may take up to 3 sec, see
-        // utilitiesFetcher.getDeviceUUID) only on a genuine first installation.
         let deviceUUID = persistenceStorage.deviceUUID ?? generateDeviceUUID()
         startUUIDDebugServiceIfNeeded(deviceUUID: deviceUUID, configuration: configuration)
         install(
@@ -171,7 +165,7 @@ final class CoreController {
         try? databaseRepository.erase()
         
         guaranteedDeliveryManager.cancelAllOperations()
-        let newVersion = 0 // Variable from an older version of this framework
+        let newVersion = 0
         persistenceStorage.deviceUUID = deviceUUID
         persistenceStorage.installationId = configuration.previousInstallationId
         persistenceStorage.imageLoadingMaxTimeInSeconds = configuration.imageLoadingMaxTimeInSeconds

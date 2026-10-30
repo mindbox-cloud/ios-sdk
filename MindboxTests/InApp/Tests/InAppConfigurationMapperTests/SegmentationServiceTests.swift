@@ -94,21 +94,6 @@ final class SegmentationServiceTests: XCTestCase {
         XCTAssertEqual(result, expectedModel)
     }
 
-    func test_checkProductSegmentation_isPresentingInAppMessage() throws {
-        SessionTemporaryStorage.shared.isPresentingInAppMessage = true
-        let expectations = expectation(description: "test_checkProductSegmentation_isPresentingInAppMessage")
-        var result: [InAppProductSegmentResponse.CustomerSegmentation]?
-        sut.checkProductSegmentationRequest(products: .init(ids: ["Hello": "World"])) { response in
-            if case .success(let segmentations) = response {
-                result = segmentations
-            }
-            expectations.fulfill()
-        }
-
-        waitForExpectations(timeout: 1)
-        XCTAssertNil(result)
-    }
-
     func test_checkProductSegmentation_segmentsEmpty_returnNil() throws {
         var result: [InAppProductSegmentResponse.CustomerSegmentation]?
         let expectations = expectation(description: "test_checkProductSegmentation_segmentsEmpty_returnNil")

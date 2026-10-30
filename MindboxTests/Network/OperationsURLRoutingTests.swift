@@ -30,7 +30,6 @@ struct OperationsURLRoutingTests {
         let syncWrapper = Self.makeEventWrapper(.syncEvent, bodyJSON: #"{"name":"X","payload":"{}"}"#)
         #expect(try builder.asURLRequest(route: EventRoute.syncEvent(syncWrapper)).url?.host == opsHost)
 
-        // SDK logs flow through the same `EventRoute.asyncEvent` (see `MBEventRepository.makeRoute`).
         let logsWrapper = Self.makeEventWrapper(.sdkLogs)
         #expect(try builder.asURLRequest(route: EventRoute.asyncEvent(logsWrapper)).url?.host == opsHost)
     }
@@ -152,8 +151,6 @@ struct OperationsURLRoutingTests {
 
     @Test("Canonical form stored by policy routes correctly end-to-end")
     func canonicalStoredFormRoutesCorrectly() throws {
-        // Mirrors what `OperationsDomainConfigPolicy` writes to PersistenceStorage:
-        // canonical `scheme://host` form. URLRequestBuilder must accept it as-is.
         let canonical = "https://anonymizer-api-regular.client.ru"
         let builder = URLRequestBuilder(domain: domain, operationsDomain: canonical)
         let wrapper = Self.makeEventWrapper(.installed)
@@ -217,8 +214,6 @@ struct OperationsURLRoutingTests {
 
     @Test("Fails fast when base URL is unparseable (no silent relative-URL request)")
     func failsFastOnUnparseableBaseURL() {
-        // Embedded space defeats both `URLComponents(string:)` parsing and
-        // makes the prior fallback build a bogus relative URL silently.
         let builder = URLRequestBuilder(domain: "bad host with spaces")
         let wrapper = Self.makeEventWrapper(.installed)
 
@@ -228,11 +223,6 @@ struct OperationsURLRoutingTests {
     }
 
     // MARK: - Rollback signals from JSON config
-    //
-    // Happy-path and key/type errors live in `SettingsConfigParsingTests`
-    // (driven by the canonical `pkl-mobile-config` stubs). The two cases
-    // below stay here because they exercise the rollback channel that's
-    // specific to this feature and not modeled in the Pkl error stubs.
 
     @Test("Settings decodes explicit null as rollback signal", .tags(.decoding))
     func settingsDecodesNullOperationsAsRollback() throws {
@@ -344,17 +334,14 @@ struct OperationsURLRoutingTests {
 
     @Test("Policy — trims surrounding whitespace before evaluating value")
     func policyTrimsSurroundingWhitespace() {
-        // Trimmed value matches stored after canonicalization → no-op.
         #expect(
             OperationsDomainConfigPolicy.action(for: "  anonymizer.client.ru  ", currentlyStored: "https://anonymizer.client.ru")
                 == .keep
         )
-        // Trimmed value differs from stored → save canonical form.
         #expect(
             OperationsDomainConfigPolicy.action(for: "  new.client.ru  ", currentlyStored: "https://old.ru")
                 == .save("https://new.client.ru")
         )
-        // Trimmed value with nothing stored → save canonical form.
         #expect(
             OperationsDomainConfigPolicy.action(for: "  valid.host.ru  ", currentlyStored: nil)
                 == .save("https://valid.host.ru")
@@ -371,8 +358,6 @@ struct OperationsURLRoutingTests {
 
     @Test("Policy — does NOT spuriously reject when canonical form matches stored (legacy raw)")
     func policyDoesNotRejectOnLegacyRawMatch() {
-        // Regression: `.keep` was previously logged as "rejected" whenever raw != stored,
-        // even when raw was valid and just normalized to the stored form.
         #expect(
             OperationsDomainConfigPolicy.action(for: "x.ru", currentlyStored: "https://x.ru")
                 == .keep
@@ -467,8 +452,6 @@ struct OperationsURLRoutingTests {
 
     @Test("Policy — rejects non-hex percent escape from config")
     func policyRejectsNonHexPercentEscape() {
-        // Regression: "%zz" is not a valid percent-encoded octet — it would corrupt
-        // (or fail to build) the request URL at runtime if accepted here.
         #expect(
             OperationsDomainConfigPolicy.action(for: "x.ru/a%zz", currentlyStored: "https://good.ru")
                 == .rejected("x.ru/a%zz")

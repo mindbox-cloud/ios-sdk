@@ -10,48 +10,39 @@ import Foundation
 import MindboxLogger
 
 protocol InAppTrackingServiceProtocol {
-    func trackInAppShown(id: String)
-    func saveInappStateChange()
+    func trackInAppShown(id: String, in history: inout InappShowHistory)
+    func saveInappStateChange(in history: inout InappShowHistory)
 }
 
 final class InAppTrackingService: InAppTrackingServiceProtocol {
-    private let persistenceStorage: PersistenceStorage
     private let calendar: Calendar
     
-    init(persistenceStorage: PersistenceStorage, calendar: Calendar = .current) {
-        self.persistenceStorage = persistenceStorage
+    init(calendar: Calendar = .current) {
         self.calendar = calendar
     }
     
-    func trackInAppShown(id: String) {
+    func trackInAppShown(id: String, in history: inout InappShowHistory) {
         let now = Date()
-        
-        trackInAppInSession(id: id)
-        updateShownDates(id: id, newDate: now)
-        cleanupOldDates(id: id, currentDate: now)
+
+        updateShownDates(id: id, newDate: now, in: &history)
+        cleanupOldDates(id: id, currentDate: now, in: &history)
     }
     
-    func saveInappStateChange() {
-        // We save the in-app state timestamp in two places (onPresented and onPresentationCompleted) to handle the case
-        // when the app is terminated while an in-app message is being shown.
+    func saveInappStateChange(in history: inout InappShowHistory) {
         
         let now = Date()
-        persistenceStorage.lastInappStateChangeDate = now
+        history.lastStateChangeDate = now
         Logger.common(message: "[InAppTrackingService] Updated lastInappStateChangeDate to \(now.asDateTimeWithSeconds)", level: .info, category: .inAppMessages)
     }
     
-    private func trackInAppInSession(id: String) {
-        SessionTemporaryStorage.shared.sessionShownInApps.append(id)
-    }
-    
-    private func updateShownDates(id: String, newDate: Date) {
-        var currentDates = persistenceStorage.shownDatesByInApp?[id] ?? []
+    private func updateShownDates(id: String, newDate: Date, in history: inout InappShowHistory) {
+        var currentDates = history.shownDatesByInApp?[id] ?? []
         currentDates.append(newDate)
-        persistenceStorage.shownDatesByInApp?[id] = currentDates
+        history.shownDatesByInApp?[id] = currentDates
     }
     
-    private func cleanupOldDates(id: String, currentDate: Date) {
-        guard var currentDates = persistenceStorage.shownDatesByInApp?[id] else { return }
+    private func cleanupOldDates(id: String, currentDate: Date, in history: inout InappShowHistory) {
+        guard var currentDates = history.shownDatesByInApp?[id] else { return }
         guard let cutoffDate = calendar.date(
             byAdding: .day,
             value: -Constants.MagicNumbers.daysToKeepInappShowTimes,
@@ -65,7 +56,7 @@ final class InAppTrackingService: InAppTrackingServiceProtocol {
                             [InAppTrackingService] Removed \(datesToRemove.count) old dates for in-app \(id):
                             \(datesToRemove.map { $0.asDateTimeWithSeconds }.joined(separator: ", "))
                             """, level: .info, category: .inAppMessages)
-            persistenceStorage.shownDatesByInApp?[id] = currentDates
+            history.shownDatesByInApp?[id] = currentDates
         }
     }
 }

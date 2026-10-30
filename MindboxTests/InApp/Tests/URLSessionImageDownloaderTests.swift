@@ -6,6 +6,7 @@
 //  Copyright © 2023 Mindbox. All rights reserved.
 //
 
+import Testing
 import XCTest
 @testable import Mindbox
 
@@ -128,4 +129,64 @@ class URLSessionImageDownloaderTests: XCTestCase {
 
         return true
     }
+}
+
+@Suite("URLSessionImageDownloader session")
+struct URLSessionImageDownloaderSessionTests {
+
+    @Test("A download's session is invalidated once its task finishes")
+    func sessionIsInvalidatedAfterTheDownload() async {
+        let invalidation = SessionInvalidationSpy()
+        let downloader = URLSessionImageDownloader(persistenceStorage: MockPersistenceStorage()) { configuration in
+            configuration.protocolClasses = [ImageStubURLProtocol.self]
+            return URLSession(configuration: configuration, delegate: invalidation, delegateQueue: nil)
+        }
+
+        let statusCode: Int? = await withCheckedContinuation { continuation in
+            downloader.downloadImage(withUrl: "https://mindbox.invalid/image.png") { _, response, _ in
+                continuation.resume(returning: response?.statusCode)
+            }
+        }
+        let isInvalidated = await pollUntil(deadline: 2, value: { invalidation.isInvalidated }, condition: { $0 })
+
+        #expect(statusCode == 200)
+        #expect(isInvalidated)
+    }
+}
+
+private final class SessionInvalidationSpy: NSObject, URLSessionDelegate {
+    private let lock = NSLock()
+    private var invalidated = false
+
+    var isInvalidated: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return invalidated
+    }
+
+    func urlSession(_ session: URLSession, didBecomeInvalidWithError error: Error?) {
+        lock.lock()
+        invalidated = true
+        lock.unlock()
+    }
+}
+
+private final class ImageStubURLProtocol: URLProtocol {
+
+    override class func canInit(with request: URLRequest) -> Bool {
+        true
+    }
+
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest {
+        request
+    }
+
+    override func startLoading() {
+        let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+        client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+        client?.urlProtocol(self, didLoad: Data([0xFF, 0xD8, 0xFF]))
+        client?.urlProtocolDidFinishLoading(self)
+    }
+
+    override func stopLoading() {}
 }

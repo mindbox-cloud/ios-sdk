@@ -16,7 +16,30 @@ enum InAppShowFailureReason: String, Codable {
     case presentationFailed = "presentation_failed"
     case webviewLoadFailed = "webview_load_failed"
     case webviewPresentationFailed = "webview_presentation_failed"
+    case waitBudgetExceeded = "wait_budget_exceeded"
     case unknownError = "unknown_error"
+}
+
+enum InAppShowError: Encodable {
+    case inapp(InAppShowFailure)
+    case embeddedBlock(EmbeddedBlockShowFailure)
+
+    private enum CodingKeys: String, CodingKey {
+        case type = "$type"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+
+        switch self {
+        case .inapp(let failure):
+            try container.encode("inappShowFailure", forKey: .type)
+            try failure.encode(to: encoder)
+        case .embeddedBlock(let failure):
+            try container.encode("embeddedBlockShowFailure", forKey: .type)
+            try failure.encode(to: encoder)
+        }
+    }
 }
 
 struct InAppShowFailure: Codable {
@@ -25,4 +48,24 @@ struct InAppShowFailure: Codable {
     let errorDetails: String?
     let dateTimeUtc: String
     let tags: [String: String]?
+}
+
+struct EmbeddedBlockShowFailure: Encodable {
+
+    enum Phase: String {
+        case configMissing = "config_missing"
+        case resolvePending = "resolve_pending"
+    }
+
+    let placeSystemName: String
+    let failureReason: InAppShowFailureReason
+    let errorDetails: String?
+    let dateTimeUtc: String
+
+    init(placeSystemName: String, waited: TimeInterval, phase: Phase, dateTimeUtc: String) {
+        self.placeSystemName = placeSystemName
+        self.failureReason = .waitBudgetExceeded
+        self.errorDetails = "phase=\(phase.rawValue); waited=\(waited.toTimeSpan())"
+        self.dateTimeUtc = dateTimeUtc
+    }
 }

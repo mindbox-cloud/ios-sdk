@@ -1,0 +1,239 @@
+//
+//  OperationActionHandler.swift
+//  Mindbox
+//
+//  Created by Akylbek Utekeshev on 13.08.2026.
+//  Copyright © 2026 Mindbox. All rights reserved.
+//
+
+import Foundation
+import MindboxLogger
+
+final class OperationActionHandler: WebBridgeActionHandler {
+
+    let actions: Set<BridgeMessage.Action> = [.asyncOperation, .syncOperation]
+
+    private lazy var featureToggleManager: FeatureToggleManager = makeFeatureToggleManager()
+    private lazy var databaseRepository: DatabaseRepositoryProtocol = makeDatabaseRepository()
+    private lazy var eventRepository: EventRepository = makeEventRepository()
+    private lazy var inAppEventSender: InappMessageEventSender = makeInAppEventSender()
+
+    private let makeFeatureToggleManager: () -> FeatureToggleManager
+    private let makeDatabaseRepository: () -> DatabaseRepositoryProtocol
+    private let makeEventRepository: () -> EventRepository
+    private let makeInAppEventSender: () -> InappMessageEventSender
+    private let inappInCurrentConfig: (_ id: String) -> InApp?
+
+    init(featureToggleManager: @escaping @autoclosure () -> FeatureToggleManager
+         = DI.injectOrFail(FeatureToggleManager.self),
+         databaseRepository: @escaping @autoclosure () -> DatabaseRepositoryProtocol
+         = DI.injectOrFail(DatabaseRepositoryProtocol.self),
+         eventRepository: @escaping @autoclosure () -> EventRepository
+         = DI.injectOrFail(EventRepository.self),
+         inAppEventSender: @escaping @autoclosure () -> InappMessageEventSender
+         = DI.injectOrFail(InappMessageEventSender.self),
+         inappInCurrentConfig: ((_ id: String) -> InApp?)? = nil) {
+        self.makeFeatureToggleManager = featureToggleManager
+        self.makeDatabaseRepository = databaseRepository
+        self.makeEventRepository = eventRepository
+        self.makeInAppEventSender = inAppEventSender
+        self.inappInCurrentConfig = inappInCurrentConfig ?? { id in
+            DI.injectOrFail(InAppConfigurationManagerProtocol.self).inappInCurrentConfig(withId: id)
+        }
+    }
+
+    func handle(_ message: BridgeMessage, host: WebBridgeHost) {
+        let operation: (name: String, body: String)
+        switch self.operation(from: message, host: host) {
+        case .success(let parsed):
+            operation = parsed
+        case .failure(let refusal):
+            host.respondError(.invalidPayload, detail: refusal.detail, to: message)
+            return
+        }
+
+        switch message.parsedAction {
+        case .asyncOperation:
+            queue(operation, message: message, host: host)
+        case .syncOperation:
+            send(operation, message: message, host: host)
+        default:
+            break
+        }
+    }
+}
+
+// MARK: - Actions
+
+private extension OperationActionHandler {
+
+    func queue(_ operation: (name: String, body: String), message: BridgeMessage, host: WebBridgeHost) {
+        let customEvent = CustomEvent(name: operation.name, payload: operation.body)
+        let event = Event(type: .customEvent, body: BodyEncoder(encodable: customEvent).body)
+        inAppEventSender.sendEventIfEnabled(operation.name, jsonString: operation.body)
+
+        do {
+            try databaseRepository.create(event: event)
+            Logger.common(message: "[WebView] asyncOperation '\(operation.name)' queued",
+                          level: .info,
+                          category: host.logCategory)
+        } catch {
+            Logger.common(message: "[WebView] asyncOperation '\(operation.name)' failed: \(error)",
+                          level: .error,
+                          category: host.logCategory)
+            host.respondError(.operationFailed, detail: "failed to queue operation '\(operation.name)': \(error)", to: message)
+            return
+        }
+
+        host.respondSuccess(to: message)
+    }
+
+    func send(_ operation: (name: String, body: String), message: BridgeMessage, host: WebBridgeHost) {
+        let customEvent = CustomEvent(name: operation.name, payload: operation.body)
+        let event = Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
+
+        Logger.common(message: "[WebView] syncOperation '\(operation.name)' sending",
+                      level: .info,
+                      category: host.logCategory)
+
+        eventRepository.sendRaw(event: event) { [weak host] result in
+            DispatchQueue.main.async {
+                guard let host else { return }
+
+                let outgoing = OperationActionHandler.makeSyncOperationResponse(
+                    result: result,
+                    action: message.action,
+                    id: message.id
+                )
+
+                switch outgoing.type {
+                case .response:
+                    Logger.common(message: "[WebView] syncOperation '\(operation.name)' success",
+                                  level: .info,
+                                  category: host.logCategory)
+                case .error:
+                    if case .failure(let error) = result {
+                        Logger.common(message: "[WebView] syncOperation '\(operation.name)' failed: \(error)",
+                                      level: .error,
+                                      category: host.logCategory)
+                    } else {
+                        Logger.common(message: "[WebView] syncOperation '\(operation.name)' failed: non-UTF-8 response body",
+                                      level: .error,
+                                      category: host.logCategory)
+                    }
+                default:
+                    break
+                }
+
+                host.send(outgoing)
+            }
+        }
+        inAppEventSender.sendEventIfEnabled(operation.name, jsonString: operation.body)
+    }
+
+    func operation(from message: BridgeMessage, host: WebBridgeHost) -> Result<(name: String, body: String), Refusal> {
+        guard let payload = message.payloadObject,
+              case .string(let name)? = payload["operation"],
+              !name.isEmpty,
+              let body = payload["body"] else {
+            return .failure(.malformed)
+        }
+
+        guard case .tags(let tags) = OperationTagsResolver.resolve(inappId: payload["inappId"],
+                                                                   host: host,
+                                                                   lookup: inappInCurrentConfig) else {
+            return .failure(.invalidInappId)
+        }
+
+        let mergedBody = JSONValue.mergingInAppTags(featureToggleManager.gatedTags(tags), into: body)
+
+        guard let data = try? JSONEncoder().encode(mergedBody),
+              let bodyString = String(data: data, encoding: .utf8) else {
+            return .failure(.malformed)
+        }
+
+        return .success((name, bodyString))
+    }
+
+    enum Refusal: Error {
+        case malformed
+        case invalidInappId
+
+        var detail: String {
+            switch self {
+            case .malformed:
+                return "could not parse operation/body or encode the operation body"
+            case .invalidInappId:
+                return "inappId must be a non-empty string or null"
+            }
+        }
+    }
+}
+
+// MARK: - Tags
+
+enum OperationTagsResolver {
+
+    enum Resolution {
+        case tags([String: String]?)
+        case invalidInappId
+    }
+
+    // lookup must not wait: operations keep their order because each is tagged and sent within one main-thread turn.
+    static func resolve(inappId: JSONValue?,
+                        host: WebBridgeHost,
+                        lookup: (_ id: String) -> InApp?) -> Resolution {
+        switch inappId {
+        case .none, .null:
+            return .tags(host.tags)
+        case .string(let id) where !id.isEmpty && id == host.contentId:
+            return .tags(host.tags)
+        case .string(let id) where !id.isEmpty:
+            guard let inapp = lookup(id) else {
+                Logger.common(message: "[WebView] Operation names in-app \(id), which is not in the current config: it goes without SDK tags",
+                              level: .error,
+                              category: host.logCategory)
+                return .tags(nil)
+            }
+            return .tags(inapp.tags)
+        default:
+            return .invalidInappId
+        }
+    }
+}
+
+// MARK: - Response mapping
+
+extension OperationActionHandler {
+
+    static func makeSyncOperationResponse(
+        result: Result<Data, MindboxError>,
+        action: String,
+        id: UUID
+    ) -> BridgeMessage {
+        switch result {
+        case .success(let data):
+            guard let bodyString = String(data: data, encoding: .utf8) else {
+                return BridgeMessage(
+                    type: .error,
+                    action: action,
+                    payload: .object(["error": .string("Response body is not valid UTF-8")]),
+                    id: id
+                )
+            }
+            return BridgeMessage(
+                type: .response,
+                action: action,
+                payload: .string(bodyString),
+                id: id
+            )
+        case .failure(let error):
+            return BridgeMessage(
+                type: .error,
+                action: action,
+                payload: .string(error.createDataJSON()),
+                id: id
+            )
+        }
+    }
+}

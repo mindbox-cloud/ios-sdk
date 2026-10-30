@@ -15,18 +15,15 @@ struct MBContainerConcurrencyTests {
 
     private final class Service {}
 
-    /// A `.container`-scoped singleton must be minted exactly once even under concurrent
-    /// resolves — the recursive lock serializes the check-create-store. Without the lock,
-    /// racing resolves each see an empty cache and run the factory more than once.
     @Test
     func concurrentResolveMintsOneInstance() {
         let container = MBContainer()
         let counterLock = NSLock()
         var factoryCalls = 0
 
+        let factoryDelayThatMakesAMissingLockRace: TimeInterval = 0.02
         container.register(Service.self, scope: .container) {
-            // Widen the check-create-store window so a missing lock reliably races.
-            Thread.sleep(forTimeInterval: 0.02)
+            Thread.sleep(forTimeInterval: factoryDelayThatMakesAMissingLockRace)
             counterLock.lock()
             factoryCalls += 1
             counterLock.unlock()

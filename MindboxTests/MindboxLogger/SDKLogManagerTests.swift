@@ -12,12 +12,11 @@ import XCTest
 
 final class SDKLogManagerTests: XCTestCase {
 
-    // Shared cross-platform vectors: target is the MD5 hex of the lowercased deviceUUID.
     private enum Stub {
-        static let deviceUUID = "216E6225-3170-4089-A6F0-3D1ED8F64153" // persisted uppercased, as the real SDK stores it
+        static let deviceUUID = "216E6225-3170-4089-A6F0-3D1ED8F64153"
         static let target = "334db432a8f72f64a89664682f7bc032"
-        static let foreignTarget = "248eccb79da2bbca61c133c59e4a1516" // another device's target
-        static let emptyStringTarget = "d41d8cd98f00b204e9800998ecf8427e" // md5 of ""
+        static let foreignTarget = "248eccb79da2bbca61c133c59e4a1516"
+        static let emptyStringTarget = "d41d8cd98f00b204e9800998ecf8427e"
     }
 
     var eventRepositoryMock: EventRepositoryMock!
@@ -82,7 +81,6 @@ final class SDKLogManagerTests: XCTestCase {
     }
 
     func testBody_withEmptyDeviceUUID_shouldNotSendLogs() {
-        // A blank persisted deviceUUID must match nothing, even a config carrying md5("").
         persistenceStorageMock.deviceUUID = ""
         logsManager.sendLogs(logs: [makeLog(target: Stub.emptyStringTarget)])
 
@@ -90,7 +88,6 @@ final class SDKLogManagerTests: XCTestCase {
     }
 
     func testBody_withEmptyTarget_shouldNotSendLogs() {
-        // Parity with Android's validator: a blank target must never match.
         logsManager.sendLogs(logs: [makeLog(target: "")])
 
         XCTAssertEqual(eventRepositoryMock.requests.count, 0)

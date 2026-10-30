@@ -1,0 +1,63 @@
+//
+//  EmbeddedBlockContentProviderFactory.swift
+//  Mindbox
+//
+//  Created by vailence on 06.08.2026.
+//  Copyright © 2026 Mindbox. All rights reserved.
+//
+
+import Foundation
+import MindboxLogger
+
+protocol EmbeddedBlockContentProviderMaking {
+    func makeProvider(placeSystemName: String) -> EmbeddedBlockWebViewProvider
+}
+
+final class EmbeddedBlockContentProviderFactory: EmbeddedBlockContentProviderMaking {
+
+    private let registry: EmbeddedBlockPlaceRegistering
+    private let inappService: InappRequestServing
+    private let failureManager: InappShowFailureManagerProtocol
+    private let accounting: InappShowAccounting
+    private let appPresence: EmbeddedBlockAppPresence
+
+    init(registry: EmbeddedBlockPlaceRegistering,
+         inappService: InappRequestServing,
+         failureManager: InappShowFailureManagerProtocol,
+         accounting: InappShowAccounting,
+         appPresence: EmbeddedBlockAppPresence = .shared) {
+        self.registry = registry
+        self.inappService = inappService
+        self.failureManager = failureManager
+        self.accounting = accounting
+        self.appPresence = appPresence
+    }
+
+    func makeProvider(placeSystemName: String) -> EmbeddedBlockWebViewProvider {
+        EmbeddedBlockWebViewProvider(placeSystemName: placeSystemName,
+                                     registry: registry,
+                                     inappService: inappService,
+                                     makePage: { EmbeddedBlockWebViewPage(content: $0) },
+                                     accounting: accounting,
+                                     reportFailure: { [failureManager] inAppId, tags, reason, details in
+                                         Self.report(failure: reason, details: details, inAppId: inAppId, tags: tags, to: failureManager)
+                                     },
+                                     reportUnansweredWait: { [failureManager, inappService] waited in
+                                         failureManager.sendWaitBudgetExceeded(place: placeSystemName,
+                                                                               waited: waited,
+                                                                               phase: inappService.hasConfig ? .resolvePending : .configMissing)
+                                     },
+                                     appPresence: appPresence)
+    }
+
+    static func report(failure reason: InAppShowFailureReason,
+                       details: String,
+                       inAppId: String,
+                       tags: [String: String]?,
+                       to manager: InappShowFailureManagerProtocol) {
+        manager.sendBlockFailure(inappId: inAppId,
+                                 reason: reason,
+                                 details: details,
+                                 tags: tags)
+    }
+}

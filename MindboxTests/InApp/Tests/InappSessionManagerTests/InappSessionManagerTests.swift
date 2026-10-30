@@ -18,12 +18,16 @@ final class InappSessionManagerTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
-        manager = DI.injectOrFail(InappSessionManagerProtocol.self) as? InappSessionManager
         coreManagerMock = DI.injectOrFail(InAppCoreManagerProtocol.self) as? InAppCoreManagerMock
         persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
         targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
+        manager = InappSessionManager(inappCoreManager: coreManagerMock,
+                                      inappConfigManager: InAppConfigurationManagerStub(),
+                                      targetingChecker: targetingChecker,
+                                      userVisitManager: DI.injectOrFail(UserVisitManagerProtocol.self))
         SessionTemporaryStorage.shared.expiredConfigSession = ""
         SessionTemporaryStorage.shared.isInitializationCalled = true
+        EmbeddedBlockAppPresence.shared.reset()
     }
 
     override func tearDown() {
@@ -170,9 +174,16 @@ final class InappSessionManagerTests: XCTestCase {
         SessionTemporaryStorage.shared.viewProductOperation = "Test2"
         SessionTemporaryStorage.shared.geoRequestResult = .success(nil)
         SessionTemporaryStorage.shared.segmentationRequestResult = .success(nil)
-        SessionTemporaryStorage.shared.isPresentingInAppMessage = true
         SessionTemporaryStorage.shared.sessionShownInApps = ["1"]
         SessionTemporaryStorage.shared.inAppSettings = Settings.InAppSettings(maxInappsPerSession: 1, maxInappsPerDay: 2, minIntervalBetweenShows: "00:00:00")
+        SessionTemporaryStorage.shared.$ledger.mutate {
+            $0.vouchedInappIds = ["1"]
+            $0.placeTargetedInappId = ["place": "1"]
+            $0.vouchedPageOffers = [PageOffer(requesterInappId: "block", inappId: "1")]
+            $0.placesReportedUnanswered = ["place"]
+            $0.servedPlaceDelays = [ServedPlaceDelay(place: "place", inappId: "1")]
+            $0.placeShownInappId = ["place": "1"]
+        }
         
         targetingChecker.context.isNeedGeoRequest = true
         targetingChecker.checkedSegmentations = [.init(segmentation: .init(ids: .init(externalId: "1")), segment: nil)]
@@ -182,6 +193,7 @@ final class InappSessionManagerTests: XCTestCase {
         targetingChecker.event = .init(name: "Test", model: nil)
         
         XCTAssertNil(persistenceStorage.lastInappStateChangeDate)
+        let sessionEpoch = SessionTemporaryStorage.shared.ledger.sessionEpoch
 
         manager.checkInappSession()
         
@@ -189,9 +201,9 @@ final class InappSessionManagerTests: XCTestCase {
         XCTAssertEqual(SessionTemporaryStorage.shared.viewProductOperation, nil)
         XCTAssertNil(SessionTemporaryStorage.shared.geoRequestResult)
         XCTAssertNil(SessionTemporaryStorage.shared.segmentationRequestResult)
-        XCTAssertEqual(SessionTemporaryStorage.shared.isPresentingInAppMessage, false)
         XCTAssertEqual(SessionTemporaryStorage.shared.sessionShownInApps, [])
         XCTAssertNil(SessionTemporaryStorage.shared.inAppSettings)
+        XCTAssertEqual(SessionTemporaryStorage.shared.ledger, InappSessionLedger(sessionEpoch: sessionEpoch + 1))
         
         targetingChecker.context.isNeedGeoRequest = false
         targetingChecker.checkedSegmentations = nil

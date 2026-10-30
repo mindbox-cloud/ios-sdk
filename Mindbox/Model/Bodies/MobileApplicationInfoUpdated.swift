@@ -16,7 +16,6 @@ struct MobileApplicationInfoUpdated: Codable {
 
     let instanceId: String
 
-    /// Храним единственный токен в массиве, потому что в таком формате его ожидает бекенд
     let tokens: [TokenData]
 
     init(token: String?,

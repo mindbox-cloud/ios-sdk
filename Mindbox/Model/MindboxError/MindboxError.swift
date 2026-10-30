@@ -9,24 +9,25 @@
 import Foundation
 import MindboxLogger
 
-/// Data types that thrown the possible errors from Mindbox.
+/// Errors the Mindbox SDK reports.
 public enum MindboxError: LocalizedError {
-    /// Client error
+    /// The API answered with status `ValidationError`, or the SDK refused a sync operation's name or
+    /// JSON body before sending it.
     case validationError(ValidationError)
-    /// Request error/server error
+    /// The API rejected the request with HTTP 4xx.
     case protocolError(ProtocolError)
-    /// Error for code 5xx
+    /// The server failed with HTTP 5xx.
     case serverError(ProtocolError)
-    /// Internal mindbox errors wrapper
+    /// An error on the SDK's side, such as an invalid or missing configuration or an HTTP 2xx response it
+    /// could not parse.
     case internalError(InternalError)
-    /// Other response error
+    /// A response the SDK cannot use, such as a redirect.
     case invalidResponse(URLResponse?)
-    /// Error for connection failure
+    /// No response came from the server, for example without a network connection.
     case connectionError
-    /// Unhandled errors
+    /// Any other error.
     case unknown(Error)
 
-    /// Return a formatted error message
     public var errorDescription: String? {
         switch self {
         case let .validationError(error):
@@ -143,12 +144,11 @@ public extension MindboxError {
         }
     }
 
+    /// Returns the error as a JSON string `{"type": "<type>", "data": {...}}`.
     func createJSON() -> String {
         makeErrorJSON().convertToString()
     }
 
-    /// Data-only JSON without the `{type, data}` envelope — the WebView JS-bridge
-    /// `onError` contract. `createJSON()` must keep the envelope: RN/Flutter dispatch on it.
     internal func createDataJSON() -> String {
         makeErrorJSON().convertDataToString()
     }

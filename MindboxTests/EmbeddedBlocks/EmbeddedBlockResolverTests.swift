@@ -1,0 +1,251 @@
+//
+//  EmbeddedBlockResolverTests.swift
+//  MindboxTests
+//
+//  Created by vailence on 06.08.2026.
+//  Copyright © 2026 Mindbox. All rights reserved.
+//
+
+import Foundation
+import Testing
+@_spi(Internal) @testable import Mindbox
+
+@Suite("Embedded block resolver", .tags(.embeddedBlocks))
+@MainActor
+struct EmbeddedBlockResolverTests {
+
+    @Test("Every block asks for its own answer")
+    func everyResolveAsksTheLoader() {
+        let loader = ContentLoaderSpy()
+        let resolver = EmbeddedBlockResolver(load: loader.load)
+        var answers: [EmbeddedBlockResolution] = []
+
+        resolver.resolve("promo") { resolution, _, _, _ in answers.append(resolution) }
+        resolver.resolve("promo") { resolution, _, _, _ in answers.append(resolution) }
+        resolver.resolve("stories") { resolution, _, _, _ in answers.append(resolution) }
+
+        #expect(loader.requestedIds == ["promo", "promo", "stories"])
+
+        loader.answer(.content(.stub))
+
+        #expect(answers == [.content(.stub), .content(.stub), .content(.stub)])
+    }
+
+    @Test("An empty answer is not remembered")
+    func emptyAnswerIsNotRemembered() {
+        let loader = ContentLoaderSpy()
+        let resolver = EmbeddedBlockResolver(load: loader.load)
+
+        resolver.resolve("promo") { _, _, _, _ in }
+        loader.answer(.empty)
+
+        var second: EmbeddedBlockResolution?
+        resolver.resolve("promo") { resolution, _, _, _ in second = resolution }
+        loader.answer(.content(.stub))
+
+        #expect(loader.requestedIds == ["promo", "promo"])
+        #expect(second == .content(.stub))
+    }
+
+    @Test("The trigger travels to the loader untouched")
+    func triggerTravelsToTheLoader() {
+        let loader = ContentLoaderSpy()
+        let resolver = EmbeddedBlockResolver(load: loader.load)
+        let event = ApplicationEvent(name: "custom.operation", model: nil)
+
+        resolver.resolve("promo", trigger: event) { _, _, _, _ in }
+        resolver.resolve("promo") { _, _, _, _ in }
+
+        #expect(loader.requestedTriggers.count == 2)
+        #expect(loader.requestedTriggers[0] === event)
+        #expect(loader.requestedTriggers[1] == nil)
+    }
+
+    @Test("An answer from a background thread is delivered on the main thread")
+    func backgroundAnswerIsDeliveredOnTheMainThread() async {
+        let resolver = EmbeddedBlockResolver(load: { _, _, completion in
+            DispatchQueue.global().async { completion(.content(.stub), 0, 0, nil) }
+        })
+
+        let deliveredOnMainThread: Bool = await withCheckedContinuation { continuation in
+            resolver.resolve("promo") { _, _, _, _ in
+                continuation.resume(returning: Thread.isMainThread)
+            }
+        }
+
+        #expect(deliveredOnMainThread)
+    }
+
+    @Test("An answer from the main thread is delivered without a hop")
+    func mainThreadAnswerIsDeliveredSynchronously() {
+        let resolver = EmbeddedBlockResolver(load: { _, _, completion in completion(.empty, 0, 0, nil) })
+        var answer: EmbeddedBlockResolution?
+
+        resolver.resolve("promo") { resolution, _, _, _ in answer = resolution }
+
+        #expect(answer == .empty)
+    }
+
+    @Test("The session the selection was made in and the version of the config it read reach the block as the loader stamped them, whether the answer comes from a background thread or from main",
+          arguments: [true, false])
+    func selectionsSessionTravelsToTheBlock(answersFromTheBackground: Bool) async {
+        let stamped = SessionTemporaryStorage.shared.ledger.sessionEpoch + 1
+        let configRead = ConfigVersion(number: 7)
+        let resolver = EmbeddedBlockResolver(load: { _, _, completion in
+            guard answersFromTheBackground else {
+                completion(.content(.stub), 0, stamped, configRead)
+                return
+            }
+
+            DispatchQueue.global().async { completion(.content(.stub), 0, stamped, configRead) }
+        })
+
+        let delivered: (sessionEpoch: Int, configVersion: ConfigVersion?) = await withCheckedContinuation { continuation in
+            resolver.resolve("promo") { _, _, sessionEpoch, configVersion in
+                continuation.resume(returning: (sessionEpoch, configVersion))
+            }
+        }
+
+        #expect(delivered.sessionEpoch == stamped)
+        #expect(delivered.configVersion == configRead)
+    }
+
+    // MARK: - What the selection's answer becomes
+
+    private func embeddedInapp(params: [String: JSONValue], isPriority: Bool = false) throws -> InAppTransitionData {
+        let layer = WebviewContentBackgroundLayer(baseUrl: "https://inapp.local/stories",
+                                                  contentUrl: "https://mindbox.ru/block.html",
+                                                  params: params)
+        let content = InappFormVariantContent(background: ContentBackground(layers: [.webview(layer)]),
+                                              elements: nil)
+        let variant = MindboxFormVariant.embedded(EmbeddedFormVariant(content: content,
+                                                                      placeSystemName: "stories-list-container"))
+        return InAppTransitionData(inAppId: "block-inapp-id",
+                                   isPriority: isPriority,
+                                   delayTime: nil,
+                                   content: variant,
+                                   frequency: nil,
+                                   tags: nil)
+    }
+
+    @Test("The selection's answer becomes the page, params untouched")
+    func resolutionMapsTheWebviewLayerIntoThePage() throws {
+        let catalogs: [[String: JSONValue]] = [
+            ["stories": .array([.object(["inAppId": .string("55555555")])])],
+            [:],
+            ["stories": .array([])]
+        ]
+
+        for params in catalogs {
+            let inapp = try embeddedInapp(params: params)
+
+            let resolution = EmbeddedBlockResolver.resolution(from: inapp, place: "stories-list-container")
+
+            guard case .content(let content) = resolution else {
+                Issue.record("Expected content for params \(params), got \(resolution)")
+                continue
+            }
+            #expect(content.inAppId == "block-inapp-id")
+            #expect(content.params == params)
+        }
+    }
+
+    @Test("The resolution carries the in-app's priority to the place's budget check")
+    func resolutionCarriesThePriority() throws {
+        let resolution = EmbeddedBlockResolver.resolution(from: try embeddedInapp(params: [:], isPriority: true),
+                                                          place: "stories-list-container")
+
+        guard case .content(let content) = resolution else {
+            Issue.record("Expected content, got \(resolution)")
+            return
+        }
+        #expect(content.isPriority)
+    }
+
+    @Test("No winner is an empty place")
+    func noWinnerIsEmpty() {
+        #expect(EmbeddedBlockResolver.resolution(from: nil, place: "stories-list-container") == .empty)
+    }
+
+    @Test("A winner that is not an embedded block is a failure with unknown_error, not an empty place")
+    func nonEmbeddedWinnerIsAFailure() throws {
+        let layer = WebviewContentBackgroundLayer(baseUrl: "https://inapp.local/stories",
+                                                  contentUrl: "https://mindbox.ru/block.html",
+                                                  params: [:])
+        let content = InappFormVariantContent(background: ContentBackground(layers: [.webview(layer)]),
+                                              elements: nil)
+        let inapp = InAppTransitionData(inAppId: "modal-inapp-id",
+                                        isPriority: false,
+                                        delayTime: nil,
+                                        content: .modal(ModalFormVariant(content: content)),
+                                        frequency: nil,
+                                        tags: ["templateType": "Modal"])
+
+        let resolution = EmbeddedBlockResolver.resolution(from: inapp, place: "stories-list-container")
+
+        guard case .failure(let failure) = resolution else {
+            Issue.record("Expected a failure, got \(resolution)")
+            return
+        }
+        #expect(failure.inAppId == "modal-inapp-id")
+        #expect(failure.tags == ["templateType": "Modal"])
+        #expect(failure.reason == .unknownError)
+    }
+
+    @Test("An embedded winner without a webview layer is a failure with unknown_error")
+    func embeddedWinnerWithoutWebviewLayerIsAFailure() throws {
+        let content = InappFormVariantContent(background: ContentBackground(layers: []), elements: nil)
+        let variant = MindboxFormVariant.embedded(EmbeddedFormVariant(content: content,
+                                                                      placeSystemName: "stories-list-container"))
+        let inapp = InAppTransitionData(inAppId: "layerless-inapp-id",
+                                        isPriority: false,
+                                        delayTime: nil,
+                                        content: variant,
+                                        frequency: nil,
+                                        tags: nil)
+
+        let resolution = EmbeddedBlockResolver.resolution(from: inapp, place: "stories-list-container")
+
+        guard case .failure(let failure) = resolution else {
+            Issue.record("Expected a failure, got \(resolution)")
+            return
+        }
+        #expect(failure.inAppId == "layerless-inapp-id")
+        #expect(failure.reason == .unknownError)
+    }
+
+    @Test("A config the SDK could not get is not an empty place")
+    func unavailableConfigIsNotEmpty() {
+        #expect(EmbeddedBlockResolver.resolution(from: .configUnavailable, place: "stories-list-container") == .configUnavailable)
+    }
+
+    @Test("A decided pass with no winner is an empty place")
+    func decidedPassWithoutWinnerIsEmpty() {
+        #expect(EmbeddedBlockResolver.resolution(from: .decided(nil), place: "stories-list-container") == .empty)
+    }
+
+    @Test("A place the pass could not check is not an empty place")
+    func uncheckedPlaceIsNotEmpty() {
+        #expect(EmbeddedBlockResolver.resolution(from: .targetingUnavailable, place: "stories-list-container") == .targetingUnavailable)
+    }
+}
+
+private final class ContentLoaderSpy {
+
+    private(set) var requestedIds: [String] = []
+    private(set) var requestedTriggers: [ApplicationEvent?] = []
+
+    private var completions: [(EmbeddedBlockResolution, TimeInterval, Int, ConfigVersion?) -> Void] = []
+
+    func load(_ id: String, trigger: ApplicationEvent?, completion: @escaping (EmbeddedBlockResolution, TimeInterval, Int, ConfigVersion?) -> Void) {
+        requestedIds.append(id)
+        requestedTriggers.append(trigger)
+        completions.append(completion)
+    }
+
+    func answer(_ resolution: EmbeddedBlockResolution) {
+        let pending = completions
+        completions = []
+        pending.forEach { $0(resolution, 0, 0, nil) }
+    }
+}

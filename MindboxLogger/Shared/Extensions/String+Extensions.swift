@@ -16,7 +16,6 @@ public enum DateFormat: String, CaseIterable {
         return self.rawValue
     }
 
-    // Fixed-pattern formatter: POSIX locale + explicit UTC timezone, 24h `HH`.
     private static func makeFormatter(for format: DateFormat) -> DateFormatter {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
@@ -25,10 +24,6 @@ public enum DateFormat: String, CaseIterable {
         return formatter
     }
 
-    // The set of formats is fixed and tiny, so every formatter is built once, up front.
-    // `static let` is initialized exactly once (thread-safe), the dictionary is then immutable,
-    // and each fully-configured `DateFormatter` is safe for concurrent string/date conversion on
-    // iOS 7+ (min target iOS 12). No lock needed.
     private static let formatters: [DateFormat: DateFormatter] = {
         var dict = [DateFormat: DateFormatter]()
         for format in DateFormat.allCases {
@@ -37,8 +32,6 @@ public enum DateFormat: String, CaseIterable {
         return dict
     }()
 
-    // Falls back to building on demand instead of force-unwrapping: the dictionary always has an
-    // entry for every case (built from `allCases`), so the fallback is unreachable in practice.
     private var formatter: DateFormatter {
         Self.formatters[self] ?? Self.makeFormatter(for: self)
     }

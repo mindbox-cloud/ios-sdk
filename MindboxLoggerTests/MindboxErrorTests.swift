@@ -14,7 +14,6 @@ struct MindboxErrorTests {
 
     // MARK: - Fixtures
 
-    /// Minimal `CodingKey` for building `DecodingError` values with a coding path.
     private struct CK: CodingKey {
         let stringValue: String
         let intValue: Int?
@@ -36,7 +35,6 @@ struct MindboxErrorTests {
                         statusCode: code, httpVersion: "HTTP/1.1", headerFields: nil)!
     }
 
-    /// `createJSON()` must always emit parseable JSON; returns the decoded envelope.
     private func envelope(_ error: MindboxError) throws -> [String: Any] {
         let data = try #require(error.createJSON().data(using: .utf8))
         return try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])

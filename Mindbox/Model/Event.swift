@@ -40,18 +40,15 @@ struct Event: EventProtocol {
         return Int64(ms)
     }
 
-    // Время добавляения персистентно в очередь событий
     let enqueueTimeStamp: Double
 
     let serialNumber: String?
 
     let type: Operation
-    // True if first attempt to send was failed
     var isRetry: Bool { !retryTimestamp.isZero }
     
     let retryTimestamp: Double
     
-    // Data according to Operation
     let body: String
 
     init(type: Operation, body: String) {

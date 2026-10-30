@@ -19,3 +19,4 @@ jobs:
       branch: ${{ github.base_ref }}
     secrets:
       GITLAB_TRIGGER_TOKEN: ${{ secrets.GITLAB_TRIGGER_TOKEN }}
+      GITLAB_HOST: ${{ secrets.GITLAB_HOST }}

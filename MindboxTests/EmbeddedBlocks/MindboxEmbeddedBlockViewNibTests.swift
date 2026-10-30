@@ -1,0 +1,320 @@
+//
+//  MindboxEmbeddedBlockViewNibTests.swift
+//  MindboxTests
+//
+//  Created by vailence on 08.10.2026.
+//  Copyright © 2026 Mindbox. All rights reserved.
+//
+
+import Testing
+import UIKit
+@_spi(Internal) @testable import Mindbox
+
+@Suite("MindboxEmbeddedBlockView from a nib", .tags(.embeddedBlocks))
+@MainActor
+struct MindboxEmbeddedBlockViewNibTests {
+
+    // MARK: - Inspectables
+
+    @Test("A block from a nib takes its place, height, strategy and animation from the inspectables")
+    func nibBlockReadsItsInspectables() throws {
+        let nib = NibFixture()
+
+        let view = try nib.loadConfiguredBlock()
+
+        #expect(view.placeSystemName == "Stories")
+        #expect(view.loadingStrategy == .placeholder)
+        #expect(view.animatesReveal == false)
+        #expect(view.intrinsicContentSize.height == 96)
+    }
+
+    @Test("Inspectables left untouched in Interface Builder mean the code path's defaults")
+    func nibBlockFallsBackToDefaults() throws {
+        let nib = NibFixture()
+
+        let view = try nib.loadDefaultBlock()
+
+        #expect(view.placeSystemName == "promo")
+        #expect(view.loadingStrategy == .automatic)
+        #expect(view.animatesReveal == true)
+    }
+
+    @Test("A block from a nib asks the SDK for the place it was given")
+    func nibBlockAsksTheSdkForItsPlace() throws {
+        let nib = NibFixture()
+
+        _ = try nib.loadConfiguredBlock()
+
+        #expect(nib.factory.requestedPlaces == ["stories", "promo"])
+        #expect(nib.memory.askedPlaces == ["stories", "promo"])
+    }
+
+    @Test("The strategy name is matched by its case-insensitive spelling, an unknown name means automatic",
+          arguments: [("automatic", MindboxEmbeddedBlockLoadingStrategy.automatic),
+                      ("placeholder", .placeholder),
+                      ("hidden", .hidden),
+                      ("HIDDEN", .hidden),
+                      (" Placeholder ", .placeholder),
+                      ("", .automatic),
+                      ("lazy", .automatic)])
+    func strategyNameIsParsed(name: String, strategy: MindboxEmbeddedBlockLoadingStrategy) throws {
+        let nib = NibFixture()
+        let view = try nib.makeUnbuiltBlock()
+        view.setValue("stories", forKey: "placeSystemName")
+        view.setValue(120, forKey: "blockHeight")
+        view.setValue(name, forKey: "loadingStrategyName")
+
+        view.awakeFromNib()
+
+        #expect(view.loadingStrategy == strategy)
+    }
+
+    @Test("An unknown strategy name parses to nothing, the known ones in any letter case",
+          arguments: [("automatic", MindboxEmbeddedBlockLoadingStrategy?.some(.automatic)),
+                      ("", .some(.automatic)),
+                      (" Placeholder ", .some(.placeholder)),
+                      ("HIDDEN", .some(.hidden)),
+                      ("lazy", nil)])
+    func strategyNameParsesPurely(name: String, strategy: MindboxEmbeddedBlockLoadingStrategy?) {
+        #expect(MindboxEmbeddedBlockView.loadingStrategy(named: name) == strategy)
+    }
+
+    @Test("A strategy applied before the place name still takes effect")
+    func strategyBeforePlaceStillApplies() throws {
+        let nib = NibFixture()
+        let view = try nib.makeUnbuiltBlock()
+        view.setValue("hidden", forKey: "loadingStrategyName")
+        view.setValue("stories", forKey: "placeSystemName")
+        view.setValue(120, forKey: "blockHeight")
+
+        view.awakeFromNib()
+
+        #expect(view.loadingStrategy == .hidden)
+        #expect(view.placeSystemName == "stories")
+    }
+
+    @Test("A timeout left at zero in Interface Builder means the SDK default",
+          arguments: [(0.0, TimeInterval(Constants.EmbeddedBlock.answerTimeoutSeconds)),
+                      (-1.0, TimeInterval(Constants.EmbeddedBlock.answerTimeoutSeconds)),
+                      (5.0, 5.0)])
+    func zeroTimeoutMeansDefault(inspectable: Double, timeout: TimeInterval) {
+        #expect(MindboxEmbeddedBlockView.timeout(fromInspectableSeconds: inspectable) == timeout)
+    }
+
+    @Test("timeoutSeconds reads back the timeout in effect, whichever way the block was created",
+          arguments: [(nil, TimeInterval(Constants.EmbeddedBlock.answerTimeoutSeconds)),
+                      (-5.0, TimeInterval(Constants.EmbeddedBlock.answerTimeoutSeconds)),
+                      (12.0, 12.0)] as [(TimeInterval?, TimeInterval)])
+    func timeoutSecondsIsTheEffectiveTimeout(given: TimeInterval?, effective: TimeInterval) {
+        let nib = NibFixture()
+
+        let view = MindboxEmbeddedBlockView(placeSystemName: "block-id", height: 120, timeout: given)
+
+        #expect(view.timeoutSeconds == effective)
+        #expect(nib.factory.requestedPlaces == ["block-id"])
+    }
+
+    @Test("A nib block that left the timeout alone reads back the SDK default")
+    func nibDefaultBlockReadsDefaultTimeout() throws {
+        let nib = NibFixture()
+
+        let view = try nib.loadDefaultBlock()
+
+        #expect(view.timeoutSeconds == TimeInterval(Constants.EmbeddedBlock.answerTimeoutSeconds))
+    }
+
+    @Test("The timeout inspectable reads back in seconds, the unit of the initializer's timeout")
+    func timeoutInspectableIsInSeconds() throws {
+        let nib = NibFixture()
+
+        let view = try nib.loadConfiguredBlock()
+
+        #expect(view.timeoutSeconds == 5)
+    }
+
+    // MARK: - View attributes
+
+    @Test("A block from a nib keeps the background colour and the clipping set in Interface Builder")
+    func nibBlockKeepsItsViewAttributes() throws {
+        let nib = NibFixture()
+
+        let view = try nib.loadConfiguredBlock()
+
+        #expect(view.backgroundColor == UIColor(red: 1, green: 0, blue: 0, alpha: 1))
+        #expect(view.clipsToBounds == false)
+    }
+
+    @Test("A block from code starts transparent and clipping, as before")
+    func codeBlockStartsClearAndClipping() {
+        let nib = NibFixture()
+
+        let view = MindboxEmbeddedBlockView(placeSystemName: "block-id", height: 120)
+
+        #expect(view.backgroundColor == .clear)
+        #expect(view.clipsToBounds == true)
+        #expect(nib.factory.requestedPlaces == ["block-id"])
+    }
+
+    // MARK: - After the block is built
+
+    @Test("Inspectables given after the block is built are ignored")
+    func inspectablesAfterBuildAreIgnored() throws {
+        let nib = NibFixture()
+        let view = try nib.loadConfiguredBlock()
+
+        view.setValue("other", forKey: "placeSystemName")
+        view.setValue(200, forKey: "blockHeight")
+        view.setValue("hidden", forKey: "loadingStrategyName")
+        view.setValue(1, forKey: "timeoutSeconds")
+        view.setValue(true, forKey: "animatesReveal")
+
+        #expect(view.placeSystemName == "Stories")
+        #expect(view.intrinsicContentSize.height == 96)
+        #expect(view.loadingStrategy == .placeholder)
+        #expect(view.timeoutSeconds == 5)
+        #expect(view.animatesReveal == false)
+    }
+
+    @Test("A block built from code ignores the inspectables the same way")
+    func codeBlockIgnoresInspectables() {
+        let nib = NibFixture()
+        let view = MindboxEmbeddedBlockView(placeSystemName: "block-id", height: 120, loadingStrategy: .placeholder)
+
+        view.setValue("other", forKey: "placeSystemName")
+        view.setValue(200, forKey: "blockHeight")
+
+        #expect(view.placeSystemName == "block-id")
+        #expect(view.intrinsicContentSize.height == 120)
+        #expect(nib.factory.requestedPlaces == ["block-id"])
+    }
+
+    // MARK: - Content
+
+    @Test("A block from a nib starts its content on entering a window and shows it")
+    func nibBlockStartsContentInWindow() async throws {
+        let nib = NibFixture()
+        let view = try nib.loadConfiguredBlock()
+        let delegate = EmbeddedBlockViewDelegateMock()
+        view.delegate = delegate
+
+        nib.window.addSubview(view)
+        let page = try #require(nib.page(for: "stories"))
+        page.reportRendered(1)
+        await mainQueueTurn()
+
+        #expect(delegate.events == [.loaded])
+        #expect(view.intrinsicContentSize.height == 96)
+    }
+
+    @Test("A decoded block that never got awakeFromNib builds itself on entering a window")
+    func unbuiltBlockBuildsOnEnteringWindow() throws {
+        let nib = NibFixture()
+        let view = try nib.makeUnbuiltBlock()
+        view.setValue("stories", forKey: "placeSystemName")
+        view.setValue(120, forKey: "blockHeight")
+        view.setValue("placeholder", forKey: "loadingStrategyName")
+
+        nib.window.addSubview(view)
+
+        #expect(nib.factory.requestedPlaces == ["stories"])
+        #expect(view.intrinsicContentSize.height == 120)
+        #expect(nib.page(for: "stories") != nil)
+    }
+
+    @Test("Releasing a decoded block that was never built neither crashes nor builds it later")
+    func releasingUnbuiltBlockIsSafe() throws {
+        let nib = NibFixture()
+        let view = try nib.makeUnbuiltBlock()
+        view.setValue("stories", forKey: "placeSystemName")
+        view.setValue(120, forKey: "blockHeight")
+
+        view.release()
+        nib.window.addSubview(view)
+
+        #expect(nib.factory.requestedPlaces.isEmpty)
+        #expect(view.intrinsicContentSize.height == 0)
+    }
+
+    // MARK: - Helpers
+
+    private func mainQueueTurn() async {
+        await withCheckedContinuation { continuation in
+            DispatchQueue.main.async {
+                continuation.resume()
+            }
+        }
+    }
+}
+
+@MainActor
+private final class NibFixture {
+
+    let factory = PerPlaceProviderFactory()
+
+    let memory = EmbeddedBlockPlaceMemoryMock()
+
+    let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 320, height: 480))
+
+    private let savedBuilder = MBInject.buildTestContainer
+
+    private let savedMode = MBInject.mode
+
+    init() {
+        let factory = factory
+        let memory = memory
+        MBInject.buildTestContainer = {
+            let container = MBContainer()
+            container.register(EmbeddedBlockContentProviderMaking.self) { factory }
+            container.register(EmbeddedBlockPlaceRemembering.self) { memory }
+            return container
+        }
+        MBInject.mode = .test
+    }
+
+    deinit {
+        MBInject.buildTestContainer = savedBuilder
+        MBInject.mode = savedMode
+    }
+
+    func page(for place: String) -> EmbeddedBlockPageMock? {
+        factory.beds[place]?.page
+    }
+
+    func loadConfiguredBlock() throws -> MindboxEmbeddedBlockView {
+        try loadBlocks()[0]
+    }
+
+    func loadDefaultBlock() throws -> MindboxEmbeddedBlockView {
+        try loadBlocks()[1]
+    }
+
+    private func loadBlocks() throws -> [MindboxEmbeddedBlockView] {
+        let nib = UINib(nibName: "EmbeddedBlockNibFixture", bundle: Bundle(for: MindboxTests.self))
+        let views = nib.instantiate(withOwner: nil).compactMap { $0 as? MindboxEmbeddedBlockView }
+        try #require(views.count == 2)
+        return views
+    }
+
+    func makeUnbuiltBlock() throws -> MindboxEmbeddedBlockView {
+        let archived = try NSKeyedArchiver.archivedData(withRootObject: UIView(frame: .zero), requiringSecureCoding: false)
+        let unarchiver = try NSKeyedUnarchiver(forReadingFrom: archived)
+        unarchiver.requiresSecureCoding = false
+        unarchiver.setClass(MindboxEmbeddedBlockView.self, forClassName: "UIView")
+        let view = unarchiver.decodeObject(of: MindboxEmbeddedBlockView.self, forKey: NSKeyedArchiveRootObjectKey)
+        return try #require(view)
+    }
+}
+
+private final class PerPlaceProviderFactory: EmbeddedBlockContentProviderMaking {
+
+    private(set) var requestedPlaces: [String] = []
+
+    private(set) var beds: [String: EmbeddedBlockTestBed] = [:]
+
+    func makeProvider(placeSystemName: String) -> EmbeddedBlockWebViewProvider {
+        requestedPlaces.append(placeSystemName)
+        let bed = EmbeddedBlockTestBed(placeSystemName: placeSystemName)
+        beds[placeSystemName] = bed
+        return bed.provider
+    }
+}

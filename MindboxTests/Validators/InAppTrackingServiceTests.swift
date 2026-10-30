@@ -12,55 +12,43 @@ import XCTest
 final class InAppTrackingServiceTests: XCTestCase {
     
     private var trackingService: InAppTrackingService!
-    private var persistenceStorage: PersistenceStorage!
+    private var history = InappShowHistory()
     
     override func setUp() {
         super.setUp()
-        persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
-        trackingService = InAppTrackingService(persistenceStorage: persistenceStorage)
-        SessionTemporaryStorage.shared.erase()
-        persistenceStorage.shownDatesByInApp = [:]
+        trackingService = InAppTrackingService()
+        history = InappShowHistory(shownDatesByInApp: [:])
     }
     
     override func tearDown() {
         trackingService = nil
-        persistenceStorage = nil
-        SessionTemporaryStorage.shared.erase()
         super.tearDown()
     }
     
-    func test_trackInAppShown_updatesSessionAndPersistenceStorage() {
-        // Given
+    func test_trackInAppShown_updatesTheHistory() {
         let inAppId = "test-inapp-id"
         let now = Date()
         
-        // When
-        trackingService.trackInAppShown(id: inAppId)
+        trackingService.trackInAppShown(id: inAppId, in: &history)
         
-        // Then
-        XCTAssertEqual(SessionTemporaryStorage.shared.sessionShownInApps, [inAppId])
-        XCTAssertEqual(persistenceStorage.shownDatesByInApp?[inAppId]?.count, 1)
-        XCTAssertNotNil(persistenceStorage.shownDatesByInApp?[inAppId]?.first)
-        if let storedDate = persistenceStorage.shownDatesByInApp?[inAppId]?.first {
+        XCTAssertEqual(history.shownDatesByInApp?[inAppId]?.count, 1)
+        XCTAssertNotNil(history.shownDatesByInApp?[inAppId]?.first)
+        if let storedDate = history.shownDatesByInApp?[inAppId]?.first {
             XCTAssertTrue(Calendar.current.isDate(storedDate, inSameDayAs: now))
         }
     }
     
     func test_trackInAppShown_multipleTimes_updatesDatesCorrectly() {
-        // Given
         let inAppId = "test-inapp-id"
         let now = Date()
         
-        // When
-        trackingService.trackInAppShown(id: inAppId)
-        trackingService.trackInAppShown(id: inAppId)
-        trackingService.trackInAppShown(id: inAppId)
+        trackingService.trackInAppShown(id: inAppId, in: &history)
+        trackingService.trackInAppShown(id: inAppId, in: &history)
+        trackingService.trackInAppShown(id: inAppId, in: &history)
         
-        // Then
-        XCTAssertEqual(SessionTemporaryStorage.shared.sessionShownInApps, [inAppId, inAppId, inAppId])
-        XCTAssertEqual(persistenceStorage.shownDatesByInApp?[inAppId]?.count, 3)
-        XCTAssertNotNil(persistenceStorage.shownDatesByInApp?[inAppId])
-        if let dates = persistenceStorage.shownDatesByInApp?[inAppId] {
+        XCTAssertEqual(history.shownDatesByInApp?[inAppId]?.count, 3)
+        XCTAssertNotNil(history.shownDatesByInApp?[inAppId])
+        if let dates = history.shownDatesByInApp?[inAppId] {
             for date in dates {
                 XCTAssertTrue(Calendar.current.isDate(date, inSameDayAs: now))
             }
@@ -68,33 +56,28 @@ final class InAppTrackingServiceTests: XCTestCase {
     }
     
     func test_trackInAppShown_differentInApps_updatesCorrectly() {
-        // Given
         let inAppId1 = "test-inapp-id-1"
         let inAppId2 = "test-inapp-id-2"
         let now = Date()
         
-        // When
-        trackingService.trackInAppShown(id: inAppId1)
-        trackingService.trackInAppShown(id: inAppId2)
+        trackingService.trackInAppShown(id: inAppId1, in: &history)
+        trackingService.trackInAppShown(id: inAppId2, in: &history)
         
-        // Then
-        XCTAssertEqual(SessionTemporaryStorage.shared.sessionShownInApps, [inAppId1, inAppId2])
-        XCTAssertEqual(persistenceStorage.shownDatesByInApp?[inAppId1]?.count, 1)
-        XCTAssertEqual(persistenceStorage.shownDatesByInApp?[inAppId2]?.count, 1)
+        XCTAssertEqual(history.shownDatesByInApp?[inAppId1]?.count, 1)
+        XCTAssertEqual(history.shownDatesByInApp?[inAppId2]?.count, 1)
         
-        XCTAssertNotNil(persistenceStorage.shownDatesByInApp?[inAppId1]?.first)
-        if let storedDate1 = persistenceStorage.shownDatesByInApp?[inAppId1]?.first {
+        XCTAssertNotNil(history.shownDatesByInApp?[inAppId1]?.first)
+        if let storedDate1 = history.shownDatesByInApp?[inAppId1]?.first {
             XCTAssertTrue(Calendar.current.isDate(storedDate1, inSameDayAs: now))
         }
         
-        XCTAssertNotNil(persistenceStorage.shownDatesByInApp?[inAppId2]?.first)
-        if let storedDate2 = persistenceStorage.shownDatesByInApp?[inAppId2]?.first {
+        XCTAssertNotNil(history.shownDatesByInApp?[inAppId2]?.first)
+        if let storedDate2 = history.shownDatesByInApp?[inAppId2]?.first {
             XCTAssertTrue(Calendar.current.isDate(storedDate2, inSameDayAs: now))
         }
     }
     
     func test_trackInAppShown_cleanupOldDates() {
-        // Given
         let inAppId = "test-inapp-id"
         let calendar = Calendar.current
         let now = Date()
@@ -102,16 +85,14 @@ final class InAppTrackingServiceTests: XCTestCase {
         let twoDaysAgo = calendar.date(byAdding: .day, value: -2, to: now)!
         let yesterday = calendar.date(byAdding: .day, value: -1, to: now)!
         
-        // When
-        persistenceStorage.shownDatesByInApp = [
+        history.shownDatesByInApp = [
             inAppId: [threeDaysAgo, twoDaysAgo, yesterday, now]
         ]
-        trackingService.trackInAppShown(id: inAppId)
+        trackingService.trackInAppShown(id: inAppId, in: &history)
         
-        // Then
-        XCTAssertEqual(persistenceStorage.shownDatesByInApp?[inAppId]?.count, 3)
-        XCTAssertNotNil(persistenceStorage.shownDatesByInApp?[inAppId])
-        if let dates = persistenceStorage.shownDatesByInApp?[inAppId] {
+        XCTAssertEqual(history.shownDatesByInApp?[inAppId]?.count, 3)
+        XCTAssertNotNil(history.shownDatesByInApp?[inAppId])
+        if let dates = history.shownDatesByInApp?[inAppId] {
             XCTAssertFalse(dates.contains { date in
                 Calendar.current.isDate(date, inSameDayAs: threeDaysAgo)
             })
@@ -126,20 +107,16 @@ final class InAppTrackingServiceTests: XCTestCase {
     }
     
     func test_trackInAppShown_withCustomCalendar() {
-        // Given
         let inAppId = "test-inapp-id"
         let calendar = Calendar(identifier: .gregorian)
-        let customTrackingService = InAppTrackingService(persistenceStorage: persistenceStorage, calendar: calendar)
+        let customTrackingService = InAppTrackingService(calendar: calendar)
         let now = Date()
         
-        // When
-        customTrackingService.trackInAppShown(id: inAppId)
+        customTrackingService.trackInAppShown(id: inAppId, in: &history)
         
-        // Then
-        XCTAssertEqual(SessionTemporaryStorage.shared.sessionShownInApps, [inAppId])
-        XCTAssertEqual(persistenceStorage.shownDatesByInApp?[inAppId]?.count, 1)
-        XCTAssertNotNil(persistenceStorage.shownDatesByInApp?[inAppId]?.first)
-        if let storedDate = persistenceStorage.shownDatesByInApp?[inAppId]?.first {
+        XCTAssertEqual(history.shownDatesByInApp?[inAppId]?.count, 1)
+        XCTAssertNotNil(history.shownDatesByInApp?[inAppId]?.first)
+        if let storedDate = history.shownDatesByInApp?[inAppId]?.first {
             XCTAssertTrue(calendar.isDate(storedDate, inSameDayAs: now))
         }
     }

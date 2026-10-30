@@ -20,6 +20,8 @@ struct ViewFactoryParameters {
     let onError: (InAppPresentationError) -> Void
     let operation: (name: String, body: String)?
     let tags: [String: String]?
+
+    let extraParams: [String: JSONValue]?
 }
 
 protocol ViewFactoryProtocol {

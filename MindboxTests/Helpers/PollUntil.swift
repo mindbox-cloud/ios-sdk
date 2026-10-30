@@ -8,13 +8,6 @@
 
 import Foundation
 
-/// Polls `value` every `pollInterval` until `condition` accepts it or `deadline`
-/// passes, and returns the last polled value either way: on timeout the caller's
-/// own assertion fails with the real final state instead of hanging the test.
-/// The deadline is only an upper bound for the genuine-failure case, sized for
-/// slow CI machines - a passing test returns on the first satisfied poll.
-/// Task cancellation also ends the poll: a cancelled `Task.sleep` throws
-/// immediately, so without the explicit check the loop would busy-spin.
 func pollUntil<T>(
     deadline: TimeInterval = 10,
     pollInterval: TimeInterval = 0.02,

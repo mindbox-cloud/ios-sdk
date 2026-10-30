@@ -101,9 +101,6 @@ final class ModalViewController: UIViewController, InappViewControllerProtocol {
             return
         }
 
-        // Rebuild elements only when the content size actually changes.
-        // Doing it on every pass is not allowed: addSubview + activate(constraints)
-        // mark the layout dirty again → infinite viewDidLayoutSubviews loop.
         let size = inappView.frame.size
         guard size != lastElementsLayoutSize else {
             return

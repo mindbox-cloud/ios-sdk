@@ -32,8 +32,8 @@ class MindboxTests: XCTestCase {
         databaseRepository = DI.injectOrFail(DatabaseRepositoryProtocol.self)
         try! databaseRepository.erase()
         Mindbox.shared.assembly()
+        EmbeddedBlockAppPresence.shared.reset()
         Mindbox.shared.coreController?.controllerQueue = self.controllerQueue
-        // Put setup code here. This method is called before the invocation of each test method in the class.
     }
 
     override func tearDown() {
@@ -45,8 +45,6 @@ class MindboxTests: XCTestCase {
 
     func testInitialization() {
         coreController = DI.injectOrFail(CoreController.self)
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
         let configuration1 = try! MBConfiguration(plistName: "TestConfig1")
         coreController.initialization(configuration: configuration1)
 
@@ -58,7 +56,6 @@ class MindboxTests: XCTestCase {
             deviceUUID = value
         }
         XCTAssertNotNil(deviceUUID)
-        //        //        //        //        //        //        //        //        //        //        //        //
         let configuration2 = try! MBConfiguration(plistName: "TestConfig2")
         coreController.initialization(configuration: configuration2)
         coreController.apnsTokenDidUpdate(token: UUID().uuidString)
@@ -78,8 +75,6 @@ class MindboxTests: XCTestCase {
         let databaseRepository = DI.injectOrFail(DatabaseRepositoryProtocol.self)
         try! databaseRepository.erase()
         coreController = DI.injectOrFail(CoreController.self)
-
-        //        //        //        //        //        //        //        //        //        //        //        //
 
         let configuration3 = try! MBConfiguration(plistName: "TestConfig3")
         coreController.initialization(configuration: configuration3)
@@ -189,19 +184,11 @@ class MindboxTests: XCTestCase {
         XCTAssertEqual(secondCountApnsToken, 1)
     }
 
-    // Functional validator cases live in OperationNameValidatorTests (Swift Testing).
-
-    // Regression: observe() used to invoke the host completion while
-    // holding observeSemaphore, so re-entering getDeviceUUID/getAPNSToken from inside
-    // a completion deadlocked the controller queue. Now the completion runs after the
-    // lock is released; on the old code this test fails by expectation timeout.
     func testObserveCompletionMayReenterPublicAPIWithoutDeadlock() {
         let deviceUUIDDelivered = expectation(description: "deviceUUID delivered")
         let apnsTokenDelivered = expectation(description: "apns token delivered")
 
         Mindbox.shared.getDeviceUUID { _ in
-            // Re-entrant call BEFORE fulfilling: under the old lock-held delivery this
-            // wedged right here, so the expectation below never fired.
             Mindbox.shared.getAPNSToken { _ in
                 apnsTokenDelivered.fulfill()
             }
@@ -387,7 +374,6 @@ private extension MindboxTests {
         let configuration1 = try! MBConfiguration(plistName: "TestConfig1")
         coreController.initialization(configuration: configuration1)
         waitForInitializationFinished()
-        DI.injectOrFail(GuaranteedDeliveryManager.self).canScheduleOperations = false
         
         try? databaseRepository.erase()
     }

@@ -10,9 +10,6 @@ import Testing
 import Foundation
 @testable import MindboxNotifications
 
-/// Exercises the push-format detection/parsing pipeline:
-/// `NotificationStrategyFactory` → `LegacyFormatStrategy`/`CurrentFormatStrategy`
-/// → `NotificationFormatter` → `MindboxPushValidator`.
 @Suite("Push notification parsing pipeline", .tags(.notifications, .pushParsing))
 struct PushNotificationParsingTests {
 

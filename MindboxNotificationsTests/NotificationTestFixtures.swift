@@ -127,7 +127,6 @@ final class MockExtensionContext: NSExtensionContext {
     }
 }
 
-// `UNNotification` has no public initializer, so build one by round-tripping through secure coding.
 // swiftlint:disable force_unwrapping force_try
 final class MockUNNotification: UNNotification {
     private let mockRequest: UNNotificationRequest
@@ -151,9 +150,6 @@ final class MockUNNotification: UNNotification {
 
 // MARK: - URLProtocol stub
 
-/// Intercepts `URLSession.shared` requests so the notification-service download path runs
-/// against a local image instead of a real network fetch. Serves `stubResponseData` for
-/// every request while registered, and counts how many it handled.
 class StubURLProtocol: URLProtocol {
     nonisolated(unsafe) static var stubResponseData: Data?
     nonisolated(unsafe) static var stubError: Error?

@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 protocol ModuleInjecting {
     func inject<Dependency>(_ serviceType: Dependency.Type) -> Dependency?
@@ -29,9 +30,9 @@ enum MBInject {
         case test
     }
 
-    static var container: MBContainer = MBInject.buildDefaulContainer()
+    @Locked static var container: MBContainer = MBInject.buildDefaulContainer()
 
-    static var mode: InjectionMode = .standard {
+    @Locked static var mode: InjectionMode = .standard {
         didSet {
             switch mode {
                 case .standard:
@@ -51,6 +52,7 @@ enum MBInject {
             .registerReplaceableUtilities()
             .registerInappTools()
             .registerInappPresentation()
+            .registerEmbeddedBlocks()
     }
 
     public static var buildTestContainer: () -> MBContainer = {

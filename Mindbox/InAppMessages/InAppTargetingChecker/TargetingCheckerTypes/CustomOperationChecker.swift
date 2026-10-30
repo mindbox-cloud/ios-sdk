@@ -13,10 +13,8 @@ final class CustomOperationChecker: InternalTargetingChecker<CustomOperationTarg
 
     override func prepareInternal(id: String, targeting: CustomOperationTargeting, context: inout PreparationContext) {
         let operationName = targeting.systemName.lowercased()
-        SessionTemporaryStorage.shared.observedCustomOperations.insert(operationName)
-
-        let key = targeting.systemName.lowercased()
-        context.operationInapps[key, default: []].insert(id)
+        SessionTemporaryStorage.shared.$observedCustomOperations.mutate { $0.insert(operationName) }
+        context.operationInapps[operationName, default: []].insert(id)
     }
 
     override func checkInternal(targeting: CustomOperationTargeting) -> Bool {

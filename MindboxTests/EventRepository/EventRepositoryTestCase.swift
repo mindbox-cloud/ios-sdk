@@ -24,6 +24,7 @@ class EventRepositoryTestCase: XCTestCase {
         persistenceStorage.reset()
         let databaseRepository = DI.injectOrFail(DatabaseRepositoryProtocol.self)
         try! databaseRepository.erase()
+        EmbeddedBlockAppPresence.shared.reset()
     }
 
     override func tearDown() {

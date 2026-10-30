@@ -22,10 +22,8 @@ struct MobileApplicationInstalled: Codable {
 
     let instanceId: String
 
-    /// ID текущая таймзона устройства в формате IANA, например "Asia/Krasnoyarsk", null если недоступно
     let ianaTimeZone: String?
 
-    /// Храним единственный токен в массиве, потому что в таком формате его ожидает бекенд
     let tokens: [TokenData]
 
     init(

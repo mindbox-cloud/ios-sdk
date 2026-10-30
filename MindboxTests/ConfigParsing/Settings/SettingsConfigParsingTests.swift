@@ -14,37 +14,31 @@ import XCTest
 fileprivate enum SettingsConfig: String, Configurable {
     typealias DecodeType = Settings
 
-    case configWithSettings = "SettingsConfig" // Correct config
+    case configWithSettings = "SettingsConfig"
 
-    // Operations file names
+    case settingsOperationsError = "SettingsOperationsError"
+    case settingsOperationsTypeError = "SettingsOperationsTypeError"
 
-    case settingsOperationsError = "SettingsOperationsError" // Key is `operationsTests` instead of `operations`
-    case settingsOperationsTypeError = "SettingsOperationsTypeError" // Type of `operations` is Int instead of `SettingsOperations`
+    case settingsOperationsViewProductError = "SettingsOperationsViewProductError"
+    case settingsOperationsViewProductTypeError = "SettingsOperationsViewProductTypeError"
 
-    case settingsOperationsViewProductError = "SettingsOperationsViewProductError" // Key is `viewProductTest` instead of `viewProduct`
-    case settingsOperationsViewProductTypeError = "SettingsOperationsViewProductTypeError" // Type of `viewProduct` is Int instead of Operation
+    case settingsOperationsViewProductSystemNameError = "SettingsOperationsViewProductSystemNameError"
+    case settingsOperationsViewProductSystemNameTypeError = "SettingsOperationsViewProductSystemNameTypeError"
 
-    case settingsOperationsViewProductSystemNameError = "SettingsOperationsViewProductSystemNameError" // Key is `systemNameTest` instead of `systemName`
-    case settingsOperationsViewProductSystemNameTypeError = "SettingsOperationsViewProductSystemNameTypeError" // Type of `systemName` is Int instead of String
+    case settingsAllOperationsWithErrors = "SettingsAllOperationsWithErrors"
+    case settingsAllOperationsWithTypeErrors = "SettingsAllOperationsWithTypeErrors"
 
-    case settingsAllOperationsWithErrors = "SettingsAllOperationsWithErrors" // Keys are `viewProductTest`, `viewCategoryTest` and `setCartTest` instead of `viewProduct`, `viewCategory` and `setCart`
-    case settingsAllOperationsWithTypeErrors = "SettingsAllOperationsWithTypeErrors" // Types of `viewProduct`, `viewCategory` and `setCart` are Int instead of String
+    case settingsOperationsViewCategoryAndSetCartError = "SettingsOperationsViewCategoryAndSetCartError"
+    case settingsOperationsViewCategoryAndSetCartTypeError = "SettingsOperationsViewCategoryAndSetCartTypeError"
+    case settingsOperationsViewCategoryAndSetCartSystemNameError = "SettingsOperationsViewCategoryAndSetCartSystemNameError"
+    case settingsOperationsViewCategoryAndSetCartSystemNameTypeError = "SettingsOperationsViewCategoryAndSetCartSystemNameTypeError"
+    case settingsOperationsViewCategoryAndSetCartSystemNameMixedError = "SettingsOperationsViewCategoryAndSetCartSystemNameMixedError"
 
-    case settingsOperationsViewCategoryAndSetCartError = "SettingsOperationsViewCategoryAndSetCartError" // Keys are `viewCategoryTest` and `setCartTest` instead of `viewCategory` and `setCart`
-    case settingsOperationsViewCategoryAndSetCartTypeError = "SettingsOperationsViewCategoryAndSetCartTypeError" // Types of `viewCategory` and `setCart` are Int instead of String
-    case settingsOperationsViewCategoryAndSetCartSystemNameError = "SettingsOperationsViewCategoryAndSetCartSystemNameError" // Keys are `systemNameTest` instead of `systemName`
-    case settingsOperationsViewCategoryAndSetCartSystemNameTypeError = "SettingsOperationsViewCategoryAndSetCartSystemNameTypeError" // Types of `systemName` are Int instead of String
-    case settingsOperationsViewCategoryAndSetCartSystemNameMixedError = "SettingsOperationsViewCategoryAndSetCartSystemNameMixedError" // Key of `viewCategory` is `systemNameTest` instead of `systemName` and type of `setCart`:`systemName` is Int instead of String
+    case ttlError = "SettingsTtlError"
+    case ttlTypeError = "SettingsTtlTypeError"
 
-    // TTL file names
-
-    case ttlError = "SettingsTtlError" // Key `ttlTest` instead of `ttl`
-    case ttlTypeError = "SettingsTtlTypeError" // Type of `ttl` is Int instead of TimeToLive
-
-    case ttlInappsError = "SettingsTtlInappsError" // Key is `inappsTest` instead of `inapps`
-    case ttlInappsTypeError = "SettingsTtlInappsTypeError" // Type of `ttl` is Int instead of String
-    
-    // Sliding Expiration file names
+    case ttlInappsError = "SettingsTtlInappsError"
+    case ttlInappsTypeError = "SettingsTtlInappsTypeError"
     
     case settingsSlidingExpirationError = "SettingsSlidingExpirationError"
     case settingsSlidingExpirationTypeError = "SettingsSlidingExpirationTypeError"
@@ -55,22 +49,18 @@ fileprivate enum SettingsConfig: String, Configurable {
     case settingsSlidingExpirationPushTokenError = "SettingsSlidingExpirationPushTokenKeepaliveError"
     case settingsSlidingExpirationPushTokenTypeError = "SettingsSlidingExpirationPushTokenKeepaliveTypeError"
 
-    // InApp Settings file names
+    case settingsInAppSettingsError = "SettingsInAppSettingsError"
+    case settingsInAppSettingsTypeError = "SettingsInAppSettingsTypeError"
+    case settingsInAppSettingsPartialError = "SettingsInAppSettingsPartialError"
+    case settingsInAppSettingsMissingMaxInappsPerSession = "SettingsInAppSettingsMissingMaxInappsPerSession"
+    case settingsInAppSettingsMissingMaxInappsPerDay = "SettingsInAppSettingsMissingMaxInappsPerDay"
+    case settingsInAppSettingsMissingMinIntervalBetweenShows = "SettingsInAppSettingsMissingMinIntervalBetweenShows"
+    case settingsInAppSettingsTypeErrors = "SettingsInAppSettingsTypeErrors"
 
-    case settingsInAppSettingsError = "SettingsInAppSettingsError" // Key is `inappTest` instead of `inapp`
-    case settingsInAppSettingsTypeError = "SettingsInAppSettingsTypeError" // Type of `inapp` is Int instead of InAppSettings
-    case settingsInAppSettingsPartialError = "SettingsInAppSettingsPartialError" // maxInappsPerSession is Int, maxInappsPerDay is String, minIntervalBetweenShows is missing
-    case settingsInAppSettingsMissingMaxInappsPerSession = "SettingsInAppSettingsMissingMaxInappsPerSession" // Missing maxInappsPerSession
-    case settingsInAppSettingsMissingMaxInappsPerDay = "SettingsInAppSettingsMissingMaxInappsPerDay" // Missing maxInappsPerDay
-    case settingsInAppSettingsMissingMinIntervalBetweenShows = "SettingsInAppSettingsMissingMinIntervalBetweenShows" // Missing minIntervalBetweenShows
-    case settingsInAppSettingsTypeErrors = "SettingsInAppSettingsTypeErrors" // All parameters have incorrect types
-
-    // BaseAddresses file names
-
-    case settingsBaseAddressesError = "SettingsBaseAddressesError" // Key is `baseAddressesTest` instead of `baseAddresses`
-    case settingsBaseAddressesTypeError = "SettingsBaseAddressesTypeError" // Type of `baseAddresses` is Int instead of BaseAddresses
-    case settingsBaseAddressesOperationsError = "SettingsBaseAddressesOperationsError" // Key is `operationsTest` instead of `operations`
-    case settingsBaseAddressesOperationsTypeError = "SettingsBaseAddressesOperationsTypeError" // Type of `operations` is Int instead of String
+    case settingsBaseAddressesError = "SettingsBaseAddressesError"
+    case settingsBaseAddressesTypeError = "SettingsBaseAddressesTypeError"
+    case settingsBaseAddressesOperationsError = "SettingsBaseAddressesOperationsError"
+    case settingsBaseAddressesOperationsTypeError = "SettingsBaseAddressesOperationsTypeError"
 
 }
 
@@ -79,7 +69,6 @@ final class SettingsConfigParsingTests: XCTestCase {
     // MARK: Settings
 
     func test_SettingsConfig_shouldParseSuccessfully() {
-        // Correct config
         let config = try! SettingsConfig.configWithSettings.getConfig()
         XCTAssertNotNil(config.operations)
         XCTAssertNotNil(config.operations?.viewProduct)
@@ -108,7 +97,6 @@ final class SettingsConfigParsingTests: XCTestCase {
     // MARK: - Operations
 
     func test_SettingsConfig_withOperationsError_shouldSetOperationsToNil() {
-        // Key is `operationsTests` instead of `operations`
         let config = try! SettingsConfig.settingsOperationsError.getConfig()
         XCTAssertNil(config.operations, "Operations must be `nil` if the key `operations` is not found")
         XCTAssertNil(config.operations?.viewProduct)
@@ -123,7 +111,6 @@ final class SettingsConfigParsingTests: XCTestCase {
     }
 
     func test_SettingsConfig_withOperationsTypeError_shouldSetOperationsToNil() {
-        // Type of `operations` is Int instead of `SettingsOperations`
         let config = try! SettingsConfig.settingsOperationsTypeError.getConfig()
         XCTAssertNil(config.operations, "Operations must be `nil` if the type of `operations` is not a `SettingsOperations`")
         XCTAssertNil(config.operations?.viewProduct)
@@ -138,7 +125,6 @@ final class SettingsConfigParsingTests: XCTestCase {
     }
 
     func test_SettingsConfig_withOperationsViewProductError_shouldSetViewProductToNil() {
-        // Key is `viewProductTest` instead of `viewProduct`
         let config = try! SettingsConfig.settingsOperationsViewProductError.getConfig()
         XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
         XCTAssertNil(config.operations?.viewProduct, "ViewProduct must be `nil` if the key `viewProduct` is not found")
@@ -153,7 +139,6 @@ final class SettingsConfigParsingTests: XCTestCase {
     }
 
     func test_SettingsConfig_withOperationsViewProductTypeError_shouldSetViewProductToNil() {
-        // Type of `viewProduct` is Int instead of Operation
         let config = try! SettingsConfig.settingsOperationsViewProductTypeError.getConfig()
         XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
         XCTAssertNil(config.operations?.viewProduct, "ViewProduct must be `nil` if the type of `viewProduct` is not an `Operation`")
@@ -168,7 +153,6 @@ final class SettingsConfigParsingTests: XCTestCase {
     }
 
     func test_SettingsConfig_withOperationsViewProductSystemNameError_shouldSetViewProductToNil() {
-        // Key is `systemNameTest` instead of `systemName`
         let config = try! SettingsConfig.settingsOperationsViewProductSystemNameError.getConfig()
         XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
         XCTAssertNil(config.operations?.viewProduct, "ViewProduct must be `nil` if the key `systemName` is not found")
@@ -183,7 +167,6 @@ final class SettingsConfigParsingTests: XCTestCase {
     }
 
     func test_SettingsConfig_withOperationsViewProductSystemNameTypeError_shouldSetViewProductToNil() {
-        // Type of `systemName` is Int instead of String
         let config = try! SettingsConfig.settingsOperationsViewProductSystemNameTypeError.getConfig()
         XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
         XCTAssertNil(config.operations?.viewProduct, "ViewProduct must be `nil` if the type of `systemName` is not a `String`")
@@ -198,7 +181,6 @@ final class SettingsConfigParsingTests: XCTestCase {
     }
 
     func test_SettingsConfig_withAllOperationsWithErrors_shouldSetOperationsToNil() {
-        // Keys are `viewProductTest`, `viewCategoryTest` and `setCartTest` instead of `viewProduct`, `viewCategory` and `setCart`
         let config = try! SettingsConfig.settingsAllOperationsWithErrors.getConfig()
         XCTAssertNil(config.operations, "Operations must be `nil` if all three operations are `nil`")
         XCTAssertNil(config.operations?.viewProduct)
@@ -213,7 +195,6 @@ final class SettingsConfigParsingTests: XCTestCase {
     }
 
     func test_SettingsConfig_withAllOperationsWithTypeErrors_shouldSetOperationsToNil() {
-        // Types of `viewProduct`, `viewCategory` and `setCart` are Int instead of String
         let config = try! SettingsConfig.settingsAllOperationsWithTypeErrors.getConfig()
         XCTAssertNil(config.operations, "Operations must be `nil` if all three operations are `nil`")
         XCTAssertNil(config.operations?.viewProduct)
@@ -228,7 +209,6 @@ final class SettingsConfigParsingTests: XCTestCase {
     }
 
     func test_SettingsConfig_withOperationsViewCategoryAndSetCartError_shouldSetViewCategoryAndSetCartToNil() {
-        // Keys are `viewCategoryTest` and `setCartTest` instead of `viewCategory` and `setCart`
         let config = try! SettingsConfig.settingsOperationsViewCategoryAndSetCartError.getConfig()
         XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
         XCTAssertNotNil(config.operations?.viewProduct, "ViewProduct must be successfully parsed")
@@ -243,7 +223,6 @@ final class SettingsConfigParsingTests: XCTestCase {
     }
 
     func test_SettingsConfig_withOperationsViewCategoryAndSetCartTypeError_shouldSetViewCategoryAndSetCartToNil() {
-        // Types of `viewCategory` and `setCart` are Int instead of String
         let config = try! SettingsConfig.settingsOperationsViewCategoryAndSetCartTypeError.getConfig()
         XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
         XCTAssertNotNil(config.operations?.viewProduct, "ViewProduct must be successfully parsed")
@@ -258,7 +237,6 @@ final class SettingsConfigParsingTests: XCTestCase {
     }
 
     func test_SettingsConfig_withOperationsViewCategoryAndSetCartSystemNameError_shouldSetViewCategoryAndSetCartToNil() {
-        // Keys are `systemNameTest` instead of `systemName`
         let config = try! SettingsConfig.settingsOperationsViewCategoryAndSetCartSystemNameError.getConfig()
         XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
         XCTAssertNotNil(config.operations?.viewProduct, "ViewProduct must be successfully parsed")
@@ -273,7 +251,6 @@ final class SettingsConfigParsingTests: XCTestCase {
     }
 
     func test_SettingsConfig_withOperationsViewCategoryAndSetCartSystemNameTypeError_shouldSetViewCategoryAndSetCartToNil() {
-        // Types of `systemName` are Int instead of String
         let config = try! SettingsConfig.settingsOperationsViewCategoryAndSetCartSystemNameTypeError.getConfig()
         XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
         XCTAssertNotNil(config.operations?.viewProduct, "ViewProduct must be successfully parsed")
@@ -288,7 +265,6 @@ final class SettingsConfigParsingTests: XCTestCase {
     }
 
     func test_SettingsConfig_withOperationsViewCategoryAndSetCartSystemNameMixedError_shouldSetViewCategoryAndSetCartToNil() {
-        // Key of `viewCategory` is `systemNameTest` instead of `systemName` and type of `setCart`:`systemName` is Int instead of String
         let config = try! SettingsConfig.settingsOperationsViewCategoryAndSetCartSystemNameMixedError.getConfig()
         XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
         XCTAssertNotNil(config.operations?.viewProduct, "ViewProduct must be successfully parsed")
@@ -305,7 +281,6 @@ final class SettingsConfigParsingTests: XCTestCase {
     // MARK: - TTL
 
     func test_SettingsConfig_withTtlError_shouldSetTtlToNil() {
-        // Key `ttlTest` instead of `ttl`
         let config = try! SettingsConfig.ttlError.getConfig()
         XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
         XCTAssertNotNil(config.operations?.viewProduct)
@@ -320,7 +295,6 @@ final class SettingsConfigParsingTests: XCTestCase {
     }
 
     func test_SettingsConfig_withTtlTypeError_shouldSetTtlToNil() {
-        // Type of `ttl` is Int instead of TimeToLive
         let config = try! SettingsConfig.ttlTypeError.getConfig()
         XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
         XCTAssertNotNil(config.operations?.viewProduct)
@@ -335,7 +309,6 @@ final class SettingsConfigParsingTests: XCTestCase {
     }
 
     func test_SettingsConfig_withTtlInappsError_shouldSetTtlToNil() {
-        // Key is `inappsTest` instead of `inapps`
         let config = try! SettingsConfig.ttlInappsError.getConfig()
         XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
         XCTAssertNotNil(config.operations?.viewProduct)
@@ -350,7 +323,6 @@ final class SettingsConfigParsingTests: XCTestCase {
     }
 
     func test_SettingsConfig_withTtlInappsTypeError_shouldSetTtlToNil() {
-        // Type of `ttl` is Int instead of String
         let config = try! SettingsConfig.ttlInappsTypeError.getConfig()
         XCTAssertNotNil(config.operations)
         XCTAssertNotNil(config.operations?.viewProduct)
@@ -367,7 +339,6 @@ final class SettingsConfigParsingTests: XCTestCase {
     // MARK: - Sliding Expiration
     
     func test_SettingsConfig_withSlidingExpirationError_shouldSetSlidingExpirationToNil() {
-        // Key is `slidingExpirationTest` instead of `slidingExpiration`
         let config = try! SettingsConfig.settingsSlidingExpirationError.getConfig()
 
         XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
@@ -379,7 +350,6 @@ final class SettingsConfigParsingTests: XCTestCase {
     }
 
     func test_SettingsConfig_withSlidingExpirationTypeError_shouldSetSlidingExpirationToNil() {
-        // Type of `slidingExpiration` is Int instead of SlidingExpiration
         let config = try! SettingsConfig.settingsSlidingExpirationTypeError.getConfig()
 
         XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
@@ -391,7 +361,6 @@ final class SettingsConfigParsingTests: XCTestCase {
     }
 
     func test_SettingsConfig_withSlidingExpirationInappSessionError_shouldSetConfigToNil() {
-        // Key is `configTest` instaed of `config`
         let config = try! SettingsConfig.settingsSlidingExpirationConfigError.getConfig()
 
         XCTAssertNotNil(config.operations)
@@ -404,7 +373,6 @@ final class SettingsConfigParsingTests: XCTestCase {
     }
 
     func test_SettingsConfig_withSlidingExpirationInappSessionTypeError_shouldSetConfigToNil() {
-        // Type of `config` is Int instead of String
         let config = try! SettingsConfig.settingsSlidingExpirationConfigTypeError.getConfig()
 
         XCTAssertNotNil(config.operations)
@@ -417,7 +385,6 @@ final class SettingsConfigParsingTests: XCTestCase {
     }
     
     func test_SettingsConfig_withSlidingExpirationPushTokenKeepaliveError_shouldSetPushTokenToNil() {
-        // Key is `pushTokenKeepaliveTest` instead of `pushTokenKeepalive`
         let config = try! SettingsConfig.settingsSlidingExpirationPushTokenError.getConfig()
         
         XCTAssertNotNil(config.operations)
@@ -429,7 +396,6 @@ final class SettingsConfigParsingTests: XCTestCase {
     }
     
     func test_SettingsConfig_withSlidingExpirationPushTokenKeepaliveTypeError_shouldSetPushTokenToNil() {
-        // Type of `pushTokenKeepalive` is Int instead of String
         let config = try! SettingsConfig.settingsSlidingExpirationPushTokenTypeError.getConfig()
         
         XCTAssertNotNil(config.operations)
@@ -443,7 +409,6 @@ final class SettingsConfigParsingTests: XCTestCase {
     // MARK: - InApp Settings
     
     func test_SettingsConfig_withInAppSettingsError_shouldSetInAppSettingsToNil() {
-        // Key is `inappTest` instead of `inapp`
         let config = try! SettingsConfig.settingsInAppSettingsError.getConfig()
         
         XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
@@ -457,7 +422,6 @@ final class SettingsConfigParsingTests: XCTestCase {
     }
     
     func test_SettingsConfig_withInAppSettingsTypeError_shouldSetInAppSettingsToNil() {
-        // Type of `inapp` is Int instead of InAppSettings
         let config = try! SettingsConfig.settingsInAppSettingsTypeError.getConfig()
         
         XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
@@ -471,7 +435,6 @@ final class SettingsConfigParsingTests: XCTestCase {
     }
     
     func test_SettingsConfig_withInAppSettingsPartialError_shouldKeepValidValues() {
-        // maxInappsPerSession is Int, maxInappsPerDay is String, minIntervalBetweenShows is missing
         let config = try! SettingsConfig.settingsInAppSettingsPartialError.getConfig()
         
         XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
@@ -485,7 +448,6 @@ final class SettingsConfigParsingTests: XCTestCase {
     }
     
     func test_SettingsConfig_withInAppSettingsMissingMaxInappsPerSession_shouldKeepOtherValues() {
-        // Missing maxInappsPerSession
         let config = try! SettingsConfig.settingsInAppSettingsMissingMaxInappsPerSession.getConfig()
         
         XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
@@ -499,7 +461,6 @@ final class SettingsConfigParsingTests: XCTestCase {
     }
     
     func test_SettingsConfig_withInAppSettingsMissingMaxInappsPerDay_shouldKeepOtherValues() {
-        // Missing maxInappsPerDay
         let config = try! SettingsConfig.settingsInAppSettingsMissingMaxInappsPerDay.getConfig()
         
         XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
@@ -513,7 +474,6 @@ final class SettingsConfigParsingTests: XCTestCase {
     }
     
     func test_SettingsConfig_withInAppSettingsMissingMinIntervalBetweenShows_shouldKeepOtherValues() {
-        // Missing minIntervalBetweenShows
         let config = try! SettingsConfig.settingsInAppSettingsMissingMinIntervalBetweenShows.getConfig()
         
         XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
@@ -527,7 +487,6 @@ final class SettingsConfigParsingTests: XCTestCase {
     }
     
     func test_SettingsConfig_withInAppSettingsTypeErrors_shouldSetAllValuesToNil() {
-        // All parameters have incorrect types
         let config = try! SettingsConfig.settingsInAppSettingsTypeErrors.getConfig()
 
         XCTAssertNotNil(config.operations, "Operations must be successfully parsed")
@@ -543,7 +502,6 @@ final class SettingsConfigParsingTests: XCTestCase {
     // MARK: - BaseAddresses
 
     func test_SettingsConfig_withBaseAddressesError_shouldSetBaseAddressesToNil() {
-        // Key is `baseAddressesTest` instead of `baseAddresses`
         let config = try! SettingsConfig.settingsBaseAddressesError.getConfig()
         XCTAssertNil(config.baseAddresses, "BaseAddresses must be `nil` if the key `baseAddresses` is not found")
 
@@ -555,7 +513,6 @@ final class SettingsConfigParsingTests: XCTestCase {
     }
 
     func test_SettingsConfig_withBaseAddressesTypeError_shouldSetBaseAddressesToNil() {
-        // Type of `baseAddresses` is Int instead of BaseAddresses
         let config = try! SettingsConfig.settingsBaseAddressesTypeError.getConfig()
         XCTAssertNil(config.baseAddresses, "BaseAddresses must be `nil` if the type of `baseAddresses` is not a `BaseAddresses`")
 
@@ -567,7 +524,6 @@ final class SettingsConfigParsingTests: XCTestCase {
     }
 
     func test_SettingsConfig_withBaseAddressesOperationsError_shouldSetOperationsToNil() {
-        // Key is `operationsTest` instead of `operations`
         let config = try! SettingsConfig.settingsBaseAddressesOperationsError.getConfig()
         XCTAssertNotNil(config.baseAddresses, "BaseAddresses must be successfully parsed")
         XCTAssertNil(config.baseAddresses?.operations, "operations must be `nil` if the key `operations` is not found")
@@ -578,7 +534,6 @@ final class SettingsConfigParsingTests: XCTestCase {
     }
 
     func test_SettingsConfig_withBaseAddressesOperationsTypeError_shouldSetOperationsToNil() {
-        // Type of `operations` is Int instead of String
         let config = try! SettingsConfig.settingsBaseAddressesOperationsTypeError.getConfig()
         XCTAssertNotNil(config.baseAddresses, "BaseAddresses must be successfully parsed")
         XCTAssertNil(config.baseAddresses?.operations, "operations must be `nil` if the type of `operations` is not a `String`")

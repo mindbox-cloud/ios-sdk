@@ -9,20 +9,15 @@ import Testing
 import Foundation
 @testable import MindboxLogger
 
-/// `Logger`'s static API is a fire-and-forget logging facade: the methods return
-/// `Void` and hand a formatted string to `MBLogger.shared`, so there is no value to
-/// assert on. These tests drive every input branch of the message builders; the
-/// behavioural contract under test is that each shape is formatted and dispatched
-/// without trapping.
-@Suite("Logger static API", .tags(.loggingAPI))
+@Suite("Logger static API smoke tests: every input shape dispatches without trapping", .tags(.loggingAPI))
 struct LoggerStaticAPITests {
 
     @Test("error(LoggerErrorModel) traverses the optional description/status/statusCode branches")
     func errorLoggerModel() {
         Logger.error(LoggerErrorModel(errorType: .server, description: "desc", status: "Failed", statusCode: 500))
-        Logger.error(LoggerErrorModel(errorType: .validation))                 // no description/status/statusCode
-        Logger.error(LoggerErrorModel(errorType: .connection, status: "x"))     // status only
-        Logger.error(LoggerErrorModel(errorType: .unknown, statusCode: 1))      // statusCode only
+        Logger.error(LoggerErrorModel(errorType: .validation))
+        Logger.error(LoggerErrorModel(errorType: .connection, status: "x"))
+        Logger.error(LoggerErrorModel(errorType: .unknown, statusCode: 1))
     }
 
     @Test("network(request:) renders method, headers and a UTF-8 body")
@@ -33,7 +28,6 @@ struct LoggerStaticAPITests {
         request.httpBody = #"{"hello":"world"}"#.data(using: .utf8)
         Logger.network(request: request, httpAdditionalHeaders: ["X-Extra": "1"])
 
-        // Minimal request: no method, headers or body.
         Logger.network(request: URLRequest(url: URL(string: "https://api.mindbox.ru")!))
     }
 
@@ -41,7 +35,7 @@ struct LoggerStaticAPITests {
     func networkNonUTF8Body() {
         var request = URLRequest(url: URL(string: "https://api.mindbox.ru/x")!)
         request.httpMethod = "PUT"
-        request.httpBody = Data([0xFF, 0xFE, 0xFA])  // not valid UTF-8 -> "Can't render body"
+        request.httpBody = Data([0xFF, 0xFE, 0xFA])
         Logger.network(request: request)
     }
 
@@ -51,9 +45,9 @@ struct LoggerStaticAPITests {
         let http = HTTPURLResponse(url: url, statusCode: 200, httpVersion: "HTTP/1.1", headerFields: nil)!
 
         Logger.response(data: #"{"status":"Success"}"#.data(using: .utf8), response: http, error: nil)
-        Logger.response(data: nil, response: http, error: NSError(domain: "net", code: -1)) // bumps level to .error
-        Logger.response(data: nil, response: nil, error: nil)                               // everything nil
-        Logger.response(data: Data([0x00, 0x01]), response: http, error: nil)               // non-JSON body skipped
+        Logger.response(data: nil, response: http, error: NSError(domain: "net", code: -1))
+        Logger.response(data: nil, response: nil, error: nil)
+        Logger.response(data: Data([0x00, 0x01]), response: http, error: nil)
     }
 
     @Test("common(message:) logs with and without an explicit subsystem")
@@ -74,7 +68,7 @@ struct LoggerStaticAPITests {
         Logger.error(MindboxError.internalError(InternalError(errorKey: .general, rawError: NSError(domain: "d", code: 1))))
         Logger.error(MindboxError.internalError(InternalError(errorKey: "no-raw-error")))
         Logger.error(MindboxError.invalidResponse(HTTPURLResponse(url: url, statusCode: 500, httpVersion: nil, headerFields: nil)!))
-        Logger.error(MindboxError.invalidResponse(nil))   // guard let e else { return }
+        Logger.error(MindboxError.invalidResponse(nil))
         Logger.error(MindboxError.connectionError)
         Logger.error(MindboxError.unknown(NSError(domain: "d", code: 2)))
     }

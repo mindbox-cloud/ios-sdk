@@ -23,20 +23,18 @@ class ABTestVariantsValidatorTests: XCTestCase {
         super.setUp()
         variantValidator = DI.injectOrFail(ABTestVariantsValidator.self)
 
-        // TODO: - Divide to few different unit tests.
-
         let object1 = ABTest.ABTestVariant.ABTestObject(type: .inapps, kind: .all, inapps: ["inapp1"])
         let object2 = ABTest.ABTestVariant.ABTestObject(type: .inapps, kind: .all, inapps: ["inapp2"])
         testCases = [
-            TestCase(variant: createVariant(objects: [object1]), isValid: true), // valid case
-            TestCase(variant: createVariant(id: "", objects: [object1]), isValid: false), // invalid id
-            TestCase(variant: createVariant(lower: 101, objects: [object1]), isValid: false), // invalid lower bound
-            TestCase(variant: createVariant(upper: -1, objects: [object1]), isValid: false), // invalid upper bound
-            TestCase(variant: createVariant(lower: 50, upper: 50), isValid: false), // lower bound is equal to upper bound
-            TestCase(variant: createVariant(lower: 100, upper: 0, objects: [object1]), isValid: false), // lower bound is greater than upper bound
-            TestCase(variant: createVariant(objects: []), isValid: false), // no objects
-            TestCase(variant: createVariant(objects: [object1, object2]), isValid: false), // more than one object
-            TestCase(variant: nil, isValid: false) // variant is nil
+            TestCase(variant: createVariant(objects: [object1]), isValid: true),
+            TestCase(variant: createVariant(id: "", objects: [object1]), isValid: false),
+            TestCase(variant: createVariant(lower: 101, objects: [object1]), isValid: false),
+            TestCase(variant: createVariant(upper: -1, objects: [object1]), isValid: false),
+            TestCase(variant: createVariant(lower: 50, upper: 50), isValid: false),
+            TestCase(variant: createVariant(lower: 100, upper: 0, objects: [object1]), isValid: false),
+            TestCase(variant: createVariant(objects: []), isValid: false),
+            TestCase(variant: createVariant(objects: [object1, object2]), isValid: false),
+            TestCase(variant: nil, isValid: false)
         ]
     }
 

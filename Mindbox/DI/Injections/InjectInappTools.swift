@@ -10,7 +10,6 @@ import Foundation
 
 extension MBContainer {
     func registerInappTools() -> Self {
-        // Layers
         register(LayerActionFilterProtocol.self) {
             LayerActionFilterService()
         }
@@ -25,7 +24,6 @@ extension MBContainer {
             return LayersFilterService(actionFilter: actionFilter, sourceFilter: sourceFilter)
         }
 
-        // Elements
         register(ElementsSizeFilterProtocol.self) {
             ElementSizeFilterService()
         }
@@ -45,7 +43,6 @@ extension MBContainer {
             return ElementsFilterService(sizeFilter: sizeFilter, positionFilter: positionFilter, colorFilter: colorFilter)
         }
 
-        // Content
         register(ContentPositionFilterProtocol.self) {
             ContentPositionFilterService()
         }
@@ -71,8 +68,7 @@ extension MBContainer {
             let configManager = DI.injectOrFail(InAppConfigurationManagerProtocol.self)
             let targetingChecker = DI.injectOrFail(InAppTargetingCheckerProtocol.self)
             let userVisitManager = DI.injectOrFail(UserVisitManagerProtocol.self)
-            let inappTrackingService = DI.injectOrFail(InAppTrackingServiceProtocol.self)
-            return InappSessionManager(inappCoreManager: coreManager, inappConfigManager: configManager, targetingChecker: targetingChecker, userVisitManager: userVisitManager, inappTrackingService: inappTrackingService)
+            return InappSessionManager(inappCoreManager: coreManager, inappConfigManager: configManager, targetingChecker: targetingChecker, userVisitManager: userVisitManager)
         }
         
         register(InappShowFailureManagerProtocol.self) {
@@ -104,29 +100,26 @@ extension MBContainer {
             return InAppPresentationManager(displayUseCase: displayUseCase)
         }
         
-        register(InAppPresentationValidatorProtocol.self) {
-            let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
-            return InAppPresentationValidator(persistenceStorage: persistenceStorage)
-        }
-        
         register(InAppTrackingServiceProtocol.self) {
-            let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
-            return InAppTrackingService(persistenceStorage: persistenceStorage)
+            InAppTrackingService()
+        }
+
+        register(InappShowBudgeting.self) {
+            InappShowBudget(persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
+                            trackingService: DI.injectOrFail(InAppTrackingServiceProtocol.self))
         }
         
+        register(InappShowAccounting.self) {
+            InappShowAccountant(tracker: DI.injectOrFail(InAppMessagesTracker.self),
+                                budget: DI.injectOrFail(InappShowBudgeting.self))
+        }
+
         register(InappScheduleManagerProtocol.self) {
-            let presentationManager = DI.injectOrFail(InAppPresentationManagerProtocol.self)
-            let presentationValidator = DI.injectOrFail(InAppPresentationValidatorProtocol.self)
-            let inappTrackingService = DI.injectOrFail(InAppTrackingServiceProtocol.self)
-            let tracker = DI.injectOrFail(InAppMessagesTracker.self)
-            let failureManager = DI.injectOrFail(InappShowFailureManagerProtocol.self)
-            
-            return InappScheduleManager(
-                presentationManager: presentationManager,
-                presentationValidator: presentationValidator,
-                trackingService: inappTrackingService,
-                tracker: tracker,
-                failureManager: failureManager
+            InappScheduleManager(
+                presentationManager: DI.injectOrFail(InAppPresentationManagerProtocol.self),
+                budget: DI.injectOrFail(InappShowBudgeting.self),
+                accountant: DI.injectOrFail(InappShowAccounting.self),
+                failureManager: DI.injectOrFail(InappShowFailureManagerProtocol.self)
             )
         }
 

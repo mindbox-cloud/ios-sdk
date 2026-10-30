@@ -1,0 +1,25 @@
+//
+//  EmbeddedBlockState.swift
+//  Mindbox
+//
+//  Created by vailence on 03.08.2026.
+//  Copyright © 2026 Mindbox. All rights reserved.
+//
+
+enum EmbeddedBlockState: Equatable {
+
+    case loading
+
+    case ready
+
+    case failed(MindboxEmbeddedBlockFailReason)
+
+    case empty
+
+    case uncheckable
+
+    var isFailed: Bool {
+        if case .failed = self { return true }
+        return false
+    }
+}

@@ -16,9 +16,24 @@ protocol InAppConfigurationDataFacadeProtocol {
         shouldCollectFailures: Bool,
         _ completion: @escaping () -> Void
     )
-    func collectTargetingFailures(forFailedTargetingInappIds failedTargetingInappIds: Set<String>, tagsByInappId: [String: [String: String]])
-    func downloadImage(withUrl url: String, inappId: String, tags: [String: String]?, completion: @escaping (Result<UIImage, MindboxError>) -> Void)
+    @discardableResult
+    func collectTargetingFailures(forFailedTargetingInappIds failedTargetingInappIds: Set<String>, tagsByInappId: [String: [String: String]]) -> Bool
+
+    func downloadImage(withUrl url: String,
+                       inappId: String,
+                       tags: [String: String]?,
+                       failureReport: ImageFailureReport,
+                       completion: @escaping (Result<UIImage, MindboxError>) -> Void)
     func trackTargeting(id: String?, tags: [String: String]?)
+
+    func sendCollectedFailures()
+
+    func discardCollectedFailures()
+}
+
+enum ImageFailureReport {
+    case bufferedForThePass
+    case atOnce
 }
 
 extension InAppConfigurationDataFacadeProtocol {
@@ -36,7 +51,9 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
     let tracker: InappTargetingTrackProtocol
     let failureManager: InappShowFailureManagerProtocol
 
-    private var pendingTargetingFailureDetails: [InAppShowFailureReason: String] = [:]
+    @Locked private var pendingTargetingFailureDetails: [InAppShowFailureReason: String] = [:]
+
+    @Locked private var uncheckableReasons: Set<InAppShowFailureReason> = []
 
     init(segmentationService: SegmentationServiceProtocol,
          targetingChecker: InAppTargetingCheckerProtocol,
@@ -57,7 +74,8 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
         shouldCollectFailures: Bool,
         _ completion: @escaping () -> Void
     ) {
-        pendingTargetingFailureDetails.removeAll()
+        pendingTargetingFailureDetails = [:]
+        uncheckableReasons = []
         fetchSegmentationIfNeeded(shouldCollectFailures: shouldCollectFailures)
         fetchGeoIfNeeded(shouldCollectFailures: shouldCollectFailures)
         fetchProductSegmentationIfNeeded(
@@ -70,35 +88,40 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
         }
     }
 
-    func collectTargetingFailures(forFailedTargetingInappIds failedTargetingInappIds: Set<String>, tagsByInappId: [String: [String: String]]) {
-        defer {
-            pendingTargetingFailureDetails.removeAll()
-        }
+    @discardableResult
+    func collectTargetingFailures(forFailedTargetingInappIds failedTargetingInappIds: Set<String>, tagsByInappId: [String: [String: String]]) -> Bool {
+        let reported = $pendingTargetingFailureDetails.exchange([:])
+        let uncheckable = $uncheckableReasons.exchange([])
 
         guard !failedTargetingInappIds.isEmpty else {
-            return
+            return false
         }
 
-        pendingTargetingFailureDetails.forEach { reason, details in
-            let inappIds = inappIds(for: reason)
-            failedTargetingInappIds.intersection(inappIds).forEach {
+        reported.forEach { reason, details in
+            failedTargetingInappIds.intersection(inappIds(for: reason)).forEach {
                 failureManager.addFailure(inappId: $0, reason: reason, details: details, tags: tagsByInappId[$0])
             }
         }
+
+        return uncheckable.contains { !failedTargetingInappIds.isDisjoint(with: inappIds(for: $0)) }
     }
 
-    func downloadImage(withUrl url: String, inappId: String, tags: [String: String]?, completion: @escaping (Result<UIImage, MindboxError>) -> Void) {
+    func downloadImage(withUrl url: String,
+                       inappId: String,
+                       tags: [String: String]?,
+                       failureReport: ImageFailureReport,
+                       completion: @escaping (Result<UIImage, MindboxError>) -> Void) {
         imageService.downloadImage(withUrl: url) { result in
             if case .failure(let error) = result {
                 switch error {
                 case .serverError, .protocolError, .unknown:
                     let details = "Image URL: \(url) | \(error.localizedDescription)"
-                    self.failureManager.addFailure(
-                        inappId: inappId,
-                        reason: .imageDownloadFailed,
-                        details: details,
-                        tags: tags
-                    )
+                    switch failureReport {
+                    case .bufferedForThePass:
+                        self.failureManager.addFailure(inappId: inappId, reason: .imageDownloadFailed, details: details, tags: tags)
+                    case .atOnce:
+                        self.failureManager.sendBlockFailure(inappId: inappId, reason: .imageDownloadFailed, details: details, tags: tags)
+                    }
                 default:
                     break
                 }
@@ -116,6 +139,14 @@ class InAppConfigurationDataFacade: InAppConfigurationDataFacadeProtocol {
                 Logger.common(message: "Track InApp.Targeting failed with error: \(error)", level: .error, category: .inAppMessages)
             }
         }
+    }
+
+    func sendCollectedFailures() {
+        failureManager.sendFailures()
+    }
+
+    func discardCollectedFailures() {
+        failureManager.clearFailures()
     }
 }
 
@@ -204,11 +235,14 @@ extension InAppConfigurationDataFacade {
         guard shouldCollectFailures else {
             return
         }
+
+        $uncheckableReasons.mutate { $0.insert(reason) }
+
         guard case .serverError = error else {
             return
         }
 
-        pendingTargetingFailureDetails[reason] = error.failureReason
+        $pendingTargetingFailureDetails.mutate { $0[reason] = error.failureReason }
     }
 
     private func inappIds(for reason: InAppShowFailureReason) -> Set<String> {

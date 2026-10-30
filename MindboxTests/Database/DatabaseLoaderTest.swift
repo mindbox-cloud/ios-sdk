@@ -86,19 +86,15 @@ final class DataBaseLoaderTests: XCTestCase {
             "Store should be present before destroy"
         )
 
-        // UUID before destroy
         let storeUUIDBefore = persistentStoreCoordinator.metadata(for: persistentStore)[NSStoreUUIDKey] as? String
 
-        // Destroy
         try databaseLoader.destroy()
 
-        // Store is detached from coordinator
         XCTAssertNil(
             persistentStoreCoordinator.persistentStore(for: storeURL),
             "Store should be detached after destroy"
         )
 
-        // Recreate
         let recreatedContainer = try databaseLoader.loadPersistentContainer()
         let recreatedCoordinator = recreatedContainer.persistentStoreCoordinator
         let recreatedStore = try XCTUnwrap(
@@ -110,15 +106,12 @@ final class DataBaseLoaderTests: XCTestCase {
     }
 
     func test_Destroy_UsesDescriptionURL_WhenStoreNotLoaded() throws {
-        // Pre-create a garbage file at the expected URL without loading the store
         let (databaseLoader, storeURL) = try makeDatabaseLoader(databaseName: Constants.precreatedDatabaseName)
         try XCTUnwrap(Constants.garbagePayload.data(using: .utf8)).write(to: storeURL)
         XCTAssertTrue(fileManager.fileExists(atPath: storeURL.path), "Precreated file must exist")
 
-        // Destroy should clear path so we can load a fresh store afterwards
         try databaseLoader.destroy()
 
-        // The physical file may or may not remain; critical point is that a store loads fine
         let persistentContainer = try databaseLoader.loadPersistentContainer()
         let persistentStoreCoordinator = persistentContainer.persistentStoreCoordinator
         let persistentStore = try XCTUnwrap(
@@ -152,7 +145,6 @@ final class DataBaseLoaderTests: XCTestCase {
         )
         XCTAssertEqual(inMemoryStore.type, NSInMemoryStoreType, "Store type must be in-memory")
 
-        // On iOS URL may be nil or /dev/null for in-memory store
         let inMemoryURLString = inMemoryStore.url?.absoluteString
         let isNilOrDevNull = (inMemoryURLString == nil ||
                               inMemoryURLString == Constants.devNullURLString)

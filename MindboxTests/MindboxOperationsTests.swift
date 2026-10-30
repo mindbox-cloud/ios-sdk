@@ -10,11 +10,6 @@ import Testing
 import Foundation
 @testable import Mindbox
 
-/// Contract tests for the public operations pipeline: the heavy work
-/// runs on the serial eventQueue, yet every externally observable guarantee holds —
-/// call order equals DB write order, the body is snapshotted at call time, invalid
-/// input is dropped before the hop, executeSyncOperation completions always arrive
-/// on the main thread, and track() stays synchronous.
 @Suite("Public operations contract", .serialized, .tags(.customOperation))
 struct MindboxOperationsTests {
 
@@ -27,23 +22,16 @@ struct MindboxOperationsTests {
         databaseRepository = DI.injectOrFail(DatabaseRepositoryProtocol.self)
         try databaseRepository.erase()
         Mindbox.shared.assembly()
-        // Keep GuaranteedDeliveryManager from consuming (deleting) the events these
-        // tests assert on — an earlier test may have enabled scheduling.
-        DI.injectOrFail(GuaranteedDeliveryManager.self).canScheduleOperations = false
+        EmbeddedBlockAppPresence.shared.reset()
     }
 
     // MARK: - Helpers
 
-    /// Events are written asynchronously on eventQueue; poll the repository until
-    /// `count` events named `name` have landed (see `pollUntil` for the timeout contract).
     private func waitForCustomEvents(named name: String, count: Int) async throws -> [CustomEvent] {
         try await pollUntil(value: { try fetchCustomEvents(named: name) },
                             condition: { $0.count >= count })
     }
 
-    /// Custom events named `name`, in the repository's own send order
-    /// (fetchRequestForSend sorts by retry/enqueue timestamp) — i.e. exactly the
-    /// order GuaranteedDeliveryManager would deliver them in.
     private func fetchCustomEvents(named name: String) throws -> [CustomEvent] {
         try databaseRepository
             .query(fetchLimit: 200, retryDeadline: 60)
@@ -52,9 +40,6 @@ struct MindboxOperationsTests {
             .filter { $0.name == name }
     }
 
-    /// Thread-safe one-shot value holder for asserting on completion callbacks.
-    /// Polled with a deadline instead of awaiting a continuation, so a regression
-    /// that never calls the completion FAILS the test instead of hanging it.
     private final class ResultBox<T>: @unchecked Sendable {
         private let lock = NSLock()
         private var stored: T?
@@ -110,8 +95,6 @@ struct MindboxOperationsTests {
     func invalidNameDropped() async throws {
         Mindbox.shared.executeAsyncOperation(operationSystemName: "плохое имя", json: "{}")
         Mindbox.shared.executeAsyncOperation(operationSystemName: "op\n", json: "{}")
-        // Sentinel after the invalid calls: the serial queue preserves order, so once
-        // it lands we know the invalid ones were dropped, not just delayed.
         Mindbox.shared.executeAsyncOperation(operationSystemName: "Test.AfterInvalidName", json: "{}")
 
         let sentinel = try await waitForCustomEvents(named: "Test.AfterInvalidName", count: 1)
@@ -161,28 +144,19 @@ struct MindboxOperationsTests {
 
     // MARK: - track() synchronicity
 
-    // track(_:) must finish its work before returning: handlePush/handleUniversalLink
-    // set skipNextDirectTrackVisit, which the didBecomeActive-driven trackDirect
-    // consumes on controllerQueue. If track() is ever deferred to a queue "for
-    // symmetry" with the operation methods, that flag write starts racing trackDirect
-    // — this test trips then. lastTrackVisit is written in the same synchronous chain
-    // as the (private) flag, so it stands in for it.
     @Test("track(.universalLink) applies its effects before returning (stays synchronous)")
     func trackAppliesEffectsSynchronously() {
-        SessionTemporaryStorage.shared.erase()
+        SessionTemporaryStorage.shared.lastTrackVisit = nil
         let activity = NSUserActivity(activityType: NSUserActivityTypeBrowsingWeb)
         activity.webpageURL = URL(string: "https://test-site.s.mindbox.ru")
 
         Mindbox.shared.track(.universalLink(activity))
 
-        // Asserted immediately, with no waiting: the effect must already be visible
-        // the moment the call returns.
         #expect(SessionTemporaryStorage.shared.lastTrackVisit?.source == .link)
     }
 
     @Test("executeSyncOperation early errors (unconfigured SDK) are delivered on main too")
     func syncEarlyErrorArrivesOnMain() async {
-        // configuration is nil after reset() in init — the "Configuration is not set" path.
         let box = ResultBox<(onMain: Bool, isFailure: Bool)>()
         Mindbox.shared.executeSyncOperation(operationSystemName: "Test.Sync", json: "{}") { result in
             if case .failure = result {
@@ -198,8 +172,6 @@ struct MindboxOperationsTests {
 
     @Test("executeSyncOperation with invalid name delivers a .validationError on the main thread")
     func syncInvalidNameDeliversValidationErrorOnMain() async {
-        // configuration is nil after reset() in init, but name validation fires before
-        // enqueueSyncEvent is called — so the completion must arrive regardless.
         let box = ResultBox<(onMain: Bool, isValidationError: Bool)>()
         Mindbox.shared.executeSyncOperation(operationSystemName: "плохое имя", json: "{}") { result in
             if case .failure(.validationError(let error)) = result {
@@ -215,9 +187,6 @@ struct MindboxOperationsTests {
 
     @Test("executeSyncOperation with invalid JSON delivers a .validationError on the main thread")
     func syncInvalidJSONDeliversValidationErrorOnMain() async throws {
-        // Configure the SDK so the only path to a failure is the invalid-JSON branch, not
-        // the "Configuration is not set" early error. This pins the regression where invalid
-        // JSON dropped the operation without ever invoking `completion`, hanging the caller.
         persistenceStorage.configuration = try MBConfiguration(endpoint: "test-endpoint", domain: "api.mindbox.ru")
         persistenceStorage.deviceUUID = "00000000-0000-0000-0000-000000000001"
 

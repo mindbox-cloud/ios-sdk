@@ -1,0 +1,4373 @@
+//
+//  EmbeddedBlockWebViewProviderTests.swift
+//  MindboxTests
+//
+//  Created by vailence on 03.08.2026.
+//  Copyright © 2026 Mindbox. All rights reserved.
+//
+
+import Testing
+import UIKit
+import QuartzCore
+@_spi(Internal) @testable import Mindbox
+
+@Suite("Embedded block web view provider", .tags(.embeddedBlocks))
+@MainActor
+struct EmbeddedBlockWebViewProviderTests {
+
+    // MARK: - Loading
+
+    @Test("Start resolves the id and loads the resolved content")
+    func startResolvesAndLoads() {
+        let bed = EmbeddedBlockTestBed(placeSystemName: "promo")
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.start()
+
+        #expect(bed.resolver.resolvedPlaces == ["promo"])
+        #expect(bed.pageFactory.contents == [.stub])
+        #expect(bed.page?.loadCount == 1)
+        #expect(states == [.loading])
+        #expect(bed.provider.contentView == nil)
+    }
+
+    @Test("Second start does not resolve or load again")
+    func secondStartDoesNothing() {
+        let bed = EmbeddedBlockTestBed()
+
+        bed.provider.start()
+        bed.provider.start()
+
+        #expect(bed.resolver.resolveCount == 1)
+        #expect(bed.page?.loadCount == 1)
+    }
+
+    @Test("Empty resolution needs no page at all")
+    func emptyResolutionCreatesNoPage() {
+        let bed = EmbeddedBlockTestBed(resolution: .empty)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.start()
+
+        #expect(states == [.loading, .empty])
+        #expect(bed.pageFactory.pages.isEmpty)
+        #expect(bed.provider.contentView == nil)
+    }
+
+    // MARK: - Readiness
+
+    @Test("A page that drew something makes the content available")
+    func pageReadyMakesContentAvailable() {
+        let bed = EmbeddedBlockTestBed()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+
+        #expect(states == [.loading, .ready])
+        #expect(bed.provider.contentView === bed.page?.view)
+    }
+
+    @Test("Silent page never becomes ready on its own")
+    func silentPageStaysLoading() {
+        let bed = EmbeddedBlockTestBed()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.start()
+
+        #expect(states == [.loading])
+        #expect(bed.provider.contentView == nil)
+    }
+
+    @Test("A report without a readable count is a failure")
+    func reportWithoutCountIsFailure() {
+        let bed = EmbeddedBlockTestBed()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.start()
+        bed.page?.reportRenderedWithoutCount()
+
+        #expect(states.last == .failed(.internalError))
+        #expect(bed.provider.contentView == nil)
+    }
+
+    @Test("A page that drew nothing collapses the block")
+    func pageEmptyCollapsesTheBlock() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.page?.reportRendered(0)
+
+        #expect(states == [.empty])
+        #expect(bed.provider.contentView == nil)
+    }
+
+    // MARK: - The place's slot
+
+    @Test("A block that started took the place's slot and keeps it while loading")
+    func loadingBlockKeepsTheSlot() {
+        let bed = EmbeddedBlockTestBed(placeSystemName: "promo")
+
+        bed.provider.start()
+
+        #expect(bed.budget.reservedOwners == [.place("promo")])
+        #expect(bed.budget.releases.isEmpty)
+    }
+
+    @Test("A paused block with content parked for its return still holds its attempt")
+    func pausedBlockWithParkedContentHoldsItsAttempt() {
+        let bed = EmbeddedBlockTestBed(resolution: .empty)
+        bed.provider.start()
+        bed.provider.stop()
+
+        bed.provider.apply(bed.answer(.content(.stub)))
+
+        #expect(bed.provider.holdsAnAttempt)
+    }
+
+    @Test("A page that failed to load gives the place's slot back")
+    func failedPageGivesTheSlotBack() {
+        let bed = EmbeddedBlockTestBed(placeSystemName: "promo")
+
+        bed.provider.start()
+        bed.page?.failLoad()
+
+        #expect(bed.budget.releases == [.place("promo")])
+    }
+
+    @Test("A page that drew nothing gives the place's slot back")
+    func emptyPageGivesTheSlotBack() {
+        let bed = EmbeddedBlockTestBed(placeSystemName: "promo")
+
+        bed.provider.start()
+        bed.page?.reportRendered(0)
+
+        #expect(bed.budget.releases == [.place("promo")])
+    }
+
+    @Test("A block leaving the screen keeps the place's slot")
+    func stoppedBlockKeepsTheSlot() {
+        let bed = EmbeddedBlockTestBed(placeSystemName: "promo")
+
+        bed.provider.start()
+        bed.provider.stop()
+
+        #expect(bed.budget.releases.isEmpty)
+    }
+
+    @Test("A winner whose delay runs out after the user left the block takes the place's slot only once the block is back, and leaves the place empty when the show budgets are spent by then",
+          arguments: [false, true])
+    func delayRunningOutAfterTheUserLeftTakesTheSlotOnReturn(isBudgetSpentByThen: Bool) {
+        let bed = EmbeddedBlockTestBed(resolution: .content(.delayed()))
+        bed.provider.start()
+        bed.provider.stop()
+
+        bed.delayScheduler.fireAll()
+        #expect(bed.budget.reservations.isEmpty)
+        #expect(bed.pageFactory.pages.isEmpty)
+
+        if isBudgetSpentByThen {
+            bed.budget.refusedInAppIds = [EmbeddedBlockWebContent.delayed().inAppId]
+        }
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+        bed.provider.start()
+
+        #expect(bed.budget.reservedOwners.first == .place("block-id"))
+        #expect(bed.pageFactory.pages.count == (isBudgetSpentByThen ? 0 : 1))
+        #expect(states.contains(.empty) == isBudgetSpentByThen)
+    }
+
+    @Test("A torn-down or abandoned block gives the place's slot back", arguments: [true, false])
+    func goneBlockGivesTheSlotBack(isTornDown: Bool) {
+        let bed = EmbeddedBlockTestBed(placeSystemName: "promo")
+
+        bed.provider.start()
+        if isTornDown {
+            bed.provider.teardown()
+        } else {
+            bed.provider.abandonAttempt()
+        }
+
+        #expect(bed.budget.releases == [.place("promo")])
+    }
+
+    // MARK: - Accounting for the show
+
+    @Test("A block that drew its page hands the show to the accounting")
+    func renderedBlockIsAccountedFor() throws {
+        let bed = EmbeddedBlockTestBed(resolution: .content(.counted()))
+
+        bed.provider.start()
+        bed.page?.reportRendered(3)
+
+        let show = try #require(bed.accounting.shows.first)
+        #expect(bed.accounting.shows.count == 1)
+        #expect(show.inAppId == EmbeddedBlockWebContent.stub.inAppId)
+        #expect(show.frequency == EmbeddedBlockWebContent.counted().frequency)
+        #expect(show.tags == EmbeddedBlockWebContent.stub.tags)
+    }
+
+    @Test("A show is accounted from the content the block was given, whatever the place resolves to later")
+    func showIsAccountedFromTheSnapshot() throws {
+        let bed = EmbeddedBlockTestBed(resolution: .content(.counted()))
+        bed.provider.start()
+
+        bed.resolver.resolution = .content(.other)
+        bed.page?.reportRendered(3)
+
+        let show = try #require(bed.accounting.shows.first)
+        #expect(show.inAppId == EmbeddedBlockWebContent.stub.inAppId)
+        #expect(show.frequency == EmbeddedBlockWebContent.counted().frequency)
+        #expect(show.tags == EmbeddedBlockWebContent.stub.tags)
+    }
+
+    @Test("Nothing drawn, nothing accounted")
+    func pageWithoutContentIsNotAccounted() {
+        let bed = EmbeddedBlockTestBed()
+
+        bed.provider.start()
+        bed.page?.reportRendered(0)
+
+        #expect(bed.accounting.shows.isEmpty)
+    }
+
+    @Test("A negative count is a failure, not an empty block")
+    func negativeCountIsFailure() {
+        let bed = EmbeddedBlockTestBed()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.start()
+        bed.page?.reportRendered(-1)
+
+        #expect(states.last == .failed(.internalError))
+        #expect(bed.accounting.shows.isEmpty)
+        #expect(bed.failureReporter.reasons == [.presentationFailed])
+    }
+
+    @Test("A page that failed to load is not accounted")
+    func failedPageIsNotAccounted() {
+        let bed = EmbeddedBlockTestBed()
+
+        bed.provider.start()
+        bed.page?.failLoad()
+
+        #expect(bed.accounting.shows.isEmpty)
+    }
+
+    @Test("An unreadable report is a failure, not a show")
+    func unreadableReportIsNoShow() {
+        let bed = EmbeddedBlockTestBed()
+
+        bed.provider.start()
+        bed.page?.reportRenderedWithoutCount()
+
+        #expect(bed.accounting.shows.isEmpty)
+        #expect(bed.failureReporter.reasons == [.presentationFailed])
+    }
+
+    @Test("A page reporting itself again is accounted once")
+    func repeatedReportIsAccountedOnce() {
+        let bed = EmbeddedBlockTestBed()
+
+        bed.provider.start()
+        bed.page?.reportRendered(3)
+        bed.page?.reportRendered(4)
+
+        #expect(bed.accounting.shows.count == 1)
+    }
+
+    @Test("A page rebuilt for the same content hands its show to the accounting again")
+    func rebuiltPageIsHandedToAccountingAgain() {
+        let bed = EmbeddedBlockTestBed(resolution: .content(.counted()))
+        bed.provider.start()
+        bed.page?.reportRendered(3)
+
+        bed.provider.reload()
+        bed.page?.reportRendered(3)
+
+        #expect(bed.accounting.shows.count == 2)
+    }
+
+    @Test("A block show is accounted at the block's place")
+    func showIsAccountedAtThePlace() {
+        let bed = EmbeddedBlockTestBed(placeSystemName: "the-place")
+
+        bed.provider.start()
+        bed.page?.reportRendered(3)
+
+        #expect(bed.accounting.places == ["the-place"])
+    }
+
+    @Test("A page shown again on return is accounted once")
+    func returningBlockIsAccountedOnce() {
+        let bed = EmbeddedBlockTestBed(resolution: .content(.counted()))
+
+        bed.provider.start()
+        bed.page?.reportRendered(3)
+        bed.provider.stop()
+        bed.provider.start()
+
+        #expect(bed.accounting.shows.count == 1)
+    }
+
+    @Test("A page that drew off screen is not accounted when another in-app waits for the block's return")
+    func offScreenRenderReplacedBeforeTheReturnIsNotAccounted() {
+        let bed = EmbeddedBlockTestBed(resolution: .content(.counted()))
+        bed.provider.start()
+        bed.provider.stop()
+        bed.page?.reportRendered(3)
+        bed.resolver.resolution = .content(.other)
+        bed.provider.apply(bed.answer(.content(.other)))
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.start()
+
+        #expect(bed.accounting.shows.isEmpty)
+        #expect(states == [.loading])
+        #expect(bed.pageFactory.contents.last == .other)
+        #expect(bed.pageFactory.pages.count == 2)
+    }
+
+    @Test("A page rebuilt for another in-app hands its show to the accounting again")
+    func pageForAnotherInappIsHandedToAccountingAgain() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+
+        bed.resolver.resolution = .content(.other)
+        bed.announceNewConfig()
+        bed.page?.reportRendered(1)
+
+        #expect(bed.accounting.shownIds == [EmbeddedBlockWebContent.stub.inAppId,
+                                            EmbeddedBlockWebContent.other.inAppId])
+    }
+
+    @Test("The block's timeToDisplay is the selection's processing plus the page's rendering")
+    func timeToDisplayAddsProcessingToRendering() throws {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.processingDuration = 2
+
+        bed.provider.start()
+        bed.clock.advance(0.75)
+        bed.page?.reportRendered(3)
+
+        let show = try #require(bed.accounting.shows.first)
+        #expect(show.timeToDisplay == 2.75)
+    }
+
+    // MARK: - Load failure
+
+    @Test("Load failure fails the block")
+    func loadFailureFailsTheBlock() {
+        let bed = EmbeddedBlockTestBed()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.start()
+        bed.page?.failLoad()
+
+        #expect(states == [.loading, .failed(.networkError)])
+        #expect(bed.provider.contentView == nil)
+    }
+
+    @Test("Load failure after a stop is ignored")
+    func loadFailureAfterStopIsIgnored() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.provider.stop()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.page?.failLoad()
+
+        #expect(states.isEmpty)
+    }
+
+    // MARK: - Reporting a failure
+
+    @Test("A page that failed to load is reported")
+    func loadFailureIsReported() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+
+        bed.page?.failLoad()
+
+        #expect(bed.failureReporter.reasons == [.webviewLoadFailed])
+        #expect(bed.failureReporter.reported.first?.inAppId == EmbeddedBlockWebContent.stub.inAppId)
+        #expect(bed.failureReporter.reported.first?.tags == EmbeddedBlockWebContent.stub.tags)
+    }
+
+    @Test("An unreadable report is reported as a presentation failure")
+    func unreadableReportIsReported() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+
+        bed.page?.reportRenderedWithoutCount()
+
+        #expect(bed.failureReporter.reasons == [.presentationFailed])
+    }
+
+    @Test("A page that ran out of patience is reported")
+    func timedOutPageIsReported() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+
+        bed.provider.failSilentPage()
+
+        #expect(bed.failureReporter.reasons == [.presentationFailed])
+    }
+
+    @Test("A delayed answer keeps the block loading and tells the container")
+    func delayedAnswerKeepsTheBlockLoading() {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.isDeferred = true
+        var delayedCalls = 0
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onContentDelayed = { delayedCalls += 1 }
+        bed.provider.onStateChange = { states.append($0) }
+        bed.provider.start()
+
+        bed.provider.contentIsDelayed()
+
+        #expect(bed.provider.isAwaitingDelayedContent)
+        #expect(delayedCalls == 1)
+        #expect(states == [.loading])
+
+        bed.provider.apply(bed.answer(.content(.stub)))
+
+        #expect(!bed.provider.isAwaitingDelayedContent)
+    }
+
+    @Test("A delay announced while the page is loading leaves the page its own budget")
+    func delayAnnouncedWhileThePageLoadsIsIgnored() {
+        let bed = EmbeddedBlockTestBed()
+        var delayedCalls = 0
+        bed.provider.onContentDelayed = { delayedCalls += 1 }
+        bed.provider.start()
+
+        bed.provider.contentIsDelayed()
+
+        #expect(!bed.provider.isAwaitingDelayedContent)
+        #expect(delayedCalls == 0)
+    }
+
+    @Test("A block the SDK never answered reports one failure without an in-app")
+    func unansweredBlockReportsOneUnattributedFailure() {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.isDeferred = true
+        bed.provider.start()
+
+        bed.provider.failUnanswered(waited: 30)
+
+        #expect(bed.failureReporter.unansweredWaits == [30])
+        #expect(bed.failureReporter.reported.isEmpty)
+    }
+
+    @Test("A second unanswered wait at the same place in one session reports nothing")
+    func secondUnansweredWaitIsSilent() {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.isDeferred = true
+        bed.provider.start()
+
+        bed.provider.failUnanswered(waited: 30)
+        bed.provider.failUnanswered(waited: 30)
+
+        #expect(bed.failureReporter.unansweredWaits.count == 1)
+    }
+
+    @Test("Another place's unanswered wait is reported on its own")
+    func anotherPlacesUnansweredWaitIsReported() {
+        let first = EmbeddedBlockTestBed(placeSystemName: "first-place")
+        let second = EmbeddedBlockTestBed(placeSystemName: "second-place")
+
+        first.provider.failUnanswered(waited: 30)
+        second.provider.failUnanswered(waited: 30)
+
+        #expect(first.failureReporter.unansweredWaits.count == 1)
+        #expect(second.failureReporter.unansweredWaits.count == 1)
+    }
+
+    @Test("An empty place reports nothing")
+    func emptyPlaceReportsNothing() {
+        let bed = EmbeddedBlockTestBed(resolution: .empty)
+        bed.provider.start()
+
+        bed.provider.failSilentPage()
+
+        #expect(bed.failureReporter.reported.isEmpty)
+    }
+
+    @Test("A silent page fails the block as internalError")
+    func silentPageFailsAsContentFailed() {
+        let bed = EmbeddedBlockTestBed()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+        bed.provider.start()
+
+        bed.provider.failSilentPage()
+
+        #expect(states == [.loading, .failed(.internalError)])
+        #expect(bed.provider.contentView == nil)
+        #expect(bed.page?.cancelCount == 1)
+    }
+
+    @Test("An unanswered block fails as networkError every time, whatever the analytics already heard")
+    func unansweredBlockFailsAsNoResponseEveryTime() {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.isDeferred = true
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.start()
+        bed.provider.failUnanswered(waited: 30)
+        bed.provider.start()
+        bed.provider.failUnanswered(waited: 30)
+
+        #expect(states == [.loading, .failed(.networkError), .loading, .failed(.networkError)])
+        #expect(bed.failureReporter.unansweredWaits == [30])
+    }
+
+    @Test("A config arriving after an unanswered wait does not revive the block until it is back on screen")
+    func configAfterUnansweredWaitWaitsForTheNextAppearance() {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.isDeferred = true
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+        bed.provider.start()
+        bed.provider.failUnanswered(waited: 30)
+
+        bed.resolver.flush()
+        bed.announceNewConfig()
+
+        #expect(states == [.loading, .failed(.networkError)])
+        #expect(bed.pageFactory.pages.isEmpty)
+        #expect(bed.resolver.resolveCount == 1)
+
+        bed.provider.start()
+        bed.resolver.flush()
+        bed.page?.reportRendered(1)
+
+        #expect(states == [.loading, .failed(.networkError), .loading, .ready])
+        #expect(bed.provider.contentView != nil)
+    }
+
+    @Test("A broken winner fails the block as internalError and reports unknown_error")
+    func brokenWinnerFailsAsInternalError() {
+        let bed = EmbeddedBlockTestBed(resolution: .failure(.broken))
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.start()
+
+        #expect(states == [.loading, .failed(.internalError)])
+        #expect(bed.pageFactory.pages.isEmpty)
+        #expect(bed.provider.contentView == nil)
+        #expect(bed.failureReporter.reasons == [.unknownError])
+        #expect(bed.failureReporter.reported.first?.inAppId == "broken-inapp-id")
+        #expect(bed.failureReporter.reported.first?.tags == ["templateType": "Broken"])
+        #expect(bed.failureReporter.reported.first?.details == EmbeddedBlockResolutionFailure.broken.details)
+    }
+
+    @Test("The same broken winner asked again is neither re-reported nor re-announced")
+    func sameBrokenWinnerAskedAgainIsSilent() {
+        let bed = EmbeddedBlockTestBed(resolution: .failure(.broken))
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+        bed.provider.start()
+
+        bed.announceNewConfig()
+
+        #expect(states == [.loading, .failed(.internalError)])
+        #expect(bed.failureReporter.reasons == [.unknownError])
+    }
+
+    @Test("A broken winner arriving while the block is paused is reported at once and applied on return")
+    func brokenWinnerWhilePausedIsAppliedOnReturn() {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.isDeferred = true
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+        bed.provider.start()
+        bed.provider.stop()
+
+        bed.resolver.resolution = .failure(.broken)
+        bed.resolver.flush()
+
+        #expect(states == [.loading])
+        #expect(bed.failureReporter.reasons == [.unknownError])
+
+        bed.provider.start()
+
+        #expect(states == [.loading, .failed(.internalError)])
+        #expect(bed.failureReporter.reasons == [.unknownError])
+    }
+
+    @Test("A broken winner replacing shown content drops the page")
+    func brokenWinnerDropsTheShownPage() {
+        let bed = EmbeddedBlockTestBed()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+
+        bed.resolver.resolution = .failure(.broken)
+        bed.announceOperation()
+
+        #expect(states == [.loading, .ready, .failed(.internalError)])
+        #expect(bed.provider.contentView == nil)
+        #expect(bed.pageFactory.pages.first?.cancelCount == 1)
+    }
+
+    @Test("An unavailable config fails the block as networkError and reports the unanswered wait")
+    func unavailableConfigFailsAsNetworkError() {
+        let bed = EmbeddedBlockTestBed(resolution: .configUnavailable)
+        bed.resolver.processingDuration = 1.5
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.start()
+
+        #expect(states == [.loading, .failed(.networkError)])
+        #expect(bed.pageFactory.pages.isEmpty)
+        #expect(bed.provider.contentView == nil)
+        #expect(bed.failureReporter.unansweredWaits == [1.5])
+        #expect(bed.failureReporter.reported.isEmpty)
+    }
+
+    @Test("A place the pass could not check collapses the block without a report of its own")
+    func uncheckedPlaceCollapsesTheBlock() {
+        let bed = EmbeddedBlockTestBed(resolution: .targetingUnavailable)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.start()
+
+        #expect(states == [.loading, .uncheckable])
+        #expect(bed.pageFactory.pages.isEmpty)
+        #expect(bed.provider.contentView == nil)
+        #expect(bed.failureReporter.reported.isEmpty)
+        #expect(bed.failureReporter.unansweredWaits.isEmpty)
+    }
+
+    @Test("An unavailable config asked again in the session fails again but reports once")
+    func unavailableConfigAskedAgainReportsOnce() {
+        let bed = EmbeddedBlockTestBed(resolution: .configUnavailable)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+        bed.provider.start()
+
+        bed.provider.stop()
+        bed.provider.start()
+
+        #expect(states == [.loading, .failed(.networkError), .loading, .failed(.networkError)])
+        #expect(bed.failureReporter.unansweredWaits.count == 1)
+    }
+
+    @Test("A config arriving after an unavailable one revives the block")
+    func configArrivingAfterUnavailableRevivesTheBlock() {
+        let bed = EmbeddedBlockTestBed(resolution: .configUnavailable)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+        bed.provider.start()
+
+        bed.resolver.resolution = .content(.stub)
+        bed.announceNewConfig()
+        bed.page?.reportRendered(1)
+
+        #expect(states == [.loading, .failed(.networkError), .loading, .ready])
+        #expect(bed.provider.contentView != nil)
+    }
+
+    @Test("A page that drew nothing reports nothing")
+    func emptyPageReportsNothing() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+
+        bed.page?.reportRendered(0)
+
+        #expect(bed.failureReporter.reported.isEmpty)
+    }
+
+    // MARK: - A new config
+
+    @Test("The same page with new data is told about it")
+    func samePageIsToldAboutNewData() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+
+        let fresh = EmbeddedBlockWebContent(inAppId: EmbeddedBlockWebContent.stub.inAppId,
+                                            baseUrl: EmbeddedBlockWebContent.stub.baseUrl,
+                                            contentUrl: EmbeddedBlockWebContent.stub.contentUrl,
+                                            frequency: EmbeddedBlockWebContent.stub.frequency,
+                                            tags: EmbeddedBlockWebContent.stub.tags,
+                                            params: ["stories": .array([.string("one")])])
+        bed.resolver.resolution = .content(fresh)
+        bed.announceNewConfig()
+
+        #expect(bed.page?.initDataPushes == [fresh.params])
+        #expect(bed.pageFactory.pages.count == 1)
+    }
+
+    @Test("A config that changed only the frequency or tags leaves the page alone")
+    func metadataOnlyChangeIsNotPushedToThePage() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.resolver.resolution = .content(.counted())
+        bed.announceNewConfig()
+        bed.page?.reportRendered(0)
+
+        #expect(bed.page?.initDataPushes.isEmpty == true)
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(states.isEmpty)
+    }
+
+    @Test("A show is accounted with the frequency the config moved to while the page was loading")
+    func snapshotFollowsAMetadataOnlyChange() throws {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+
+        bed.resolver.resolution = .content(.counted())
+        bed.announceNewConfig()
+        bed.page?.reportRendered(1)
+
+        let show = try #require(bed.accounting.shows.first)
+        #expect(show.frequency == EmbeddedBlockWebContent.counted().frequency)
+        #expect(bed.page?.initDataPushes.isEmpty == true)
+    }
+
+    @Test("A config that empties the place drops the page still loading: its late report shows nothing")
+    func emptyAnswerWhileLoadingDropsThePage() {
+        let bed = EmbeddedBlockTestBed()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+        bed.provider.start()
+        let page = bed.page
+
+        bed.resolver.resolution = .empty
+        bed.announceNewConfig()
+        page?.reportRendered(1)
+
+        #expect(page?.isClosed == true)
+        #expect(states == [.loading, .empty])
+        #expect(bed.accounting.shows.isEmpty)
+        #expect(bed.provider.contentView == nil)
+    }
+
+    @Test("An empty answer after the page drew nothing drops that page too")
+    func emptyAnswerAfterAnEmptyPageDropsIt() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(0)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.apply(bed.answer(.empty))
+        bed.page?.reportRendered(1)
+
+        #expect(bed.page?.isClosed == true)
+        #expect(states.isEmpty)
+        #expect(bed.accounting.shows.isEmpty)
+    }
+
+    // MARK: - A lost web content process
+
+    @Test("A shown page that lost its web content process is rebuilt for the same content, without a failure")
+    func lostProcessRebuildsThePage() {
+        let bed = EmbeddedBlockTestBed()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+
+        bed.page?.loseContentProcess()
+        bed.page?.reportRendered(1)
+
+        #expect(bed.pageFactory.contents == [.stub, .stub])
+        #expect(bed.page?.loadCount == 1)
+        #expect(bed.resolver.resolveCount == 1)
+        #expect(states == [.loading, .ready, .loading, .ready])
+        #expect(bed.failureReporter.reported.isEmpty)
+    }
+
+    @Test("A rebuilt page that loses its process again before drawing fails the block once")
+    func rebuiltPageLostAgainFailsTheBlock() {
+        let bed = EmbeddedBlockTestBed()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+
+        bed.page?.loseContentProcess()
+        bed.page?.loseContentProcess()
+
+        #expect(bed.pageFactory.pages.count == 2)
+        #expect(states.last == .failed(.networkError))
+        #expect(bed.failureReporter.reasons == [.webviewLoadFailed])
+    }
+
+    @Test("A rebuilt page that drew is rebuilt again on a later loss")
+    func drawnRebuiltPageIsRebuiltAgain() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.page?.loseContentProcess()
+        bed.page?.reportRendered(1)
+
+        bed.page?.loseContentProcess()
+
+        #expect(bed.pageFactory.pages.count == 3)
+        #expect(bed.failureReporter.reported.isEmpty)
+    }
+
+    @Test("A page that lost its process off screen is dropped, and the block's return starts a new attempt")
+    func lostProcessOffScreenDropsThePage() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.provider.stop()
+
+        bed.page?.loseContentProcess()
+
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.page?.isClosed == true)
+
+        bed.provider.start()
+
+        #expect(bed.pageFactory.pages.count == 2)
+        #expect(bed.page?.loadCount == 1)
+        #expect(bed.failureReporter.reported.isEmpty)
+    }
+
+    @Test("A page that lost its process while the app was away is rebuilt once the user is back, and that loss is no failure")
+    func lostProcessWhileAwayIsRebuiltOnReturn() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.page?.loseContentProcess()
+        bed.presenceBed.enterBackground()
+
+        bed.page?.loseContentProcess()
+
+        bed.presenceBed.returnToApp()
+
+        #expect(bed.pageFactory.pages.count == 2)
+
+        bed.presenceBed.finishSessionCheck()
+
+        #expect(bed.pageFactory.pages.count == 3)
+        #expect(bed.page?.loadCount == 1)
+        #expect(bed.failureReporter.reported.isEmpty)
+    }
+
+    @Test("A page that lost its process while the app was away is not reused when the place picks the same page again")
+    func lostPageIsNotReusedForTheSamePage() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.presenceBed.enterBackground()
+        bed.page?.loseContentProcess()
+
+        bed.deliverSamePageWithNewData()
+
+        #expect(bed.pageFactory.pages.count == 2)
+    }
+
+    @Test("A page that lost its process while the app was away is not resumed as ready when its block comes back on screen")
+    func lostPageIsNotResumedOnStart() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.presenceBed.enterBackground()
+        bed.page?.loseContentProcess()
+        bed.provider.stop()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.start()
+
+        #expect(states.first == .loading)
+        #expect(bed.pageFactory.pages.count == 2)
+    }
+
+    @Test("A page held after drawing nothing that lost its process while the app was away is rebuilt once the user is back")
+    func emptyHeldPageLostWhileAwayIsRebuiltOnReturn() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData()
+        bed.page?.reportRendered(0)
+        bed.presenceBed.enterBackground()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.page?.loseContentProcess()
+
+        #expect(states.isEmpty)
+
+        bed.presenceBed.returnToApp()
+        bed.presenceBed.finishSessionCheck()
+
+        #expect(bed.pageFactory.pages.count == 2)
+        #expect(states == [.loading])
+    }
+
+    @Test("A page held after drawing nothing that lost its process while the app was away is rebuilt with the newer content its place sent meanwhile")
+    func emptyHeldPageLostWhileAwayIsRebuiltWithNewerContent() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData()
+        bed.page?.reportRendered(0)
+        bed.presenceBed.enterBackground()
+        bed.deliverSamePageWithNewData("newer")
+        bed.page?.loseContentProcess()
+
+        bed.presenceBed.returnToApp()
+        bed.presenceBed.finishSessionCheck()
+
+        #expect(bed.pageFactory.pages.count == 2)
+        #expect(bed.pageFactory.contents.last?.params["newer"] == .bool(true))
+    }
+
+    @Test("A page that lost its process while the app was away collapses on the user's return when its place answered without content meanwhile")
+    func lostPageHeldWhileAwayCollapsesOnReturn() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.presenceBed.enterBackground()
+        bed.page?.loseContentProcess()
+        bed.resolver.resolution = .empty
+        bed.announceNewConfig()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.presenceBed.returnToApp()
+        bed.presenceBed.finishSessionCheck()
+
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.page?.isClosed == true)
+        #expect(states == [.empty])
+    }
+
+    @Test("A failed or empty block ignores a lost process", arguments: [true, false])
+    func settledBlockIgnoresALostProcess(failed: Bool) {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        if failed {
+            bed.page?.failLoad()
+        } else {
+            bed.page?.reportRendered(0)
+        }
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.page?.loseContentProcess()
+
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(states.isEmpty)
+    }
+
+    @Test("An empty block whose page lost its process comes back on screen still empty while its place resolves again")
+    func emptyBlockWithALostPageComesBackEmpty() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(0)
+        bed.page?.loseContentProcess()
+        bed.provider.stop()
+        bed.resolver.isDeferred = true
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.start()
+
+        #expect(states == [.empty])
+        #expect(bed.pageFactory.pages.count == 1)
+    }
+
+    @Test("A page held on screen after drawing nothing is rebuilt when it loses its process, and the block collapses when the rebuilt page draws nothing too")
+    func emptyHeldPageIsRebuiltOnALostProcess() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData()
+        bed.page?.reportRendered(0)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.page?.loseContentProcess()
+
+        #expect(bed.pageFactory.pages.count == 2)
+
+        bed.page?.reportRendered(0)
+
+        #expect(states == [.loading, .empty])
+    }
+
+    @Test("A page rebuilt after losing its process before its first draw counts the lost page's time in timeToDisplay")
+    func lostProcessBeforeTheFirstDrawKeepsItsTime() throws {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.processingDuration = 2
+        bed.provider.start()
+        bed.clock.advance(3)
+
+        bed.page?.loseContentProcess()
+        bed.clock.advance(1)
+        bed.page?.reportRendered(3)
+
+        let show = try #require(bed.accounting.shows.first)
+        #expect(bed.pageFactory.pages.count == 2)
+        #expect(show.timeToDisplay == 6)
+    }
+
+    @Test("A page that lost its process while the app was away is not failed by its timers, and is rebuilt once the user is back")
+    func lostPageIsNotFailedByItsTimers() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.presenceBed.enterBackground()
+        bed.page?.loseContentProcess()
+
+        bed.provider.failSilentPageUnlessLost()
+
+        #expect(bed.failureReporter.reported.isEmpty)
+
+        bed.presenceBed.returnToApp()
+        bed.presenceBed.finishSessionCheck()
+
+        #expect(bed.pageFactory.pages.count == 2)
+    }
+
+    @Test("A page that lost its process before its first draw keeps that time in timeToDisplay when the place picks the same page again in the session")
+    func lostPageRebuiltForTheSamePageKeepsItsTime() throws {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.processingDuration = 2
+        bed.provider.start()
+        bed.clock.advance(3)
+        bed.presenceBed.enterBackground()
+        bed.page?.loseContentProcess()
+
+        bed.deliverSamePageWithNewData()
+        bed.presenceBed.returnToApp()
+        bed.presenceBed.finishSessionCheck()
+        bed.clock.advance(1)
+        bed.page?.reportRendered(3)
+
+        let show = try #require(bed.accounting.shows.first)
+        #expect(bed.pageFactory.pages.count == 2)
+        #expect(show.timeToDisplay == 6)
+    }
+
+    // MARK: - The data push's confirmation
+
+    @Test("A page that never confirms the data push is rebuilt")
+    func silentDataPushRebuildsThePage() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData()
+
+        bed.ackScheduler.fire()
+
+        #expect(bed.pageFactory.pages.count == 2)
+        #expect(bed.pageFactory.pages.last?.loadCount == 1)
+    }
+
+    @Test("A confirmed data push keeps the page")
+    func confirmedDataPushKeepsThePage() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData()
+
+        bed.page?.confirmInitData()
+        bed.ackScheduler.fire()
+
+        #expect(bed.pageFactory.pages.count == 1)
+    }
+
+    @Test("A stopped block drops the confirmation wait")
+    func stoppedBlockDropsTheAckWait() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData()
+
+        bed.provider.stop()
+        bed.ackScheduler.fire()
+
+        #expect(bed.pageFactory.pages.count == 1)
+    }
+
+    @Test("A data push confirmation arriving while paused clears the wait and prevents rebuild on return")
+    func dataPushConfirmationWhilePausedClearsTheWait() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData()
+        #expect(bed.ackScheduler.scheduled.count == 1)
+
+        bed.provider.stop()
+        bed.page?.confirmInitData()
+
+        bed.provider.start()
+
+        #expect(bed.ackScheduler.scheduled.count == 1)
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.page?.loadCount == 1)
+    }
+
+    @Test("The confirmation wait uses the page budget")
+    func ackWaitUsesThePageBudget() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData()
+
+        #expect(bed.ackScheduler.scheduled.map(\.delay) == [TimeInterval(Constants.EmbeddedBlock.readyTimeoutSeconds)])
+    }
+
+    @Test("Another in-app at the place replaces the page")
+    func anotherInappReplacesThePage() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+
+        bed.resolver.resolution = .content(.other)
+        bed.announceNewConfig()
+
+        #expect(bed.pageFactory.pages.count == 2)
+        #expect(bed.pageFactory.contents.last == .other)
+    }
+
+    @Test("A place an operation dropped collapses the block at once")
+    func droppedPlaceCollapsesTheBlock() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.resolver.resolution = .empty
+        bed.announceOperation()
+
+        #expect(states == [.empty])
+        #expect(bed.provider.contentView == nil)
+    }
+
+    @Test("A stopped block is not told about a new config")
+    func stoppedBlockIsNotTold() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.provider.stop()
+        let resolvesBefore = bed.resolver.resolveCount
+
+        bed.announceNewConfig()
+
+        #expect(bed.resolver.resolveCount == resolvesBefore)
+        #expect(bed.page?.initDataPushes.isEmpty == true)
+    }
+
+    @Test("A config landing while the first resolve is in flight is queued, not lost")
+    func configDuringFirstResolveIsQueued() {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.isDeferred = true
+        bed.provider.start()
+
+        bed.announceNewConfig()
+        #expect(bed.resolver.resolveCount == 1)
+
+        bed.resolver.flush()
+        #expect(bed.resolver.resolveCount == 2)
+    }
+
+    @Test("An operation during the first resolve is queued together with its trigger")
+    func operationDuringFirstResolveKeepsItsTrigger() {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.isDeferred = true
+        bed.provider.start()
+
+        let event = bed.announceOperation()
+        #expect(bed.resolver.resolveCount == 1)
+
+        bed.resolver.flush()
+
+        #expect(bed.resolver.resolveCount == 2)
+        let carried = bed.resolver.triggers.last ?? nil
+        #expect(carried === event)
+    }
+
+    @Test("A new config revives a block that had settled as empty")
+    func newConfigRevivesAnEmptyBlock() {
+        let bed = EmbeddedBlockTestBed(resolution: .empty)
+        bed.provider.start()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.resolver.resolution = .content(.stub)
+        bed.announceNewConfig()
+
+        #expect(states.contains(.loading))
+        #expect(bed.pageFactory.pages.count == 1)
+    }
+
+    @Test("A new config reloads a block whose page failed to load")
+    func newConfigReloadsAFailedPage() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.failLoad()
+
+        bed.announceNewConfig()
+
+        #expect(bed.pageFactory.pages.count == 2)
+        #expect(bed.pageFactory.pages.first?.initDataPushes.isEmpty == true)
+    }
+
+    // MARK: - An operation
+
+    @Test("An operation re-resolves the place in its own context")
+    func operationReresolvesInItsContext() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+
+        let fresh = EmbeddedBlockWebContent(inAppId: EmbeddedBlockWebContent.stub.inAppId,
+                                            baseUrl: EmbeddedBlockWebContent.stub.baseUrl,
+                                            contentUrl: EmbeddedBlockWebContent.stub.contentUrl,
+                                            frequency: EmbeddedBlockWebContent.stub.frequency,
+                                            tags: EmbeddedBlockWebContent.stub.tags,
+                                            params: ["stories": .array([.string("one")])])
+        bed.resolver.resolution = .content(fresh)
+        let event = bed.announceOperation("custom.operation")
+
+        let carried = bed.resolver.triggers.last ?? nil
+        #expect(carried === event)
+        #expect(bed.page?.initDataPushes.count == 1)
+    }
+
+    @Test("The same answer again leaves the healthy page alone")
+    func sameAnswerIsDeduplicated() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.announceNewConfig()
+        bed.announceOperation()
+
+        #expect(states.isEmpty)
+        #expect(bed.page?.initDataPushes.isEmpty == true)
+        #expect(bed.pageFactory.pages.count == 1)
+    }
+
+    @Test("The same answer revives a page that was collapsed by a dropped place, by rebuilding it")
+    func sameAnswerRevivesACollapsedPage() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+
+        bed.resolver.resolution = .empty
+        bed.announceOperation()
+
+        bed.resolver.resolution = .content(.stub)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+        bed.announceNewConfig()
+        bed.page?.reportRendered(1)
+
+        #expect(bed.pageFactory.pages.count == 2)
+        #expect(bed.pageFactory.pages.first?.initDataPushes.isEmpty == true)
+        #expect(states == [.loading, .ready])
+    }
+
+    @Test("A block collapsed by its own page is rebuilt for new data, not told about it")
+    func collapsedBlockIsRebuiltForNewData() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(0)
+
+        bed.deliverSamePageWithNewData()
+
+        #expect(bed.pageFactory.pages.count == 2)
+        #expect(bed.pageFactory.pages.first?.initDataPushes.isEmpty == true)
+    }
+
+    @Test("A shown block is not collapsed by a later report of nothing")
+    func shownBlockIgnoresALaterEmptyReport() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(2)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.page?.reportRendered(0)
+
+        #expect(states.isEmpty)
+        #expect(bed.provider.contentView != nil)
+    }
+
+    @Test("A shown block is not failed by a later unreadable report")
+    func shownBlockIgnoresALaterUnreadableReport() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(2)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.page?.reportRenderedWithoutCount()
+
+        #expect(bed.failureReporter.reported.isEmpty)
+        #expect(bed.accounting.shows.count == 1)
+        #expect(states.isEmpty)
+    }
+
+    @Test("A page that drew nothing and then drew something is heard")
+    func pageThatDrawsAfterReportingNothingIsHeard() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.page?.reportRendered(0)
+        bed.page?.reportRendered(2)
+
+        #expect(states == [.empty, .ready])
+        #expect(bed.accounting.shownIds == [EmbeddedBlockWebContent.stub.inAppId])
+    }
+
+    @Test("A data push lets the page report itself again: its report of nothing collapses the block once the user leaves")
+    func dataPushReopensTheReport() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(2)
+        bed.deliverSamePageWithNewData()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.page?.reportRendered(0)
+        bed.provider.stop()
+
+        #expect(states == [.empty])
+    }
+
+    @Test("An operation revives a block that had settled as empty")
+    func operationRevivesAnEmptyBlock() {
+        let bed = EmbeddedBlockTestBed(resolution: .empty)
+        bed.provider.start()
+
+        bed.resolver.resolution = .content(.stub)
+        let event = bed.announceOperation()
+
+        #expect(bed.pageFactory.pages.count == 1)
+        let carried = bed.resolver.triggers.last ?? nil
+        #expect(carried === event)
+    }
+
+    @Test("A stopped block ignores operations")
+    func stoppedBlockIgnoresOperations() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.provider.stop()
+        let resolvesBefore = bed.resolver.resolveCount
+
+        bed.announceOperation()
+
+        #expect(bed.resolver.resolveCount == resolvesBefore)
+    }
+
+    @Test("A new session hands a drawn page its data again, equal data included")
+    func newSessionRefreshesADrawnPage() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.announceNewSession()
+
+        #expect(bed.page?.initDataPushes == [EmbeddedBlockWebContent.stub.params])
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(states.isEmpty)
+    }
+
+    @Test("The new session's show goes when the page draws its new data, not on the push, its confirmation or another answer")
+    func newSessionShowWaitsForTheRedraw() {
+        let bed = EmbeddedBlockTestBed()
+        let first = bed.resolver.sessionEpoch
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+
+        bed.announceNewSession()
+        bed.page?.confirmInitData()
+        bed.announceNewConfig()
+        #expect(bed.accounting.sessionEpochs == [first])
+
+        bed.page?.reportRendered(1)
+
+        #expect(bed.accounting.sessionEpochs == [first, first + 1])
+        #expect(bed.accounting.shownIds == [EmbeddedBlockWebContent.stub.inAppId, EmbeddedBlockWebContent.stub.inAppId])
+    }
+
+    @Test("A session hands its page the data once and shows it once, however many answers it brings")
+    func newSessionRefreshesAndShowsOnce() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+
+        bed.announceNewSession()
+        bed.page?.confirmInitData()
+        bed.page?.reportRendered(1)
+        bed.announceNewConfig()
+        bed.provider.stop()
+        bed.provider.start()
+
+        #expect(bed.page?.initDataPushes.count == 1)
+        #expect(bed.accounting.shows.count == 2)
+    }
+
+    @Test("An operation that brings a new session hands the page its data, and its show waits for the redraw")
+    func operationInANewSessionPushesAndShowsAfterTheRedraw() {
+        let bed = EmbeddedBlockTestBed()
+        let first = bed.resolver.sessionEpoch
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+
+        bed.expireSession()
+        bed.resolver.sessionEpoch = bed.currentSessionEpoch
+        bed.announceOperation()
+        #expect(bed.page?.initDataPushes == [EmbeddedBlockWebContent.stub.params])
+        #expect(bed.accounting.sessionEpochs == [first])
+
+        bed.page?.reportRendered(1)
+
+        #expect(bed.accounting.sessionEpochs == [first, first + 1])
+    }
+
+    @Test("A return to the screen within the session hands the page nothing and shows nothing new")
+    func returnWithinTheSessionChangesNothing() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+
+        bed.provider.stop()
+        bed.provider.start()
+        bed.announceNewConfig()
+
+        #expect(bed.page?.initDataPushes.isEmpty == true)
+        #expect(bed.accounting.shows.count == 1)
+    }
+
+    @Test("A page still loading when the new session lands is told once it has drawn, and shown once it draws again")
+    func loadingPageIsRefreshedAfterItDraws() {
+        let bed = EmbeddedBlockTestBed()
+        let first = bed.resolver.sessionEpoch
+        bed.provider.start()
+
+        bed.announceNewSession()
+        #expect(bed.page?.initDataPushes.isEmpty == true)
+
+        bed.page?.reportRendered(1)
+        #expect(bed.page?.initDataPushes == [EmbeddedBlockWebContent.stub.params])
+        #expect(bed.accounting.shows.isEmpty)
+
+        bed.page?.reportRendered(1)
+        #expect(bed.accounting.sessionEpochs == [first + 1])
+    }
+
+    @Test("A loading page owed the new session's data that draws after the user left is told once the block is back, not off screen")
+    func pageDrawnOffScreenIsPushedOnceTheBlockIsBack() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.announceNewSession()
+
+        bed.provider.stop()
+        bed.page?.reportRendered(1)
+        #expect(bed.page?.initDataPushes.isEmpty == true)
+
+        bed.provider.start()
+        #expect(bed.page?.initDataPushes == [EmbeddedBlockWebContent.stub.params])
+    }
+
+    @Test("New data a new session brings for the same page while that page still loads is handed to it once it has drawn, and it is shown in that session once it draws again")
+    func loadingPageGetsTheSessionsNewDataAfterItDraws() {
+        let bed = EmbeddedBlockTestBed()
+        let first = bed.resolver.sessionEpoch
+        bed.provider.start()
+
+        bed.expireSession()
+        bed.resolver.sessionEpoch = bed.currentSessionEpoch
+        bed.deliverSamePageWithNewData()
+        #expect(bed.page?.initDataPushes.isEmpty == true)
+        #expect(bed.pageFactory.pages.count == 1)
+
+        bed.page?.reportRendered(1)
+        #expect(bed.page?.initDataPushes == [["fresh": .bool(true)]])
+        #expect(bed.accounting.shows.isEmpty)
+
+        bed.page?.reportRendered(1)
+        #expect(bed.accounting.sessionEpochs == [first + 1])
+    }
+
+    @Test("A shown page the new session picks again with delayTime is covered by the placeholder through the delay, gets its data once the delay runs out, and comes back with its show once it draws that data")
+    func shownPageIsCoveredThroughTheNewSessionsDelay() {
+        let bed = EmbeddedBlockTestBed(resolution: .content(.delayed()))
+        let first = bed.resolver.sessionEpoch
+        bed.provider.start()
+        bed.delayScheduler.fireAll()
+        bed.page?.reportRendered(1)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.renewSession()
+
+        #expect(states == [.loading])
+        #expect(bed.delayScheduler.armCount == 2)
+        #expect(bed.delayScheduler.lastDelay == 5)
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.provider.contentView === bed.page?.view)
+        #expect(bed.page?.initDataPushes.isEmpty == true)
+        #expect(bed.accounting.sessionEpochs == [first])
+
+        bed.delayScheduler.fireAll()
+        #expect(bed.page?.initDataPushes.count == 1)
+        #expect(bed.accounting.sessionEpochs == [first])
+        #expect(states == [.loading])
+
+        bed.page?.reportRendered(1)
+
+        #expect(states == [.loading, .ready])
+        #expect(bed.accounting.sessionEpochs == [first, first + 1])
+        #expect(bed.pageFactory.pages.count == 1)
+    }
+
+    @Test("The same page a new session answered while the user was on another screen takes its slot on return, gets its data at once, and its show counts the selection and the time on screen since the return, not the time away")
+    func samePageAnsweredOffScreenIsRefreshedOnReturn() {
+        let bed = EmbeddedBlockTestBed()
+        let first = bed.resolver.sessionEpoch
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.clock.advance(5)
+        bed.provider.stop()
+        let reservationsBefore = bed.budget.reservations.count
+        bed.resolver.processingDuration = 4
+
+        bed.renewSession()
+        #expect(bed.budget.reservations.count == reservationsBefore)
+        #expect(bed.page?.initDataPushes.isEmpty == true)
+
+        bed.resolver.isDeferred = true
+        bed.clock.advance(100)
+        bed.provider.start()
+        #expect(bed.page?.initDataPushes == [EmbeddedBlockWebContent.stub.params])
+        #expect(bed.budget.reservations.count == reservationsBefore + 1)
+
+        bed.clock.advance(0.25)
+        bed.page?.reportRendered(1)
+
+        #expect(bed.accounting.sessionEpochs == [first, first + 1])
+        #expect(bed.accounting.shows.last?.timeToDisplay == 4.25)
+    }
+
+    @Test("Another page a new session answered while the user was on another screen is built on return, before the old one shows again, and its show counts the selection and the time since the build")
+    func anotherPageAnsweredOffScreenIsBuiltOnReturn() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.provider.stop()
+        let reservationsBefore = bed.budget.reservations.count
+        bed.resolver.resolution = .content(.other)
+        bed.resolver.processingDuration = 4
+
+        bed.renewSession()
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.budget.reservations.count == reservationsBefore)
+
+        bed.resolver.isDeferred = true
+        bed.clock.advance(100)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+        bed.provider.start()
+
+        #expect(states == [.loading])
+        #expect(bed.pageFactory.contents.last == .other)
+        #expect(bed.budget.reservations.map(\.inAppId).dropFirst(reservationsBefore) == [EmbeddedBlockWebContent.other.inAppId])
+
+        bed.clock.advance(0.25)
+        bed.page?.reportRendered(1)
+
+        #expect(bed.accounting.shownIds.last == EmbeddedBlockWebContent.other.inAppId)
+        #expect(bed.accounting.shows.last?.timeToDisplay == 4.25)
+    }
+
+    @Test("A block the user comes back to before the new session answers keeps its page under the placeholder until that answer is drawn, and the answer's one show counts its own selection time plus the page's time on screen from the answer")
+    func blockBackBeforeTheNewSessionAnswersStaysCoveredAndCountsPageTimeFromTheAnswer() {
+        let bed = EmbeddedBlockTestBed()
+        let first = bed.resolver.sessionEpoch
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.provider.stop()
+        bed.resolver.isDeferred = true
+        bed.renewSession()
+        bed.clock.advance(40)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.start()
+        #expect(states == [.loading])
+        #expect(bed.pageFactory.pages.count == 1)
+
+        bed.clock.advance(0.5)
+        bed.resolver.processingDuration = 40.5
+        bed.resolver.flush()
+        bed.clock.advance(0.25)
+        bed.page?.reportRendered(1)
+
+        #expect(bed.page?.initDataPushes == [EmbeddedBlockWebContent.stub.params])
+        #expect(states == [.loading, .ready])
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.accounting.sessionEpochs == [first, first + 1])
+        #expect(bed.accounting.shows.last?.timeToDisplay == 40.75)
+    }
+
+    @Test("A page that draws the ended session's data after the new session began stays under the placeholder until that session answers, and no show goes for it")
+    func pageDrawingTheEndedSessionsDataStaysCovered() {
+        let bed = EmbeddedBlockTestBed()
+        let first = bed.resolver.sessionEpoch
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData()
+        bed.resolver.isDeferred = true
+        bed.renewSession()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.page?.reportRendered(1)
+
+        #expect(states.last == .loading)
+        #expect(!states.contains(.ready))
+        #expect(bed.accounting.sessionEpochs == [first])
+    }
+
+    @Test("A page that draws nothing for the ended session's data after the new session began keeps its block covered, and the new session's answer is drawn on the same page")
+    func pageDrawingNothingForTheEndedSessionsDataStaysCovered() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData()
+        bed.resolver.isDeferred = true
+        bed.renewSession()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.page?.reportRendered(0)
+
+        #expect(!states.contains(.empty))
+        #expect(bed.provider.isCoveredForTheSession)
+
+        bed.resolver.flush()
+        bed.page?.reportRendered(1)
+
+        #expect(states.last == .ready)
+        #expect(bed.pageFactory.pages.count == 1)
+    }
+
+    @Test("A show that came due in the background goes once the user is back and the session check of the return is over")
+    func showDueInTheBackgroundGoesOnReturn() {
+        let bed = EmbeddedBlockTestBed()
+        let first = bed.resolver.sessionEpoch
+        bed.provider.start()
+        bed.enterBackground()
+        bed.page?.reportRendered(1)
+
+        bed.returnToApp()
+        #expect(bed.accounting.sessionEpochs.isEmpty)
+
+        bed.finishSessionCheck()
+
+        #expect(bed.accounting.sessionEpochs == [first])
+    }
+
+    @Test("A page drawn while the user was away, who came back past the session's end, is shown once: in the new session, after it redraws")
+    func showDueFromAnExpiredSessionGoesInTheNewOneOnly() {
+        let bed = EmbeddedBlockTestBed()
+        let tracker = InAppMessagesTrackerSpyMock()
+        bed.accounting.accountant = InappShowAccountant(tracker: tracker, budget: bed.budget)
+        bed.provider.start()
+        bed.enterBackground()
+        bed.page?.reportRendered(1)
+
+        bed.returnToApp()
+        #expect(tracker.trackViewCallCount == 0)
+
+        bed.expireSession()
+        bed.finishSessionCheck()
+        #expect(tracker.trackViewCallCount == 0)
+
+        bed.concludeNewSessionDownload()
+        #expect(bed.page?.initDataPushes == [EmbeddedBlockWebContent.stub.params])
+        bed.page?.reportRendered(1)
+
+        #expect(tracker.trackViewCallCount == 1)
+        #expect(bed.accounting.sessionEpochs.last == bed.currentSessionEpoch)
+    }
+
+    @Test("A session check that began before the trip to the background does not let the return's show go")
+    func sessionCheckFromBeforeTheReturnLetsNothingGo() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.enterBackground()
+        bed.page?.reportRendered(1)
+        bed.returnToApp()
+
+        bed.finishSessionCheck(startedAt: bed.clock.now - 1)
+        #expect(bed.accounting.shows.isEmpty)
+
+        bed.finishSessionCheck()
+
+        #expect(bed.accounting.shows.count == 1)
+    }
+
+    @Test("A page that draws while the app is inactive is shown once the app is active again")
+    func showDueWhileInactiveGoesOnBecomingActive() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.applicationState = .inactive
+        bed.page?.reportRendered(1)
+        #expect(bed.accounting.shows.isEmpty)
+
+        bed.becomeActive()
+
+        #expect(bed.accounting.shows.count == 1)
+    }
+
+    @Test("A block created after a return, before that return's session check ends, waits for the check like the rest")
+    func blockCreatedInTheReturnWindowWaitsForTheCheck() {
+        let bed = EmbeddedBlockTestBed()
+        bed.enterBackground()
+        bed.returnToApp()
+
+        let late = bed.makeProvider(placeSystemName: "late-block")
+        late.start()
+        #expect(bed.resolver.resolveCount == 0)
+
+        bed.finishSessionCheck()
+        bed.page?.reportRendered(1)
+
+        #expect(bed.resolver.resolvedPlaces == ["late-block"])
+        #expect(bed.accounting.places == ["late-block"])
+        withExtendedLifetime(late) {}
+    }
+
+    @Test("A block back on screen between a return and the end of its session check meets the session the check leaves with the content parked for it: applied in the session it kept, dropped once that session has ended",
+          arguments: [false, true])
+    func returnToTheScreenInsideTheReturnWaitsForTheCheck(sessionExpired: Bool) {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.provider.stop()
+        bed.provider.apply(bed.answer(.content(.other)))
+        bed.resolver.isDeferred = true
+        bed.enterBackground()
+        bed.returnToApp()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.start()
+        #expect(states.isEmpty)
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.resolver.resolveCount == 1)
+
+        if sessionExpired {
+            bed.expireSession()
+        }
+        bed.finishSessionCheck(startsNewSession: sessionExpired)
+
+        if sessionExpired {
+            #expect(states.last == .loading)
+            #expect(!states.contains(.ready))
+        } else {
+            #expect(states == [.loading])
+        }
+        #expect(bed.pageFactory.pages.count == (sessionExpired ? 1 : 2))
+        #expect(bed.pageFactory.pages.first?.isClosed == !sessionExpired)
+        #expect(bed.resolver.resolveCount == 2)
+    }
+
+    @Test("A refusal parked for a block that comes back on screen between a return and the end of its session check collapses it at once; the start the check lets through asks again, anew once the check has begun a new session",
+          arguments: [false, true])
+    func collapseParkedForAReturnInsideTheReturnLandsAtOnce(sessionExpired: Bool) {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.provider.stop()
+        bed.provider.apply(bed.answer(.empty))
+        bed.resolver.isDeferred = true
+        bed.enterBackground()
+        bed.returnToApp()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.start()
+        #expect(states == [.empty])
+        #expect(bed.page?.isClosed == true)
+        #expect(bed.provider.isStartPending)
+        #expect(bed.resolver.resolveCount == 1)
+
+        if sessionExpired {
+            bed.expireSession()
+        }
+        bed.finishSessionCheck(startsNewSession: sessionExpired)
+
+        #expect(states == (sessionExpired ? [.empty, .loading] : [.empty]))
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.resolver.resolveCount == 2)
+    }
+
+    @Test("A refusal parked for a block that comes back on screen after the return's session check has ended the session, before the check is announced, still collapses it at once, and the start the check lets through asks the new session anew",
+          arguments: [false, true])
+    func collapseParkedForAReturnLandsAtOnceWhenTheCheckEndsTheSessionFirst(isResetDone: Bool) {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.provider.stop()
+        bed.provider.apply(bed.answer(.empty))
+        bed.resolver.isDeferred = true
+        bed.enterBackground()
+        bed.returnToApp()
+        if isResetDone {
+            bed.expireSession()
+        } else {
+            SessionTemporaryStorage.shared.$ledger.mutate { $0.isSessionEnding = true }
+        }
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.start()
+        #expect(states == [.empty])
+        #expect(bed.page?.isClosed == true)
+
+        if !isResetDone {
+            bed.expireSession()
+        }
+        bed.finishSessionCheck(startsNewSession: true)
+
+        #expect(states == [.empty, .loading])
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.resolver.resolveCount == 2)
+    }
+
+    @Test("A refusal that reaches a block back on screen while the return's session check runs keeps the block's content until the user leaves, before the check ends or after it",
+          arguments: [false, true])
+    func refusalForABlockBackInsideTheReturnIsHeldUntilTheUserLeaves(leavesBeforeTheCheckEnds: Bool) {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.resolver.isDeferred = true
+        bed.announceNewConfig()
+        bed.provider.stop()
+        bed.enterBackground()
+        bed.returnToApp()
+        bed.provider.start()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.resolver.resolution = .empty
+        bed.resolver.flush()
+        #expect(states.isEmpty)
+
+        if !leavesBeforeTheCheckEnds {
+            bed.finishSessionCheck()
+            #expect(states == [.ready])
+            #expect(bed.provider.contentView === bed.page?.view)
+            #expect(bed.page?.isClosed == false)
+        }
+
+        bed.provider.stop()
+
+        #expect(states == (leavesBeforeTheCheckEnds ? [.empty] : [.ready, .empty]))
+        #expect(bed.page?.isClosed == true)
+    }
+
+    @Test("A page that draws nothing for a block back on screen while the return's session check runs keeps the block's content until the user leaves, before the check ends or after it",
+          arguments: [false, true])
+    func emptyPageForABlockBackInsideTheReturnIsHeldUntilTheUserLeaves(leavesBeforeTheCheckEnds: Bool) {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData()
+        bed.provider.stop()
+        bed.enterBackground()
+        bed.returnToApp()
+        bed.provider.start()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.page?.reportRendered(0)
+        #expect(states.isEmpty)
+
+        if !leavesBeforeTheCheckEnds {
+            bed.finishSessionCheck()
+            #expect(states == [.ready])
+            #expect(bed.provider.contentView === bed.page?.view)
+        }
+
+        bed.provider.stop()
+
+        #expect(states == (leavesBeforeTheCheckEnds ? [.empty] : [.ready, .empty]))
+        #expect(bed.page?.isClosed == true)
+    }
+
+    @Test("A block whose page drew nothing while it was off screen collapses before its first frame when it comes back while the return's session check runs")
+    func pageEmptiedOffScreenCollapsesAsTheBlockComesBackInsideTheReturn() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.provider.stop()
+        bed.enterBackground()
+        bed.returnToApp()
+        bed.page?.reportRendered(0)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.start()
+
+        #expect(states == [.empty])
+        #expect(bed.provider.isStartPending)
+    }
+
+    @Test("A refusal that reaches a block back on screen while the return's session check runs drops the content parked for the block before it: the newest answer decides when the check ends")
+    func refusalInsideTheReturnDropsTheContentParkedBeforeIt() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.resolver.isDeferred = true
+        bed.announceNewConfig()
+        bed.provider.stop()
+        bed.provider.apply(bed.answer(.content(.other)))
+        bed.enterBackground()
+        bed.returnToApp()
+        bed.provider.start()
+        bed.resolver.resolution = .empty
+        bed.resolver.flush()
+
+        bed.finishSessionCheck()
+
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.provider.contentView === bed.page?.view)
+        #expect(bed.provider.heldCollapse == .empty)
+    }
+
+    @Test("A refusal an operation brings to a block back on screen while the return's session check runs collapses it at once")
+    func operationRefusalForABlockBackInsideTheReturnCollapsesAtOnce() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.resolver.isDeferred = true
+        bed.announceOperation()
+        bed.provider.stop()
+        bed.enterBackground()
+        bed.returnToApp()
+        bed.provider.start()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.resolver.resolution = .empty
+        bed.resolver.flush()
+
+        #expect(states == [.empty])
+        #expect(bed.page?.isClosed == true)
+    }
+
+    @Test("An answer that reaches a block back on screen between a return and the end of its session check takes no slot until the check ends, and takes it when the block starts then")
+    func answerForABlockBackInsideTheReturnTakesItsSlotAtTheCheckEnd() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.resolver.isDeferred = true
+        bed.resolver.resolution = .content(.other)
+        bed.announceNewConfig()
+        bed.provider.stop()
+        bed.enterBackground()
+        bed.returnToApp()
+        bed.provider.start()
+        let reservationsBefore = bed.budget.reservations.count
+
+        bed.resolver.flush()
+        #expect(bed.budget.reservations.count == reservationsBefore)
+        #expect(bed.pageFactory.pages.count == 1)
+
+        bed.finishSessionCheck()
+
+        #expect(bed.budget.reservations.map(\.inAppId).dropFirst(reservationsBefore) == [EmbeddedBlockWebContent.other.inAppId])
+        #expect(bed.pageFactory.contents.last == .other)
+    }
+
+    @Test("A block that leaves the screen again before the return's session check ends does not start when it ends")
+    func blockLeavingInsideTheReturnDoesNotStartAfterIt() {
+        let bed = EmbeddedBlockTestBed()
+        bed.enterBackground()
+        bed.returnToApp()
+
+        bed.provider.start()
+        bed.provider.stop()
+        bed.finishSessionCheck()
+
+        #expect(bed.resolver.resolveCount == 0)
+    }
+
+    @Test("Another page an operation names between a return and the end of its session check is not built from the session the check ends")
+    func operationInsideTheReturnBuildsNoPageOfTheEndingSession() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.enterBackground()
+        bed.returnToApp()
+
+        bed.resolver.resolution = .content(.other)
+        let event = bed.announceOperation()
+        #expect(bed.resolver.resolveCount == 1)
+        #expect(bed.pageFactory.pages.count == 1)
+
+        bed.resolver.isDeferred = true
+        let ending = bed.currentSessionEpoch
+        bed.renewSession()
+        let carried = bed.resolver.triggers.last ?? nil
+        #expect(carried === event)
+
+        bed.resolver.sessionEpoch = ending
+        bed.resolver.flush()
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.budget.reservations.map(\.inAppId) == [EmbeddedBlockWebContent.stub.inAppId])
+
+        bed.concludeNewSessionDownload()
+        bed.resolver.flush()
+
+        #expect(bed.resolver.resolveCount == 3)
+        #expect(bed.pageFactory.pages.count == 2)
+        #expect(bed.budget.reservations.map(\.inAppId) == [EmbeddedBlockWebContent.stub.inAppId, EmbeddedBlockWebContent.other.inAppId])
+    }
+
+    @Test("An operation that arrives while a block back on screen waits for the return's session check is asked for its place once the check ends, whether the check keeps the session or starts a new one",
+          arguments: [false, true])
+    func operationInsideTheReturnReachesABlockBackOnScreen(startsNewSession: Bool) {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.provider.stop()
+        bed.enterBackground()
+        bed.returnToApp()
+        bed.provider.start()
+
+        let event = bed.announceOperation()
+        #expect(bed.resolver.resolveCount == 1)
+
+        if startsNewSession {
+            bed.renewSession()
+        } else {
+            bed.finishSessionCheck()
+        }
+
+        let carried = bed.resolver.triggers.last ?? nil
+        #expect(carried === event)
+    }
+
+    @Test("A block waiting for the return's session check starts when the check ends with the app not active, so the operation held for its place and one arriving after are asked for it, whether the block was paused or new and the check keeps the session or starts a new one",
+          arguments: [false, true], [false, true])
+    func operationReachesABlockWhoseCheckEndsWhileTheAppIsNotActive(wasPaused: Bool, startsNewSession: Bool) {
+        let bed = EmbeddedBlockTestBed()
+        if wasPaused {
+            bed.provider.start()
+            bed.page?.reportRendered(1)
+            bed.provider.stop()
+        }
+        bed.enterBackground()
+        bed.returnToApp()
+        bed.provider.start()
+        let held = bed.announceOperation()
+        bed.applicationState = .inactive
+
+        if startsNewSession {
+            bed.renewSession()
+        } else {
+            bed.finishSessionCheck()
+        }
+        let carried = bed.resolver.triggers.last ?? nil
+        #expect(carried === held)
+
+        let later = bed.announceOperation("later.operation")
+        let carriedLater = bed.resolver.triggers.last ?? nil
+        #expect(carriedLater === later)
+    }
+
+    @Test("A block back on screen between a return and the end of its session check counts that time in its timeToDisplay, and not the time it leaves again before the check ends")
+    func blockBackInsideTheReturnCountsItsTimeOnScreen() throws {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.processingDuration = 2
+        bed.provider.start()
+        bed.clock.advance(0.5)
+        bed.provider.stop()
+        bed.enterBackground()
+        bed.clock.advance(60)
+        bed.returnToApp()
+
+        bed.provider.start()
+        bed.clock.advance(0.75)
+        bed.provider.stop()
+        bed.clock.advance(30)
+        bed.provider.start()
+        bed.clock.advance(0.5)
+        bed.finishSessionCheck()
+        bed.clock.advance(0.25)
+        bed.page?.reportRendered(1)
+
+        let show = try #require(bed.accounting.shows.first)
+        #expect(show.timeToDisplay == 4)
+    }
+
+    @Test("A block that comes back on screen while a return's session check runs asks its place once when that check starts a new session: the start at the check's end is the new session's ask, shown in that session and timed from that ask, whether the block was paused with its page or new",
+          arguments: [false, true])
+    func blockBackInsideAReturnThatStartsANewSessionAsksItsPlaceOnce(wasPaused: Bool) throws {
+        let bed = EmbeddedBlockTestBed()
+        let first = bed.resolver.sessionEpoch
+        if wasPaused {
+            bed.provider.start()
+            bed.page?.reportRendered(1)
+            bed.provider.stop()
+        }
+        let resolvesBefore = bed.resolver.resolveCount
+        bed.enterBackground()
+        bed.returnToApp()
+        bed.provider.start()
+        bed.resolver.isDeferred = true
+        bed.resolver.processingDuration = 2
+
+        bed.renewSession()
+        #expect(bed.resolver.resolveCount == resolvesBefore + 1)
+        bed.resolver.flush()
+        bed.clock.advance(0.5)
+        bed.resolver.flush()
+        #expect(bed.resolver.resolveCount == resolvesBefore + 1)
+        bed.page?.reportRendered(1)
+
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.accounting.sessionEpochs == (wasPaused ? [first, first + 1] : [first + 1]))
+        let show = try #require(bed.accounting.shows.last)
+        #expect(show.timeToDisplay == 2.5)
+    }
+
+    @Test("An operation held for a block that comes back on screen while a return's session check runs is asked with its trigger by the new session's ask that the start joins when that check starts a new session")
+    func operationHeldForABlockBackInsideANewSessionsReturnRidesTheAskTheStartJoins() {
+        let bed = EmbeddedBlockTestBed()
+        bed.enterBackground()
+        bed.returnToApp()
+        bed.provider.start()
+        let event = bed.announceOperation()
+        bed.resolver.isDeferred = true
+
+        bed.renewSession()
+        #expect(bed.resolver.triggers.count == 1)
+        bed.resolver.flush()
+
+        #expect(bed.resolver.resolveCount == 1)
+        let carried = bed.resolver.triggers.last ?? nil
+        #expect(carried === event)
+    }
+
+    @Test("Of two operations held for a block that comes back on screen while a return's session check runs, both are asked in order, the start joining the first, whether the check keeps the session or starts a new one",
+          arguments: [false, true])
+    func ofTwoOperationsHeldForABlockBackInsideTheReturnBothAreAskedWithTheStartJoiningTheFirst(startsNewSession: Bool) {
+        let bed = EmbeddedBlockTestBed()
+        bed.enterBackground()
+        bed.returnToApp()
+        bed.provider.start()
+        let first = bed.announceOperation("first.operation")
+        let second = bed.announceOperation("second.operation")
+        bed.resolver.isDeferred = true
+
+        if startsNewSession {
+            bed.renewSession()
+        } else {
+            bed.finishSessionCheck()
+        }
+        #expect(bed.resolver.triggers == [first])
+        bed.resolver.flush()
+
+        #expect(bed.resolver.triggers == [first, second])
+    }
+
+    @Test("Content kept on screen for the end of a return's session check counts the wait in its timeToDisplay")
+    func contentKeptForTheReturnCountsTheWait() {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.processingDuration = 2
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.enterBackground()
+        bed.clock.advance(60)
+        bed.returnToApp()
+
+        bed.resolver.resolution = .content(.other)
+        bed.resolver.processingDuration = 1
+        bed.announceNewConfig()
+        #expect(bed.pageFactory.pages.count == 1)
+        bed.clock.advance(0.75)
+        bed.finishSessionCheck()
+        bed.clock.advance(0.25)
+        bed.page?.reportRendered(1)
+
+        #expect(bed.pageFactory.pages.count == 2)
+        #expect(bed.accounting.shows.map(\.timeToDisplay) == [2, 2])
+    }
+
+    @Test("A return before the SDK is initialized holds nothing back: no session check follows it")
+    func returnBeforeInitializationHoldsNothingBack() {
+        let bed = EmbeddedBlockTestBed()
+        bed.presenceBed.isSDKInitialized = false
+        bed.provider.start()
+        bed.enterBackground()
+        bed.page?.reportRendered(1)
+
+        bed.returnToApp()
+
+        #expect(bed.accounting.shows.count == 1)
+    }
+
+    @Test("A launch's entry to the foreground is not a return: a block in the window asks its place at once, and its show waits only for the app to be active")
+    func launchIsNotAReturn() {
+        let bed = EmbeddedBlockTestBed(applicationState: .background)
+        bed.enterForegroundAtLaunch()
+
+        bed.provider.start()
+        #expect(bed.resolver.resolvedPlaces == ["block-id"])
+
+        bed.page?.reportRendered(1)
+        #expect(bed.accounting.shows.isEmpty)
+
+        bed.becomeActive()
+
+        #expect(bed.accounting.shows.count == 1)
+    }
+
+    @Test("An entry to the foreground after a trip to the background is a return: a block in the window waits for its session check")
+    func foregroundEntryAfterTheBackgroundIsAReturn() {
+        let bed = EmbeddedBlockTestBed(applicationState: .background)
+        bed.enterForegroundAtLaunch()
+        bed.becomeActive()
+        bed.enterBackground()
+        bed.returnToApp()
+
+        bed.provider.start()
+        #expect(bed.resolver.resolveCount == 0)
+
+        bed.finishSessionCheck()
+
+        #expect(bed.resolver.resolvedPlaces == ["block-id"])
+    }
+
+    @Test("A presence created while the app reads the background, as a scene-based app reads it while it launches, takes its first entry to the foreground for the launch")
+    func presenceCreatedInTheBackgroundTakesItsFirstEntryForTheLaunch() {
+        let bed = AppPresenceBed(applicationState: .background)
+
+        bed.enterForegroundAtLaunch()
+        #expect(!bed.presence.isAwaitingSessionCheck)
+
+        bed.becomeActive()
+
+        #expect(bed.presence.isPresent)
+    }
+
+    @Test("A presence created off the main thread reads whether the app is in the background on the main thread")
+    func presenceCreatedOffTheMainThreadReadsTheStateOnIt() async {
+        final class Reads {
+            var onMainThread: [Bool] = []
+        }
+        let reads = Reads()
+        let center = NotificationCenter()
+
+        let presence: EmbeddedBlockAppPresence = await withCheckedContinuation { continuation in
+            DispatchQueue.global().async {
+                continuation.resume(returning: EmbeddedBlockAppPresence(applicationState: {
+                    reads.onMainThread.append(Thread.isMainThread)
+                    return .background
+                }, isSDKInitialized: { true }, notificationCenter: center))
+            }
+        }
+        await withCheckedContinuation { continuation in
+            DispatchQueue.main.async { continuation.resume() }
+        }
+
+        #expect(reads.onMainThread == [true])
+        #expect(presence.isInBackground)
+    }
+
+    @Test("A return and the session check that answers it are compared on the monotonic clock the check stamps itself with")
+    func returnAndItsCheckShareTheMonotonicClock() {
+        let center = NotificationCenter()
+        let presence = EmbeddedBlockAppPresence(applicationState: { .active }, isSDKInitialized: { true }, notificationCenter: center)
+        center.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
+        center.post(name: UIApplication.willEnterForegroundNotification, object: nil)
+        let checkStartedBeforeTheReturn = CACurrentMediaTime() - 1
+        let checkStartedAfterTheReturn = CACurrentMediaTime()
+
+        center.post(name: .inappSessionChecked, object: nil, userInfo: [Constants.Notification.sessionCheckStartedAt: checkStartedBeforeTheReturn])
+        #expect(!presence.isPresent)
+
+        center.post(name: .inappSessionChecked, object: nil, userInfo: [Constants.Notification.sessionCheckStartedAt: checkStartedAfterTheReturn])
+        #expect(presence.isPresent)
+    }
+
+    @Test("A new session that lands in the background hands the page its data once the user is back, not before")
+    func newSessionInTheBackgroundIsPushedOnReturn() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.enterBackground()
+
+        bed.announceNewSession()
+        #expect(bed.page?.initDataPushes.isEmpty == true)
+
+        bed.returnToApp()
+        bed.finishSessionCheck()
+
+        #expect(bed.page?.initDataPushes == [EmbeddedBlockWebContent.stub.params])
+    }
+
+    @Test("A page that draws between a return and the end of its session check is handed the new session's data only once the check is over, and is shown in that session once it draws it")
+    func pageDrawnInsideTheReturnIsPushedOnceTheCheckIsOver() {
+        let bed = EmbeddedBlockTestBed()
+        let first = bed.resolver.sessionEpoch
+        bed.provider.start()
+        bed.announceNewSession()
+        bed.enterBackground()
+        bed.returnToApp()
+
+        bed.page?.reportRendered(1)
+        #expect(bed.page?.initDataPushes.isEmpty == true)
+
+        bed.finishSessionCheck()
+        #expect(bed.page?.initDataPushes == [EmbeddedBlockWebContent.stub.params])
+        #expect(bed.accounting.shows.isEmpty)
+
+        bed.page?.reportRendered(1)
+
+        #expect(bed.accounting.sessionEpochs == [first + 1])
+    }
+
+    @Test("Another page a place answers while the app is in the background is built at the moment of the answer, not on return")
+    func anotherPageAnsweredInTheBackgroundIsBuiltAtOnce() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.enterBackground()
+
+        bed.resolver.resolution = .content(.other)
+        bed.announceNewConfig()
+
+        #expect(bed.pageFactory.pages.count == 2)
+        #expect(bed.pageFactory.contents.last == .other)
+        #expect(bed.budget.reservations.map(\.inAppId) == [EmbeddedBlockWebContent.stub.inAppId, EmbeddedBlockWebContent.other.inAppId])
+    }
+
+    @Test("The same page a new session answers while the app is away, not yet shown when the return leaves its block on another screen, gives the place's slot back, and takes it again, gets its data and is shown once the block is back")
+    func samePageAnsweredWhileAwayGivesTheSlotBackWhenTheReturnLeavesTheBlock() {
+        let bed = EmbeddedBlockTestBed()
+        let first = bed.resolver.sessionEpoch
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.enterBackground()
+        bed.announceNewSession()
+        let reservationsBefore = bed.budget.reservations.count
+        let releasesBefore = bed.budget.releases
+
+        bed.returnToApp()
+        bed.provider.stop()
+        bed.finishSessionCheck()
+        #expect(bed.budget.releases == releasesBefore + [.place("block-id")])
+        #expect(bed.page?.initDataPushes.isEmpty == true)
+
+        bed.resolver.isDeferred = true
+        bed.provider.start()
+        #expect(bed.budget.reservations.count == reservationsBefore + 1)
+        #expect(bed.page?.initDataPushes == [EmbeddedBlockWebContent.stub.params])
+
+        bed.page?.reportRendered(1)
+        #expect(bed.accounting.sessionEpochs == [first, first + 1])
+    }
+
+    @Test("Another page a place answers while the app is away over a block that holds a refusal cancels the collapse, gives the place's slot back when the return leaves the block on another screen, and takes it again once the block is back, or leaves the place empty when the show budgets are spent by then",
+          arguments: [false, true])
+    func anotherPageAnsweredWhileAwayGivesTheSlotBackWhenTheReturnLeavesTheBlock(isBudgetSpentByThen: Bool) {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.resolver.resolution = .empty
+        bed.announceNewConfig()
+        bed.enterBackground()
+        bed.resolver.resolution = .content(.other)
+        bed.announceNewConfig()
+        #expect(bed.budget.reservations.map(\.inAppId) == [EmbeddedBlockWebContent.stub.inAppId, EmbeddedBlockWebContent.other.inAppId])
+        let releasesBefore = bed.budget.releases
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.stop()
+        bed.returnToApp()
+        bed.finishSessionCheck()
+        #expect(states.isEmpty)
+        #expect(bed.budget.releases == releasesBefore + [.place("block-id")])
+
+        if isBudgetSpentByThen {
+            bed.budget.refusedInAppIds = [EmbeddedBlockWebContent.other.inAppId]
+        }
+        bed.resolver.isDeferred = true
+        bed.provider.start()
+        #expect(bed.budget.reservations.map(\.inAppId).last == EmbeddedBlockWebContent.other.inAppId)
+        #expect(bed.budget.reservations.count == 3)
+        bed.page?.reportRendered(1)
+
+        #expect(states.contains(.empty) == isBudgetSpentByThen)
+        #expect(bed.page?.isClosed == isBudgetSpentByThen)
+        #expect(bed.accounting.shownIds == (isBudgetSpentByThen ? [EmbeddedBlockWebContent.stub.inAppId] : [EmbeddedBlockWebContent.stub.inAppId, EmbeddedBlockWebContent.other.inAppId]))
+    }
+
+    @Test("A page a place answered while the app was away that drew nothing before its block left gives no slot back a second time and is not rebuilt from that answer: the block back on screen asks its place first")
+    func pageAnsweredWhileAwayThatDrewNothingLeavesNothingToApply() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.enterBackground()
+        bed.resolver.resolution = .content(.other)
+        bed.announceNewConfig()
+        bed.page?.reportRendered(0)
+        let releasesAfterTheEmptyPage = bed.budget.releases
+
+        bed.provider.stop()
+        bed.returnToApp()
+        bed.finishSessionCheck()
+        #expect(bed.budget.releases == releasesAfterTheEmptyPage)
+
+        bed.resolver.isDeferred = true
+        let resolvesBefore = bed.resolver.resolveCount
+        bed.provider.start()
+
+        #expect(bed.resolver.resolveCount == resolvesBefore + 1)
+        #expect(bed.pageFactory.pages.count == 2)
+        #expect(bed.budget.reservations.count == 2)
+    }
+
+    @Test("A page already shown in the session keeps the place's slot as it was when its place answers it again while the app is away and the return leaves its block on another screen")
+    func shownPageAnsweredAgainWhileAwayKeepsTheSlot() {
+        let bed = EmbeddedBlockTestBed()
+        bed.expireSession()
+        bed.resolver.sessionEpoch = bed.currentSessionEpoch
+        bed.accounting.accountant = InappShowAccountant(tracker: InAppMessagesTrackerSpyMock(), budget: bed.budget)
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.enterBackground()
+        bed.announceNewConfig()
+        let reservationsBefore = bed.budget.reservations.count
+        let releasesBefore = bed.budget.releases
+
+        bed.returnToApp()
+        bed.provider.stop()
+        bed.finishSessionCheck()
+        bed.resolver.isDeferred = true
+        bed.provider.start()
+
+        #expect(bed.budget.releases == releasesBefore)
+        #expect(bed.budget.reservations.count == reservationsBefore)
+        #expect(bed.page?.isClosed == false)
+    }
+
+    @Test("Content a place answers while the app is away reaches a block on screen and a paused block of the same place: when the return leaves the first block on another screen the place's slot goes back, and the paused block back on screen takes it again and shows the content, or leaves the place empty when the show budgets are spent by then",
+          arguments: [false, true])
+    func pausedBlockTakesTheSlotAgainForContentAnotherBlockGaveBack(isBudgetSpentByThen: Bool) {
+        let bed = EmbeddedBlockTestBed()
+        let paused = bed.makeProvider(placeSystemName: "block-id")
+        paused.start()
+        bed.page?.reportRendered(1)
+        paused.stop()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.enterBackground()
+        bed.resolver.resolution = .content(.other)
+        bed.announceNewConfig()
+        let reservationsBefore = bed.budget.reservations.count
+        let releasesBefore = bed.budget.releases
+
+        bed.returnToApp()
+        bed.provider.stop()
+        bed.finishSessionCheck()
+        #expect(bed.budget.releases == releasesBefore + [.place("block-id")])
+
+        if isBudgetSpentByThen {
+            bed.budget.refusedInAppIds = [EmbeddedBlockWebContent.other.inAppId]
+        }
+        var states: [EmbeddedBlockState] = []
+        paused.onStateChange = { states.append($0) }
+        bed.resolver.isDeferred = true
+        paused.start()
+        #expect(bed.budget.reservations.count == reservationsBefore + 1)
+        #expect(bed.budget.reservations.last?.inAppId == EmbeddedBlockWebContent.other.inAppId)
+        #expect(bed.pageFactory.pages.count == (isBudgetSpentByThen ? 3 : 4))
+        if !isBudgetSpentByThen {
+            bed.page?.reportRendered(1)
+        }
+
+        let stub = EmbeddedBlockWebContent.stub.inAppId
+        #expect(states == (isBudgetSpentByThen ? [.empty] : [.loading, .ready]))
+        #expect(bed.accounting.shownIds == (isBudgetSpentByThen ? [stub, stub] : [stub, stub, EmbeddedBlockWebContent.other.inAppId]))
+    }
+
+    @Test("Data a page was owed for a session that ended while the user was away is not handed to it on return: only the session the user came back to pushes, once")
+    func dataOwedForAnEndedSessionIsNotPushedOnReturn() {
+        let bed = EmbeddedBlockTestBed()
+        let first = bed.resolver.sessionEpoch
+        bed.provider.start()
+        bed.announceNewSession()
+        bed.enterBackground()
+        bed.page?.reportRendered(1)
+        #expect(bed.page?.initDataPushes.isEmpty == true)
+
+        bed.returnToApp()
+        bed.renewSession()
+        bed.page?.reportRendered(1)
+
+        #expect(bed.page?.initDataPushes == [EmbeddedBlockWebContent.stub.params])
+        #expect(bed.accounting.sessionEpochs == [first + 2])
+    }
+
+    @Test("A data push left unconfirmed when the app went to the background is waited on again on its remainder once the user is back")
+    func dataPushWaitIsSuspendedInTheBackground() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.announceNewSession()
+        bed.clock.advance(2)
+
+        bed.enterBackground()
+        bed.ackScheduler.fire()
+        #expect(bed.pageFactory.pages.count == 1)
+
+        bed.returnToApp()
+        bed.finishSessionCheck()
+
+        #expect(bed.ackScheduler.scheduled.last?.delay == TimeInterval(Constants.EmbeddedBlock.readyTimeoutSeconds) - 2)
+    }
+
+    @Test("A page left with an unconfirmed data push is not rebuilt from that push's session once a new session has started, whether the app came back from the background or the session ended in the foreground: it waits for the new session's answer",
+          arguments: [true, false])
+    func unconfirmedPushOfAnEndedSessionRebuildsNothing(isReturn: Bool) {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.announceNewSession()
+        #expect(bed.page?.initDataPushes.count == 1)
+
+        if isReturn {
+            bed.enterBackground()
+            bed.returnToApp()
+        }
+        bed.resolver.isDeferred = true
+        bed.renewSession()
+        bed.ackScheduler.fire()
+
+        #expect(bed.pageFactory.pages.count == 1)
+
+        bed.resolver.flush()
+
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.page?.initDataPushes.count == 2)
+    }
+
+    @Test("A page that confirms the new session's data and draws it long after, past the confirmation wait's budget, still sends that session's show and keeps its page")
+    func pageDrawingLongAfterTheConfirmedPushIsShown() {
+        let bed = EmbeddedBlockTestBed()
+        let first = bed.resolver.sessionEpoch
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.announceNewSession()
+        bed.page?.confirmInitData()
+
+        bed.clock.advance(TimeInterval(Constants.EmbeddedBlock.readyTimeoutSeconds) * 3)
+        bed.ackScheduler.fire()
+        bed.page?.reportRendered(1)
+
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.accounting.sessionEpochs == [first, first + 1])
+    }
+
+    @Test("A new session's data waits while the app is not active, as under Control Center or a system alert, and goes once it is active again")
+    func dataPushWaitsForTheAppToBeActive() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.applicationState = .inactive
+
+        bed.announceNewSession()
+        #expect(bed.page?.initDataPushes.isEmpty == true)
+
+        bed.becomeActive()
+
+        #expect(bed.page?.initDataPushes == [EmbeddedBlockWebContent.stub.params])
+    }
+
+    @Test("A show the return's session check holds back is recorded on the main thread, also when the check is announced from another thread")
+    func showHeldForTheReturnIsRecordedOnMain() async {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.enterBackground()
+        bed.page?.reportRendered(1)
+        bed.returnToApp()
+        #expect(bed.accounting.shows.isEmpty)
+
+        nonisolated(unsafe) let presenceBed = bed.presenceBed
+        let startedAt = bed.clock.now
+        await withCheckedContinuation { continuation in
+            DispatchQueue.global().async {
+                presenceBed.finishSessionCheck(startedAt: startedAt)
+                continuation.resume()
+            }
+        }
+        await withCheckedContinuation { continuation in
+            DispatchQueue.main.async { continuation.resume() }
+        }
+
+        #expect(bed.accounting.recordedOnMainThread == [true])
+    }
+
+    @Test("A new session's show counts the session's first selection and the time on screen until the redraw; a later answer of that session restarts neither")
+    func newSessionShowCountsTheFirstSelectionOfTheSession() {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.processingDuration = 2
+        bed.provider.start()
+        bed.clock.advance(0.75)
+        bed.page?.reportRendered(1)
+        bed.clock.advance(100)
+
+        bed.resolver.processingDuration = 0.5
+        bed.renewSession()
+        bed.clock.advance(0.25)
+        bed.resolver.processingDuration = 3
+        bed.announceOperation()
+        bed.clock.advance(0.25)
+        bed.page?.reportRendered(1)
+
+        #expect(bed.page?.initDataPushes.count == 1)
+        #expect(bed.accounting.shows.map(\.timeToDisplay) == [2.75, 1])
+    }
+
+    @Test("Answers a new session gives for the same in-app one after another while the block is off screen keep the selection time of the first, as on Android; an answer for another in-app keeps its own",
+          arguments: [true, false])
+    func answersParkedInOneNewSessionKeepTheFirstSelectionTime(isSameInapp: Bool) {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.provider.stop()
+        bed.expireSession()
+        bed.resolver.sessionEpoch = bed.currentSessionEpoch
+        let later: EmbeddedBlockWebContent = isSameInapp ? .stub : .other
+
+        bed.provider.apply(bed.answer(.content(.stub)).with(processingDuration: 0.5))
+        bed.provider.apply(bed.answer(.content(later)).with(processingDuration: 0.05))
+        bed.resolver.isDeferred = true
+        bed.provider.start()
+        bed.clock.advance(0.25)
+        bed.page?.reportRendered(1)
+
+        #expect(bed.accounting.shownIds.last == later.inAppId)
+        #expect(bed.accounting.shows.last?.timeToDisplay == (isSameInapp ? 0.75 : 0.3))
+    }
+
+    @Test("An answer parked while the block was off screen counts in its timeToDisplay the time the block is back on screen between a return and the end of its session check, and not the time it leaves again before the check ends",
+          arguments: [true, false])
+    func answerParkedBeforeTheReturnCountsTheCheckOnScreen(isSamePage: Bool) {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.provider.stop()
+        bed.expireSession()
+        bed.resolver.sessionEpoch = bed.currentSessionEpoch
+        bed.provider.apply(bed.answer(.content(isSamePage ? .stub : .other)).with(processingDuration: 2))
+        bed.enterBackground()
+        bed.clock.advance(60)
+        bed.returnToApp()
+        bed.resolver.isDeferred = true
+
+        bed.provider.start()
+        bed.clock.advance(0.75)
+        bed.provider.stop()
+        bed.clock.advance(30)
+        bed.provider.start()
+        bed.clock.advance(0.5)
+        bed.finishSessionCheck()
+        bed.clock.advance(0.25)
+        bed.page?.reportRendered(1)
+
+        #expect(bed.pageFactory.pages.count == (isSamePage ? 1 : 2))
+        #expect(bed.accounting.shows.last?.timeToDisplay == 3.5)
+    }
+
+    @Test("A new session's clock restarted on screen stops while the block is off screen before the page redraws")
+    func newSessionClockStopsWhileTheBlockIsOffScreen() {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.processingDuration = 2
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.clock.advance(100)
+
+        bed.resolver.processingDuration = 0.5
+        bed.renewSession()
+        bed.clock.advance(0.25)
+        bed.provider.stop()
+        bed.clock.advance(30)
+        bed.provider.start()
+        bed.clock.advance(0.25)
+        bed.page?.reportRendered(1)
+
+        #expect(bed.accounting.shows.map(\.timeToDisplay) == [2, 1])
+    }
+
+    @Test("A page still loading when the new session answers counts, for that session's show, the selection and the time on screen from that answer to the redraw, the rest of its load included")
+    func loadingPageCountsTheNewSessionFromItsAnswer() {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.processingDuration = 2
+        bed.provider.start()
+        bed.clock.advance(1)
+
+        bed.resolver.processingDuration = 0.5
+        bed.announceNewSession()
+        bed.clock.advance(2)
+        bed.page?.reportRendered(1)
+        bed.clock.advance(0.25)
+        bed.page?.reportRendered(1)
+
+        #expect(bed.page?.initDataPushes.count == 1)
+        #expect(bed.accounting.shows.map(\.timeToDisplay) == [2.75])
+    }
+
+    @Test("A covered page that never confirms the new session's push fails as presentation_failed and is not rebuilt")
+    func coveredPageThatNeverConfirmsTheNewSessionsPushFails() {
+        let bed = EmbeddedBlockTestBed()
+        let first = bed.resolver.sessionEpoch
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.announceNewSession()
+
+        bed.ackScheduler.fire()
+
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.failureReporter.reasons == [.presentationFailed])
+        #expect(bed.accounting.sessionEpochs == [first])
+    }
+
+    @Test("A covered page whose earlier push goes unconfirmed while the new session's data waits for the app to be active is neither failed nor rebuilt, and takes that data once the app is active")
+    func unconfirmedEarlierPushDoesNotFailTheCoverBeforeTheSessionsDataGoes() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData()
+        bed.applicationState = .inactive
+        bed.announceNewSession()
+
+        bed.ackScheduler.fire()
+
+        #expect(bed.failureReporter.reasons.isEmpty)
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.page?.initDataPushes.count == 1)
+
+        bed.becomeActive()
+
+        #expect(bed.page?.initDataPushes.count == 2)
+    }
+
+    @Test("A page rebuilt after an unconfirmed push within a session times its show from the stored selection")
+    func rebuiltPageTimesItsShowFromTheStoredSelection() {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.processingDuration = 2
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.clock.advance(100)
+
+        bed.deliverSamePageWithNewData()
+        bed.clock.advance(7)
+        bed.ackScheduler.fire()
+        bed.clock.advance(0.25)
+        bed.page?.reportRendered(1)
+
+        #expect(bed.pageFactory.pages.count == 2)
+        #expect(bed.accounting.shows.map(\.timeToDisplay) == [2, 2.25])
+    }
+
+    @Test("A session that lands while the page has not redrawn the previous one's push takes over: one more push, and one show, for the newest session")
+    func newerSessionBeforeTheRedrawTakesOver() {
+        let bed = EmbeddedBlockTestBed()
+        let first = bed.resolver.sessionEpoch
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.announceNewSession()
+        bed.page?.confirmInitData()
+
+        bed.announceNewSession()
+        bed.page?.reportRendered(1)
+
+        #expect(bed.page?.initDataPushes.count == 2)
+        #expect(bed.accounting.sessionEpochs == [first, first + 2])
+    }
+
+    @Test("A page built in place of one that was owed the new session's data is not owed it: it is shown on its own first draw")
+    func pageReplacingAnOwedOneIsShownOnItsOwnDraw() {
+        let bed = EmbeddedBlockTestBed()
+        let first = bed.resolver.sessionEpoch
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.enterBackground()
+        bed.announceNewSession()
+
+        bed.resolver.resolution = .content(.other)
+        bed.announceNewConfig()
+        bed.returnToApp()
+        bed.finishSessionCheck()
+        bed.page?.reportRendered(1)
+
+        #expect(bed.page?.initDataPushes.isEmpty == true)
+        #expect(bed.accounting.shownIds == [EmbeddedBlockWebContent.stub.inAppId, EmbeddedBlockWebContent.other.inAppId])
+        #expect(bed.accounting.sessionEpochs == [first, first + 1])
+    }
+
+    enum NothingToShow {
+        case empty
+        case brokenWinner
+        case configUnavailable
+        case targetingUnavailable
+
+        static let whileShown: [NothingToShow] = [.empty, .brokenWinner, .targetingUnavailable]
+
+        var resolution: EmbeddedBlockResolution {
+            switch self {
+            case .empty: return .empty
+            case .brokenWinner: return .failure(.broken)
+            case .configUnavailable: return .configUnavailable
+            case .targetingUnavailable: return .targetingUnavailable
+            }
+        }
+
+        var reportedFailures: [InAppShowFailureReason] { self == .brokenWinner ? [.unknownError] : [] }
+
+        var unansweredWaitReports: Int { self == .configUnavailable ? 1 : 0 }
+
+        var collapsedState: EmbeddedBlockState {
+            switch self {
+            case .empty: return .empty
+            case .brokenWinner: return .failed(.internalError)
+            case .configUnavailable: return .failed(.networkError)
+            case .targetingUnavailable: return .uncheckable
+            }
+        }
+    }
+
+    @Test("A shown block keeps its content while the user looks, whatever its place answers instead, and reports a failure at once",
+          arguments: NothingToShow.whileShown)
+    func shownBlockHoldsTheCollapse(_ answer: NothingToShow) {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.resolver.resolution = answer.resolution
+        bed.announceNewConfig()
+
+        #expect(states.isEmpty)
+        #expect(bed.provider.contentView === bed.page?.view)
+        #expect(bed.page?.isClosed == false)
+        #expect(bed.failureReporter.reasons == answer.reportedFailures)
+        #expect(bed.failureReporter.unansweredWaits.isEmpty)
+    }
+
+    @Test("A held failure reported when it arrived is not reported again when the collapse lands")
+    func heldFailureIsReportedOnce() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.resolver.resolution = .failure(.broken)
+        bed.announceNewConfig()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.stop()
+
+        #expect(states == [.failed(.internalError)])
+        #expect(bed.failureReporter.reasons == [.unknownError])
+    }
+
+    @Test("A held collapse lands as the user leaves, whatever its place answered instead: the page is dropped, the container hears it off screen, and the return asks the place anew",
+          arguments: NothingToShow.whileShown)
+    func heldCollapseLandsAsTheUserLeaves(_ answer: NothingToShow) {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.resolver.resolution = answer.resolution
+        bed.announceNewConfig()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.stop()
+
+        #expect(states == [answer.collapsedState])
+        #expect(bed.page?.isClosed == true)
+        #expect(bed.provider.contentView == nil)
+
+        let resolvesBefore = bed.resolver.resolveCount
+        bed.provider.start()
+
+        #expect(states == [answer.collapsedState, .loading, answer.collapsedState])
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.resolver.resolveCount == resolvesBefore + 1)
+    }
+
+    @Test("A held collapse whose block a screen covered while the app was away, or right after the return, lands as the screen covers it; the trip to the background alone lands nothing",
+          arguments: [true, false])
+    func heldCollapseLandsWhenAScreenCoversTheBlock(coveredWhileAway: Bool) {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.resolver.resolution = .empty
+        bed.announceNewConfig()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.enterBackground()
+        if coveredWhileAway {
+            bed.provider.stop()
+            #expect(states == [.empty])
+        }
+        bed.returnToApp()
+        bed.finishSessionCheck()
+        if !coveredWhileAway {
+            #expect(states.isEmpty)
+            #expect(bed.page?.isClosed == false)
+            #expect(bed.provider.contentView === bed.page?.view)
+            bed.provider.stop()
+        }
+
+        #expect(states == [.empty])
+        #expect(bed.page?.isClosed == true)
+    }
+
+    @Test("A held collapse whose session ended while the app was away still lands as the user leaves, the new session's ask still in flight")
+    func heldCollapseOfAnEndedSessionLandsAsTheUserLeaves() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.resolver.resolution = .empty
+        bed.announceNewConfig()
+        bed.resolver.isDeferred = true
+        bed.enterBackground()
+        bed.expireSession()
+        bed.returnToApp()
+        bed.finishSessionCheck(startsNewSession: true)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.stop()
+
+        #expect(states == [.empty])
+        #expect(bed.page?.isClosed == true)
+    }
+
+    enum ParkedAnswer: CaseIterable {
+        case empty
+        case anotherPage
+
+        var resolution: EmbeddedBlockResolution { self == .empty ? .empty : .content(.other) }
+    }
+
+    @Test("An answer parked in a session that ended while the user was away is dropped on return: the page stays under the placeholder, and the place's answer decides",
+          arguments: ParkedAnswer.allCases)
+    func parkedAnswerOfAnEndedSessionIsDropped(_ parked: ParkedAnswer) {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.provider.stop()
+        bed.provider.apply(bed.answer(parked.resolution))
+        bed.expireSession()
+        let resolvesBefore = bed.resolver.resolveCount
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.start()
+
+        #expect(states == [.loading])
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.page?.isClosed == false)
+        #expect(bed.resolver.resolveCount == resolvesBefore + 1)
+    }
+
+    @Test("A failure that reaches a block off screen is reported at once; only the state waits for the return, and a teardown first loses nothing",
+          arguments: [NothingToShow.brokenWinner, .configUnavailable], [true, false])
+    func parkedFailureIsReportedOnArrival(_ answer: NothingToShow, isTornDownFirst: Bool) {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.provider.stop()
+        bed.resolver.isDeferred = true
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.apply(bed.answer(answer.resolution))
+        #expect(bed.failureReporter.reasons == answer.reportedFailures)
+        #expect(bed.failureReporter.unansweredWaits.count == answer.unansweredWaitReports)
+        #expect(states.isEmpty)
+
+        if isTornDownFirst {
+            bed.provider.teardown()
+        } else {
+            bed.provider.start()
+        }
+
+        #expect(bed.failureReporter.reasons == answer.reportedFailures)
+        #expect(bed.failureReporter.unansweredWaits.count == answer.unansweredWaitReports)
+        #expect(states == (isTornDownFirst ? [] : [answer.collapsedState]))
+    }
+
+    @Test("An answer parked in the session a check is ending is dropped on return, like one of a session that has ended")
+    func parkedAnswerOfAnEndingSessionIsDropped() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.provider.stop()
+        bed.provider.apply(bed.answer(.empty))
+        SessionTemporaryStorage.shared.$ledger.mutate { $0.isSessionEnding = true }
+        defer { SessionTemporaryStorage.shared.$ledger.mutate { $0.isSessionEnding = false } }
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.start()
+
+        #expect(states == [.loading])
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.page?.isClosed == false)
+    }
+
+    @Test("An unavailable config that reaches a block off screen after its session ended is not reported in the session that follows")
+    func parkedUnavailableConfigOfAnEndedSessionIsNotReported() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.provider.stop()
+        let answer = bed.answer(.configUnavailable)
+        bed.expireSession()
+
+        bed.provider.apply(answer)
+
+        #expect(bed.failureReporter.unansweredWaits.isEmpty)
+        #expect(!SessionTemporaryStorage.shared.ledger.placesReportedUnanswered.contains("block-id"))
+    }
+
+    @Test("Content answered while a collapse is held keeps the block as it is through the next return")
+    func contentCancelsTheHeldCollapse() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.resolver.resolution = .empty
+        bed.announceNewConfig()
+
+        bed.resolver.resolution = .content(.stub)
+        bed.announceNewConfig()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+        bed.provider.stop()
+        bed.provider.start()
+
+        #expect(states == [.ready])
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.page?.isClosed == false)
+    }
+
+    @Test("A block whose held collapse landed as the user left holds no attempt, so a new session does not ask its place while it is off screen")
+    func blockCollapsedAsTheUserLeftIsNotAskedOffScreen() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.resolver.resolution = .empty
+        bed.announceNewConfig()
+        bed.provider.stop()
+        #expect(!bed.provider.holdsAnAttempt)
+        let resolvesBefore = bed.resolver.resolveCount
+
+        bed.renewSession()
+
+        #expect(bed.resolver.resolveCount == resolvesBefore)
+    }
+
+    @Test("An operation's pass asked before the session's reset that the new session's config answers is that session's ask: a refusal it brings, no longer the operation's, still collapses a shown block at once in the new session instead of being held until the user leaves")
+    func operationPassAnsweredByTheNewSessionCollapsesItsRefusal() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.resolver.isDeferred = true
+        bed.announceOperation()
+        bed.renewSession()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+        bed.resolver.resolution = .empty
+
+        bed.resolver.flush()
+
+        #expect(states == [.empty])
+        #expect(bed.provider.heldCollapse == nil)
+        #expect(bed.page?.isClosed == true)
+    }
+
+    @Test("An operation's pass asked after the session's reset and still in flight when the new session is announced stays the operation's: a refusal it brings for a shown block collapses it at once, and the new session's own ask, with no trigger, follows it")
+    func operationPassAskedAfterTheResetCollapsesItsRefusalAndTheNewSessionAsksAfterIt() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        let resolvesBefore = bed.resolver.resolveCount
+        bed.resolver.isDeferred = true
+        bed.expireSession()
+        bed.resolver.sessionEpoch = bed.currentSessionEpoch
+        let event = bed.announceOperation()
+        bed.finishSessionCheck(startsNewSession: true)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+        bed.resolver.resolution = .empty
+
+        bed.resolver.flush()
+
+        #expect(states == [.empty])
+        #expect(bed.provider.heldCollapse == nil)
+        #expect(bed.page?.isClosed == true)
+        #expect(bed.resolver.resolveCount == resolvesBefore + 2)
+        let operationsPass = bed.resolver.triggers.dropLast().last ?? nil
+        let newSessionsAsk = bed.resolver.triggers.last ?? nil
+        #expect(operationsPass === event)
+        #expect(newSessionsAsk == nil)
+    }
+
+    @Test("A queued pass that merged an operation with a new config, started after the session's reset and still in flight when the new session is announced, has a trigger, so it is not that session's ask: the new session's own ask, with no trigger, follows it, and the pass's refusal collapses at once the block the new session covers, though it carries a config update")
+    func mergedPassWithATriggerAskedAfterTheResetCollapsesItsRefusalAndTheNewSessionAsksAfterIt() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        let resolvesBefore = bed.resolver.resolveCount
+        bed.resolver.isDeferred = true
+        bed.announceNewConfig()
+        bed.announceNewConfig()
+        let event = bed.announceOperation()
+        bed.expireSession()
+        bed.resolver.sessionEpoch = bed.currentSessionEpoch
+        bed.resolver.flush()
+        bed.finishSessionCheck(startsNewSession: true)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+        bed.resolver.resolution = .empty
+
+        bed.resolver.flush()
+
+        #expect(states == [.empty])
+        #expect(bed.provider.heldCollapse == nil)
+        #expect(bed.page?.isClosed == true)
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.resolver.resolveCount == resolvesBefore + 3)
+        let mergedPass = bed.resolver.triggers.dropLast().last ?? nil
+        let newSessionsAsk = bed.resolver.triggers.last ?? nil
+        #expect(mergedPass === event)
+        #expect(newSessionsAsk == nil)
+    }
+
+    @Test("A page its place no longer shows is not shown in the new session when it draws")
+    func heldCollapseKeepsTheShowBack() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.announceNewSession()
+
+        bed.resolver.resolution = .empty
+        bed.announceNewConfig()
+        bed.page?.reportRendered(1)
+
+        #expect(bed.accounting.shows.count == 1)
+    }
+
+    @Test("A page whose collapse is held still opens what the user taps in it")
+    func heldPageStillOpensWhatTheUserTaps() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.resolver.resolution = .empty
+        bed.announceNewConfig()
+        #expect(bed.provider.heldCollapse == .empty)
+
+        bed.page?.send(.showInApp, ["inappId": .string("story-id")])
+
+        #expect(bed.inappService.shown.map(\.id) == ["story-id"])
+        #expect(bed.page?.showInAppRefusals.isEmpty == true)
+    }
+
+    @Test("A page its place no longer shows is not rebuilt for a push it never confirmed")
+    func heldCollapseIsNotRebuiltOnAckTimeout() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData()
+        bed.resolver.resolution = .empty
+        bed.announceNewConfig()
+
+        bed.ackScheduler.fire()
+
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.page?.isClosed == false)
+    }
+
+    @Test("A page its place no longer shows is not handed its data while the collapse is held, even when it redraws late; content that lifts the hold hands it once")
+    func heldPageIsNotPushedUntilContentLiftsTheHold() {
+        let bed = EmbeddedBlockTestBed()
+        let first = bed.resolver.sessionEpoch
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData()
+        bed.resolver.resolution = .empty
+        bed.announceNewConfig()
+        bed.ackScheduler.fire()
+
+        bed.page?.reportRendered(1)
+        bed.becomeActive()
+        #expect(bed.page?.initDataPushes.count == 1)
+
+        bed.resolver.resolution = .content(.stub)
+        bed.announceNewConfig()
+        #expect(bed.page?.initDataPushes.count == 2)
+        #expect(bed.accounting.sessionEpochs == [first])
+
+        bed.page?.reportRendered(1)
+
+        #expect(bed.accounting.sessionEpochs == [first])
+    }
+
+    @Test("Data a page was owed while the user was away is not handed to it on return while its collapse is held")
+    func heldPageIsNotPushedOnReturn() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.enterBackground()
+        bed.deliverSamePageWithNewData()
+        bed.resolver.resolution = .empty
+        bed.announceNewConfig()
+
+        bed.returnToApp()
+        bed.finishSessionCheck()
+
+        #expect(bed.page?.initDataPushes.isEmpty == true)
+        #expect(bed.page?.isClosed == false)
+    }
+
+    @Test("A page that draws nothing for the new session collapses the block at once, unshown, letting the page go and giving the place's slot back, and the block stays collapsed through the background and as the user leaves")
+    func pageThatDrawsNothingForTheNewSessionCollapsesAtOnce() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.announceNewSession()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+        let releasesBefore = bed.budget.releases
+
+        bed.page?.reportRendered(0)
+
+        #expect(states == [.empty])
+        #expect(bed.provider.contentView == nil)
+        #expect(bed.provider.heldCollapse == nil)
+        #expect(bed.page?.isClosed == true)
+        #expect(bed.budget.releases == releasesBefore + [.place("block-id")])
+
+        bed.enterBackground()
+        bed.returnToApp()
+        bed.finishSessionCheck()
+        bed.provider.stop()
+
+        #expect(states == [.empty])
+        #expect(bed.accounting.shows.count == 1)
+        #expect(bed.budget.releases == releasesBefore + [.place("block-id")])
+    }
+
+    @Test("A page that drew nothing for new data, whose block the new session's content reaches while the app is away, keeps its content through a return that leaves it on another screen, and is handed that content under the placeholder once the block is back",
+          arguments: [false, true])
+    func contentReachingAPageThatDrewNothingWhileAwayIsAppliedOnReturn(isLeftInTheBackground: Bool) {
+        let bed = EmbeddedBlockTestBed()
+        let first = bed.resolver.sessionEpoch
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData()
+        bed.page?.reportRendered(0)
+        bed.enterBackground()
+        bed.announceNewSession()
+        #expect(bed.page?.initDataPushes.count == 1)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        if isLeftInTheBackground {
+            bed.provider.stop()
+            bed.returnToApp()
+        } else {
+            bed.returnToApp()
+            bed.provider.stop()
+        }
+        bed.finishSessionCheck()
+
+        #expect(states.isEmpty)
+        #expect(bed.page?.isClosed == false)
+        #expect(bed.provider.heldCollapse == nil)
+
+        bed.resolver.isDeferred = true
+        bed.provider.start()
+        #expect(bed.page?.initDataPushes.count == 2)
+
+        bed.page?.reportRendered(1)
+        #expect(states == [.loading, .ready])
+        #expect(bed.accounting.sessionEpochs == [first, first + 1])
+    }
+
+    @Test("A page that drew nothing and got new data while the app was away holds the block again once the user is back on it: leaving before it draws that data collapses the block, whether the return landed on it or left it on another screen first",
+          arguments: [false, true])
+    func pageThatDrewNothingHoldsAgainOnceTheUserIsBack(isLeftOnAnotherScreenFirst: Bool) {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData("first")
+        bed.page?.reportRendered(0)
+        bed.enterBackground()
+        bed.deliverSamePageWithNewData("second")
+        bed.returnToApp()
+        if isLeftOnAnotherScreenFirst {
+            bed.provider.stop()
+        }
+        bed.finishSessionCheck()
+        bed.resolver.isDeferred = true
+        if isLeftOnAnotherScreenFirst {
+            bed.provider.start()
+        }
+        #expect(bed.page?.initDataPushes.count == 2)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.stop()
+
+        #expect(states == [.empty])
+        #expect(bed.page?.isClosed == true)
+    }
+
+    @Test("A page that draws nothing for the data an operation of a new session handed it collapses the block at once and is let go: no show goes for that session and leaving adds nothing")
+    func pageThatDrawsNothingAfterANewSessionsOperationCollapsesAtOnce() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.expireSession()
+        bed.resolver.sessionEpoch = bed.currentSessionEpoch
+        bed.announceOperation()
+        #expect(bed.page?.initDataPushes.count == 1)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.page?.reportRendered(0)
+
+        #expect(states == [.empty])
+        #expect(bed.provider.contentView == nil)
+        #expect(bed.provider.heldCollapse == nil)
+        #expect(bed.page?.isClosed == true)
+        #expect(bed.accounting.shows.count == 1)
+
+        bed.provider.stop()
+
+        #expect(states == [.empty])
+    }
+
+    @Test("A page that drew nothing under the placeholder cannot bring its block back by drawing later unasked")
+    func pageThatDrewNothingUnderTheCoverCannotReviveTheBlock() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.announceNewSession()
+        let page = bed.page
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        page?.reportRendered(0)
+        page?.reportRendered(1)
+
+        #expect(states == [.empty])
+        #expect(bed.accounting.shows.count == 1)
+    }
+
+    @Test("A page that draws nothing for new data and then draws something takes its report back: no second show goes and leaving collapses nothing")
+    func pageThatDrawsAgainLiftsItsHold() {
+        let bed = EmbeddedBlockTestBed()
+        let first = bed.resolver.sessionEpoch
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData()
+        bed.page?.reportRendered(0)
+
+        bed.page?.reportRendered(2)
+
+        #expect(bed.accounting.sessionEpochs == [first])
+
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+        bed.provider.stop()
+
+        #expect(states.isEmpty)
+        #expect(bed.page?.isClosed == false)
+    }
+
+    @Test("An answer naming the same page does not take back the report of a page that drew nothing: the block still collapses as the user leaves")
+    func sameContentDoesNotLiftThePagesHold() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData()
+        bed.page?.reportRendered(0)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.announceNewConfig()
+        bed.provider.stop()
+
+        #expect(states == [.empty])
+        #expect(bed.accounting.shows.count == 1)
+    }
+
+    @Test("A page that drew nothing is still handed a later session's data, and that session's show goes once the page draws it")
+    func pageThatDrewNothingTakesALaterSessionsData() {
+        let bed = EmbeddedBlockTestBed()
+        let first = bed.resolver.sessionEpoch
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData()
+        bed.page?.reportRendered(0)
+
+        bed.announceNewSession()
+        #expect(bed.page?.initDataPushes.count == 2)
+
+        bed.page?.reportRendered(1)
+
+        #expect(bed.accounting.sessionEpochs == [first, first + 1])
+    }
+
+    @Test("A page that drew nothing is not rebuilt for a later push it never confirmed: it keeps the block's content until the user leaves")
+    func pageThatDrewNothingIsNotRebuiltOnAckTimeout() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData("first")
+        bed.page?.confirmInitData()
+        bed.page?.reportRendered(0)
+        bed.deliverSamePageWithNewData("second")
+        #expect(bed.page?.initDataPushes.count == 2)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.ackScheduler.fire()
+
+        #expect(states.isEmpty)
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.page?.isClosed == false)
+
+        bed.provider.stop()
+
+        #expect(states == [.empty])
+    }
+
+    @Test("A held block that fails holds no collapse any more: the host hears the failure alone, and leaving adds nothing",
+          arguments: [true, false])
+    func failedHeldBlockLandsNothingOnLeaving(isPageHold: Bool) {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        if isPageHold {
+            bed.deliverSamePageWithNewData()
+            bed.page?.reportRendered(0)
+        } else {
+            bed.resolver.resolution = .empty
+            bed.announceNewConfig()
+        }
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.page?.failLoad()
+        bed.provider.stop()
+
+        #expect(states == [.failed(.networkError)])
+        #expect(bed.provider.heldCollapse == nil)
+    }
+
+    @Test("A block whose page drew nothing and whose place then answers nothing lands as its place answered when the user leaves",
+          arguments: [NothingToShow.brokenWinner, .targetingUnavailable])
+    func placeAnswerLandsOverThePagesReport(_ answer: NothingToShow) {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData()
+        bed.page?.reportRendered(0)
+        bed.resolver.resolution = answer.resolution
+        bed.announceNewConfig()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.stop()
+
+        #expect(states == [answer.collapsedState])
+    }
+
+    // MARK: - Which in-apps the page may draw
+
+    @Test("A loading block answers which in-apps it may draw")
+    func loadingBlockAnswersTargeting() {
+        let bed = EmbeddedBlockTestBed()
+        bed.inappService.allowed = ["story-1"]
+        bed.provider.start()
+
+        bed.page?.send(.filterShowableInapps, ["inappIds": .array([.string("story-1"), .string("story-2")])])
+
+        #expect(bed.inappService.askedIds == [["story-1", "story-2"]])
+        #expect(bed.page?.responses.map(\.payload) == [.object(["inappIds": .array([.string("story-1")])])])
+    }
+
+    @Test("The question names the block's own in-app")
+    func questionNamesTheBlocksInapp() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+
+        bed.page?.send(.filterShowableInapps, ["inappIds": .array([.string("story-1")])])
+
+        #expect(bed.inappService.askedBy == [EmbeddedBlockWebContent.stub.inAppId])
+    }
+
+    @Test("An answer landing after a stop still reaches the page")
+    func answerAfterStopReachesThePage() {
+        let bed = EmbeddedBlockTestBed()
+        bed.inappService.allowed = ["story-1"]
+        bed.inappService.isDeferred = true
+        bed.provider.start()
+
+        bed.page?.send(.filterShowableInapps, ["inappIds": .array([.string("story-1")])])
+        bed.provider.stop()
+        bed.inappService.flush()
+
+        #expect(bed.page?.responses.map(\.payload) == [.object(["inappIds": .array([.string("story-1")])])])
+    }
+
+    @Test("A block off screen answers its page's question")
+    func stoppedBlockAnswersTheQuestion() {
+        let bed = EmbeddedBlockTestBed()
+        bed.inappService.allowed = ["story-1"]
+        bed.provider.start()
+        bed.provider.stop()
+
+        bed.page?.send(.filterShowableInapps, ["inappIds": .array([.string("story-1")])])
+
+        #expect(bed.inappService.askedIds == [["story-1"]])
+        #expect(bed.page?.responses.map(\.payload) == [.object(["inappIds": .array([.string("story-1")])])])
+    }
+
+    @Test("An answer for a page dropped when the user left a block its place no longer shows is dropped")
+    func answerForAPageDroppedOnLeavingIsDropped() {
+        let bed = EmbeddedBlockTestBed()
+        bed.inappService.isDeferred = true
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.resolver.resolution = .empty
+        bed.announceNewConfig()
+
+        bed.page?.send(.filterShowableInapps, ["inappIds": .array([.string("story-1")])])
+        bed.provider.stop()
+        bed.inappService.flush()
+
+        #expect(bed.page?.isClosed == true)
+        #expect(bed.page?.responses.contains { $0.action == "filterShowableInapps" } == false)
+    }
+
+    @Test("An answer for a page the block has since replaced is dropped")
+    func answerForAReplacedPageIsDropped() {
+        let bed = EmbeddedBlockTestBed()
+        bed.inappService.isDeferred = true
+        bed.provider.start()
+        let first = bed.page
+
+        first?.send(.filterShowableInapps, ["inappIds": .array([.string("story-1")])])
+        bed.resolver.resolution = .content(.other)
+        bed.announceNewConfig()
+        bed.inappService.flush()
+
+        #expect(bed.pageFactory.pages.count == 2)
+        #expect(first?.responses.isEmpty == true)
+    }
+
+    // MARK: - Asking to show an in-app
+
+    @Test("A shown block passes the request on and does not change its own state")
+    func shownBlockShowsTheInapp() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.page?.send(.showInApp, ["inappId": .string("story-id")])
+
+        #expect(bed.inappService.shown.map(\.id) == ["story-id"])
+        #expect(states.isEmpty)
+    }
+
+    @Test("The page hears the show's outcome once it is known, not on handover")
+    func pageHearsTheShowOutcome() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+
+        bed.page?.send(.showInApp, ["inappId": .string("story-id")])
+        #expect(bed.page?.showInAppResponses.isEmpty == true)
+        #expect(bed.page?.showInAppRefusals.isEmpty == true)
+
+        bed.inappService.finishShow(.success(()))
+
+        #expect(bed.page?.showInAppResponses == [.object(["success": .bool(true)])])
+    }
+
+    @Test("A show that failed reaches the page as its reason")
+    func failedShowReachesThePageAsItsReason() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+
+        bed.page?.send(.showInApp, ["inappId": .string("story-id")])
+        bed.inappService.finishShow(.failure(.showFailed))
+
+        #expect(bed.page?.showInAppRefusals == ["show_failed"])
+    }
+
+    @Test("The params the page sent are passed on as they are")
+    func paramsArePassedOnUntouched() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+
+        let params: [String: JSONValue] = ["formId": .string("160477"),
+                                           "lastContentUpdateDateTimeUtc": .string("2026-08-13T09:00:00.000000Z")]
+        bed.page?.send(.showInApp, ["inappId": .string("story-id"), "params": .object(params)])
+
+        #expect(bed.inappService.shown.first?.params == params)
+    }
+
+    enum BlockExit: CaseIterable {
+        case leftTheScreen
+        case released
+        case reloaded
+        case collapsed
+        case failed
+        case coveredForANewSession
+    }
+
+    @Test("A show the block asked for may start only while that block is still shown", arguments: BlockExit.allCases)
+    func showMayStartOnlyWhileTheAskingBlockIsShown(exit: BlockExit) throws {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.send(.showInApp, ["inappId": .string("story-id")])
+        let requesterIsActive = try #require(bed.inappService.requesterChecks.first)
+        #expect(requesterIsActive())
+
+        switch exit {
+        case .leftTheScreen:
+            bed.provider.stop()
+        case .released:
+            bed.provider.teardown()
+        case .reloaded:
+            bed.provider.reload()
+        case .collapsed:
+            bed.page?.reportRendered(0)
+        case .failed:
+            bed.page?.failLoad()
+        case .coveredForANewSession:
+            bed.page?.reportRendered(1)
+            bed.resolver.isDeferred = true
+            bed.renewSession()
+        }
+
+        #expect(!requesterIsActive())
+    }
+
+    @Test("A show the block asked for does not start once that block is gone")
+    func showDoesNotStartOnceTheAskingBlockIsGone() throws {
+        var inappService: InappRequestServiceMock?
+        weak var released: EmbeddedBlockWebViewProvider?
+
+        autoreleasepool {
+            let bed = EmbeddedBlockTestBed()
+            bed.provider.start()
+            bed.page?.send(.showInApp, ["inappId": .string("story-id")])
+            inappService = bed.inappService
+            released = bed.provider
+        }
+
+        try #require(released == nil)
+        let requesterIsActive = try #require(inappService?.requesterChecks.first)
+        #expect(!requesterIsActive())
+    }
+
+    @Test("A stopped block's request is refused at the presence gate, before the block hears it")
+    func stoppedBlockIsRefusedAtThePresenceGate() {
+        let bed = EmbeddedBlockTestBed()
+
+        bed.provider.start()
+        var requestsHeard = 0
+        let forward = bed.page?.onShowInAppRequest
+        bed.page?.onShowInAppRequest = { inappId, params, completion in
+            requestsHeard += 1
+            forward?(inappId, params, completion)
+        }
+        bed.provider.stop()
+        bed.page?.send(.showInApp, ["inappId": .string("story-id")])
+
+        #expect(requestsHeard == 0)
+        #expect(bed.inappService.shown.isEmpty)
+        #expect(bed.page?.showInAppRefusals == ["not_visible"])
+    }
+
+    @Test("A block collapsed as empty refuses a show request as not_visible")
+    func emptyBlockRefusesShowInApp() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+
+        bed.page?.reportRendered(0)
+        bed.page?.send(.showInApp, ["inappId": .string("story-id")])
+
+        #expect(bed.inappService.shown.isEmpty)
+        #expect(bed.page?.showInAppRefusals == ["not_visible"])
+    }
+
+    @Test("A shown block covered for a new session refuses a show request as not_visible until its page draws that session's data")
+    func coveredBlockRefusesShowInAppUntilItsPageDrawsTheNewSession() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.resolver.isDeferred = true
+        bed.renewSession()
+
+        bed.page?.send(.showInApp, ["inappId": .string("story-id")])
+
+        #expect(bed.inappService.shown.isEmpty)
+        #expect(bed.page?.showInAppRefusals == ["not_visible"])
+
+        bed.resolver.flush()
+        bed.page?.reportRendered(1)
+        bed.page?.send(.showInApp, ["inappId": .string("story-id")])
+
+        #expect(bed.inappService.shown.map(\.id) == ["story-id"])
+        #expect(bed.page?.showInAppRefusals == ["not_visible"])
+    }
+
+    @Test("A failed block refuses a show request as not_visible")
+    func failedBlockRefusesShowInApp() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+
+        bed.page?.failLoad()
+        bed.page?.send(.showInApp, ["inappId": .string("story-id")])
+
+        #expect(bed.inappService.shown.isEmpty)
+        #expect(bed.page?.showInAppRefusals == ["not_visible"])
+    }
+
+    @Test("A block broken by an unreadable report refuses a show request as not_visible")
+    func brokenBlockRefusesShowInApp() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+
+        bed.page?.reportRenderedWithoutCount()
+        bed.page?.send(.showInApp, ["inappId": .string("story-id")])
+
+        #expect(bed.inappService.shown.isEmpty)
+        #expect(bed.page?.showInAppRefusals == ["not_visible"])
+    }
+
+    @Test("A new attempt after a failure acts again")
+    func retryAfterFailureActsAgain() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.failLoad()
+
+        bed.provider.stop()
+        bed.provider.start()
+        bed.page?.send(.showInApp, ["inappId": .string("story-id")])
+
+        #expect(bed.inappService.shown.map(\.id) == ["story-id"])
+    }
+
+    @Test("A message the block does not own leaves its state alone")
+    func foreignMessageLeavesStateAlone() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.page?.send(.click)
+
+        #expect(states.isEmpty)
+        #expect(bed.provider.contentView === bed.page?.view)
+    }
+
+    // MARK: - Stop and restart
+
+    @Test("Stop keeps the page, records what it says and announces nothing")
+    func stopPausesThePage() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.stop()
+        bed.page?.reportRendered(1)
+
+        #expect(bed.page?.cancelCount == 0)
+        #expect(states.isEmpty)
+
+        bed.provider.start()
+
+        #expect(states == [.ready])
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.provider.contentView === bed.page?.view)
+    }
+
+    @Test("An abandoned attempt cancels the page and is not resumed")
+    func abandonedAttemptCancelsThePage() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.abandonAttempt()
+
+        #expect(bed.page?.cancelCount == 1)
+        #expect(bed.provider.contentView == nil)
+
+        bed.provider.start()
+
+        #expect(bed.resolver.resolveCount == 2)
+        #expect(states == [.loading])
+    }
+
+    @Test("The page is told nobody is looking at it, and told again when the user comes back")
+    func stopAndStartTellThePageAboutTheUser() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+
+        bed.provider.stop()
+        #expect(bed.page?.isUserPresent == false)
+
+        bed.provider.start()
+        #expect(bed.page?.isUserPresent == true)
+    }
+
+    @Test("A return resumes a page that never rendered and the same answer changes nothing")
+    func returnResumesAPageThatNeverRendered() {
+        let bed = EmbeddedBlockTestBed()
+
+        bed.provider.start()
+        bed.provider.stop()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+
+        #expect(bed.resolver.resolveCount == 2)
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.page?.loadCount == 1)
+        #expect(bed.provider.contentView === bed.page?.view)
+    }
+
+    @Test("Page rendered before the block left the window is shown again without a reload")
+    func renderedPageIsShownAgainWithoutReload() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.provider.stop()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.start()
+
+        #expect(states == [.ready])
+        #expect(bed.page?.loadCount == 1)
+        #expect(bed.resolver.resolveCount == 2)
+        #expect(bed.provider.contentView === bed.page?.view)
+    }
+
+    @Test("A page that survived the window round trip can still be told its data changed")
+    func returnedPageStillHearsNewData() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.provider.stop()
+        bed.provider.start()
+
+        let sameId = EmbeddedBlockWebContent(inAppId: EmbeddedBlockWebContent.stub.inAppId,
+                                             baseUrl: EmbeddedBlockWebContent.stub.baseUrl,
+                                             contentUrl: EmbeddedBlockWebContent.stub.contentUrl,
+                                             frequency: .unlimited,
+                                             tags: EmbeddedBlockWebContent.stub.tags,
+                                             params: ["fresh": .bool(true)])
+        bed.provider.apply(bed.answer(.content(sameId)))
+
+        #expect(bed.pageFactory.pages.count == 1)
+        #expect(bed.page?.initDataPushes == [["fresh": .bool(true)]])
+    }
+
+    @Test("A return catches up with a config that changed off screen")
+    func returnCatchesUpWithAChangedWorld() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.provider.stop()
+
+        bed.resolver.resolution = .content(.other)
+        bed.provider.apply(bed.answer(.content(.other)))
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+        bed.provider.start()
+
+        #expect(states == [.loading])
+        #expect(bed.accounting.shows.count == 1)
+        #expect(bed.pageFactory.pages.count == 2)
+        #expect(bed.pageFactory.contents.last == .other)
+    }
+
+    @Test("A return hears about a config that changed while nobody was on the place")
+    func returnAsksAgainAfterAnInvalidationItNeverHeard() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.provider.stop()
+
+        bed.resolver.resolution = .content(.other)
+        bed.announceNewConfig()
+        #expect(bed.pageFactory.pages.count == 1)
+
+        bed.provider.start()
+
+        #expect(bed.pageFactory.contents.last == .other)
+        #expect(bed.pageFactory.pages.count == 2)
+    }
+
+    @Test("A return with an empty answer in hand still asks the place")
+    func returnWithAnEmptyAnswerStillAsks() {
+        let bed = EmbeddedBlockTestBed(resolution: .empty)
+        bed.provider.start()
+        bed.provider.stop()
+        bed.provider.apply(bed.answer(.empty))
+
+        bed.provider.start()
+
+        #expect(bed.resolver.resolveCount == 2)
+    }
+
+    @Test("An empty answer parked for the return collapses the block without accounting the page that drew off screen")
+    func parkedEmptyAnswerCollapsesWithoutAShow() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.provider.stop()
+        bed.page?.reportRendered(1)
+        bed.resolver.resolution = .empty
+        bed.provider.apply(bed.answer(.empty))
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.start()
+
+        #expect(bed.accounting.shows.isEmpty)
+        #expect(states == [.empty])
+        #expect(bed.pageFactory.page?.isClosed == true)
+        #expect(bed.resolver.resolveCount == 2)
+    }
+
+    @Test("A reload drops the answer parked for the attempt it replaces")
+    func reloadDropsTheParkedAnswer() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.provider.abandonAttempt()
+        bed.provider.apply(bed.answer(.content(.other)))
+
+        bed.provider.reload()
+        #expect(bed.pageFactory.contents.last == .stub)
+
+        bed.provider.stop()
+        bed.provider.start()
+
+        #expect(bed.pageFactory.contents.last == .stub)
+        #expect(bed.pageFactory.pages.count == 2)
+    }
+
+    @Test("A resolution arriving after abandonAttempt is discarded, not parked")
+    func resolutionAfterAbandonAttemptIsDiscarded() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.provider.abandonAttempt()
+
+        bed.provider.apply(bed.answer(.content(.other)))
+        bed.provider.start()
+
+        #expect(bed.resolver.resolveCount == 2)
+        #expect(bed.pageFactory.contents == [.stub, .stub])
+    }
+
+    @Test("A failure off screen is reported when the block comes back")
+    func failureOffScreenIsHeldUntilTheReturn() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.provider.stop()
+
+        bed.page?.failLoad()
+
+        #expect(bed.failureReporter.reported.isEmpty)
+
+        bed.provider.start()
+
+        #expect(bed.failureReporter.reasons == [.webviewLoadFailed])
+    }
+
+    @Test("A data push left unconfirmed off screen is waited on again after the return")
+    func dataPushAckIsRearmedAfterAReturn() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData()
+        #expect(bed.ackScheduler.scheduled.count == 1)
+
+        bed.provider.stop()
+        #expect(bed.ackScheduler.scheduled.last?.work.isCancelled == true)
+
+        bed.provider.start()
+        #expect(bed.ackScheduler.scheduled.count == 2)
+
+        bed.ackScheduler.fire()
+
+        #expect(bed.pageFactory.pages.count == 2)
+    }
+
+    @Test("A data push parked for the return is waited on once")
+    func parkedDataPushIsWaitedOnOnce() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.provider.stop()
+        let fresh = EmbeddedBlockWebContent(inAppId: EmbeddedBlockWebContent.stub.inAppId,
+                                            baseUrl: EmbeddedBlockWebContent.stub.baseUrl,
+                                            contentUrl: EmbeddedBlockWebContent.stub.contentUrl,
+                                            frequency: EmbeddedBlockWebContent.stub.frequency,
+                                            tags: EmbeddedBlockWebContent.stub.tags,
+                                            params: ["stories": .array([.string("one")])])
+        bed.resolver.resolution = .content(fresh)
+        bed.provider.apply(bed.answer(.content(fresh)))
+
+        bed.provider.start()
+
+        #expect(bed.page?.initDataPushes == [fresh.params])
+        #expect(bed.ackScheduler.scheduled.count == 1)
+        #expect(bed.accounting.shows.count == 1)
+    }
+
+    @Test("The confirmation wait resumes on its remainder, not on a full interval")
+    func dataPushAckResumesOnTheRemainder() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData()
+
+        let whole = TimeInterval(Constants.EmbeddedBlock.readyTimeoutSeconds)
+        #expect(bed.ackScheduler.scheduled.map(\.delay) == [whole])
+
+        bed.clock.advance(1)
+        bed.provider.stop()
+        bed.clock.advance(100)
+        bed.provider.start()
+
+        #expect(bed.ackScheduler.scheduled.map(\.delay) == [whole, whole - 1])
+    }
+
+    @Test("A confirmation wait spent in full fires the moment the block comes back")
+    func dataPushAckSpentInFullFiresOnTheReturn() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData()
+
+        bed.clock.advance(TimeInterval(Constants.EmbeddedBlock.readyTimeoutSeconds) + 1)
+        bed.provider.stop()
+        bed.provider.start()
+
+        #expect(bed.ackScheduler.scheduled.last?.delay == 0)
+
+        bed.ackScheduler.fire()
+
+        #expect(bed.pageFactory.pages.count == 2)
+    }
+
+    @Test("A fresh data push waits out the whole interval again")
+    func freshDataPushGetsTheWholeIntervalBack() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.deliverSamePageWithNewData("first")
+
+        bed.clock.advance(2)
+        bed.page?.confirmInitData()
+        bed.deliverSamePageWithNewData("second")
+
+        let whole = TimeInterval(Constants.EmbeddedBlock.readyTimeoutSeconds)
+        #expect(bed.ackScheduler.scheduled.map(\.delay) == [whole, whole])
+    }
+
+    @Test("The show reports the time the render took, not the time spent off screen")
+    func showReportsTheRenderTimeNotTheAbsence() throws {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.processingDuration = 2
+
+        bed.provider.start()
+        bed.clock.advance(0.75)
+        bed.provider.stop()
+        bed.page?.reportRendered(1)
+
+        bed.clock.advance(8)
+        bed.provider.start()
+
+        let show = try #require(bed.accounting.shows.first)
+        #expect(show.timeToDisplay == 2.75)
+    }
+
+    @Test("Time the block spent off screen before the render is not in its timeToDisplay")
+    func showExcludesTheTimeOffScreenBeforeTheRender() throws {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.processingDuration = 2
+
+        bed.provider.start()
+        bed.clock.advance(0.75)
+        bed.provider.stop()
+        bed.clock.advance(45)
+        bed.provider.start()
+        bed.clock.advance(0.25)
+        bed.page?.reportRendered(1)
+
+        let show = try #require(bed.accounting.shows.first)
+        #expect(show.timeToDisplay == 3)
+    }
+
+    @Test("Every pass of the block across the screen is excluded, not only the first")
+    func showExcludesEveryAbsenceBeforeTheRender() throws {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.processingDuration = 2
+
+        bed.provider.start()
+        bed.clock.advance(0.5)
+        bed.provider.stop()
+        bed.clock.advance(10)
+        bed.provider.start()
+        bed.clock.advance(0.5)
+        bed.provider.stop()
+        bed.clock.advance(30)
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+
+        let show = try #require(bed.accounting.shows.first)
+        #expect(show.timeToDisplay == 3)
+    }
+
+    @Test("A page rebuilt after a return measures from its own build, with no absence behind it")
+    func rebuiltPageMeasuresFromItsOwnBuild() throws {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.processingDuration = 2
+
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.clock.advance(5)
+        bed.provider.stop()
+        bed.clock.advance(30)
+        bed.provider.start()
+        bed.resolver.resolution = .content(.other)
+        bed.resolver.processingDuration = 1
+        bed.announceNewConfig()
+        bed.clock.advance(0.5)
+        bed.page?.reportRendered(1)
+
+        #expect(bed.accounting.shows.map(\.timeToDisplay) == [2, 1.5])
+    }
+
+    @Test("The app's background between the start and the render is not in timeToDisplay")
+    func showExcludesTheBackgroundBeforeTheRender() throws {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.processingDuration = 2
+
+        bed.provider.start()
+        bed.clock.advance(0.5)
+        bed.enterBackground()
+        bed.clock.advance(20)
+        bed.enterForeground()
+        bed.clock.advance(0.5)
+        bed.page?.reportRendered(1)
+
+        let show = try #require(bed.accounting.shows.first)
+        #expect(show.timeToDisplay == 3)
+    }
+
+    @Test("A page built from an answer that landed in the background measures from the return")
+    func pageBuiltInTheBackgroundMeasuresFromTheReturn() throws {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.processingDuration = 2
+
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.enterBackground()
+        bed.clock.advance(10)
+        bed.resolver.resolution = .content(.other)
+        bed.resolver.processingDuration = 1
+        bed.announceNewConfig()
+        bed.clock.advance(10)
+        bed.enterForeground()
+        bed.clock.advance(0.5)
+        bed.page?.reportRendered(1)
+
+        #expect(bed.pageFactory.pages.count == 2)
+        #expect(bed.accounting.shows.map(\.timeToDisplay) == [2, 1.5])
+    }
+
+    @Test("An answer released by the return itself, with the app still reporting the background, measures from the activation")
+    func answerReleasedByTheReturnMeasuresFromTheActivation() throws {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.processingDuration = 2
+
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        bed.enterBackground()
+        bed.clock.advance(10)
+        bed.resolver.resolution = .content(.other)
+        bed.resolver.processingDuration = 1
+        let release = bed.center.addObserver(forName: UIApplication.willEnterForegroundNotification,
+                                             object: nil,
+                                             queue: .main) { _ in
+            bed.announceNewConfig()
+        }
+        defer { bed.center.removeObserver(release) }
+        bed.enterForeground()
+        bed.clock.advance(0.5)
+        bed.page?.reportRendered(1)
+
+        #expect(bed.pageFactory.pages.count == 2)
+        #expect(bed.accounting.shows.map(\.timeToDisplay) == [2, 1.5])
+    }
+
+    @Test("Failed block tries again when it comes back")
+    func failedBlockTriesAgainOnReturn() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.failLoad()
+        bed.provider.stop()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.start()
+
+        #expect(states == [.loading])
+        #expect(bed.pageFactory.pages.count == 2)
+        #expect(bed.page?.loadCount == 1)
+    }
+
+    @Test("Resolution arriving after a stop creates nothing")
+    func lateResolutionAfterStopIsIgnored() {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.isDeferred = true
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.provider.start()
+        bed.provider.stop()
+        bed.resolver.flush()
+
+        #expect(bed.pageFactory.pages.isEmpty)
+        #expect(states == [.loading])
+    }
+
+    // MARK: - Reload
+
+    @Test("Reload asks for the content again and builds a new page")
+    func reloadRefetchesTheContent() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        let firstPage = bed.page
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        bed.resolver.resolution = .content(.other)
+        bed.provider.reload()
+
+        #expect(bed.resolver.resolveCount == 2)
+        #expect(bed.pageFactory.contents == [.stub, .other])
+        #expect(bed.pageFactory.pages.count == 2)
+        #expect(bed.page !== firstPage)
+        #expect(firstPage?.cancelCount == 1)
+        #expect(states == [.loading])
+        #expect(bed.provider.contentView == nil)
+    }
+
+    @Test("The dropped page cannot report into the new attempt")
+    func droppedPageIsSilenced() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+        let firstPage = bed.page
+        bed.provider.reload()
+        var states: [EmbeddedBlockState] = []
+        bed.provider.onStateChange = { states.append($0) }
+
+        firstPage?.reportRendered(1)
+        firstPage?.failLoad()
+
+        #expect(states.isEmpty)
+        #expect(bed.provider.contentView == nil)
+    }
+
+    @Test("Reload during an in-flight resolve is covered by its answer")
+    func reloadDuringResolveIsCoveredByItsAnswer() {
+        let bed = EmbeddedBlockTestBed()
+        bed.resolver.isDeferred = true
+        bed.provider.start()
+
+        bed.provider.reload()
+        bed.resolver.flush()
+
+        #expect(bed.resolver.resolveCount == 1)
+        #expect(bed.pageFactory.pages.count == 1)
+    }
+
+    @Test("Reloaded block becomes ready through the same path")
+    func reloadedBlockBecomesReady() {
+        let bed = EmbeddedBlockTestBed()
+        bed.provider.start()
+        bed.page?.reportRendered(1)
+
+        bed.provider.reload()
+        bed.page?.reportRendered(1)
+
+        #expect(bed.provider.contentView === bed.page?.view)
+    }
+}

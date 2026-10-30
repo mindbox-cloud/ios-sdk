@@ -10,56 +10,93 @@ import Foundation
 import QuartzCore
 import UIKit
 
-/// A stopwatch that only counts time while the app is in the foreground.
-/// Background time (between `didEnterBackground` and `willEnterForeground`) is excluded from `elapsed`.
+// Main thread only: the observers run on main and init reads UIApplication's applicationState.
 final class ForegroundStopwatch {
-    private let startTime: CFTimeInterval
-    private var totalBackgroundDuration: CFTimeInterval = 0
-    private var backgroundEntryTime: CFTimeInterval?
+    private let now: () -> CFTimeInterval
+
+    private var accumulated: CFTimeInterval = 0
+    private var runningSince: CFTimeInterval?
+
+    private var isInBackground = false
+    private var isSuspended = false
 
     private var bgObserver: NSObjectProtocol?
     private var fgObserver: NSObjectProtocol?
+    private var activeObserver: NSObjectProtocol?
 
     private let notificationCenter: NotificationCenter
 
-    init(notificationCenter: NotificationCenter = .default) {
+    init(notificationCenter: NotificationCenter = .default,
+         now: @escaping () -> CFTimeInterval = { CACurrentMediaTime() },
+         isInBackground: () -> Bool = { UIApplication.shared.applicationState == .background }) {
         self.notificationCenter = notificationCenter
-        self.startTime = CACurrentMediaTime()
+        self.now = now
+        self.isInBackground = isInBackground()
+        self.runningSince = self.isInBackground ? nil : now()
 
         bgObserver = notificationCenter.addObserver(
             forName: UIApplication.didEnterBackgroundNotification,
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.backgroundEntryTime = CACurrentMediaTime()
+            guard let self else { return }
+            self.isInBackground = true
+            self.settle()
         }
 
+        let foreground: (Notification) -> Void = { [weak self] _ in
+            guard let self else { return }
+            self.isInBackground = false
+            self.settle()
+        }
         fgObserver = notificationCenter.addObserver(
             forName: UIApplication.willEnterForegroundNotification,
             object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            guard let self, let entryTime = self.backgroundEntryTime else { return }
-            self.totalBackgroundDuration += CACurrentMediaTime() - entryTime
-            self.backgroundEntryTime = nil
-        }
+            queue: .main,
+            using: foreground
+        )
+        activeObserver = notificationCenter.addObserver(
+            forName: UIApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: .main,
+            using: foreground
+        )
     }
 
-    /// Elapsed foreground-only time since the stopwatch was created.
     var elapsed: TimeInterval {
-        var currentBackgroundDuration = totalBackgroundDuration
-        if let entryTime = backgroundEntryTime {
-            currentBackgroundDuration += CACurrentMediaTime() - entryTime
-        }
-        return CACurrentMediaTime() - startTime - currentBackgroundDuration
+        accumulated + (runningSince.map { now() - $0 } ?? 0)
     }
 
-    /// Stops the stopwatch and removes notification observers.
+    func suspend() {
+        isSuspended = true
+        settle()
+    }
+
+    func resume() {
+        isSuspended = false
+        settle()
+    }
+
     func stop() {
         if let bgObserver { notificationCenter.removeObserver(bgObserver) }
         if let fgObserver { notificationCenter.removeObserver(fgObserver) }
+        if let activeObserver { notificationCenter.removeObserver(activeObserver) }
         bgObserver = nil
         fgObserver = nil
+        activeObserver = nil
+    }
+
+    private func settle() {
+        let shouldRun = !isInBackground && !isSuspended
+
+        if shouldRun {
+            if runningSince == nil {
+                runningSince = now()
+            }
+        } else if let runningSince {
+            accumulated += now() - runningSince
+            self.runningSince = nil
+        }
     }
 
     deinit {

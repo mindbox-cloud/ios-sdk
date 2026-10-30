@@ -25,10 +25,7 @@ public extension NSManagedObjectContext {
         )
     }
 
-    /// Helper function for convincing the type checker that
-    /// the rethrows invariant holds for performAndWait.
-    ///
-    /// Source: https://github.com/apple/swift/blob/bb157a070ec6534e4b534456d208b03adc07704b/stdlib/public/SDK/Dispatch/Queue.swift#L228-L249
+    // Source: https://github.com/apple/swift/blob/bb157a070ec6534e4b534456d208b03adc07704b/stdlib/public/SDK/Dispatch/Queue.swift#L228-L249
     private func _performAndWaitHelper<T>(
         fn: (() -> Void) -> Void,
         execute work: () throws -> T,

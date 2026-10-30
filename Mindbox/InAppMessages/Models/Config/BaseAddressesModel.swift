@@ -9,8 +9,6 @@
 import Foundation
 
 extension Settings {
-    /// DTO for `settings.baseAddresses` in the mobile JSON config
-    /// (`/mobile/byendpoint/{endpointId}.json`).
     struct BaseAddresses: Decodable, Equatable {
         let operations: String?
 

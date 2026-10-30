@@ -23,15 +23,16 @@ public protocol WebBridgeNavigationDelegate: AnyObject {
     func webBridge(_ bridge: MindboxWebBridge, didFailProvisionalNavigation url: URL?, error: Error)
     func webBridge(_ bridge: MindboxWebBridge, decidePolicyFor url: URL?, navigationType: WKNavigationType, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void)
     func webBridge(_ bridge: MindboxWebBridge, didReceiveHTTPError url: String?)
+    func webBridgeWebContentProcessDidTerminate(_ bridge: MindboxWebBridge)
 }
 
 @_spi(Internal)
 public extension WebBridgeNavigationDelegate {
     func webBridge(_ bridge: MindboxWebBridge, didReceiveHTTPError url: String?) {}
+    func webBridgeWebContentProcessDidTerminate(_ bridge: MindboxWebBridge) {}
 }
 
 protocol BridgePendingStore: AnyObject {
-    func addPending(_ id: UUID)
     func removePending(_ id: UUID)
     func containsPending(_ id: UUID) -> Bool
 }
@@ -39,7 +40,6 @@ protocol BridgePendingStore: AnyObject {
 @_spi(Internal)
 public final class MindboxWebBridge: NSObject {
 
-    weak var delegate: WebBridgeWKScriptMessageDelegate?
     weak var messageDelegate: WebBridgeMessageDelegate?
     weak var navigationDelegate: WebBridgeNavigationDelegate?
 
@@ -51,10 +51,6 @@ public final class MindboxWebBridge: NSObject {
     private var pendingRequestIds = Set<UUID>()
     private var contentURL: URL?
 
-    // A reused (pre-warmed) WKWebView can deliver navigation callbacks and script messages
-    // that belong to a previous owner's load. Callbacks are filtered by navigation identity;
-    // messages are gated until the show's own document commits (the document-swap point —
-    // whoever posts before it is not this show's page). Main-thread only.
     private var expectedNavigation: WKNavigation?
     private var expectedNavigationFinished = false
     private var expectedNavigationCommitted = false
@@ -65,18 +61,24 @@ public final class MindboxWebBridge: NSObject {
         super.init()
 
         let controller = webView.configuration.userContentController
-        // Idempotent: a reused WebView may still carry a previous show's handler of this name.
         controller.removeScriptMessageHandler(forName: Constants.WebViewBridgeJS.handlerName)
         controller.add(self, name: Constants.WebViewBridgeJS.handlerName)
-        // Take over the HTTP-error detection channel too: on a borrowed instance the
-        // prewarm's monitor still owns it — from here the errors belong to this show.
         controller.removeScriptMessageHandler(forName: Constants.WebViewHTTPErrorJS.handlerName)
         controller.add(self, name: Constants.WebViewHTTPErrorJS.handlerName)
         webView.navigationDelegate = self
     }
 
-    // No deinit teardown needed: `navigationDelegate` is weak (zeroes automatically), and
-    // the successor's init does remove-then-add on the script handler.
+    func detach() {
+        assert(Thread.isMainThread)
+        guard let webView else { return }
+
+        let controller = webView.configuration.userContentController
+        controller.removeScriptMessageHandler(forName: Constants.WebViewBridgeJS.handlerName)
+        controller.removeScriptMessageHandler(forName: Constants.WebViewHTTPErrorJS.handlerName)
+        if webView.navigationDelegate === self {
+            webView.navigationDelegate = nil
+        }
+    }
 
     func send(_ message: BridgeMessage) {
         guard let json = message.jsonString() else {
@@ -102,13 +104,9 @@ public final class MindboxWebBridge: NSObject {
             category: .webViewInAppMessages
         )
 
-        switch message.type {
-            case .request:
-                pendingRequestIds.insert(message.id)
-            case .response:
-                pendingRequestIds.remove(message.id)
-            case .error:
-                pendingRequestIds.remove(message.id)
+        let tracksPending = message.type == .request
+        if tracksPending {
+            pendingRequestIds.insert(message.id)
         }
 
         let script = Constants.WebViewBridgeJS.sendScript(json: json)
@@ -118,7 +116,7 @@ public final class MindboxWebBridge: NSObject {
                 message: "[WebView] Bridge: webView deallocated, cannot send message",
                 category: .webViewInAppMessages
             )
-            pendingRequestIds.remove(message.id)
+            if tracksPending { pendingRequestIds.remove(message.id) }
             return
         }
 
@@ -128,7 +126,7 @@ public final class MindboxWebBridge: NSObject {
                     message: "[WebView] Bridge: failed to send \(message.type.rawValue) id \(message.id) to JS. Error: \(error.localizedDescription)",
                     category: .webViewInAppMessages
                 )
-                self.pendingRequestIds.remove(message.id)
+                if tracksPending { self.pendingRequestIds.remove(message.id) }
                 return
             }
 
@@ -137,7 +135,7 @@ public final class MindboxWebBridge: NSObject {
                     message: "[WebView] Bridge: JS rejected \(message.type.rawValue) id \(message.id). Result: \(String(describing: result))",
                     category: .webViewInAppMessages
                 )
-                self.pendingRequestIds.remove(message.id)
+                if tracksPending { self.pendingRequestIds.remove(message.id) }
                 return
             }
 
@@ -152,8 +150,6 @@ public final class MindboxWebBridge: NSObject {
         contentURL = url
     }
 
-    /// Registers the navigation issued by this show's own load (loadHTMLString/reload).
-    /// Until it finishes, callbacks for any other navigation are treated as stale leftovers.
     func expectContentNavigation(_ navigation: WKNavigation?) {
         contentLoadIssued = true
         expectedNavigation = navigation
@@ -164,8 +160,6 @@ public final class MindboxWebBridge: NSObject {
     private func isStaleNavigation(_ navigation: WKNavigation?) -> Bool {
         if expectedNavigationFinished { return false }
         guard contentLoadIssued else { return true }
-        // WebKit occasionally delivers a nil navigation (early provisional failures): it
-        // can't be proven to be a leftover — fail open, like the nil-expected case below.
         guard let navigation else { return false }
         guard let expected = expectedNavigation else { return false }
         return navigation !== expected
@@ -183,10 +177,6 @@ extension MindboxWebBridge: WKScriptMessageHandler {
     public func userContentController(_ userContentController: WKUserContentController,
                                       didReceive message: WKScriptMessage) {
         if message.name == Constants.WebViewHTTPErrorJS.handlerName {
-            // Same staleness gate as bridge messages below: a leftover page's error on a
-            // reused WebView must not consume this show's one-shot retry. The show's own
-            // subresources only start loading after its document commits, so nothing real
-            // is lost.
             guard expectedNavigationCommitted else {
                 logStaleNavigation("http error message")
                 return
@@ -204,8 +194,6 @@ extension MindboxWebBridge: WKScriptMessageHandler {
             return
         }
 
-        // Mirror of the navigation staleness filter at message level: until the show's own
-        // document has committed, whoever is posting is not this show's page — drop it.
         guard expectedNavigationCommitted else {
             Logger.common(
                 message: "[WebView] Bridge: ignoring JS message before the show's document committed (leftover page on reused WebView)",
@@ -245,7 +233,6 @@ extension MindboxWebBridge: WKScriptMessageHandler {
             category: .webViewInAppMessages
         )
 
-        delegate?.webBridge(self, didReceiveFromJS: message)
         dispatcher.dispatch(bridgeMessage, in: self)
     }
 }
@@ -264,7 +251,6 @@ extension MindboxWebBridge: WKNavigationDelegate {
             logStaleNavigation("commit")
             return
         }
-        // The old document is gone from this point: script messages are now this show's.
         expectedNavigationCommitted = true
     }
 
@@ -273,8 +259,6 @@ extension MindboxWebBridge: WKNavigationDelegate {
             logStaleNavigation("finish")
             return
         }
-        // Only the show's own load reports the content URL; a page-initiated navigation
-        // reports its real URL so upstream can tell the documents apart.
         let isExpected = navigation === expectedNavigation
         if isExpected {
             expectedNavigationFinished = true
@@ -301,7 +285,13 @@ extension MindboxWebBridge: WKNavigationDelegate {
         }
         navigationDelegate?.webBridge(self, didFailProvisionalNavigation: webView.url, error: error)
     }
-    
+
+    public func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+        Logger.common(message: "[WebView] Bridge: the page's web content process terminated",
+                      level: .error, category: .webViewInAppMessages)
+        navigationDelegate?.webBridgeWebContentProcessDidTerminate(self)
+    }
+
     public func webView(_ webView: WKWebView,
                         decidePolicyFor navigationAction: WKNavigationAction,
                         decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
@@ -314,10 +304,6 @@ extension MindboxWebBridge: WKNavigationDelegate {
 }
 
 extension MindboxWebBridge: BridgePendingStore {
-    func addPending(_ id: UUID) {
-        pendingRequestIds.insert(id)
-    }
-
     func removePending(_ id: UUID) {
         pendingRequestIds.remove(id)
     }

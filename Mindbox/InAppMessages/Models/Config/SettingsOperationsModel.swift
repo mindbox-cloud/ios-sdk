@@ -35,7 +35,6 @@ extension Settings.SettingsOperations {
         self.setCart = try? container.decodeIfPresent(Operation.self, forKey: .setCart)
 
         if viewProduct == nil && viewCategory == nil && setCart == nil {
-            // Will never be caught because of `try?` in `Settings.init`
             throw DecodingError.dataCorruptedError(forKey: .viewProduct, in: container, debugDescription: "The `operation` type could not be decoded because all operations are nil")
         }
     }

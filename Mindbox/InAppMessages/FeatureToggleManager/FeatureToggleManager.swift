@@ -25,14 +25,8 @@ enum FeatureFlag {
     }
 }
 
-/// Holds the toggles applied from a freshly downloaded config. The WebView flags
-/// (`shouldPrewarmInAppWebView`, `shouldCacheInAppWebView`) are deliberately read
-/// config-scoped by their consumers instead (each prewarm stage reads the config it works
-/// with; the data store latches from the config cache) — those reads happen before any
-/// fresh config can be applied here.
 final class FeatureToggleManager {
 
-    /// Guards `featureToggles`: it is written on the config-fetch queue and read from arbitrary queues (tracking, WebView JS-bridge).
     private let lock = NSLock()
     private var featureToggles: Settings.FeatureToggles?
 

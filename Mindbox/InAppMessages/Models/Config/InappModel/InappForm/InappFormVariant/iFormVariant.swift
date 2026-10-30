@@ -13,6 +13,7 @@ protocol iFormVariant: Decodable, Equatable { }
 enum MindboxFormVariantType: String, Decodable {
     case modal
     case snackbar
+    case embedded
     case unknown
 
     init(from decoder: Decoder) throws {
@@ -25,6 +26,7 @@ enum MindboxFormVariantType: String, Decodable {
 enum MindboxFormVariantDTO: Decodable, Hashable, Equatable {
     case modal(ModalFormVariantDTO)
     case snackbar(SnackbarFormVariantDTO)
+    case embedded(EmbeddedFormVariantDTO)
     case unknown
 
     enum CodingKeys: String, CodingKey {
@@ -35,6 +37,7 @@ enum MindboxFormVariantDTO: Decodable, Hashable, Equatable {
         switch (lhs, rhs) {
             case (.modal, .modal): return true
             case (.snackbar, .snackbar): return true
+            case (.embedded, .embedded): return true
             case (.unknown, .unknown): return true
             default: return false
         }
@@ -44,6 +47,7 @@ enum MindboxFormVariantDTO: Decodable, Hashable, Equatable {
         switch self {
             case .modal: hasher.combine("modal")
             case .snackbar: hasher.combine("snackbar")
+            case .embedded: hasher.combine("embedded")
             case .unknown: hasher.combine("unknown")
         }
     }
@@ -64,6 +68,9 @@ enum MindboxFormVariantDTO: Decodable, Hashable, Equatable {
             case .snackbar:
                 let snackbarVariant = try variantContainer.decode(SnackbarFormVariantDTO.self)
                 self = .snackbar(snackbarVariant)
+            case .embedded:
+                let embeddedVariant = try variantContainer.decode(EmbeddedFormVariantDTO.self)
+                self = .embedded(embeddedVariant)
             case .unknown:
                 self = .unknown
         }
@@ -73,6 +80,7 @@ enum MindboxFormVariantDTO: Decodable, Hashable, Equatable {
 enum MindboxFormVariant: Decodable, Hashable, Equatable {
     case modal(ModalFormVariant)
     case snackbar(SnackbarFormVariant)
+    case embedded(EmbeddedFormVariant)
     case unknown
 
     enum CodingKeys: String, CodingKey {
@@ -83,6 +91,7 @@ enum MindboxFormVariant: Decodable, Hashable, Equatable {
         switch (lhs, rhs) {
             case (.modal, .modal): return true
             case (.snackbar, .snackbar): return true
+            case (.embedded, .embedded): return true
             case (.unknown, .unknown): return true
             default: return false
         }
@@ -92,6 +101,7 @@ enum MindboxFormVariant: Decodable, Hashable, Equatable {
         switch self {
             case .modal: hasher.combine("modal")
             case .snackbar: hasher.combine("snackbar")
+            case .embedded: hasher.combine("embedded")
             case .unknown: hasher.combine("unknown")
         }
     }
@@ -112,6 +122,9 @@ enum MindboxFormVariant: Decodable, Hashable, Equatable {
             case .snackbar:
                 let snackbarVariant = try variantContainer.decode(SnackbarFormVariant.self)
                 self = .snackbar(snackbarVariant)
+            case .embedded:
+                let embeddedVariant = try variantContainer.decode(EmbeddedFormVariant.self)
+                self = .embedded(embeddedVariant)
             case .unknown:
                 self = .unknown
                 throw CustomDecodingError.unknownType("The variant type could not be decoded. The variant will be ignored.")
@@ -120,9 +133,27 @@ enum MindboxFormVariant: Decodable, Hashable, Equatable {
 }
 
 extension MindboxFormVariant {
+
+    var placeSystemName: String? {
+        switch self {
+        case .embedded(let embedded): return embedded.placeSystemName
+        case .modal, .snackbar, .unknown: return nil
+        }
+    }
+
+    var isOverlayPresentable: Bool {
+        switch self {
+        case .modal, .snackbar: return true
+        case .embedded, .unknown: return false
+        }
+    }
+}
+
+extension MindboxFormVariant {
     init(type: MindboxFormVariantType,
          modalVariant: ModalFormVariant? = nil,
-         snackbarVariant: SnackbarFormVariant? = nil
+         snackbarVariant: SnackbarFormVariant? = nil,
+         embeddedVariant: EmbeddedFormVariant? = nil
     ) throws {
         switch type {
         case .modal:
@@ -136,6 +167,12 @@ extension MindboxFormVariant {
                 throw CustomDecodingError.unknownType("The variant type could not be decoded. The variant will be ignored.")
             }
             self = .snackbar(snackbarVariant)
+
+        case .embedded:
+            guard let embeddedVariant = embeddedVariant else {
+                throw CustomDecodingError.unknownType("The variant type could not be decoded. The variant will be ignored.")
+            }
+            self = .embedded(embeddedVariant)
 
         case .unknown:
             self = .unknown

@@ -7,6 +7,7 @@
 //
 
 import XCTest
+import Testing
 @testable import Mindbox
 
 final class MockSegmentationService: SegmentationServiceProtocol {
@@ -49,11 +50,23 @@ final class MockInappShowFailureManager: InappShowFailureManagerProtocol {
         failures.append((inappId: inappId, reason: reason, details: details, tags: tags))
     }
 
-    func clearFailures() {
-        failures.removeAll()
+    private(set) var sentAtOnce: [(inappId: String, reason: InAppShowFailureReason)] = []
+
+    func sendBlockFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?) {
+        sentAtOnce.append((inappId: inappId, reason: reason))
     }
 
+    func sendFailure(inappId: String, reason: InAppShowFailureReason, details: String?, tags: [String: String]?) {}
+
     func sendFailures() {}
+
+    private(set) var clearFailuresCallCount = 0
+
+    func clearFailures() {
+        clearFailuresCallCount += 1
+    }
+
+    func sendWaitBudgetExceeded(place: String, waited: TimeInterval, phase: EmbeddedBlockShowFailure.Phase) {}
 }
 
 final class InAppConfigurationDataFacadeTests: XCTestCase {
@@ -200,6 +213,12 @@ final class InAppConfigurationDataFacadeTests: XCTestCase {
         XCTAssertTrue(mockFailureManager.failures.allSatisfy { $0.reason == .productSegmentRequestFailed })
     }
 
+    func test_discardCollectedFailures_dropsWhatThePassBuffered() {
+        dataFacade.discardCollectedFailures()
+
+        XCTAssertEqual(mockFailureManager.clearFailuresCallCount, 1)
+    }
+
     func test_collectTargetingFailures_propagatesTagsByInappId() {
         SessionTemporaryStorage.shared.viewProductOperation = "App.ViewProduct".lowercased()
         let model = decodeInAppOperationJSONModel(from: """
@@ -254,6 +273,73 @@ final class InAppConfigurationDataFacadeTests: XCTestCase {
         XCTAssertEqual(mockFailureManager.failures.count, 1)
         XCTAssertEqual(Set(mockFailureManager.failures.map { $0.inappId }), Set(["inapp-segment-2"]))
         XCTAssertTrue(mockFailureManager.failures.allSatisfy { $0.reason == .customerSegmentRequestFailed })
+    }
+
+    private func fetchDependencies() {
+        let expectation = expectation(description: "fetch dependencies")
+        dataFacade.fetchDependencies(model: nil) { expectation.fulfill() }
+        waitForExpectations(timeout: 1)
+    }
+
+    func test_reportsUnchecked_whenSegmentationFailedOnTheServerAndACandidateDependsOnIt() {
+        dataFacade.targetingChecker.context.segmentInapps = ["inapp-segment"]
+        dataFacade.targetingChecker.context.segments = ["segment-id"]
+        mockSegmentation.stubError = .serverError(.init(status: .internalServerError, errorMessage: "Internal Server error", httpStatusCode: 500))
+        fetchDependencies()
+
+        let unchecked = dataFacade.collectTargetingFailures(forFailedTargetingInappIds: ["inapp-segment", "inapp-other"], tagsByInappId: [:])
+
+        XCTAssertTrue(unchecked)
+        XCTAssertEqual(mockFailureManager.failures.map(\.inappId), ["inapp-segment"])
+    }
+
+    func test_reportsUnchecked_whenSegmentationFailedOfflineButReportsNoFailure() {
+        dataFacade.targetingChecker.context.segmentInapps = ["inapp-segment"]
+        dataFacade.targetingChecker.context.segments = ["segment-id"]
+        mockSegmentation.stubError = .connectionError
+        fetchDependencies()
+
+        let unchecked = dataFacade.collectTargetingFailures(forFailedTargetingInappIds: ["inapp-segment"], tagsByInappId: [:])
+
+        XCTAssertTrue(unchecked)
+        XCTAssertTrue(mockFailureManager.failures.isEmpty)
+    }
+
+    func test_reportsUnchecked_whenGeoFailedOffline() {
+        let networkFetcher = DI.injectOrFail(NetworkFetcher.self) as? MockNetworkFetcher
+        networkFetcher?.error = .connectionError
+        dataFacade.targetingChecker.context.geoInapps = ["inapp-geo"]
+        dataFacade.targetingChecker.context.isNeedGeoRequest = true
+        fetchDependencies()
+
+        let unchecked = dataFacade.collectTargetingFailures(forFailedTargetingInappIds: ["inapp-geo"], tagsByInappId: [:])
+
+        XCTAssertTrue(unchecked)
+        XCTAssertTrue(mockFailureManager.failures.isEmpty)
+    }
+
+    func test_reportsChecked_whenNoFailedCandidateDependsOnTheFailedFetch() {
+        dataFacade.targetingChecker.context.segmentInapps = ["inapp-segment"]
+        dataFacade.targetingChecker.context.segments = ["segment-id"]
+        mockSegmentation.stubError = .connectionError
+        fetchDependencies()
+
+        let unchecked = dataFacade.collectTargetingFailures(forFailedTargetingInappIds: ["inapp-other"], tagsByInappId: [:])
+
+        XCTAssertFalse(unchecked)
+    }
+
+    func test_reportsChecked_onTheNextPassWhoseFetchSucceeded() {
+        dataFacade.targetingChecker.context.segmentInapps = ["inapp-segment"]
+        dataFacade.targetingChecker.context.segments = ["segment-id"]
+        mockSegmentation.stubError = .connectionError
+        fetchDependencies()
+        XCTAssertTrue(dataFacade.collectTargetingFailures(forFailedTargetingInappIds: ["inapp-segment"], tagsByInappId: [:]))
+
+        mockSegmentation.stubError = nil
+        fetchDependencies()
+
+        XCTAssertFalse(dataFacade.collectTargetingFailures(forFailedTargetingInappIds: ["inapp-segment"], tagsByInappId: [:]))
     }
 
     func test_addFailure_whenSegmentationRequestFailedBefore_returnsCachedFailureOnNextFetch() {
@@ -383,5 +469,46 @@ final class InAppConfigurationDataFacadeTests: XCTestCase {
     private func decodeInAppOperationJSONModel(from jsonString: String) -> InappOperationJSONModel? {
         guard let data = jsonString.data(using: .utf8) else { return nil }
         return try? JSONDecoder().decode(InappOperationJSONModel.self, from: data)
+    }
+}
+
+@Suite("Where the facade reports an in-app's failed image download")
+struct InAppConfigurationDataFacadeImageFailureTests {
+
+    private let failureManager = MockInappShowFailureManager()
+    private let dataFacade: InAppConfigurationDataFacade
+
+    init() {
+        TestConfiguration.configure()
+        dataFacade = InAppConfigurationDataFacade(segmentationService: MockSegmentationService(),
+                                                  targetingChecker: DI.injectOrFail(InAppTargetingCheckerProtocol.self),
+                                                  imageService: MockImageDownloadService(),
+                                                  tracker: DI.injectOrFail(InAppMessagesTracker.self),
+                                                  failureManager: failureManager)
+    }
+
+    private func downloadMissingImage(reporting report: ImageFailureReport) async {
+        await withCheckedContinuation { continuation in
+            dataFacade.downloadImage(withUrl: "https://example.com/missing.jpg", inappId: "inapp-1", tags: nil, failureReport: report) { _ in
+                continuation.resume()
+            }
+        }
+    }
+
+    @Test("A pass's failed image download waits in the pass's buffer")
+    func passImageFailureIsBuffered() async {
+        await downloadMissingImage(reporting: .bufferedForThePass)
+
+        #expect(failureManager.failures.map(\.inappId) == ["inapp-1"])
+        #expect(failureManager.sentAtOnce.isEmpty)
+    }
+
+    @Test("A tap's failed image download is sent at once, past the buffer")
+    func tapImageFailureIsSentAtOnce() async {
+        await downloadMissingImage(reporting: .atOnce)
+
+        #expect(failureManager.sentAtOnce.map(\.inappId) == ["inapp-1"])
+        #expect(failureManager.sentAtOnce.map(\.reason) == [.imageDownloadFailed])
+        #expect(failureManager.failures.isEmpty)
     }
 }

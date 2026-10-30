@@ -9,59 +9,151 @@
 import Foundation
 import MindboxLogger
 
+struct ConfigCandidates {
+
+    let renderable: [InApp]
+
+    let inPool: [InApp]
+
+    static let empty = ConfigCandidates(renderable: [], inPool: [])
+}
+
 protocol InappFilterProtocol {
-    func filter(inapps: [InAppDTO]?, abTests: [ABTest]?) -> [InApp]
-    func filterInappsByOperation(event: ApplicationEvent?, operationInapps: [String: Set<String>]) -> [InApp]
-    func filterInappsByOperationForShow(event: ApplicationEvent?, abTests: [ABTest]?, operationInapps: [String: Set<String>]) -> [InApp]
-    func filterInappsByTargeting(inapps: [InApp], targetingChecker: InAppTargetingCheckerProtocol) -> [InAppTransitionData]
-    var validInapps: [InApp] { get }
-    var shownInAppShowDatesDictionary: [String: [Date]] { get }
+
+    func candidates(from response: ConfigResponse) -> ConfigCandidates
+
+    func filterForTrigger(in candidates: ConfigCandidates) -> [InApp]
+
+    func filter(place: String, in candidates: ConfigCandidates) -> [InApp]
+
+    func inapps(addressedTo place: String, in candidates: ConfigCandidates) -> [InApp]
+
+    func inapps(askedAbout ids: [String], in candidates: ConfigCandidates) -> [InApp]
+
+    func filter(requestedIds ids: [String], in candidates: ConfigCandidates) -> [InApp]
+
+    func filter(id: String, in candidates: ConfigCandidates) -> InApp?
+
+    func filterInappsByOperation(event: ApplicationEvent?,
+                                 operationInapps: [String: Set<String>],
+                                 in candidates: ConfigCandidates) -> [InApp]
+
+    func filterOutNonOverlayInapps(_ inapps: [InApp]) -> [InApp]
+
+    func filterInappsByOperationForShow(event: ApplicationEvent?,
+                                        operationInapps: [String: Set<String>],
+                                        in candidates: ConfigCandidates) -> [InApp]
+
+    func filterInappsByTargeting(inapps: [InApp],
+                                 targetingChecker: InAppTargetingCheckerProtocol,
+                                 pickVariant: (InApp) -> MindboxFormVariant?) -> [InAppTransitionData]
 }
 
 final class InappsFilterService: InappFilterProtocol {
-
-    var validInapps: [InApp] = []
-    var shownInAppShowDatesDictionary: [String: [Date]] = [:]
 
     private let persistenceStorage: PersistenceStorage
     private let variantsFilter: VariantFilterProtocol
     private let sdkVersionValidator: SDKVersionValidator
 
-    init(persistenceStorage: PersistenceStorage, variantsFilter: VariantFilterProtocol, sdkVersionValidator: SDKVersionValidator) {
+    init(persistenceStorage: PersistenceStorage,
+         variantsFilter: VariantFilterProtocol,
+         sdkVersionValidator: SDKVersionValidator) {
         self.persistenceStorage = persistenceStorage
         self.variantsFilter = variantsFilter
         self.sdkVersionValidator = sdkVersionValidator
     }
 
-    func filter(inapps: [InAppDTO]?, abTests: [ABTest]?) -> [InApp] {
-        guard var inapps = inapps else {
+    func candidates(from response: ConfigResponse) -> ConfigCandidates {
+        let renderable = renderableInapps(from: response.inapps?.elements)
+        // Safe to cache: deviceUUID is written during SDK initialization, before in-apps start.
+        let inPool = filterInappsByABTests(response.abtests, responseInapps: renderable)
+
+        return ConfigCandidates(renderable: renderable, inPool: inPool)
+    }
+
+    func filterForTrigger(in candidates: ConfigCandidates) -> [InApp] {
+        applyPostABFilters(filterOutNonOverlayInapps(candidates.inPool))
+    }
+
+    func filter(place: String, in candidates: ConfigCandidates) -> [InApp] {
+        applyPostABFilters(filterInappsByPlace(place, inapps: candidates.inPool))
+    }
+
+    func inapps(addressedTo place: String, in candidates: ConfigCandidates) -> [InApp] {
+        filterInappsByPlace(place, inapps: candidates.renderable)
+    }
+
+    func inapps(askedAbout ids: [String], in candidates: ConfigCandidates) -> [InApp] {
+        var seen = Set<String>()
+        return ids.compactMap { id in
+            guard seen.insert(id).inserted else { return nil }
+            return candidates.renderable.first { $0.id == id }
+        }
+    }
+
+    func filter(requestedIds ids: [String], in candidates: ConfigCandidates) -> [InApp] {
+        let asked = Set(ids)
+
+        let missing = asked.subtracting(candidates.renderable.map(\.id))
+        if !missing.isEmpty {
+            Logger.common(message: "[InappsFilterService] The page asked about in-app(s) this SDK cannot render: [\(missing.sorted().joined(separator: ", "))]",
+                          level: .debug, category: .inAppMessages)
+        }
+
+        let requested = ids.compactMap { id in candidates.inPool.first { $0.id == id } }
+        return filterInappsByAlreadyShown(filterOutNonOverlayInapps(requested))
+    }
+
+    func filter(id: String, in candidates: ConfigCandidates) -> InApp? {
+        let inapp = candidates.renderable.first { $0.id == id }
+
+        if inapp == nil {
+            Logger.common(message: "[InappsFilterService] No in-app with id \(id) this SDK can render.",
+                          level: .error, category: .inAppMessages)
+        }
+
+        return inapp
+    }
+
+    private func renderableInapps(from inapps: [InAppDTO]?) -> [InApp] {
+        guard let inapps = inapps else {
             Logger.common(message: "Received nil for in-apps. Returning an empty array.", level: .debug, category: .inAppMessages)
             return []
         }
 
-        inapps = filterInappsBySDKVersion(inapps)
-        Logger.common(message: "Processing \(inapps.count) in-app(s).", level: .debug, category: .inAppMessages)
-        let validInapps = filterValidInAppMessages(inapps)
-        
-        return applyCommonFilters(inapps: validInapps, abTests: abTests)
+        let versionedInapps = filterInappsBySDKVersion(inapps)
+        Logger.common(message: "Processing \(versionedInapps.count) in-app(s).", level: .debug, category: .inAppMessages)
+        return filterValidInAppMessages(versionedInapps)
     }
-    
-    func filterInappsByOperation(event: ApplicationEvent?, operationInapps: [String: Set<String>]) -> [InApp] {
+
+    func filterInappsByOperation(event: ApplicationEvent?,
+                                 operationInapps: [String: Set<String>],
+                                 in candidates: ConfigCandidates) -> [InApp] {
+        inappsListening(to: event, operationInapps: operationInapps, among: candidates.renderable)
+    }
+
+    func filterInappsByOperationForShow(event: ApplicationEvent?,
+                                        operationInapps: [String: Set<String>],
+                                        in candidates: ConfigCandidates) -> [InApp] {
+        let inPool = inappsListening(to: event, operationInapps: operationInapps, among: candidates.inPool)
+        return applyPostABFilters(filterOutNonOverlayInapps(inPool))
+    }
+
+    private func inappsListening(to event: ApplicationEvent?,
+                                 operationInapps: [String: Set<String>],
+                                 among inapps: [InApp]) -> [InApp] {
         guard let event = event,
               let inappIDS = operationInapps[event.name] else {
             Logger.common(message: "[InappsFilterService] No operation inapps for event. Return empty array", level: .debug, category: .inAppMessages)
             return []
         }
-        
-        return validInapps.filter { inappIDS.contains($0.id) }
-    }
-    
-    func filterInappsByOperationForShow(event: ApplicationEvent?, abTests: [ABTest]?, operationInapps: [String: Set<String>]) -> [InApp] {
-        let inapps = filterInappsByOperation(event: event, operationInapps: operationInapps)
-        return applyCommonFilters(inapps: inapps, abTests: abTests)
+
+        return inapps.filter { inappIDS.contains($0.id) }
     }
 
-    func filterInappsByTargeting(inapps: [InApp], targetingChecker: InAppTargetingCheckerProtocol) -> [InAppTransitionData] {
+    func filterInappsByTargeting(inapps: [InApp],
+                                 targetingChecker: InAppTargetingCheckerProtocol,
+                                 pickVariant: (InApp) -> MindboxFormVariant?) -> [InAppTransitionData] {
         var filteredInAppsByEvent: [InAppTransitionData] = []
 
         for inapp in inapps {
@@ -69,7 +161,7 @@ final class InappsFilterService: InappFilterProtocol {
                 continue
             }
 
-            if let inAppFormVariants = inapp.form.variants.first {
+            if let inAppFormVariants = pickVariant(inapp) {
                 let formData = InAppTransitionData(inAppId: inapp.id,
                                                    isPriority: inapp.isPriority,
                                                    delayTime: inapp.delayTime,
@@ -86,7 +178,6 @@ final class InappsFilterService: InappFilterProtocol {
 
 // MARK: - Internal methods
 extension InappsFilterService {
-    // FIXME: Rewrite this func in the future
     // swiftlint:disable:next cyclomatic_complexity
     func filterInappsByABTests(_ abTests: [ABTest]?, responseInapps: [InApp]?) -> [InApp] {
         let responseInapps = responseInapps ?? []
@@ -158,9 +249,9 @@ extension InappsFilterService {
     }
 
     func filterInappsByAlreadyShown(_ inapps: [InApp]) -> [InApp] {
-        let shownInAppShowDatesDictionary = persistenceStorage.shownDatesByInApp ?? [:]
         let frequencyValidator = self.createFrequencyValidator()
-        Logger.common(message: "Shown in-apps ids: [\(shownInAppShowDatesDictionary.keys)]", level: .info, category: .inAppMessages)
+        let shownIds = persistenceStorage.shownDatesByInApp?.keys ?? [:].keys
+        Logger.common(message: "Shown in-apps ids: [\(shownIds)]", level: .info, category: .inAppMessages)
         let filteredInapps = inapps.filter {
             let result = frequencyValidator.isValid(frequency: $0.frequency, id: $0.id)
             return result
@@ -191,8 +282,10 @@ extension InappsFilterService {
                                            sdkVersion: inapp.sdkVersion,
                                            targeting: inapp.targeting,
                                            frequency: inapp.frequency,
+                                           displayConditions: inapp.displayConditions,
                                            form: formModel,
                                            tags: inapp.tags)
+                    warnIfNoPassCanReach(inappModel)
                     filteredInapps.append(inappModel)
                 }
             } catch {
@@ -201,20 +294,50 @@ extension InappsFilterService {
         }
 
         Logger.common(message: "Filtering process completed. \(filteredInapps.count) valid in-app(s) found.", level: .debug, category: .inAppMessages)
-        validInapps = filteredInapps
         return filteredInapps
+    }
+
+    private func warnIfNoPassCanReach(_ inapp: InApp) {
+        guard inapp.displayConditions == .directCall, inapp.targeting.requiresEvent else { return }
+
+        Logger.common(message: "[InappsFilterService] In-app \(inapp.id) is direct-call only but targeted by an event: no pass will show it or vouch for it, only a direct call opens it. Check the campaign.",
+                      level: .error, category: .inAppMessages)
     }
 
     private func createFrequencyValidator() -> InappFrequencyValidator {
         InappFrequencyValidator(persistenceStorage: persistenceStorage)
     }
 
-    private func applyCommonFilters(inapps: [InApp], abTests: [ABTest]?) -> [InApp] {
-        let filteredByABTestInapps = filterInappsByABTests(abTests, responseInapps: inapps)
-        let filteredByAlreadyShown = filterInappsByAlreadyShown(filteredByABTestInapps)
-        return sortInappsByPriority(filteredByAlreadyShown)
+    private func applyPostABFilters(_ inapps: [InApp]) -> [InApp] {
+        sortInappsByPriority(filterInappsByAlreadyShown(filterOutDirectCallInapps(inapps)))
     }
-    
+
+    func filterInappsByPlace(_ place: String, inapps: [InApp]) -> [InApp] {
+        inapps.filter { inapp in inapp.form.variants.contains { $0.placeSystemName == place } }
+    }
+
+    func filterOutNonOverlayInapps(_ inapps: [InApp]) -> [InApp] {
+        inapps.filter { inapp in
+            guard inapp.form.variants.contains(where: { $0.isOverlayPresentable }) else {
+                Logger.common(message: "[InappsFilterService] In-app \(inapp.id) has no variant that can be shown over the screen. Skipping.",
+                              level: .debug, category: .inAppMessages)
+                return false
+            }
+            return true
+        }
+    }
+
+    func filterOutDirectCallInapps(_ inapps: [InApp]) -> [InApp] {
+        inapps.filter { inapp in
+            guard inapp.displayConditions != .directCall else {
+                Logger.common(message: "[InappsFilterService] In-app \(inapp.id) is direct call only. Skipping.",
+                              level: .debug, category: .inAppMessages)
+                return false
+            }
+            return true
+        }
+    }
+
     func sortInappsByPriority(_ inapps: [InApp]) -> [InApp] {
         return inapps.sorted { $0.isPriority && !$1.isPriority }
     }

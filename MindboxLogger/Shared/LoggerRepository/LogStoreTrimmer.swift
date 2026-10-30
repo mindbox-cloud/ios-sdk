@@ -18,26 +18,11 @@ struct SystemClock: Clock {
 }
 
 protocol LogStoreTrimming {
-    /// Attempts to perform a trim operation if the policy allows it.
-    ///
-    /// - Parameters:
-    ///   - precomputedSizeKB: Optional precomputed database size in kilobytes.
-    ///     If provided, the trimmer will **not** call the measurer.
-    ///   - delete: A callback that must perform deletion given the computed fraction
-    ///     (e.g. delete the oldest `fraction * N` items). May throw.
-    /// - Returns: `true` if a trim was performed; `false` if skipped (below limit or under cooldown).
-    /// - Throws: Rethrows any error thrown by `delete`.
     @discardableResult
     func maybeTrim(precomputedSizeKB: Int?, delete: (Double) throws -> Void) throws -> Bool
     
-    /// Computes the fraction of items to delete in order to reach the configured
-    /// low-water mark.
-    ///
-    /// The result is clamped to `[minDeleteFraction, maxDeleteFraction]`.
-    /// Returns `nil` if the current size does not exceed the limit.
     func computeTrimFraction(sizeKB: Int, limitKB: Int) -> Double?
     
-    /// Resets cooldown so that the next `maybeTrim` call may run immediately.
     func resetCooldown()
 }
 

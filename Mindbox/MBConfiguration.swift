@@ -204,14 +204,11 @@ struct ConfigValidation {
         static let domain               = ChangedState(rawValue: 1 << 2)
         static let shouldCreateCustomer = ChangedState(rawValue: 1 << 3)
 
-        /// Change affecting the REST API for the application
         static let rest: ChangedState = [.endpoint, .domain]
     }
 
     var changedState: ChangedState = .none
 
-    // `operationsDomain` is intentionally not diffed: changing it must not re-fire
-    // `installed`. The new value is picked up at request time via MBNetworkFetcher.
     mutating func compare(_ lhs: MBConfiguration?, _ rhs: MBConfiguration?) {
         if !(lhs?.domain == rhs?.domain && lhs?.endpoint == rhs?.endpoint) {
             changedState = .rest

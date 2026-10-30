@@ -8,9 +8,6 @@
 
 import Foundation
 
-/// Polls the page for the JS bridge instead of deciding on a single didFinish-time probe:
-/// module scripts can finish evaluating a beat after the navigation's load event (reused
-/// prewarmed WebView, slow devices), so one early `false` must not fail a healthy in-app.
 final class WebViewReadyChecker {
     typealias Evaluate = (_ script: String, _ completion: @escaping (Result<Any?, Error>) -> Void) -> Void
     typealias Schedule = (_ delay: TimeInterval, _ work: @escaping () -> Void) -> Void
@@ -34,8 +31,6 @@ final class WebViewReadyChecker {
         attempt(1, onReady: onReady, onGiveUp: onGiveUp)
     }
 
-    /// Abandons the poll without calling either completion — the caller's new navigation
-    /// (or teardown) owns readiness from here.
     func cancel() {
         isCancelled = true
     }
@@ -47,14 +42,12 @@ final class WebViewReadyChecker {
 
             let failure: String
             switch result {
-            case .success(let anyValue) where (anyValue as? Bool) == true:
+            case .success(let anyValue) where (anyValue as? String) == Constants.WebViewBridgeJS.bridgeReady:
                 onReady()
                 return
-            case .success:
-                failure = "window.bridgeMessagesHandlers.emit is missing"
+            case .success(let anyValue):
+                failure = Self.failureDescription(for: anyValue)
             case .failure(let error):
-                // Transient during navigation churn (a page mid-teardown rejects
-                // evaluation) — retried on the same budget as a plain `false`.
                 failure = "evaluateJavaScript error: \(error.localizedDescription)"
             }
 
@@ -65,6 +58,17 @@ final class WebViewReadyChecker {
             self.schedule(Self.retryDelay) { [weak self] in
                 self?.attempt(number + 1, onReady: onReady, onGiveUp: onGiveUp)
             }
+        }
+    }
+
+    private static func failureDescription(for value: Any?) -> String {
+        switch value as? String {
+        case Constants.WebViewBridgeJS.bridgeNoNativeHandler:
+            return "no-native-bridge: window.webkit.messageHandlers.\(Constants.WebViewBridgeJS.handlerName).postMessage is missing"
+        case Constants.WebViewBridgeJS.bridgeNoPageHandlers:
+            return "no-handlers: window.bridgeMessagesHandlers.emit is missing"
+        default:
+            return "unexpected ready check result: \(String(describing: value))"
         }
     }
 }

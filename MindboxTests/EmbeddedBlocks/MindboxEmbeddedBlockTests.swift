@@ -1,0 +1,357 @@
+//
+//  MindboxEmbeddedBlockTests.swift
+//  MindboxTests
+//
+//  Created by vailence on 10.08.2026.
+//  Copyright © 2026 Mindbox. All rights reserved.
+//
+
+#if canImport(SwiftUI)
+import Testing
+import SwiftUI
+@_spi(Internal) @testable import Mindbox
+
+@Suite("MindboxEmbeddedBlock SwiftUI wrapper", .tags(.embeddedBlocks))
+@MainActor
+struct MindboxEmbeddedBlockTests {
+
+    init() {
+        EmbeddedBlockAppPresence.shared.reset()
+    }
+
+    // MARK: - Modifiers
+
+    @Test("Bare block has neither a placeholder nor an error view")
+    func bareBlockHasNoCustomViews() {
+        guard #available(iOS 13.0, *) else { return }
+
+        let block = MindboxEmbeddedBlock(placeSystemName: "stories", height: 104, loadingStrategy: .placeholder)
+
+        #expect(block.placeholderBuilder == nil)
+        #expect(block.errorBuilder == nil)
+    }
+
+    @Test("Placeholder modifier sets the placeholder and leaves the error view alone")
+    func placeholderModifierSetsOnlyThePlaceholder() {
+        guard #available(iOS 13.0, *) else { return }
+
+        let block = MindboxEmbeddedBlock(placeSystemName: "stories", height: 104, loadingStrategy: .placeholder)
+            .placeholder { Color.gray }
+
+        #expect(block.placeholderBuilder != nil)
+        #expect(block.errorBuilder == nil)
+    }
+
+    @Test("Error view modifier sets the error view and leaves the placeholder alone")
+    func errorViewModifierSetsOnlyTheErrorView() {
+        guard #available(iOS 13.0, *) else { return }
+
+        let block = MindboxEmbeddedBlock(placeSystemName: "stories", height: 104, loadingStrategy: .placeholder)
+            .errorView { Text("no stories") }
+
+        #expect(block.errorBuilder != nil)
+        #expect(block.placeholderBuilder == nil)
+    }
+
+    @Test("Both modifiers compose in either order")
+    func bothModifiersCompose() {
+        guard #available(iOS 13.0, *) else { return }
+
+        let placeholderFirst = MindboxEmbeddedBlock(placeSystemName: "stories", height: 104, loadingStrategy: .placeholder)
+            .placeholder { Color.gray }
+            .errorView { Text("no stories") }
+
+        let errorFirst = MindboxEmbeddedBlock(placeSystemName: "stories", height: 104, loadingStrategy: .placeholder)
+            .errorView { Text("no stories") }
+            .placeholder { Color.gray }
+
+        #expect(placeholderFirst.placeholderBuilder != nil)
+        #expect(placeholderFirst.errorBuilder != nil)
+        #expect(errorFirst.placeholderBuilder != nil)
+        #expect(errorFirst.errorBuilder != nil)
+    }
+
+    @Test("Modifier returns a copy and does not touch the block it was applied to")
+    func modifierDoesNotMutateTheOriginal() {
+        guard #available(iOS 13.0, *) else { return }
+
+        let bare = MindboxEmbeddedBlock(placeSystemName: "stories", height: 104, loadingStrategy: .placeholder)
+
+        let decorated = bare
+            .placeholder { Color.gray }
+            .errorView { Text("no stories") }
+
+        #expect(bare.placeholderBuilder == nil)
+        #expect(bare.errorBuilder == nil)
+        #expect(decorated.placeholderBuilder != nil)
+        #expect(decorated.errorBuilder != nil)
+    }
+
+    @Test("Applying a modifier twice keeps the last view")
+    func repeatedModifierKeepsTheLastView() {
+        guard #available(iOS 13.0, *) else { return }
+
+        let log = BuildLog()
+
+        let block = MindboxEmbeddedBlock(placeSystemName: "stories", height: 104, loadingStrategy: .placeholder)
+            .placeholder { ProbeView("first", log: log) }
+            .placeholder { ProbeView("second", log: log) }
+
+        _ = block.placeholderBuilder?()
+
+        #expect(log.tags == ["second"])
+    }
+
+    // MARK: - Host layers
+
+    @Test("Custom placeholder replaces the SDK shimmer with a transparent stand-in")
+    func customPlaceholderReplacesTheShimmer() throws {
+        guard #available(iOS 13.0, *) else { return }
+
+        let blockView = makeBlockView()
+
+        makeRepresentable(hasPlaceholder: true).syncStandIns(in: blockView)
+
+        let standIn = try #require(blockView.placeholderView)
+        #expect(standIn.superview === blockView)
+        #expect(blockView.subviews.contains { $0 is EmbeddedBlockShimmerView } == false)
+        #expect(standIn.isUserInteractionEnabled == false)
+    }
+
+    @Test("Block without a custom placeholder keeps the SDK shimmer")
+    func bareBlockKeepsTheShimmer() {
+        guard #available(iOS 13.0, *) else { return }
+
+        let blockView = makeBlockView()
+
+        makeRepresentable().syncStandIns(in: blockView)
+
+        #expect(blockView.placeholderView == nil)
+        #expect(blockView.subviews.contains { $0 is EmbeddedBlockShimmerView })
+    }
+
+    @Test("Custom error view opts the container into showing the failure")
+    func customErrorViewOptsIntoShowingTheFailure() {
+        guard #available(iOS 13.0, *) else { return }
+
+        let blockView = makeBlockView()
+
+        makeRepresentable(hasErrorView: true).syncStandIns(in: blockView)
+
+        #expect(blockView.errorView != nil)
+    }
+
+    @Test("Block without a custom error view leaves the container collapsing")
+    func bareBlockLeavesTheContainerCollapsing() {
+        guard #available(iOS 13.0, *) else { return }
+
+        let blockView = makeBlockView()
+
+        makeRepresentable().syncStandIns(in: blockView)
+
+        #expect(blockView.errorView == nil)
+    }
+
+    @Test("Layers added and dropped after creation take effect")
+    func layersAddedAndDroppedAfterCreationTakeEffect() {
+        guard #available(iOS 13.0, *) else { return }
+
+        let blockView = makeBlockView()
+        makeRepresentable().syncStandIns(in: blockView)
+
+        makeRepresentable(hasPlaceholder: true, hasErrorView: true).syncStandIns(in: blockView)
+
+        #expect(blockView.placeholderView != nil)
+        #expect(blockView.errorView != nil)
+
+        makeRepresentable().syncStandIns(in: blockView)
+
+        #expect(blockView.placeholderView == nil)
+        #expect(blockView.errorView == nil)
+    }
+
+    @Test("Repeated updates keep the very same stand-ins")
+    func repeatedUpdatesKeepTheSameStandIns() throws {
+        guard #available(iOS 13.0, *) else { return }
+
+        let blockView = makeBlockView()
+        let representable = makeRepresentable(hasPlaceholder: true, hasErrorView: true)
+        representable.syncStandIns(in: blockView)
+        let placeholder = try #require(blockView.placeholderView)
+        let errorView = try #require(blockView.errorView)
+
+        representable.syncStandIns(in: blockView)
+
+        #expect(blockView.placeholderView === placeholder)
+        #expect(blockView.errorView === errorView)
+    }
+
+    @Test("A block created without a strategy is automatic, in SwiftUI and in UIKit alike")
+    func defaultStrategyIsAutomatic() {
+        guard #available(iOS 13.0, *) else { return }
+
+        withTestContainer(memory: EmbeddedBlockPlaceMemoryMock()) {
+            #expect(MindboxEmbeddedBlock(placeSystemName: "stories", height: 104).loadingStrategy == .automatic)
+            #expect(MindboxEmbeddedBlockView(placeSystemName: "stories", height: 104).loadingStrategy == .automatic)
+        }
+    }
+
+    @Test("The container SwiftUI builds is made with the block's strategy and animatesReveal")
+    func containerGetsTheBlocksStrategyAndAnimatesReveal() throws {
+        guard #available(iOS 13.0, *) else { return }
+
+        try withTestContainer(memory: EmbeddedBlockPlaceMemoryMock()) {
+            let block = MindboxEmbeddedBlock(placeSystemName: "stories", height: 104,
+                                             loadingStrategy: .hidden, animatesReveal: false)
+            let hosting = UIHostingController(rootView: block)
+            let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 320, height: 600))
+            window.rootViewController = hosting
+            window.isHidden = false
+            hosting.view.layoutIfNeeded()
+
+            let container = try #require(findBlockView(in: hosting.view))
+            #expect(container.loadingStrategy == .hidden)
+            #expect(container.animatesReveal == false)
+        }
+    }
+
+    // MARK: - First look
+
+    @Test("The first look follows the strategy and the memory of the place",
+          arguments: [(MindboxEmbeddedBlockLoadingStrategy.automatic, true, MindboxEmbeddedBlockAppearance.placeholder),
+                      (.automatic, false, .collapsed),
+                      (.placeholder, false, .placeholder),
+                      (.hidden, true, .collapsed)])
+    func initialAppearanceFollowsTheStrategyAndTheMemory(strategy: MindboxEmbeddedBlockLoadingStrategy,
+                                                         isRemembered: Bool,
+                                                         expected: MindboxEmbeddedBlockAppearance) {
+        let memory = EmbeddedBlockPlaceMemoryMock(shownPlaces: isRemembered ? ["stories"] : [])
+
+        withTestContainer(memory: memory) {
+            #expect(MindboxEmbeddedBlockView.initialAppearance(placeSystemName: "stories", loadingStrategy: strategy) == expected)
+        }
+    }
+
+    @Test("The first look asks the memory about the normalized place name")
+    func initialAppearanceNormalizesThePlaceName() {
+        let memory = EmbeddedBlockPlaceMemoryMock(shownPlaces: ["stories"])
+
+        withTestContainer(memory: memory) {
+            #expect(MindboxEmbeddedBlockView.initialAppearance(placeSystemName: "  stories \n", loadingStrategy: .automatic) == .placeholder)
+        }
+        #expect(memory.askedPlaces == ["stories"])
+    }
+
+    @Test("The first look asks the memory by the case-folded key, like the block itself")
+    func initialAppearanceAsksByTheKey() {
+        let memory = EmbeddedBlockPlaceMemoryMock(shownPlaces: ["main-screen-top"])
+
+        withTestContainer(memory: memory) {
+            #expect(MindboxEmbeddedBlockView.initialAppearance(placeSystemName: " Main-Screen-Top ", loadingStrategy: .automatic) == .placeholder)
+        }
+        #expect(memory.askedPlaces == ["main-screen-top"])
+    }
+
+    @Test("Creating the block asks nothing of the memory; the body does")
+    func creatingTheBlockDoesNotAskTheMemory() {
+        guard #available(iOS 13.0, *) else { return }
+
+        let memory = EmbeddedBlockPlaceMemoryMock(shownPlaces: ["stories"])
+
+        withTestContainer(memory: memory) {
+            let block = MindboxEmbeddedBlock(placeSystemName: "stories", height: 104, loadingStrategy: .automatic)
+            #expect(memory.askedPlaces.isEmpty)
+
+            let hosting = UIHostingController(rootView: block)
+            _ = hosting.sizeThatFits(in: CGSize(width: 320, height: CGFloat.greatestFiniteMagnitude))
+            #expect(memory.askedPlaces.contains("stories"))
+        }
+    }
+
+    @Test("The SwiftUI body is laid out from the first look before the container answers",
+          arguments: [(true, CGFloat(104)), (false, CGFloat(0))])
+    func bodyStartsFromTheInitialAppearance(isRemembered: Bool, expectedHeight: CGFloat) {
+        guard #available(iOS 13.0, *) else { return }
+
+        let memory = EmbeddedBlockPlaceMemoryMock(shownPlaces: isRemembered ? ["stories"] : [])
+
+        withTestContainer(memory: memory) {
+            let block = MindboxEmbeddedBlock(placeSystemName: "stories", height: 104, loadingStrategy: .automatic)
+            let hosting = UIHostingController(rootView: block)
+            hosting.view.bounds = CGRect(x: 0, y: 0, width: 320, height: 600)
+            hosting.view.layoutIfNeeded()
+
+            let size = hosting.sizeThatFits(in: CGSize(width: 320, height: CGFloat.greatestFiniteMagnitude))
+            #expect(size.height == expectedHeight)
+        }
+    }
+
+    // MARK: - Helpers
+
+    private func withTestContainer(memory: EmbeddedBlockPlaceMemoryMock, _ body: () throws -> Void) rethrows {
+        let factory = EmbeddedBlockContentProviderFactoryMock(provider: EmbeddedBlockTestBed().provider)
+        let savedBuilder = MBInject.buildTestContainer
+        let savedMode = MBInject.mode
+        defer {
+            MBInject.buildTestContainer = savedBuilder
+            MBInject.mode = savedMode
+        }
+        MBInject.buildTestContainer = {
+            let container = MBContainer()
+            container.register(EmbeddedBlockContentProviderMaking.self) { factory }
+            container.register(EmbeddedBlockPlaceRemembering.self) { memory }
+            return container
+        }
+        MBInject.mode = .test
+
+        try body()
+    }
+
+    private func findBlockView(in view: UIView) -> MindboxEmbeddedBlockView? {
+        if let blockView = view as? MindboxEmbeddedBlockView { return blockView }
+
+        for subview in view.subviews {
+            if let found = findBlockView(in: subview) { return found }
+        }
+        return nil
+    }
+
+    private func makeBlockView() -> MindboxEmbeddedBlockView {
+        MindboxEmbeddedBlockView(placeSystemName: "stories",
+                                 height: 104,
+                                 contentProvider: EmbeddedBlockTestBed().provider,
+                                 placeMemory: EmbeddedBlockPlaceMemoryMock(),
+                                 loadingStrategy: .placeholder)
+    }
+
+    @available(iOS 13.0, *)
+    private func makeRepresentable(hasPlaceholder: Bool = false,
+                                   hasErrorView: Bool = false) -> EmbeddedBlockRepresentable {
+        return EmbeddedBlockRepresentable(placeSystemName: "stories",
+                                          height: 104,
+                                          timeout: nil,
+                                          loadingStrategy: .placeholder,
+                                          animatesReveal: true,
+                                          appearance: .constant(.placeholder),
+                                          onLoad: nil,
+                                          onEmpty: nil,
+                                          onFail: nil,
+                                          hasPlaceholder: hasPlaceholder,
+                                          hasErrorView: hasErrorView)
+    }
+}
+
+private final class BuildLog {
+    var tags: [String] = []
+}
+
+@available(iOS 13.0, *)
+private struct ProbeView: View {
+
+    init(_ tag: String, log: BuildLog) {
+        log.tags.append(tag)
+    }
+
+    var body: some View { Color.clear }
+}
+#endif

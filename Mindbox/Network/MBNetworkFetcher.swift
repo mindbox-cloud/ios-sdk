@@ -61,7 +61,6 @@ class MBNetworkFetcher: NetworkFetcher {
         do {
             let urlRequest = try builder.asURLRequest(route: route)
             Logger.network(request: urlRequest, httpAdditionalHeaders: session.configuration.httpAdditionalHeaders)
-            // Starting data task
             let startTime = CFAbsoluteTimeGetCurrent()
             session.dataTask(with: urlRequest) { data, response, error in
                 let networkTimeMs = Int((CFAbsoluteTimeGetCurrent() - startTime) * 1000)
@@ -110,7 +109,6 @@ class MBNetworkFetcher: NetworkFetcher {
         do {
             let urlRequest = try builder.asURLRequest(route: route)
             Logger.network(request: urlRequest, httpAdditionalHeaders: session.configuration.httpAdditionalHeaders)
-            // Starting data task
             let startTime = CFAbsoluteTimeGetCurrent()
             session.dataTask(with: urlRequest) { [weak self] data, response, error in
                 let networkTimeMs = Int((CFAbsoluteTimeGetCurrent() - startTime) * 1000)
@@ -407,7 +405,6 @@ class MBNetworkFetcher: NetworkFetcher {
         ))
     }
     
-    /// Cancels all ongoing network tasks started by this fetcher.
     func cancelAllTasks() {
         session.getAllTasks { tasks in
             tasks.forEach { $0.cancel() }
@@ -421,8 +418,6 @@ class MBNetworkFetcher: NetworkFetcher {
         )
     }
 
-    /// Priority: JSON config > init > nil. Empty strings count as "no value".
-    /// Static for unit-testing without a PersistenceStorage or MBConfiguration.
     static func resolveOperationsDomain(fromConfigJSON: String?, fromInit: String?) -> String? {
         if let fromConfig = fromConfigJSON, !fromConfig.isEmpty {
             return fromConfig

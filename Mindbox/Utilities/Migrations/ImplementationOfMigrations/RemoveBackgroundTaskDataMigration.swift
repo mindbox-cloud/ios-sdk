@@ -50,7 +50,6 @@ final class RemoveBackgroundTaskDataMigration: MigrationProtocol {
         
         let fileURL = documentsURL.appendingPathComponent(backgroundExecutionPlistName)
         
-        // If file doesn't exist - will throw error `No such file or directory`
         try? fileManager.removeItem(at: fileURL)
     }
 }

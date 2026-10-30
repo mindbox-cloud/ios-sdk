@@ -8,10 +8,14 @@
 import UIKit
 import MindboxLogger
 
+private let initTimeoutSeconds = Constants.WebView.timeoutSeconds
+
 protocol WebVCDelegate: AnyObject {
     func closeTapWebViewVC()
     func closeTimeoutWebViewVC()
+    func closeBridgeLostWebViewVC()
     func closeLoadFailedWebViewVC(reason: String)
+    func closePresentationFailedWebViewVC(reason: String)
 }
 
 final class WebViewController: UIViewController, InappViewControllerProtocol {
@@ -35,18 +39,20 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
     private let imagesDict: [String: UIImage]
     private let operation: (name: String, body: String)?
     private let tags: [String: String]?
+    private let extraParams: [String: JSONValue]?
 
     private let onPresented: () -> Void
     private let onCloseInApp: () -> Void
     private let onError: (InAppPresentationError) -> Void
     private let onTapAction: InAppMessageTapAction
     private let windowProvider: () -> UIWindow?
-    var isTimeoutClose = false
-    private var hasReportedTerminalError = false
+    private var hasClosed = false
     private var hasOnPresentedBeenCalled = false
 
     private enum Constants {
         static let defaultAlphaBackgroundColor: CGFloat = 0.0
+
+        static let revealDuration: TimeInterval = 0.15
     }
 
     private var transparentWebView: TransparentView?
@@ -63,13 +69,15 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         onError: @escaping (InAppPresentationError) -> Void,
         windowProvider: @escaping () -> UIWindow? = WebViewController.defaultWindowProvider,
         operation: (name: String, body: String)?,
-        tags: [String: String]?
+        tags: [String: String]?,
+        extraParams: [String: JSONValue]? = nil
     ) {
         self.model = model
         self.id = id
         self.imagesDict = imagesDict
         self.operation = operation
         self.tags = tags
+        self.extraParams = extraParams
         self.onPresented = onPresented
         self.onCloseInApp = onCloseInApp
         self.onError = onError
@@ -86,7 +94,6 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         NotificationCenter.default.removeObserver(self)
         Logger.common(message: "[WebView] Deinit WebViewVC", category: .webViewInAppMessages)
         transparentWebView?.cleanUp()
-        // Stop the closed in-app's JS from running hidden on the parked warm instance.
         DI.injectOrFail(InAppWebViewPrewarmServiceProtocol.self).parkWarmWebView()
     }
 
@@ -100,19 +107,19 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
 
         switch layer {
         case .webview(let webviewLayer):
-            let webView = TransparentView(frame: .zero, params: webviewLayer.params, userAgent: createUserAgent(), operation: operation, inAppId: id, tags: tags)
+            let params = WebViewStartPayloadBuilder.mergedParams(config: webviewLayer.params, fromCaller: extraParams)
+            let webView = TransparentView(frame: .zero, params: params, userAgent: createUserAgent(), operation: operation, inAppId: id, tags: tags)
             view.addSubview(webView)
 
             setupConstraints(for: webView, in: view)
 
             webView.delegate = self
             webView.webViewAction = self
+            self.transparentWebView = webView
             webView.loadHTMLPage(
                 baseUrl: webviewLayer.baseUrl,
                 contentUrl: webviewLayer.contentUrl
             )
-
-            self.transparentWebView = webView
         default:
             reportErrorAndClose(
                 .webviewPresentationFailed("[WebView] Invalid background layer type for in-app id \(id).")
@@ -153,13 +160,6 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
         becomeFirstResponder()
     }
 
-    override func viewWillDisappear(_ animated: Bool) {
-        // Every dismissal path (close action, dim-tap, timeout) goes through here while
-        // the page is still alive — the last moment the learned-hosts capture can run.
-        transparentWebView?.captureObservedResourceHosts()
-        super.viewWillDisappear(animated)
-    }
-
     override func motionEnded(_ motion: UIEvent.EventSubtype, with event: UIEvent?) {
         if motion == .motionShake {
             transparentWebView?.handleSystemShake()
@@ -196,14 +196,14 @@ final class WebViewController: UIViewController, InappViewControllerProtocol {
 
     @objc
     private func appDidEnterBackground() {
-        guard !hasOnPresentedBeenCalled, !hasReportedTerminalError else { return }
+        guard !hasOnPresentedBeenCalled, !hasClosed else { return }
         transparentWebView?.cancelTimeoutTimer()
         Logger.common(message: "[WebView] App entered background, timeout timer cancelled for in-app id \(id)", category: .webViewInAppMessages)
     }
 
     @objc
     private func appWillEnterForeground() {
-        guard !hasOnPresentedBeenCalled, !hasReportedTerminalError else { return }
+        guard !hasOnPresentedBeenCalled, !hasClosed else { return }
         transparentWebView?.restartTimeoutTimer()
         Logger.common(message: "[WebView] App entering foreground, timeout timer restarted for in-app id \(id)", category: .webViewInAppMessages)
     }
@@ -220,26 +220,25 @@ extension WebViewController: WebVCDelegate {
     }
     
     func closeTimeoutWebViewVC() {
-        Logger.common(message: "[WebView] WebViewVC closeTimeoutOrErrorWebViewVC", category: .webViewInAppMessages)
-        reportErrorAndClose(
-            Self.timeoutError(
-                readyCheckGaveUp: transparentWebView?.readyCheckDidGiveUp == true,
-                inAppId: id,
-                httpErrorDetail: transparentWebView?.noCacheRetryTelemetryDetail
-            )
+        let error = Self.timeoutError(
+            readyCheckFailure: transparentWebView?.readyCheckFailure,
+            httpErrorDetail: transparentWebView?.noCacheRetryTelemetryDetail
         )
+        Logger.common(message: "[WebView] In-app \(id) closed: \(error.failureDetails ?? "")", category: .webViewInAppMessages)
+        reportErrorAndClose(error)
     }
 
-    /// The init timeout is the single closing authority, but monitoring must still tell
-    /// "the page loaded and its JS bridge never appeared" (a content defect) apart from
-    /// "the page never finished loading" (a load defect). `httpErrorDetail` adds the
-    /// concrete cause when a script subresource answered with an HTTP error — with it a
-    /// poisoned-cache death names the resource and status instead of a generic timeout.
-    static func timeoutError(readyCheckGaveUp: Bool, inAppId: String, httpErrorDetail: String? = nil) -> InAppPresentationError {
+    static func timeoutError(readyCheckFailure: String?, httpErrorDetail: String? = nil) -> InAppPresentationError {
         let suffix = httpErrorDetail.map { " \($0)" } ?? ""
-        return readyCheckGaveUp
-            ? .webviewPresentationFailed("[WebView] JS bridge missing after page load (init timeout) for in-app id \(inAppId).\(suffix)")
-            : .webviewLoadFailed("[WebView] WebView initialization timeout for in-app id \(inAppId).\(suffix)")
+        guard let readyCheckFailure else {
+            return .webviewLoadFailed("Page did not send init within \(initTimeoutSeconds)s.\(suffix)")
+        }
+        return .webviewPresentationFailed("JS bridge not found on the loaded page within \(initTimeoutSeconds)s: \(readyCheckFailure).\(suffix)")
+    }
+
+    func closeBridgeLostWebViewVC() {
+        let status = transparentWebView?.readyCheckFailure.map { ": \($0)" } ?? ""
+        reportErrorAndClose(.webviewPresentationFailed("JS bridge lost after the page was shown\(status)"))
     }
 
     func closeLoadFailedWebViewVC(reason: String) {
@@ -248,17 +247,22 @@ extension WebViewController: WebVCDelegate {
             .webviewLoadFailed(reason)
         )
     }
+
+    func closePresentationFailedWebViewVC(reason: String) {
+        Logger.common(message: "[WebView] WebViewVC closePresentationFailedWebViewVC. Reason: \(reason)", category: .webViewInAppMessages)
+        reportErrorAndClose(.webviewPresentationFailed(reason))
+    }
 }
 
 extension WebViewController: WebViewAction {
 
     func onInit() {
-        Logger.common(message: "[WebView] TransparentWebView: received init action", category: .webViewInAppMessages)
         removeLifecycleObservers()
         DispatchQueue.main.async {
+            guard !self.hasClosed else { return }
             if let window = self.windowProvider() {
                 window.isUserInteractionEnabled = true
-                UIView.animate(withDuration: 0.3) {
+                UIView.animate(withDuration: Constants.revealDuration) {
                     window.alpha = 1.0
                 }
                 window.makeKeyAndVisible()
@@ -283,22 +287,18 @@ extension WebViewController: WebViewAction {
     }
 
     func onClose() {
-        Logger.common(message: "[WebView] WebViewVC closeWebView", category: .webViewInAppMessages)
-        onCloseInApp()
+        close(reporting: nil)
     }
 
     func onHide() {
         DispatchQueue.main.async {
+            guard !self.hasClosed else { return }
             if let window = self.windowProvider() {
                 window.isUserInteractionEnabled = false
                 window.alpha = 0.00
                 Logger.common(message: "[WebView] TransparentWebView: Window is now non-interactive and transparent", category: .webViewInAppMessages)
             }
         }
-    }
-    
-    func onLog(message: String) {
-        Logger.common(message: "[JS] \(message)", category: .webViewInAppMessages)
     }
 }
 
@@ -316,12 +316,24 @@ private extension WebViewController {
     }
 
     func reportErrorAndClose(_ error: InAppPresentationError) {
-        guard !hasReportedTerminalError else {
-            return
+        close(reporting: error)
+    }
+
+    func close(reporting error: InAppPresentationError?) {
+        guard !hasClosed else { return }
+        endShow()
+        if let error {
+            onError(error)
         }
-        hasReportedTerminalError = true
-        isTimeoutClose = true
-        onError(error)
-        onClose()
+        Logger.common(message: "[WebView] WebViewVC closeWebView", category: .webViewInAppMessages)
+        onCloseInApp()
+    }
+}
+
+extension WebViewController: InAppShowEnding {
+    func endShow() {
+        guard !hasClosed else { return }
+        hasClosed = true
+        transparentWebView?.endShow()
     }
 }
