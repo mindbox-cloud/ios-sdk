@@ -24,6 +24,21 @@ jobs:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
     - run: swiftlint --config .swiftlint.yml --reporter github-actions-logging --strict
 
+  PrivacyManifest:
+    runs-on: macos-26
+    timeout-minutes: 20
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+    - uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
+      with:
+        xcode-version: latest-stable
+    - uses: mindbox-cloud/xcprivacy-gate@5326ebcf35d96659bec78ed7702f1932bf2c78af # v0.1.0
+      with:
+        args: self-test
+    - uses: mindbox-cloud/xcprivacy-gate@5326ebcf35d96659bec78ed7702f1932bf2c78af # v0.1.0
+      with:
+        args: check --config .github/privacy-manifest/config.json
+
   build:
     runs-on: macos-26
     timeout-minutes: 20
