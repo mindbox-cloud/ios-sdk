@@ -55,7 +55,7 @@ jobs:
     # survive regardless of the console formatter. Only failures are listed
     # (include_passed: false), so the PR comment stays compact even on green runs.
     - name: Publish unit-test summary
-      uses: mikepenz/action-junit-report@a9170d5795813c01ab4901ffb045b52bab4ab09d # v6.5.0
+      uses: mikepenz/action-junit-report@8a133bfa3ecb0ea9024c1e2ae788b4c25f6cdb9d # v6.6.2
       if: ${{ !cancelled() }}
       with:
         report_paths: test_output/report.junit
@@ -78,7 +78,7 @@ jobs:
 
     - name: Upload xcresult bundle
       id: xcresult
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       if: ${{ !cancelled() }}
       with:
         name: unit-tests-xcresult
@@ -102,7 +102,7 @@ jobs:
 
     - name: Upload coverage site
       if: ${{ github.ref == 'refs/heads/develop' }}
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: coverage-site
         path: coverage-site
@@ -159,7 +159,7 @@ jobs:
         .github/scripts/build_api_reference.sh release api-reference
         COPYFILE_DISABLE=1 tar -cf api-reference.tar -C api-reference .
 
-    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: api-reference
         path: api-reference.tar
@@ -219,4 +219,4 @@ jobs:
 
     - name: Deploy to GitHub Pages
       id: deploy
-      uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0
+      uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
