@@ -32,4 +32,5 @@ extension Tag {
     @Tag static var dependencyInjection: Self
     @Tag static var embeddedBlocks: Self
     @Tag static var inappSelection: Self
+    @Tag static var trackingIds: Self
 }
