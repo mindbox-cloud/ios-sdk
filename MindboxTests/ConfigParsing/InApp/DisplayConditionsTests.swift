@@ -41,7 +41,7 @@ struct DisplayConditionsTests {
         #expect(try decode(#"{"$type": "directCall"}"#) == .directCall)
     }
 
-    @Test("Anything unreadable keeps the in-app showing as before", arguments: [
+    @Test("Anything unreadable is rejected", arguments: [
         #"{"$type": "pushOnly"}"#,
         #"{"$type": "all"}"#,
         #"{"$type": "DirectCall"}"#,
@@ -51,8 +51,28 @@ struct DisplayConditionsTests {
         #"42"#,
         #"[]"#
     ])
-    func unreadableValue(value: String) throws {
-        #expect(try decode(value) == .unrestricted)
+    func unreadableValue(value: String) {
+        #expect(throws: (any Error).self) { try decode(value) }
+    }
+
+    @Test("A null value means no conditions")
+    func nullValue() throws {
+        #expect(try decode("null") == nil)
+    }
+
+    @Test("An in-app with an unknown condition is dropped", arguments: [
+        #"{"$type": "unknownCondition"}"#,
+        #"{"$type": "DirectCall"}"#,
+        #"{}"#,
+        #""directCall""#
+    ])
+    func inappWithUnreadableValue(value: String) {
+        #expect(throws: (any Error).self) { try decodeInapp(displayConditions: value) }
+    }
+
+    @Test("A direct-call in-app keeps its condition")
+    func inappWithDirectCall() throws {
+        #expect(try decodeInapp(displayConditions: #"{"$type": "directCall"}"#).displayConditions == .directCall)
     }
 
     @Test("An in-app whose displayConditions is null shows as before")

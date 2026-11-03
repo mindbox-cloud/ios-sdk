@@ -27,6 +27,11 @@ fileprivate enum InAppConfig: String, Configurable {
     case inAppFrequencyUnknownType = "InAppFrequencyUnknownType"
     case inAppFrequencyNil = "InAppFrequencyNil"
 
+    case inAppDisplayConditionsUnknownType = "InAppDisplayConditionsUnknownType"
+    case inAppDisplayConditionsTypeError = "InAppDisplayConditionsTypeError"
+    case inAppDisplayConditionsNil = "InAppDisplayConditionsNil"
+    case inAppDisplayConditionsDirectCall = "InAppDisplayConditionsDirectCall"
+
     case inAppTargetingError = "InAppTargetingError"
     case inAppTargetingTypeError = "InAppTargetingTypeError"
 
@@ -129,6 +134,33 @@ final class InAppConfigParsingTests: XCTestCase {
         }
         XCTAssertEqual(inapp.frequency, .once(OnceFrequency(kind: .lifetime)),
                        "Frequency must default to once/lifetime when frequency is absent")
+    }
+
+    // MARK: displayConditions
+
+    func test_InApp_withDisplayConditionsUnknownType_shouldSkipInApp() {
+        let config = try! InAppConfig.inAppDisplayConditionsUnknownType.getConfig()
+        XCTAssertNotNil(config.inapps)
+        XCTAssertTrue(config.inapps!.elements.isEmpty,
+                      "InApp must be skipped when displayConditions has unknown $type")
+    }
+
+    func test_InApp_withDisplayConditionsTypeError_shouldSkipInApp() {
+        let config = try! InAppConfig.inAppDisplayConditionsTypeError.getConfig()
+        XCTAssertNotNil(config.inapps)
+        XCTAssertTrue(config.inapps!.elements.isEmpty,
+                      "InApp must be skipped when displayConditions is not an object")
+    }
+
+    func test_InApp_withDisplayConditionsNil_shouldBeUnrestricted() {
+        let config = try! InAppConfig.inAppDisplayConditionsNil.getConfig()
+        XCTAssertEqual(config.inapps?.elements.first?.displayConditions, .unrestricted,
+                       "InApp must survive and show without conditions when displayConditions is null")
+    }
+
+    func test_InApp_withDisplayConditionsDirectCall_shouldBeDirectCall() {
+        let config = try! InAppConfig.inAppDisplayConditionsDirectCall.getConfig()
+        XCTAssertEqual(config.inapps?.elements.first?.displayConditions, .directCall)
     }
 
     // MARK: frequency wire values

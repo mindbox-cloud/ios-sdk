@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import MindboxLogger
 
 enum DisplayConditionsType: String, Decodable {
     case directCall
@@ -31,27 +30,17 @@ enum DisplayConditions: Decodable, Equatable {
     }
 
     init(from decoder: Decoder) throws {
-        guard let container = try? decoder.container(keyedBy: CodingKeys.self) else {
-            if let single = try? decoder.singleValueContainer(), single.decodeNil() {
-                self = .unrestricted
-                return
-            }
+        let container = try decoder.container(keyedBy: CodingKeys.self)
 
-            Logger.common(message: "[DisplayConditions] displayConditions is not an object — showing without conditions.",
-                          level: .error, category: .inAppMessages)
-            self = .unrestricted
-            return
+        guard let type = try? container.decode(DisplayConditionsType.self, forKey: .type) else {
+            throw CustomDecodingError.decodingError("displayConditions has no readable $type. Inapp will be ignored.")
         }
-
-        let type = (try? container.decode(DisplayConditionsType.self, forKey: .type)) ?? .unknown
 
         switch type {
         case .directCall:
             self = .directCall
         case .unknown:
-            Logger.common(message: "[DisplayConditions] Unknown type. Showing as before.",
-                          level: .error, category: .inAppMessages)
-            self = .unrestricted
+            throw CustomDecodingError.unknownType("displayConditions has unknown type. Inapp will be ignored.")
         }
     }
 }

@@ -60,7 +60,13 @@ extension InAppDTO {
             frequency = .once(OnceFrequency(kind: .lifetime))
         }
 
-        self.displayConditions = (try? container.decode(DisplayConditions.self, forKey: .displayConditions)) ?? .unrestricted
+        do {
+            self.displayConditions = try container.decodeIfPresent(DisplayConditions.self, forKey: .displayConditions) ?? .unrestricted
+        } catch {
+            Logger.common(message: "[DisplayConditions] In-app \(self.id) is ignored: unreadable displayConditions.",
+                          level: .error, category: .inAppMessages)
+            throw error
+        }
 
         self.targeting = try container.decode(Targeting.self, forKey: .targeting)
         self.form = try container.decode(InAppFormDTO.self, forKey: .form)

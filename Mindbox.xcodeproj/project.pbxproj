@@ -187,6 +187,10 @@
 		4731A82C2F447C3100CBE1E5 /* InAppFormVariantsTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7A82F447C3100CBE1E5 /* InAppFormVariantsTypeError.json */; };
 		4731A82D2F447C3100CBE1E5 /* ABTestsSdkVersionConfigError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7922F447C3100CBE1E5 /* ABTestsSdkVersionConfigError.json */; };
 		4731A82E2F447C3100CBE1E5 /* InAppFrequencyUnknownType.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7AD2F447C3100CBE1E5 /* InAppFrequencyUnknownType.json */; };
+		4F755BBD6239AB5DF4D9BD43 /* InAppDisplayConditionsUnknownType.json in Resources */ = {isa = PBXBuildFile; fileRef = 7454679AE0CE0344E084CBAE /* InAppDisplayConditionsUnknownType.json */; };
+		A136B8BB737C30D52801F113 /* InAppDisplayConditionsTypeError.json in Resources */ = {isa = PBXBuildFile; fileRef = A1B395ADBE169AE85FC27206 /* InAppDisplayConditionsTypeError.json */; };
+		7ADE1F7E620891A00B170C3C /* InAppDisplayConditionsNil.json in Resources */ = {isa = PBXBuildFile; fileRef = 571E1D2144AE512DC40D001E /* InAppDisplayConditionsNil.json */; };
+		03454DE4A7A998524E994806 /* InAppDisplayConditionsDirectCall.json in Resources */ = {isa = PBXBuildFile; fileRef = 6E715222B0D70FB76DFB40F1 /* InAppDisplayConditionsDirectCall.json */; };
 		4731A82F2F447C3100CBE1E5 /* InAppOneCorrupted.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7B32F447C3100CBE1E5 /* InAppOneCorrupted.json */; };
 		4731A8302F447C3100CBE1E5 /* SettingsOperationsViewProductError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7D52F447C3100CBE1E5 /* SettingsOperationsViewProductError.json */; };
 		4731A8312F447C3100CBE1E5 /* InAppTargetingError.json in Resources */ = {isa = PBXBuildFile; fileRef = 4731A7B62F447C3100CBE1E5 /* InAppTargetingError.json */; };
@@ -936,6 +940,10 @@
 		4731A7AB2F447C3100CBE1E5 /* InAppFrequencyNil.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = InAppFrequencyNil.json; sourceTree = "<group>"; };
 		4731A7AC2F447C3100CBE1E5 /* InAppFrequencyTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = InAppFrequencyTypeError.json; sourceTree = "<group>"; };
 		4731A7AD2F447C3100CBE1E5 /* InAppFrequencyUnknownType.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = InAppFrequencyUnknownType.json; sourceTree = "<group>"; };
+		7454679AE0CE0344E084CBAE /* InAppDisplayConditionsUnknownType.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = InAppDisplayConditionsUnknownType.json; sourceTree = "<group>"; };
+		A1B395ADBE169AE85FC27206 /* InAppDisplayConditionsTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = InAppDisplayConditionsTypeError.json; sourceTree = "<group>"; };
+		571E1D2144AE512DC40D001E /* InAppDisplayConditionsNil.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = InAppDisplayConditionsNil.json; sourceTree = "<group>"; };
+		6E715222B0D70FB76DFB40F1 /* InAppDisplayConditionsDirectCall.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = InAppDisplayConditionsDirectCall.json; sourceTree = "<group>"; };
 		4731A7AE2F447C3100CBE1E5 /* InAppIdError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = InAppIdError.json; sourceTree = "<group>"; };
 		4731A7AF2F447C3100CBE1E5 /* InAppIdTypeError.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = InAppIdTypeError.json; sourceTree = "<group>"; };
 		4731A7B02F447C3100CBE1E5 /* InAppLayerMissingType.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = InAppLayerMissingType.json; sourceTree = "<group>"; };
@@ -2072,6 +2080,10 @@
 				4731A7AB2F447C3100CBE1E5 /* InAppFrequencyNil.json */,
 				4731A7AC2F447C3100CBE1E5 /* InAppFrequencyTypeError.json */,
 				4731A7AD2F447C3100CBE1E5 /* InAppFrequencyUnknownType.json */,
+				7454679AE0CE0344E084CBAE /* InAppDisplayConditionsUnknownType.json */,
+				A1B395ADBE169AE85FC27206 /* InAppDisplayConditionsTypeError.json */,
+				571E1D2144AE512DC40D001E /* InAppDisplayConditionsNil.json */,
+				6E715222B0D70FB76DFB40F1 /* InAppDisplayConditionsDirectCall.json */,
 				4731A7AE2F447C3100CBE1E5 /* InAppIdError.json */,
 				4731A7AF2F447C3100CBE1E5 /* InAppIdTypeError.json */,
 				4731A7B02F447C3100CBE1E5 /* InAppLayerMissingType.json */,
@@ -4341,6 +4353,10 @@
 				4731A82C2F447C3100CBE1E5 /* InAppFormVariantsTypeError.json in Resources */,
 				4731A82D2F447C3100CBE1E5 /* ABTestsSdkVersionConfigError.json in Resources */,
 				4731A82E2F447C3100CBE1E5 /* InAppFrequencyUnknownType.json in Resources */,
+				4F755BBD6239AB5DF4D9BD43 /* InAppDisplayConditionsUnknownType.json in Resources */,
+				A136B8BB737C30D52801F113 /* InAppDisplayConditionsTypeError.json in Resources */,
+				7ADE1F7E620891A00B170C3C /* InAppDisplayConditionsNil.json in Resources */,
+				03454DE4A7A998524E994806 /* InAppDisplayConditionsDirectCall.json in Resources */,
 				4731A82F2F447C3100CBE1E5 /* InAppOneCorrupted.json in Resources */,
 				4731A8302F447C3100CBE1E5 /* SettingsOperationsViewProductError.json in Resources */,
 				4731A8312F447C3100CBE1E5 /* InAppTargetingError.json in Resources */,
