@@ -248,7 +248,9 @@ final class CoreController {
             try databaseRepository.create(event: event)
             persistenceStorage.applicationInfoUpdateVersion = newVersion
             Logger.common(message: "[Core] Mobile application info has been updated", level: .default, category: .general)
-            updateLastInfoUpdateDate()
+            if eventType != .trackingIdsUpdated {
+                updateLastInfoUpdateDate()
+            }
         } catch {
             Logger.common(message: "[Core] Updating mobile application info failed with an error: \(error.localizedDescription)", level: .error, category: .general)
         }

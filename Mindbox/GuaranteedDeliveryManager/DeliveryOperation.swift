@@ -23,6 +23,15 @@ class DeliveryOperation: AsyncOperation, @unchecked Sendable {
 
     var onCompleted: ((_ event: Event, _ error: MindboxError?) -> Void)?
 
+    private func shouldRetry(after error: MindboxError) -> Bool {
+        event.type != .trackingIdsUpdated && !Self.isClientError(error)
+    }
+
+    private static func isClientError(_ error: MindboxError) -> Bool {
+        guard case let .protocolError(response) = error else { return false }
+        return HTTPURLResponseStatusCodeValidator(statusCode: response.httpStatusCode).isClientError
+    }
+
     override func main() {
         guard !isCancelled else { finish(); return }
         
@@ -45,10 +54,10 @@ class DeliveryOperation: AsyncOperation, @unchecked Sendable {
                 
                 guard !self.isCancelled else { return }
                 
-                if case let MindboxError.protocolError(response) = error, HTTPURLResponseStatusCodeValidator(statusCode: response.httpStatusCode).isClientError {
-                    try? self.databaseRepository.delete(event: self.event)
-                } else {
+                if self.shouldRetry(after: error) {
                     try? self.databaseRepository.update(event: self.event)
+                } else {
+                    try? self.databaseRepository.delete(event: self.event)
                 }
             }
         }

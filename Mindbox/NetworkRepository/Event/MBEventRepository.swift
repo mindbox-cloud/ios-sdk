@@ -45,14 +45,14 @@ class MBEventRepository: EventRepository {
         }
         let route = EventRoute(EventWrapper(event: event, endpoint: configuration.endpoint, deviceUUID: deviceUUID))
         let firstSend = trackingIdsResolver.takeFirstSend(of: event)
-        guard let attachment = trackingIdsResolver.attachment(for: event.type, trackingHost: trackingHostResolver.trackingHost),
+        guard let attachment = event.isRetry ? nil : trackingIdsResolver.attachment(for: event.type, trackingHost: trackingHostResolver.trackingHost),
               case let .sdkOperation(operation) = event.type.request else {
             fetcher.request(route: route, completion: completion)
             return
         }
         let idsRoute = EventRoute(EventWrapper(event: event, endpoint: configuration.endpoint, deviceUUID: deviceUUID, trackingIds: attachment))
         let instanceId = persistenceStorage.applicationInstanceId
-        fetcher.request(type: BaseResponse.self, route: idsRoute) { [persistenceStorage, trackingIdsResolver] result in
+        fetcher.request(type: BaseResponse.self, route: idsRoute) { [fetcher, persistenceStorage, trackingIdsResolver] result in
             switch result {
             case .success:
                 let hash = attachment.hash
@@ -64,6 +64,13 @@ class MBEventRepository: EventRepository {
                     )
                 }
                 completion(.success(()))
+            case let .failure(error) where event.type == .keepAlive:
+                Logger.common(
+                    message: "[TrackingIds] Keepalive did not reach the tracking host (\(error.localizedDescription)), retrying on the main host without ids",
+                    level: .info,
+                    category: .general
+                )
+                fetcher.request(route: route, completion: completion)
             case let .failure(error):
                 completion(.failure(error))
             }
