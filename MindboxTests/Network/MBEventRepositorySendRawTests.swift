@@ -95,6 +95,16 @@ struct MBEventRepositorySendRawTests {
         return trackingIdsResolver
     }
 
+    private static let clientError = MindboxError.protocolError(.init(status: .protocolError, errorMessage: "Forbidden", httpStatusCode: 403))
+
+    private func deliver(_ event: Event, with repository: EventRepository, from database: DatabaseRepositoryProtocol) async {
+        await withCheckedContinuation { continuation in
+            let operation = DeliveryOperation(databaseRepository: database, eventRepository: repository, event: event)
+            operation.completionBlock = { continuation.resume() }
+            operation.start()
+        }
+    }
+
     private static func wrapper(of route: Route?) -> EventWrapper? {
         (route as? EventRoute)?.wrapper
     }
@@ -386,6 +396,28 @@ struct MBEventRepositorySendRawTests {
         #expect(TrackingIdsRecord.reference(in: storage) == .unconfirmed)
     }
 
+    @Test("A Keepalive sent again under its transaction after the fallback stores no hash", .tags(.trackingIds))
+    func send_keepaliveResentAfterFallback_storesNoHash() async throws {
+        let fetcher = FakeNetworkFetcher()
+        fetcher.requestTypedRawResponse = .failure(.connectionError)
+        let storage = try makeStorage()
+        let trackingIdsResolver = makeTrackingIdsResolver(UUID())
+        let repo = makeRepository(fetcher: fetcher, storage: storage, trackingIdsResolver: trackingIdsResolver)
+        let keepalive = Event(type: .keepAlive, body: "{}")
+        trackingIdsResolver.expectFirstSend(of: keepalive)
+
+        _ = await awaitResult { completion in
+            repo.send(event: keepalive, completion: completion)
+        }
+        fetcher.requestTypedRawResponse = .success(Data(#"{"status":"Success"}"#.utf8))
+        _ = await awaitResult { completion in
+            repo.send(event: keepalive, completion: completion)
+        }
+
+        #expect(fetcher.requestTypedCallCount == 2)
+        #expect(TrackingIdsRecord.reference(in: storage) == nil)
+    }
+
     @Test("An ids event first sent without ids stores no hash when sent again with them", .tags(.trackingIds))
     func send_idsEventFirstSentWithoutIds_storesNoHashOnResend() async throws {
         let fetcher = FakeNetworkFetcher()
@@ -476,6 +508,85 @@ struct MBEventRepositorySendRawTests {
         #expect(Self.wrapper(of: route)?.trackingIds?.ids == [])
         #expect(route.baseURLKind == .operations)
         #expect(TrackingIdsRecord.reference(in: storage) == .hash("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"))
+    }
+
+    @Test("A retried Keepalive goes to the operations host without ids and leaves the hash untouched", .tags(.trackingIds))
+    func send_retriedKeepalive_goesToOperationsHostWithoutIds() async throws {
+        let fetcher = FakeNetworkFetcher()
+        let storage = try makeStorage()
+        let repo = makeRepository(fetcher: fetcher, storage: storage, trackingIdsResolver: makeTrackingIdsResolver(UUID()))
+        let database = try MockDatabaseRepository(inMemory: true)
+        let event = Event(type: .keepAlive, body: "{}")
+        try database.create(event: event)
+        try database.update(event: event)
+        let retried = try #require(try database.readEvent(by: event.transactionId))
+        try #require(retried.isRetry)
+
+        let result = await awaitResult { completion in
+            repo.send(event: retried, completion: completion)
+        }
+
+        let route = try #require(fetcher.capturedRoute as? EventRoute)
+        #expect(fetcher.requestTypedCallCount == 0)
+        #expect(route.baseURLKind == .operations)
+        #expect(Self.wrapper(of: route)?.trackingIds == nil)
+        #expect(route.body == Data("{}".utf8))
+        #expect(TrackingIdsRecord.reference(in: storage) == nil)
+        #expect(throws: Never.self) { try result.get() }
+    }
+
+    @Test("A Keepalive whose ids request fails is resent without ids to the operations host in the same send", .tags(.trackingIds))
+    func send_keepaliveWithFailedIdsRequest_fallsBackToOperationsHostWithoutIds() async throws {
+        let fetcher = FakeNetworkFetcher()
+        fetcher.requestTypedRawResponse = .failure(Self.clientError)
+        let storage = try makeStorage()
+        let trackingIdsResolver = makeTrackingIdsResolver(UUID())
+        let repo = makeRepository(fetcher: fetcher, storage: storage, trackingIdsResolver: trackingIdsResolver)
+        let keepalive = Event(type: .keepAlive, body: "{}")
+        trackingIdsResolver.expectFirstSend(of: keepalive)
+
+        let result = await awaitResult { completion in
+            repo.send(event: keepalive, completion: completion)
+        }
+
+        let route = try #require(fetcher.capturedRoute as? EventRoute)
+        #expect(fetcher.requestTypedCallCount == 1)
+        #expect(route.baseURLKind == .operations)
+        #expect(Self.wrapper(of: route)?.trackingIds == nil)
+        #expect(TrackingIdsRecord.reference(in: storage) == nil)
+        #expect(throws: Never.self) { try result.get() }
+    }
+
+    @Test("A Keepalive without ids rejected with 4xx is deleted", .tags(.trackingIds))
+    func delivery_keepaliveWithoutIdsRejectedWithClientError_isDeleted() async throws {
+        let fetcher = FakeNetworkFetcher()
+        fetcher.requestResult = .failure(Self.clientError)
+        let repo = makeRepository(fetcher: fetcher, storage: try makeStorage())
+        let database = try MockDatabaseRepository(inMemory: true)
+        let keepalive = Event(type: .keepAlive, body: "{}")
+        try database.create(event: keepalive)
+
+        await deliver(keepalive, with: repo, from: database)
+
+        #expect(try database.readEvent(by: keepalive.transactionId) == nil)
+    }
+
+    @Test("The setter's InfoUpdated is deleted after a failed send while other events are retried", .tags(.trackingIds))
+    func delivery_failedSetterInfoUpdated_isDeletedWhileOthersAreRetried() async throws {
+        let fetcher = FakeNetworkFetcher()
+        fetcher.requestResult = .failure(.connectionError)
+        let repo = makeRepository(fetcher: fetcher, storage: try makeStorage())
+        let database = try MockDatabaseRepository(inMemory: true)
+        let idsEvent = Event(type: .trackingIdsUpdated, body: "{}")
+        let infoEvent = Event(type: .infoUpdated, body: "{}")
+        try database.create(event: idsEvent)
+        try database.create(event: infoEvent)
+
+        await deliver(idsEvent, with: repo, from: database)
+        await deliver(infoEvent, with: repo, from: database)
+
+        #expect(try database.readEvent(by: idsEvent.transactionId) == nil)
+        #expect(try #require(try database.readEvent(by: infoEvent.transactionId)).isRetry)
     }
 
     @Test("eraseMetadata hands the accepted hash to the next installation as unconfirmed", .tags(.trackingIds))

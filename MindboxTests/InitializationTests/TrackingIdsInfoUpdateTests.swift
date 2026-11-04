@@ -245,6 +245,19 @@ struct TrackingIdsInfoUpdateTests {
         cleanup()
     }
 
+    @Test("The setter's InfoUpdated leaves the Keepalive clock alone")
+    func setterEventLeavesTheKeepaliveClockAlone() async throws {
+        try await initialize()
+        let lastInfoUpdate = Date(timeIntervalSince1970: 1_700_000_000)
+        storage.lastInfoUpdateDate = lastInfoUpdate
+
+        await update(UUID())
+
+        #expect(try trackingIdsEventCount() == 1)
+        #expect(storage.lastInfoUpdateDate == lastInfoUpdate)
+        cleanup()
+    }
+
     @Test("The setter's event sent through the SDK's event repository stores the hash of the id it carried")
     func setterEventSentThroughTheRepositoryStoresItsHash() async throws {
         try await initialize()
