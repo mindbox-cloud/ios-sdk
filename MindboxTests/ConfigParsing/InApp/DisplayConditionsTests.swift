@@ -36,23 +36,14 @@ struct DisplayConditionsTests {
         return try JSONDecoder().decode(InAppDTO.self, from: Data(json.utf8))
     }
 
+    private func isUnknownType(_ error: CustomDecodingError) -> Bool {
+        if case .unknownType = error { return true }
+        return false
+    }
+
     @Test("Direct call is the only restrictive value")
     func directCall() throws {
         #expect(try decode(#"{"$type": "directCall"}"#) == .directCall)
-    }
-
-    @Test("Anything unreadable is rejected", arguments: [
-        #"{"$type": "pushOnly"}"#,
-        #"{"$type": "all"}"#,
-        #"{"$type": "DirectCall"}"#,
-        #"{"$type": 42}"#,
-        #"{}"#,
-        #""directCall""#,
-        #"42"#,
-        #"[]"#
-    ])
-    func unreadableValue(value: String) {
-        #expect(throws: (any Error).self) { try decode(value) }
     }
 
     @Test("A null value means no conditions")
@@ -60,14 +51,43 @@ struct DisplayConditionsTests {
         #expect(try decode("null") == nil)
     }
 
-    @Test("An in-app with an unknown condition is dropped", arguments: [
-        #"{"$type": "unknownCondition"}"#,
-        #"{"$type": "DirectCall"}"#,
+    @Test("An unknown or miscased $type is rejected as unknown", arguments: [
+        #"{"$type": "pushOnly"}"#,
+        #"{"$type": "all"}"#,
+        #"{"$type": "DirectCall"}"#
+    ])
+    func unknownType(value: String) {
+        let error = #expect(throws: CustomDecodingError.self) { try decode(value) }
+        if let error {
+            #expect(isUnknownType(error), "got \(error)")
+        }
+    }
+
+    @Test("A value without a readable $type is rejected by the decoder", arguments: [
+        #"{"$type": 42}"#,
+        #"{"$type": null}"#,
+        #"{}"#,
+        #""directCall""#,
+        #"42"#,
+        #"[]"#
+    ])
+    func unreadableValue(value: String) {
+        #expect(throws: DecodingError.self) { try decode(value) }
+    }
+
+    @Test("An in-app with an unknown condition is dropped")
+    func inappWithUnknownType() {
+        #expect(throws: CustomDecodingError.self) {
+            try decodeInapp(displayConditions: #"{"$type": "unknownCondition"}"#)
+        }
+    }
+
+    @Test("An in-app with an unreadable condition is dropped", arguments: [
         #"{}"#,
         #""directCall""#
     ])
     func inappWithUnreadableValue(value: String) {
-        #expect(throws: (any Error).self) { try decodeInapp(displayConditions: value) }
+        #expect(throws: DecodingError.self) { try decodeInapp(displayConditions: value) }
     }
 
     @Test("A direct-call in-app keeps its condition")

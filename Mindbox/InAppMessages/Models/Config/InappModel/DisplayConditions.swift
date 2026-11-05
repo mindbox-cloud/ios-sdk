@@ -8,17 +8,6 @@
 
 import Foundation
 
-enum DisplayConditionsType: String, Decodable {
-    case directCall
-    case unknown
-
-    init(from decoder: Decoder) throws {
-        let container: SingleValueDecodingContainer = try decoder.singleValueContainer()
-        let type: String = try container.decode(String.self)
-        self = DisplayConditionsType(rawValue: type) ?? .unknown
-    }
-}
-
 enum DisplayConditions: Decodable, Equatable {
 
     case directCall
@@ -29,18 +18,18 @@ enum DisplayConditions: Decodable, Equatable {
         case type = "$type"
     }
 
+    private static let directCallType = "directCall"
+
+    /// Throws `DecodingError` when the value is not an object or `$type` is missing or not a string,
+    /// and `CustomDecodingError.unknownType` when `$type` is a string the SDK does not know.
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
+        let rawType = try container.decode(String.self, forKey: .type)
 
-        guard let type = try? container.decode(DisplayConditionsType.self, forKey: .type) else {
-            throw CustomDecodingError.decodingError("displayConditions has no readable $type. Inapp will be ignored.")
+        guard rawType == Self.directCallType else {
+            throw CustomDecodingError.unknownType("displayConditions has unknown $type '\(rawType)'")
         }
 
-        switch type {
-        case .directCall:
-            self = .directCall
-        case .unknown:
-            throw CustomDecodingError.unknownType("displayConditions has unknown type. Inapp will be ignored.")
-        }
+        self = .directCall
     }
 }
