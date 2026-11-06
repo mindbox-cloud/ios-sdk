@@ -182,6 +182,27 @@ struct TrackingIdsInfoUpdateTests {
         cleanup()
     }
 
+    @Test("A Keepalive that finds a tracking host the setter call lacked claims the id first, so a revoke in the next launch clears it")
+    func keepaliveWithANewTrackingHostClaimsTheIdFirst() async throws {
+        try await initialize()
+        storage.operationsDomainFromConfig = "proxy.client.ru"
+        await update(UUID())
+        #expect(try trackingIdsEventCount() == 0)
+
+        storage.operationsDomainFromConfig = nil
+        storage.lastInfoUpdateDate = nil
+        NotificationCenter.default.post(
+            name: .receivedPushTokenKeepaliveFromTheMobileConfig,
+            object: nil,
+            userInfo: [Constants.Notification.pushTokenKeepalive: "0.00:00:01"]
+        )
+        await drainControllerQueue()
+
+        #expect(try trackingIdsEventCount() == 1)
+        #expect(nextLaunchClaims(zeros))
+        cleanup()
+    }
+
     @Test("Initialization sends an id set before it once; a repeated initialization sends nothing")
     func initializationSendsAPendingIdOnce() async throws {
         await update(UUID())
