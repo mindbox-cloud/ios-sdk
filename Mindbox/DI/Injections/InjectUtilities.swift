@@ -18,6 +18,15 @@ extension MBContainer {
             TimerManager()
         }
 
+        register(TrackingIdsResolver.self) {
+            TrackingIdsResolver()
+        }
+
+        register(TrackingHostResolver.self) {
+            TrackingHostResolver(persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
+                                 declaredTrackingDomains: TrackingHostResolver.declaredTrackingDomains(in: .main))
+        }
+
         register(MigrationManagerProtocol.self, scope: .transient) {
             let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
             return MigrationManager(persistenceStorage: persistenceStorage)
@@ -69,7 +78,10 @@ extension MBContainer {
         register(EventRepository.self) {
             let networkFetcher = DI.injectOrFail(NetworkFetcher.self)
             let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
-            return MBEventRepository(fetcher: networkFetcher, persistenceStorage: persistenceStorage)
+            return MBEventRepository(fetcher: networkFetcher,
+                                     persistenceStorage: persistenceStorage,
+                                     trackingIdsResolver: DI.injectOrFail(TrackingIdsResolver.self),
+                                     trackingHostResolver: DI.injectOrFail(TrackingHostResolver.self))
         }
 
         register(TrackVisitManagerProtocol.self) {

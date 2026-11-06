@@ -57,6 +57,8 @@ struct URLRequestBuilder {
             return domain
         case .operations:
             return operationsDomain ?? domain
+        case let .tracking(trackingHost):
+            return trackingHost
         }
     }
 

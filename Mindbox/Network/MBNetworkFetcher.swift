@@ -54,13 +54,10 @@ class MBNetworkFetcher: NetworkFetcher {
             return
         }
 
-        let builder = URLRequestBuilder(
-            domain: configuration.domain,
-            operationsDomain: resolvedOperationsDomain(configuration: configuration)
-        )
+        let builder = makeRequestBuilder(configuration: configuration)
         do {
             let urlRequest = try builder.asURLRequest(route: route)
-            Logger.network(request: urlRequest, httpAdditionalHeaders: session.configuration.httpAdditionalHeaders)
+            logRequest(urlRequest, route: route)
             let startTime = CFAbsoluteTimeGetCurrent()
             session.dataTask(with: urlRequest) { data, response, error in
                 let networkTimeMs = Int((CFAbsoluteTimeGetCurrent() - startTime) * 1000)
@@ -102,13 +99,10 @@ class MBNetworkFetcher: NetworkFetcher {
             completion(.failure(error))
             return
         }
-        let builder = URLRequestBuilder(
-            domain: configuration.domain,
-            operationsDomain: resolvedOperationsDomain(configuration: configuration)
-        )
+        let builder = makeRequestBuilder(configuration: configuration)
         do {
             let urlRequest = try builder.asURLRequest(route: route)
-            Logger.network(request: urlRequest, httpAdditionalHeaders: session.configuration.httpAdditionalHeaders)
+            logRequest(urlRequest, route: route)
             let startTime = CFAbsoluteTimeGetCurrent()
             session.dataTask(with: urlRequest) { [weak self] data, response, error in
                 let networkTimeMs = Int((CFAbsoluteTimeGetCurrent() - startTime) * 1000)
@@ -143,13 +137,10 @@ class MBNetworkFetcher: NetworkFetcher {
             return
         }
 
-        let builder = URLRequestBuilder(
-            domain: configuration.domain,
-            operationsDomain: resolvedOperationsDomain(configuration: configuration)
-        )
+        let builder = makeRequestBuilder(configuration: configuration)
         do {
             let urlRequest = try builder.asURLRequest(route: route)
-            Logger.network(request: urlRequest, httpAdditionalHeaders: session.configuration.httpAdditionalHeaders)
+            logRequest(urlRequest, route: route)
             let startTime = CFAbsoluteTimeGetCurrent()
             session.dataTask(with: urlRequest) { data, response, error in
                 let networkTimeMs = Int((CFAbsoluteTimeGetCurrent() - startTime) * 1000)
@@ -409,6 +400,19 @@ class MBNetworkFetcher: NetworkFetcher {
         session.getAllTasks { tasks in
             tasks.forEach { $0.cancel() }
         }
+    }
+
+    private func makeRequestBuilder(configuration: MBConfiguration) -> URLRequestBuilder {
+        URLRequestBuilder(
+            domain: configuration.domain,
+            operationsDomain: resolvedOperationsDomain(configuration: configuration)
+        )
+    }
+
+    private func logRequest(_ urlRequest: URLRequest, route: Route) {
+        var loggable = urlRequest
+        loggable.httpBody = route.loggableBody(from: urlRequest.httpBody)
+        Logger.network(request: loggable, httpAdditionalHeaders: session.configuration.httpAdditionalHeaders)
     }
 
     private func resolvedOperationsDomain(configuration: MBConfiguration) -> String? {

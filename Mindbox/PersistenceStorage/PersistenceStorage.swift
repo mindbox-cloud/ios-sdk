@@ -55,6 +55,8 @@ protocol PersistenceStorage: AnyObject {
     
     var applicationInstanceId: String? { get set }
 
+    var trackingIdsRecord: String? { get set }
+
     var webViewLocalStateVersion: Int? { get set }
 
     var webViewLearnedHosts: [String: [String]]? { get set }
@@ -76,11 +78,35 @@ protocol PersistenceStorage: AnyObject {
     var shownInappsDictionary: [String: Date]? { get set }
 }
 
+private let unconfirmedTrackingIdsReference = "unconfirmed"
+
 extension PersistenceStorage {
     
     func eraseMetadata() {
         applicationInstanceId = nil
         applicationInfoUpdateVersion = nil
+    }
+
+    var trackingIdsReference: String? {
+        guard let record = trackingIdsRecord, let separator = record.lastIndex(of: ":") else { return nil }
+        guard record[..<separator] == applicationInstanceId ?? "" else { return unconfirmedTrackingIdsReference }
+        return String(record[record.index(after: separator)...])
+    }
+
+    var isTrackingIdsReferenceUnconfirmed: Bool {
+        trackingIdsReference == unconfirmedTrackingIdsReference
+    }
+
+    func acceptTrackingIdsHash(_ hash: String, instanceId: String?) {
+        recordTrackingIds(hash, instanceId: instanceId)
+    }
+
+    func markTrackingIdsUnconfirmed(instanceId: String?) {
+        recordTrackingIds(unconfirmedTrackingIdsReference, instanceId: instanceId)
+    }
+
+    private func recordTrackingIds(_ reference: String, instanceId: String?) {
+        trackingIdsRecord = (instanceId ?? "") + ":" + reference
     }
     
     func softReset() {
@@ -110,6 +136,7 @@ extension PersistenceStorage {
         operationsDomainFromConfig = nil
         applicationInstanceId = nil
         applicationInfoUpdateVersion = nil
+        trackingIdsRecord = nil
         webViewLearnedHosts = nil
         embeddedBlockPlaceRecords = nil
     }

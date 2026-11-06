@@ -15,6 +15,7 @@ struct Event: EventProtocol {
         case installed = "MobilePush.ApplicationInstalled"
         case installedWithoutCustomer = "MobilePush.ApplicationInstalledWithoutCustomer"
         case infoUpdated = "MobilePush.ApplicationInfoUpdated"
+        case trackingIdsUpdated = "MobilePush.ApplicationInfoUpdated.TrackingIds"
         case keepAlive = "MobilePush.ApplicationKeepalive"
         case trackClick = "MobilePush.TrackClick"
         case trackVisit = "MobilePush.TrackVisit"
@@ -27,6 +28,10 @@ struct Event: EventProtocol {
         case inAppShowFailureEvent = "Inapp.ShowFailure"
 
         case sdkLogs = "MobileSdk.Logs"
+
+        var operationName: String {
+            self == .trackingIdsUpdated ? Operation.infoUpdated.rawValue : rawValue
+        }
     }
 
     let transactionId: String

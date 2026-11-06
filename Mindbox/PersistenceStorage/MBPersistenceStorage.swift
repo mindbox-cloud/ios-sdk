@@ -258,6 +258,9 @@ class MBPersistenceStorage: PersistenceStorage {
     @UserDefaultsWrapper(key: .applicationInstanceId, defaultValue: nil)
     var applicationInstanceId: String?
 
+    @UserDefaultsWrapper(key: .trackingIdsRecord, defaultValue: nil)
+    var trackingIdsRecord: String?
+
     @UserDefaultsWrapper(key: .webViewLocalStateVersion, defaultValue: nil)
     var webViewLocalStateVersion: Int?
 
@@ -309,6 +312,7 @@ extension MBPersistenceStorage {
             case versionCodeForMigration = "MBPersistenceStorage-versionCodeForMigration"
             case applicationInfoUpdateVersion = "MBPersistenceStorage-applicationInfoUpdatedVersion"
             case applicationInstanceId = "MBPersistenceStorage-applicationInstanceId"
+            case trackingIdsRecord = "MBPersistenceStorage-trackingIdsRecord"
             case webViewLocalStateVersion = "MBPersistenceStorage-webViewLocalStateVersion"
             case webViewLearnedHosts = "MBPersistenceStorage-webViewLearnedHosts"
             case embeddedBlockPlaceRecords = "MBPersistenceStorage-embeddedBlockPlaceRecords"

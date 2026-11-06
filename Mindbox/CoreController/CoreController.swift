@@ -16,6 +16,9 @@ final class CoreController {
     private let databaseRepository: DatabaseRepositoryProtocol
     private let guaranteedDeliveryManager: GuaranteedDeliveryManager
     private let uuidDebugService: UUIDDebugService
+    private let trackingIdsResolver: TrackingIdsResolver
+    private let trackingIdsChangeDetector: TrackingIdsChangeDetector
+    private let trackingHostResolver: TrackingHostResolver
     private var configValidation = ConfigValidation()
     private let userVisitManager: UserVisitManagerProtocol
     private let sessionManager: SessionManager
@@ -33,11 +36,13 @@ final class CoreController {
 
             self.configValidation.compare(configuration, self.persistenceStorage.configuration)
             self.persistenceStorage.configuration = configuration
+            self.trackingHostResolver.reportIfMainHostIsDeclaredAsTracking()
             if !self.persistenceStorage.isInstalled {
                 self.primaryInitialization(with: configuration)
             } else {
                 self.repeatInitialization(with: configuration)
             }
+            self.sendTrackingIdsIfChanged()
 
             AppGroupStorageTransitionReporter().reportIfNeeded()
 
@@ -94,7 +99,24 @@ final class CoreController {
         }
     }
 
+    func advertisingIdentifierDidUpdate(_ identifier: UUID?) {
+        controllerQueue.async {
+            self.trackingIdsResolver.update(identifier: identifier)
+            self.sendTrackingIdsIfChanged()
+        }
+    }
+
     // MARK: - Private
+    private func sendTrackingIdsIfChanged() {
+        dispatchPrecondition(condition: .onQueue(controllerQueue))
+        guard SessionTemporaryStorage.shared.isInitializationCalled, trackingIdsChangeDetector.claimPendingChange() else { return }
+        updateInfo(
+            apnsToken: persistenceStorage.apnsToken,
+            isNotificationsEnabled: notificationStatus(),
+            eventType: .trackingIdsUpdated
+        )
+    }
+
     private func notificationStatus() -> Bool {
         let notificationStatusProvider = DI.injectOrFail(UNAuthorizationStatusProviding.self)
         let lock = DispatchSemaphore(value: 0)
@@ -148,7 +170,9 @@ final class CoreController {
     }
 
     private func install(deviceUUID: String, configuration: MBConfiguration) {
+        dispatchPrecondition(condition: .onQueue(controllerQueue))
         persistenceStorage.eraseMetadata()
+        trackingIdsChangeDetector.reset()
         try? databaseRepository.erase()
         
         guaranteedDeliveryManager.cancelAllOperations()
@@ -220,6 +244,7 @@ final class CoreController {
             body: BodyEncoder(encodable: infoUpdated).body
         )
         do {
+            trackingIdsResolver.expectFirstSend(of: event)
             try databaseRepository.create(event: event)
             persistenceStorage.applicationInfoUpdateVersion = newVersion
             Logger.common(message: "[Core] Mobile application info has been updated", level: .default, category: .general)
@@ -237,6 +262,8 @@ final class CoreController {
         sessionManager: SessionManager,
         inAppMessagesManager: InAppCoreManagerProtocol,
         uuidDebugService: UUIDDebugService,
+        trackingIdsResolver: TrackingIdsResolver,
+        trackingHostResolver: TrackingHostResolver,
         controllerQueue: DispatchQueue = DispatchQueue(label: "com.Mindbox.controllerQueue"),
         userVisitManager: UserVisitManagerProtocol
     ) {
@@ -246,6 +273,11 @@ final class CoreController {
         self.databaseRepository = databaseRepository
         self.guaranteedDeliveryManager = guaranteedDeliveryManager
         self.uuidDebugService = uuidDebugService
+        self.trackingIdsResolver = trackingIdsResolver
+        self.trackingIdsChangeDetector = TrackingIdsChangeDetector(trackingIdsResolver: trackingIdsResolver,
+                                                                   trackingHostResolver: trackingHostResolver,
+                                                                   persistenceStorage: persistenceStorage)
+        self.trackingHostResolver = trackingHostResolver
         self.controllerQueue = controllerQueue
         self.inAppMessagesManager = inAppMessagesManager
         self.sessionManager = sessionManager

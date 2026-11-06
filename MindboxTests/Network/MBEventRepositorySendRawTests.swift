@@ -56,6 +56,17 @@ struct MBEventRepositorySendRawTests {
         return storage
     }
 
+    private func makeRepository(fetcher: NetworkFetcher,
+                                storage: MockPersistenceStorage,
+                                trackingIdsResolver: TrackingIdsResolver = TrackingIdsResolver(),
+                                declaredDomains: Set<String> = []) -> MBEventRepository {
+        MBEventRepository(fetcher: fetcher,
+                          persistenceStorage: storage,
+                          trackingIdsResolver: trackingIdsResolver,
+                          trackingHostResolver: TrackingHostResolver(persistenceStorage: storage,
+                                                                     declaredTrackingDomains: declaredDomains))
+    }
+
     private func makeSyncEvent(operation: String = "TestOp", body: String = "{}") -> Event {
         let customEvent = CustomEvent(name: operation, payload: body)
         return Event(type: .syncEvent, body: BodyEncoder(encodable: customEvent).body)
@@ -77,10 +88,7 @@ struct MBEventRepositorySendRawTests {
         let rawBody = #"{"status":"ValidationError","validationMessages":[{"message":"x","location":"/y"}]}"#.data(using: .utf8)!
         fetcher.requestRawResult = .success(rawBody)
 
-        let repo = MBEventRepository(
-            fetcher: fetcher,
-            persistenceStorage: try makeStorage()
-        )
+        let repo = makeRepository(fetcher: fetcher, storage: try makeStorage())
 
         let result = await awaitResult { completion in
             repo.sendRaw(event: makeSyncEvent(), completion: completion)
@@ -100,10 +108,7 @@ struct MBEventRepositorySendRawTests {
     @Test("syncEvent event yields EventRoute.syncEvent")
     func sendRaw_syncEvent_routesToSyncEndpoint() async throws {
         let fetcher = FakeNetworkFetcher()
-        let repo = MBEventRepository(
-            fetcher: fetcher,
-            persistenceStorage: try makeStorage()
-        )
+        let repo = makeRepository(fetcher: fetcher, storage: try makeStorage())
 
         _ = await awaitResult { completion in
             repo.sendRaw(event: makeSyncEvent(), completion: completion)
@@ -123,10 +128,7 @@ struct MBEventRepositorySendRawTests {
         let fetcher = FakeNetworkFetcher()
         fetcher.requestRawResult = .failure(.connectionError)
 
-        let repo = MBEventRepository(
-            fetcher: fetcher,
-            persistenceStorage: try makeStorage()
-        )
+        let repo = makeRepository(fetcher: fetcher, storage: try makeStorage())
 
         let result = await awaitResult { completion in
             repo.sendRaw(event: makeSyncEvent(), completion: completion)
@@ -150,7 +152,7 @@ struct MBEventRepositorySendRawTests {
         let fetcher = FakeNetworkFetcher()
         let storage = try makeStorage(configured: false)
 
-        let repo = MBEventRepository(fetcher: fetcher, persistenceStorage: storage)
+        let repo = makeRepository(fetcher: fetcher, storage: storage)
 
         let result = await awaitResult { completion in
             repo.sendRaw(event: makeSyncEvent(), completion: completion)
@@ -176,7 +178,7 @@ struct MBEventRepositorySendRawTests {
         let fetcher = FakeNetworkFetcher()
         let storage = try makeStorage(deviceUUID: nil)
 
-        let repo = MBEventRepository(fetcher: fetcher, persistenceStorage: storage)
+        let repo = makeRepository(fetcher: fetcher, storage: storage)
 
         let result = await awaitResult { completion in
             repo.sendRaw(event: makeSyncEvent(), completion: completion)
@@ -202,10 +204,7 @@ struct MBEventRepositorySendRawTests {
         let fetcher = FakeNetworkFetcher()
         fetcher.requestRawResult = .success(Data("ok".utf8))
 
-        let repo = MBEventRepository(
-            fetcher: fetcher,
-            persistenceStorage: try makeStorage()
-        )
+        let repo = makeRepository(fetcher: fetcher, storage: try makeStorage())
 
         let isMain: Bool = await withCheckedContinuation { cont in
             repo.sendRaw(event: makeSyncEvent()) { _ in
@@ -221,7 +220,7 @@ struct MBEventRepositorySendRawTests {
     @Test("send<T> network-path completion is delivered on the main queue")
     func sendTyped_completion_onMainQueue() async throws {
         let fetcher = FakeNetworkFetcher()
-        let repo = MBEventRepository(fetcher: fetcher, persistenceStorage: try makeStorage())
+        let repo = makeRepository(fetcher: fetcher, storage: try makeStorage())
 
         let outcome: (isMain: Bool, isSuccess: Bool) = await withCheckedContinuation { cont in
             repo.send(type: OperationResponse.self, event: makeSyncEvent()) { result in
@@ -241,7 +240,7 @@ struct MBEventRepositorySendRawTests {
     @Test("send<T> early error (missing configuration) is delivered on the main queue")
     func sendTyped_missingConfiguration_errorOnMainQueue() async throws {
         let fetcher = FakeNetworkFetcher()
-        let repo = MBEventRepository(fetcher: fetcher, persistenceStorage: try makeStorage(configured: false))
+        let repo = makeRepository(fetcher: fetcher, storage: try makeStorage(configured: false))
 
         let outcome: (isMain: Bool, errorKey: String?) = await withCheckedContinuation { cont in
             repo.send(type: OperationResponse.self, event: makeSyncEvent()) { result in
@@ -261,7 +260,7 @@ struct MBEventRepositorySendRawTests {
     @Test("send<T> early error (missing deviceUUID) is delivered on the main queue")
     func sendTyped_missingDeviceUUID_errorOnMainQueue() async throws {
         let fetcher = FakeNetworkFetcher()
-        let repo = MBEventRepository(fetcher: fetcher, persistenceStorage: try makeStorage(deviceUUID: nil))
+        let repo = makeRepository(fetcher: fetcher, storage: try makeStorage(deviceUUID: nil))
 
         let outcome: (isMain: Bool, errorKey: String?) = await withCheckedContinuation { cont in
             repo.send(type: OperationResponse.self, event: makeSyncEvent()) { result in

@@ -13,10 +13,17 @@ class MBEventRepository: EventRepository {
     private let fetcher: NetworkFetcher
 
     private let persistenceStorage: PersistenceStorage
+    private let trackingIdsResolver: TrackingIdsResolver
+    private let trackingHostResolver: TrackingHostResolver
 
-    init(fetcher: NetworkFetcher, persistenceStorage: PersistenceStorage) {
+    init(fetcher: NetworkFetcher,
+         persistenceStorage: PersistenceStorage,
+         trackingIdsResolver: TrackingIdsResolver,
+         trackingHostResolver: TrackingHostResolver) {
         self.fetcher = fetcher
         self.persistenceStorage = persistenceStorage
+        self.trackingIdsResolver = trackingIdsResolver
+        self.trackingHostResolver = trackingHostResolver
     }
 
     func send(event: Event, completion: @escaping (Result<Void, MindboxError>) -> Void) {
@@ -36,13 +43,30 @@ class MBEventRepository: EventRepository {
             completion(.failure(error))
             return
         }
-        let wrapper = EventWrapper(
-            event: event,
-            endpoint: configuration.endpoint,
-            deviceUUID: deviceUUID
-        )
-        let route = makeRoute(wrapper: wrapper)
-        fetcher.request(route: route, completion: completion)
+        let route = makeRoute(wrapper: EventWrapper(event: event, endpoint: configuration.endpoint, deviceUUID: deviceUUID))
+        let firstSend = trackingIdsResolver.takeFirstSend(of: event)
+        guard let attachment = trackingIdsResolver.attachment(for: event.type, trackingHost: trackingHostResolver.trackingHost) else {
+            fetcher.request(route: route, completion: completion)
+            return
+        }
+        let idsRoute = makeRoute(wrapper: EventWrapper(event: event, endpoint: configuration.endpoint, deviceUUID: deviceUUID, trackingIds: attachment))
+        let instanceId = persistenceStorage.applicationInstanceId
+        fetcher.request(type: BaseResponse.self, route: idsRoute) { [persistenceStorage, trackingIdsResolver] result in
+            switch result {
+            case .success:
+                let hash = attachment.hash
+                if let firstSend, trackingIdsResolver.accept(hash, from: firstSend, instanceId: instanceId, in: persistenceStorage) {
+                    Logger.common(
+                        message: "[TrackingIds] " + attachment.sentLogMessage(operation: event.type.operationName),
+                        level: .debug,
+                        category: .general
+                    )
+                }
+                completion(.success(()))
+            case let .failure(error):
+                completion(.failure(error))
+            }
+        }
     }
 
     func send<T>(type: T.Type, event: Event, completion: @escaping (Result<T, MindboxError>) -> Void) where T: Decodable {
@@ -115,6 +139,7 @@ class MBEventRepository: EventRepository {
         switch wrapper.event.type {
         case .installed,
              .infoUpdated,
+             .trackingIdsUpdated,
              .keepAlive,
              .trackClick,
              .installedWithoutCustomer,

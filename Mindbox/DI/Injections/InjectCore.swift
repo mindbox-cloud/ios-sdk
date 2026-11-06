@@ -18,6 +18,8 @@ extension MBContainer {
                            sessionManager: DI.injectOrFail(SessionManager.self),
                            inAppMessagesManager: DI.injectOrFail(InAppCoreManagerProtocol.self),
                            uuidDebugService: DI.injectOrFail(UUIDDebugService.self),
+                           trackingIdsResolver: DI.injectOrFail(TrackingIdsResolver.self),
+                           trackingHostResolver: DI.injectOrFail(TrackingHostResolver.self),
                            userVisitManager: DI.injectOrFail(UserVisitManagerProtocol.self))
         }
 
