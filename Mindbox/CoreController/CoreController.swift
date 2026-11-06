@@ -341,6 +341,7 @@ private extension CoreController {
                     message: "[Keepalive] Sending keep-alive (interval \(timeSpanString))", level: .debug, category: .pushTokenKeepalive
                 )
 
+                sendTrackingIdsIfChanged()
                 updateInfo(
                     apnsToken: persistenceStorage.apnsToken,
                     isNotificationsEnabled: notificationStatus(),
