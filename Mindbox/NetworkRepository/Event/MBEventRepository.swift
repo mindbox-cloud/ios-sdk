@@ -64,7 +64,7 @@ class MBEventRepository: EventRepository {
                     )
                 }
                 completion(.success(()))
-            case let .failure(error) where event.type == .keepAlive:
+            case let .failure(error) where event.type == .keepAlive && attachment.trackingHost != nil:
                 Logger.common(
                     message: "[TrackingIds] Keepalive did not reach the tracking host (\(error.localizedDescription)), retrying on the main host without ids",
                     level: .info,
