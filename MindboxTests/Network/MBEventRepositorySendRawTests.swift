@@ -96,8 +96,7 @@ struct MBEventRepositorySendRawTests {
     }
 
     private static func wrapper(of route: Route?) -> EventWrapper? {
-        guard case let .asyncEvent(wrapper)? = route as? EventRoute else { return nil }
-        return wrapper
+        (route as? EventRoute)?.wrapper
     }
 
     // MARK: - Success: forwards raw bytes from fetcher
@@ -123,9 +122,9 @@ struct MBEventRepositorySendRawTests {
         #expect(fetcher.requestRawCallCount == 1)
     }
 
-    // MARK: - Route: syncEvent uses EventRoute.syncEvent
+    // MARK: - Route: syncEvent goes to the sync endpoint
 
-    @Test("syncEvent event yields EventRoute.syncEvent")
+    @Test("syncEvent event goes to the sync endpoint")
     func sendRaw_syncEvent_routesToSyncEndpoint() async throws {
         let fetcher = FakeNetworkFetcher()
         let repo = makeRepository(fetcher: fetcher, storage: try makeStorage())
@@ -134,11 +133,8 @@ struct MBEventRepositorySendRawTests {
             repo.sendRaw(event: makeSyncEvent(), completion: completion)
         }
 
-        let route = try #require(fetcher.capturedRoute as? EventRoute)
-        if case .syncEvent = route {
-        } else {
-            Issue.record("Expected EventRoute.syncEvent, got \(route)")
-        }
+        let route = try #require(fetcher.capturedRoute)
+        #expect(route.path == "/v3/operations/sync")
     }
 
     // MARK: - Failure: fetcher error is passed through

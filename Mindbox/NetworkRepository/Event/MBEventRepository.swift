@@ -43,13 +43,14 @@ class MBEventRepository: EventRepository {
             completion(.failure(error))
             return
         }
-        let route = makeRoute(wrapper: EventWrapper(event: event, endpoint: configuration.endpoint, deviceUUID: deviceUUID))
+        let route = EventRoute(EventWrapper(event: event, endpoint: configuration.endpoint, deviceUUID: deviceUUID))
         let firstSend = trackingIdsResolver.takeFirstSend(of: event)
-        guard let attachment = trackingIdsResolver.attachment(for: event.type, trackingHost: trackingHostResolver.trackingHost) else {
+        guard let attachment = trackingIdsResolver.attachment(for: event.type, trackingHost: trackingHostResolver.trackingHost),
+              case let .sdkOperation(operation) = event.type.request else {
             fetcher.request(route: route, completion: completion)
             return
         }
-        let idsRoute = makeRoute(wrapper: EventWrapper(event: event, endpoint: configuration.endpoint, deviceUUID: deviceUUID, trackingIds: attachment))
+        let idsRoute = EventRoute(EventWrapper(event: event, endpoint: configuration.endpoint, deviceUUID: deviceUUID, trackingIds: attachment))
         let instanceId = persistenceStorage.applicationInstanceId
         fetcher.request(type: BaseResponse.self, route: idsRoute) { [persistenceStorage, trackingIdsResolver] result in
             switch result {
@@ -57,7 +58,7 @@ class MBEventRepository: EventRepository {
                 let hash = attachment.hash
                 if let firstSend, trackingIdsResolver.accept(hash, from: firstSend, instanceId: instanceId, in: persistenceStorage) {
                     Logger.common(
-                        message: "[TrackingIds] " + attachment.sentLogMessage(operation: event.type.operationName),
+                        message: "[TrackingIds] " + attachment.sentLogMessage(operation: operation),
                         level: .debug,
                         category: .general
                     )
@@ -96,7 +97,7 @@ class MBEventRepository: EventRepository {
             endpoint: configuration.endpoint,
             deviceUUID: deviceUUID
         )
-        let route = makeRoute(wrapper: wrapper)
+        let route = EventRoute(wrapper)
         fetcher.request(type: type, route: route, completion: deliver)
     }
 
@@ -122,7 +123,7 @@ class MBEventRepository: EventRepository {
             endpoint: configuration.endpoint,
             deviceUUID: deviceUUID
         )
-        let route = makeRoute(wrapper: wrapper)
+        let route = EventRoute(wrapper)
         fetcher.requestRaw(route: route) { result in
             DispatchQueue.main.async {
                 switch result {
@@ -135,29 +136,6 @@ class MBEventRepository: EventRepository {
         }
     }
 
-    private func makeRoute(wrapper: EventWrapper) -> Route {
-        switch wrapper.event.type {
-        case .installed,
-             .infoUpdated,
-             .trackingIdsUpdated,
-             .keepAlive,
-             .trackClick,
-             .installedWithoutCustomer,
-             .inAppViewEvent,
-             .inAppClickEvent,
-             .inAppTargetingEvent,
-             .inAppShowFailureEvent,
-             .sdkLogs:
-            return EventRoute.asyncEvent(wrapper)
-        case .customEvent:
-            return EventRoute.customAsyncEvent(wrapper)
-        case .trackVisit:
-            return EventRoute.trackVisit(wrapper)
-        case .syncEvent:
-            return EventRoute.syncEvent(wrapper)
-        }
-    }
-    
     func cancelAllRequests() {
         fetcher.cancelAllTasks()
     }
