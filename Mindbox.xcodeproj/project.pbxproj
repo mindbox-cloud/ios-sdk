@@ -220,6 +220,7 @@
 		474142602E8A692800839AD8 /* NoopDatabaseRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4741425F2E8A692800839AD8 /* NoopDatabaseRepository.swift */; };
 		474142622E8AAC8900839AD8 /* DatabaseRepository_NoopContractTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 474142612E8AAC8900839AD8 /* DatabaseRepository_NoopContractTests.swift */; };
 		4741DAC42E85C49F00EB2497 /* DatabaseLoaderFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4741DAC32E85C49F00EB2497 /* DatabaseLoaderFlowTests.swift */; };
+		A45C2A43AB871FBB812DFA42 /* DatabaseLoaderStoreResetTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89C6C4FD73B1FF4E138EF8CA /* DatabaseLoaderStoreResetTests.swift */; };
 		4741DAC62E85DC1600EB2497 /* MBDatabaseRepositoryMemoryWarningTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4741DAC52E85DC1600EB2497 /* MBDatabaseRepositoryMemoryWarningTests.swift */; };
 		474851C12C6A622E0026C38E /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 474851C02C6A622E0026C38E /* NotificationService.swift */; };
 		474851C32C6A627F0026C38E /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 474851C22C6A627F0026C38E /* Constants.swift */; };
@@ -1015,6 +1016,7 @@
 		4741425F2E8A692800839AD8 /* NoopDatabaseRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoopDatabaseRepository.swift; sourceTree = "<group>"; };
 		474142612E8AAC8900839AD8 /* DatabaseRepository_NoopContractTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseRepository_NoopContractTests.swift; sourceTree = "<group>"; };
 		4741DAC32E85C49F00EB2497 /* DatabaseLoaderFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseLoaderFlowTests.swift; sourceTree = "<group>"; };
+		89C6C4FD73B1FF4E138EF8CA /* DatabaseLoaderStoreResetTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseLoaderStoreResetTests.swift; sourceTree = "<group>"; };
 		4741DAC52E85DC1600EB2497 /* MBDatabaseRepositoryMemoryWarningTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MBDatabaseRepositoryMemoryWarningTests.swift; sourceTree = "<group>"; };
 		474851C02C6A622E0026C38E /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		474851C22C6A627F0026C38E /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
@@ -2454,6 +2456,7 @@
 				84E1D6A8261D8D54002BF03A /* DatabaseLoaderTest.swift */,
 				4741425D2E8A688300839AD8 /* DataBaseLoading_StubDatabaseLoaderContractTests.swift */,
 				4741DAC32E85C49F00EB2497 /* DatabaseLoaderFlowTests.swift */,
+				89C6C4FD73B1FF4E138EF8CA /* DatabaseLoaderStoreResetTests.swift */,
 				47C38A302E05920B00D5A2FE /* MockDatabaseRepositoryTests.swift */,
 			);
 			path = Database;
@@ -4970,6 +4973,7 @@
 				F3CD20262F600A800065392A /* MBConfigurationTests.swift in Sources */,
 				F3D925AD2A1236F400135C87 /* URLSessionImageDownloaderTests.swift in Sources */,
 				4741DAC42E85C49F00EB2497 /* DatabaseLoaderFlowTests.swift in Sources */,
+				A45C2A43AB871FBB812DFA42 /* DatabaseLoaderStoreResetTests.swift in Sources */,
 				F3A8B9A02A3A52F400E9C055 /* ABTestValidatorTests.swift in Sources */,
 				47C38A312E05920B00D5A2FE /* MockDatabaseRepositoryTests.swift in Sources */,
 				9B9C953B292111A700BB29DA /* MockDateProvider.swift in Sources */,
