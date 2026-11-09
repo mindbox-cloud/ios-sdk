@@ -18,7 +18,7 @@ struct SDKUserAgentTests {
         var appVerson: String?
         var hostApplicationName: String?
         var applicationGroupIdentifier = "group.stub"
-        func getDeviceUUID(completion: @escaping (String) -> Void) { completion("") }
+        func generateDeviceUUID() -> String { "" }
     }
 
     @Test("Keeps the segment order the backend slices traffic by: mindbox.sdk/<sdk> (<os> <ver>; <model>) <app>/<appVer>")

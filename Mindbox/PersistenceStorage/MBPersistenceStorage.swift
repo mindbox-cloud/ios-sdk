@@ -380,11 +380,8 @@ struct AppGroupStorageTransitionReporter {
               MBPersistenceStorage.isInstalled(in: sharedDefaults) else { return false }
 
         Logger.common(
-            message: "[Storage] Install state found in BOTH the local fallback store and the "
-                + "App Group suite. The device ran in local-storage fallback (App Group "
-                + "unavailable) and the App Group has since become available, so the install was "
-                + "re-registered on the shared container (deviceUUID stays stable, re-derived from IDFA/IDFV; "
-                + "in-app caps/counters reset).",
+            message: "[Storage] Install state in both the local store and the App Group suite: the App Group became "
+                + "available after a local-only install, so the SDK registered the install again on an empty shared store.",
             level: .info,
             category: .general
         )

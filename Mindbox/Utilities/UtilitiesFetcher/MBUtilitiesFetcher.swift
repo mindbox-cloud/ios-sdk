@@ -7,9 +7,6 @@
 //
 
 import Foundation
-import AdSupport
-import AppTrackingTransparency
-import UIKit.UIDevice
 #if SWIFT_PACKAGE
 import SDKVersionProvider
 #endif
@@ -68,22 +65,10 @@ class MBUtilitiesFetcher: UtilitiesFetcher {
         appBundle.bundleIdentifier
     }
 
-    func getDeviceUUID(completion: @escaping (String) -> Void) {
-        if let uuid = IDFAFetcher().fetch() {
-            Logger.common(message: "[MBUtilitiesFetcher] IDFAFetcher uuid:\(uuid.uuidString)", level: .default, category: .general)
-            completion(uuid.uuidString)
-        } else {
-            IDFVFetcher().fetch(tryCount: 3) { uuid in
-                if let uuid = uuid {
-                    Logger.common(message: "[MBUtilitiesFetcher] IDFVFetcher uuid:\(uuid.uuidString)", level: .default, category: .general)
-                    completion(uuid.uuidString)
-                } else {
-                    let uuid = UUID()
-                    completion(uuid.uuidString)
-                    Logger.common(message: "[MBUtilitiesFetcher] Generated uuid:\(uuid.uuidString)", level: .default, category: .general)
-                }
-            }
-        }
+    func generateDeviceUUID() -> String {
+        let uuid = UUID().uuidString
+        Logger.common(message: "[MBUtilitiesFetcher] Generated uuid:\(uuid)", level: .default, category: .general)
+        return uuid
     }
 }
 

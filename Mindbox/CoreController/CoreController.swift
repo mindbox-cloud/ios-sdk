@@ -107,19 +107,6 @@ final class CoreController {
         return isNotificationsEnabled
     }
 
-    private func generateDeviceUUID() -> String {
-        let lock = DispatchSemaphore(value: 0)
-        var deviceUUID = String()
-        let start = CFAbsoluteTimeGetCurrent()
-        utilitiesFetcher.getDeviceUUID {
-            deviceUUID = $0
-            lock.signal()
-        }
-        lock.wait()
-        Logger.common(message: "[Core] It took \(CFAbsoluteTimeGetCurrent() - start) seconds to generate deviceUUID", level: .debug, category: .general)
-        return deviceUUID
-    }
-
     private func primaryInitialization(with configuration: MBConfiguration) {
         if persistenceStorage.firstInitializationDateTime == nil {
             let now = Date()
@@ -127,7 +114,7 @@ final class CoreController {
             Logger.common(message: "[Core] Set firstInitializationDateTime from currentDate: \(now)")
         }
 
-        let deviceUUID = persistenceStorage.deviceUUID ?? generateDeviceUUID()
+        let deviceUUID = persistenceStorage.deviceUUID ?? utilitiesFetcher.generateDeviceUUID()
         startUUIDDebugServiceIfNeeded(deviceUUID: deviceUUID, configuration: configuration)
         install(
             deviceUUID: deviceUUID,
