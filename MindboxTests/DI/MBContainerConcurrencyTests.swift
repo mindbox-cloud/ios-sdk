@@ -44,3 +44,38 @@ struct MBContainerConcurrencyTests {
         #expect(identifiers.count == 1)
     }
 }
+
+@Suite("MBContainer keys", .tags(.dependencyInjection))
+struct MBContainerKeyTests {
+
+    private enum First { final class Service {} }
+    private enum Second { final class Service {} }
+
+    @Test
+    func typesWithTheSameNameAreDistinct() {
+        let container = MBContainer()
+        let first = First.Service()
+        let second = Second.Service()
+        container.register(First.Service.self) { first }
+        container.register(Second.Service.self) { second }
+
+        #expect(container.resolve(First.Service.self) === first)
+        #expect(container.resolve(Second.Service.self) === second)
+    }
+
+    @Test
+    func containerScopeReturnsTheSameInstance() {
+        let container = MBContainer()
+        container.register(First.Service.self, scope: .container) { First.Service() }
+
+        #expect(container.resolve(First.Service.self) === container.resolve(First.Service.self))
+    }
+
+    @Test
+    func transientScopeReturnsNewInstances() {
+        let container = MBContainer()
+        container.register(First.Service.self, scope: .transient) { First.Service() }
+
+        #expect(container.resolve(First.Service.self) !== container.resolve(First.Service.self))
+    }
+}
