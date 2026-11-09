@@ -7,18 +7,6 @@
 //
 
 import Foundation
-import MindboxLogger
-
-enum DisplayConditionsType: String, Decodable {
-    case directCall
-    case unknown
-
-    init(from decoder: Decoder) throws {
-        let container: SingleValueDecodingContainer = try decoder.singleValueContainer()
-        let type: String = try container.decode(String.self)
-        self = DisplayConditionsType(rawValue: type) ?? .unknown
-    }
-}
 
 enum DisplayConditions: Decodable, Equatable {
 
@@ -30,28 +18,18 @@ enum DisplayConditions: Decodable, Equatable {
         case type = "$type"
     }
 
+    private static let directCallType = "directCall"
+
+    /// Throws `DecodingError` when the value is not an object or `$type` is missing or not a string,
+    /// and `CustomDecodingError.unknownType` when `$type` is a string the SDK does not know.
     init(from decoder: Decoder) throws {
-        guard let container = try? decoder.container(keyedBy: CodingKeys.self) else {
-            if let single = try? decoder.singleValueContainer(), single.decodeNil() {
-                self = .unrestricted
-                return
-            }
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let rawType = try container.decode(String.self, forKey: .type)
 
-            Logger.common(message: "[DisplayConditions] displayConditions is not an object — showing without conditions.",
-                          level: .error, category: .inAppMessages)
-            self = .unrestricted
-            return
+        guard rawType == Self.directCallType else {
+            throw CustomDecodingError.unknownType("displayConditions has unknown $type '\(rawType)'")
         }
 
-        let type = (try? container.decode(DisplayConditionsType.self, forKey: .type)) ?? .unknown
-
-        switch type {
-        case .directCall:
-            self = .directCall
-        case .unknown:
-            Logger.common(message: "[DisplayConditions] Unknown type. Showing as before.",
-                          level: .error, category: .inAppMessages)
-            self = .unrestricted
-        }
+        self = .directCall
     }
 }

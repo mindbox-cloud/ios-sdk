@@ -60,7 +60,7 @@ enum InappFrequency: Decodable, Equatable, Hashable {
         let container: KeyedDecodingContainer<InappFrequency.CodingKeys> = try decoder.container(
             keyedBy: CodingKeys.self)
         guard let type = try? container.decode(InappFrequencyType.self, forKey: .type) else {
-            throw CustomDecodingError.decodingError("The variant type could not be decoded. The variant will be ignored.")
+            throw CustomDecodingError.decodingError("frequency has no readable $type")
         }
 
         let variantContainer: SingleValueDecodingContainer = try decoder.singleValueContainer()
