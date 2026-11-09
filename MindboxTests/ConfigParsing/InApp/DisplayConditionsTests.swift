@@ -46,11 +46,6 @@ struct DisplayConditionsTests {
         #expect(try decode(#"{"$type": "directCall"}"#) == .directCall)
     }
 
-    @Test("A null value means no conditions")
-    func nullValue() throws {
-        #expect(try decode("null") == nil)
-    }
-
     @Test("An unknown or miscased $type is rejected as unknown", arguments: [
         #"{"$type": "pushOnly"}"#,
         #"{"$type": "all"}"#,
@@ -77,8 +72,11 @@ struct DisplayConditionsTests {
 
     @Test("An in-app with an unknown condition is dropped")
     func inappWithUnknownType() {
-        #expect(throws: CustomDecodingError.self) {
+        let error = #expect(throws: CustomDecodingError.self) {
             try decodeInapp(displayConditions: #"{"$type": "unknownCondition"}"#)
+        }
+        if let error {
+            #expect(isUnknownType(error), "got \(error)")
         }
     }
 
@@ -93,6 +91,20 @@ struct DisplayConditionsTests {
     @Test("A direct-call in-app keeps its condition")
     func inappWithDirectCall() throws {
         #expect(try decodeInapp(displayConditions: #"{"$type": "directCall"}"#).displayConditions == .directCall)
+    }
+
+    @Test("A dropped in-app leaves its neighbours in the config")
+    func neighboursSurvive() throws {
+        func inapp(_ id: String, displayConditions: String) -> String {
+            #"{"id": "\#(id)", "sdkVersion": {"min": 1, "max": 1}, "displayConditions": \#(displayConditions), "targeting": {"$type": "true"}, "form": {"variants": []}}"#
+        }
+        let json = [
+            inapp("before", displayConditions: "null"),
+            inapp("dropped", displayConditions: #"{"$type": "unknownCondition"}"#),
+            inapp("after", displayConditions: #"{"$type": "directCall"}"#)
+        ].joined(separator: ",")
+        let inapps = try JSONDecoder().decode(FailableDecodableArray<InAppDTO>.self, from: Data("[\(json)]".utf8))
+        #expect(inapps.elements.map(\.id) == ["before", "after"])
     }
 
     @Test("An in-app whose displayConditions is null shows as before")
