@@ -23,6 +23,7 @@ struct MBEventRepositorySendRawTests {
         private(set) var capturedRoute: Route?
         private(set) var requestRawCallCount = 0
         private(set) var requestTypedCallCount = 0
+        private(set) var requestCallCount = 0
 
         func request<T>(
             type: T.Type,
@@ -43,6 +44,7 @@ struct MBEventRepositorySendRawTests {
         }
 
         func request(route: Route, completion: @escaping ((Result<Void, MindboxError>) -> Void)) {
+            requestCallCount += 1
             capturedRoute = route
             completion(requestResult)
         }
@@ -555,6 +557,29 @@ struct MBEventRepositorySendRawTests {
         #expect(Self.wrapper(of: route)?.trackingIds == nil)
         #expect(TrackingIdsRecord.reference(in: storage) == nil)
         #expect(throws: Never.self) { try result.get() }
+    }
+
+    @Test("A revoked Keepalive whose empty-list request fails returns the failure without a second request", .tags(.trackingIds))
+    func send_revokedKeepaliveWithFailedRequest_isNotResentWithoutIds() async throws {
+        let fetcher = FakeNetworkFetcher()
+        fetcher.requestTypedRawResponse = .failure(.connectionError)
+        let storage = try makeStorage()
+        let trackingIdsResolver = makeTrackingIdsResolver(nil)
+        let repo = makeRepository(fetcher: fetcher, storage: storage, trackingIdsResolver: trackingIdsResolver)
+        let keepalive = Event(type: .keepAlive, body: "{}")
+        trackingIdsResolver.expectFirstSend(of: keepalive)
+
+        let result = await awaitResult { completion in
+            repo.send(event: keepalive, completion: completion)
+        }
+
+        let route = try #require(fetcher.capturedRoute as? EventRoute)
+        #expect(fetcher.requestTypedCallCount == 1)
+        #expect(fetcher.requestCallCount == 0)
+        #expect(route.baseURLKind == .operations)
+        #expect(Self.wrapper(of: route)?.trackingIds?.ids == [])
+        #expect(TrackingIdsRecord.reference(in: storage) == nil)
+        #expect(throws: MindboxError.self) { try result.get() }
     }
 
     @Test("A Keepalive without ids rejected with 4xx is deleted", .tags(.trackingIds))
