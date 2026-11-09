@@ -419,7 +419,6 @@
 		A17853DD29AF7EDE0072578F /* Date+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E340299E5B6D00F8F074 /* Date+Extension.swift */; };
 		A17853DE29AF7EDE0072578F /* FileManager+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E342299E5B6D00F8F074 /* FileManager+Extensions.swift */; };
 		A17853DF29AF7EDE0072578F /* MBLoggerUtilitiesFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E344299E5B6D00F8F074 /* MBLoggerUtilitiesFetcher.swift */; };
-		A17853E029AF7EDE0072578F /* URL+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E343299E5B6D00F8F074 /* URL+Extensions.swift */; };
 		A17853E629AF7EE90072578F /* MBLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E34B299E5B6D00F8F074 /* MBLogger.swift */; };
 		A17853E829AF7EEF0072578F /* CDLogMessage.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A154E34D299E5B6D00F8F074 /* CDLogMessage.xcdatamodeld */; };
 		A17853EB29AF7EF30072578F /* MBPersistentContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154E350299E5B6D00F8F074 /* MBPersistentContainer.swift */; };
@@ -1203,7 +1202,6 @@
 		A154E340299E5B6D00F8F074 /* Date+Extension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Date+Extension.swift"; sourceTree = "<group>"; };
 		A154E341299E5B6D00F8F074 /* String+Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "String+Extensions.swift"; sourceTree = "<group>"; };
 		A154E342299E5B6D00F8F074 /* FileManager+Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "FileManager+Extensions.swift"; sourceTree = "<group>"; };
-		A154E343299E5B6D00F8F074 /* URL+Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "URL+Extensions.swift"; sourceTree = "<group>"; };
 		A154E344299E5B6D00F8F074 /* MBLoggerUtilitiesFetcher.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MBLoggerUtilitiesFetcher.swift; sourceTree = "<group>"; };
 		A154E34B299E5B6D00F8F074 /* MBLogger.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MBLogger.swift; sourceTree = "<group>"; };
 		A154E34E299E5B6D00F8F074 /* CDLogMessage.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = CDLogMessage.xcdatamodel; sourceTree = "<group>"; };
@@ -3009,7 +3007,6 @@
 				A154E340299E5B6D00F8F074 /* Date+Extension.swift */,
 				A154E341299E5B6D00F8F074 /* String+Extensions.swift */,
 				A154E342299E5B6D00F8F074 /* FileManager+Extensions.swift */,
-				A154E343299E5B6D00F8F074 /* URL+Extensions.swift */,
 				A154E344299E5B6D00F8F074 /* MBLoggerUtilitiesFetcher.swift */,
 			);
 			path = Extensions;
@@ -5070,7 +5067,6 @@
 				47A4FA6E2E7335A200569870 /* LoggerDatabaseLoader.swift in Sources */,
 				A17853DC29AF7EDE0072578F /* String+Extensions.swift in Sources */,
 				F3B2A3A02A4C79E200E2CA25 /* ValidationError.swift in Sources */,
-				A17853E029AF7EDE0072578F /* URL+Extensions.swift in Sources */,
 				A17853DD29AF7EDE0072578F /* Date+Extension.swift in Sources */,
 				A17853D729AF7ED90072578F /* LogCategory.swift in Sources */,
 				A17853EC29AF7EF30072578F /* CDLogMessage+CoreDataClass.swift in Sources */,
