@@ -61,6 +61,42 @@ enum TrackingIdsAttachment: Equatable {
     }
 }
 
+struct TrackingIdsRecord: Equatable {
+    enum Reference: Equatable {
+        case hash(String)
+        case unconfirmed
+    }
+
+    private static let unconfirmedValue = "unconfirmed"
+
+    let instanceId: String
+    let reference: Reference
+
+    init(instanceId: String?, reference: Reference) {
+        self.instanceId = instanceId ?? ""
+        self.reference = reference
+    }
+
+    init?(rawValue: String) {
+        guard let separator = rawValue.lastIndex(of: ":") else { return nil }
+        let value = String(rawValue[rawValue.index(after: separator)...])
+        instanceId = String(rawValue[..<separator])
+        reference = value == Self.unconfirmedValue ? .unconfirmed : .hash(value)
+    }
+
+    var rawValue: String {
+        switch reference {
+        case let .hash(hash): return instanceId + ":" + hash
+        case .unconfirmed: return instanceId + ":" + Self.unconfirmedValue
+        }
+    }
+
+    static func reference(in storage: PersistenceStorage) -> Reference? {
+        guard let record = storage.trackingIdsRecord.flatMap(Self.init(rawValue:)) else { return nil }
+        return record.instanceId == (storage.applicationInstanceId ?? "") ? record.reference : .unconfirmed
+    }
+}
+
 private func sha256Hex(_ text: String) -> String {
     SHA256().hash(data: Data(text.utf8)).map { String(format: "%02x", $0) }.joined()
 }
@@ -100,14 +136,14 @@ final class TrackingIdsResolver {
     func markUnconfirmed(in storage: PersistenceStorage) {
         $claims.mutate { claims in
             claims.count += 1
-            storage.markTrackingIdsUnconfirmed(instanceId: storage.applicationInstanceId)
+            storage.trackingIdsRecord = TrackingIdsRecord(instanceId: storage.applicationInstanceId, reference: .unconfirmed).rawValue
         }
     }
 
     func accept(_ hash: String, from firstSend: FirstSend, instanceId: String?, in storage: PersistenceStorage) -> Bool {
         $claims.mutate { claims in
             guard firstSend.claim == claims.count else { return false }
-            storage.acceptTrackingIdsHash(hash, instanceId: instanceId)
+            storage.trackingIdsRecord = TrackingIdsRecord(instanceId: instanceId, reference: .hash(hash)).rawValue
             return true
         }
     }

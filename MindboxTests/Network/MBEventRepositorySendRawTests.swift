@@ -316,7 +316,7 @@ struct MBEventRepositorySendRawTests {
         let attachment = try #require(Self.wrapper(of: route)?.trackingIds)
         #expect(attachment.carriesTrackingIds)
         #expect(route.baseURLKind == .tracking(Self.trackingHost))
-        #expect(storage.trackingIdsReference == attachment.hash)
+        #expect(TrackingIdsRecord.reference(in: storage) == .hash(attachment.hash))
         #expect(fetcher.requestTypedCallCount == 1)
         #expect(throws: Never.self) { try result.get() }
     }
@@ -336,7 +336,7 @@ struct MBEventRepositorySendRawTests {
         }
 
         #expect(Self.wrapper(of: fetcher.capturedRoute)?.trackingIds?.carriesTrackingIds == true)
-        #expect(storage.trackingIdsReference == nil)
+        #expect(TrackingIdsRecord.reference(in: storage) == nil)
     }
 
     @Test("A success that lands after a re-installation leaves the new installation unconfirmed", .tags(.trackingIds))
@@ -354,11 +354,11 @@ struct MBEventRepositorySendRawTests {
         let completion = try #require(fetcher.heldCompletion)
         storage.eraseMetadata()
         storage.applicationInstanceId = "new-installation"
-        storage.markTrackingIdsUnconfirmed(instanceId: "new-installation")
+        storage.trackingIdsRecord = TrackingIdsRecord(instanceId: "new-installation", reference: .unconfirmed).rawValue
 
         completion(.success(()))
 
-        #expect(storage.trackingIdsReference == "unconfirmed")
+        #expect(TrackingIdsRecord.reference(in: storage) == .unconfirmed)
     }
 
     @Test("An older success that lands after a newer claim leaves the record unconfirmed", .tags(.trackingIds))
@@ -368,7 +368,7 @@ struct MBEventRepositorySendRawTests {
         let storage = try makeStorage()
         storage.installationDate = Date()
         storage.applicationInstanceId = "installation"
-        storage.markTrackingIdsUnconfirmed(instanceId: "installation")
+        storage.trackingIdsRecord = TrackingIdsRecord(instanceId: "installation", reference: .unconfirmed).rawValue
         let trackingIdsResolver = TrackingIdsResolver()
         let changeDetector = TrackingIdsChangeDetector(trackingIdsResolver: trackingIdsResolver,
                                                        trackingHostResolver: TrackingHostResolver(persistenceStorage: storage,
@@ -387,7 +387,7 @@ struct MBEventRepositorySendRawTests {
         try #require(changeDetector.claimPendingChange())
         revokeAnswer(.success(()))
 
-        #expect(storage.trackingIdsReference == "unconfirmed")
+        #expect(TrackingIdsRecord.reference(in: storage) == .unconfirmed)
     }
 
     @Test("An ids event first sent without ids stores no hash when sent again with them", .tags(.trackingIds))
@@ -408,7 +408,7 @@ struct MBEventRepositorySendRawTests {
         }
 
         #expect(fetcher.requestTypedCallCount == 1)
-        #expect(storage.trackingIdsReference == nil)
+        #expect(TrackingIdsRecord.reference(in: storage) == nil)
     }
 
     @Test("An ids event this launch did not create stores no hash", .tags(.trackingIds))
@@ -422,7 +422,7 @@ struct MBEventRepositorySendRawTests {
         }
 
         #expect(fetcher.requestTypedCallCount == 1)
-        #expect(storage.trackingIdsReference == nil)
+        #expect(TrackingIdsRecord.reference(in: storage) == nil)
     }
 
     @Test("Keepalive carries the current ids, Installed and InfoUpdated carry none", .tags(.trackingIds))
@@ -460,7 +460,7 @@ struct MBEventRepositorySendRawTests {
         #expect(Self.wrapper(of: route)?.trackingIds == nil)
         #expect(route.baseURLKind == .operations)
         #expect(route.body == Data(#"{"token":"t"}"#.utf8))
-        #expect(storage.trackingIdsReference == nil)
+        #expect(TrackingIdsRecord.reference(in: storage) == nil)
     }
 
     @Test("Revoked state sends an empty list on the operations host and stores the empty-list hash", .tags(.trackingIds))
@@ -479,31 +479,31 @@ struct MBEventRepositorySendRawTests {
         let route = try #require(fetcher.capturedRoute as? EventRoute)
         #expect(Self.wrapper(of: route)?.trackingIds?.ids == [])
         #expect(route.baseURLKind == .operations)
-        #expect(storage.trackingIdsReference == "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
+        #expect(TrackingIdsRecord.reference(in: storage) == .hash("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"))
     }
 
     @Test("eraseMetadata hands the accepted hash to the next installation as unconfirmed", .tags(.trackingIds))
     func eraseMetadata_handsTheAcceptedHashOverUnconfirmed() throws {
         let storage = try makeStorage()
-        storage.acceptTrackingIdsHash("accepted", instanceId: storage.applicationInstanceId)
+        storage.trackingIdsRecord = TrackingIdsRecord(instanceId: storage.applicationInstanceId, reference: .hash("accepted")).rawValue
 
         storage.eraseMetadata()
         storage.applicationInstanceId = "next-installation"
 
-        #expect(storage.trackingIdsReference == "unconfirmed")
+        #expect(TrackingIdsRecord.reference(in: storage) == .unconfirmed)
     }
 
     @Test("The accepted hash belongs to the installation that sent it, any other one reads it as unconfirmed", .tags(.trackingIds))
     func acceptedHash_belongsToTheSendingInstallation() throws {
         let storage = try makeStorage()
         storage.applicationInstanceId = "installation"
-        storage.acceptTrackingIdsHash("accepted", instanceId: "installation")
-        #expect(storage.trackingIdsReference == "accepted")
+        storage.trackingIdsRecord = TrackingIdsRecord(instanceId: "installation", reference: .hash("accepted")).rawValue
+        #expect(TrackingIdsRecord.reference(in: storage) == .hash("accepted"))
 
         storage.applicationInstanceId = "another-installation"
-        #expect(storage.trackingIdsReference == "unconfirmed")
+        #expect(TrackingIdsRecord.reference(in: storage) == .unconfirmed)
 
         storage.applicationInstanceId = nil
-        #expect(storage.trackingIdsReference == "unconfirmed")
+        #expect(TrackingIdsRecord.reference(in: storage) == .unconfirmed)
     }
 }

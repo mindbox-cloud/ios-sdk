@@ -256,7 +256,7 @@ struct TrackingIdsInfoUpdateTests {
             DI.injectOrFail(EventRepository.self).send(event: event) { _ in continuation.resume() }
         }
 
-        #expect(storage.trackingIdsReference == Self.hash(of: id))
+        #expect(TrackingIdsRecord.reference(in: storage) == .hash(Self.hash(of: id)))
         cleanup()
     }
 
@@ -324,7 +324,7 @@ struct TrackingIdsInfoUpdateTests {
     }
 
     private func accept(_ hash: String) {
-        storage.acceptTrackingIdsHash(hash, instanceId: storage.applicationInstanceId)
+        storage.trackingIdsRecord = TrackingIdsRecord(instanceId: storage.applicationInstanceId, reference: .hash(hash)).rawValue
     }
 
     private func drainControllerQueue() async {

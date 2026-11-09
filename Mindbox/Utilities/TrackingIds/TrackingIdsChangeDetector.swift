@@ -33,10 +33,11 @@ final class TrackingIdsChangeDetector {
             return false
         }
         let hash = attachment.hash
-        let reference = lastEvaluatedHash ?? persistenceStorage.trackingIdsReference
-        let isUnanswered = lastEvaluatedHash == nil && persistenceStorage.isTrackingIdsReferenceUnconfirmed
+        let stored = TrackingIdsRecord.reference(in: persistenceStorage)
+        let reference = lastEvaluatedHash.map(TrackingIdsRecord.Reference.hash) ?? stored
+        let isUnanswered = lastEvaluatedHash == nil && stored == .unconfirmed
         lastEvaluatedHash = hash
-        guard hash != reference, attachment.carriesTrackingIds || reference != nil else {
+        guard reference != .hash(hash), attachment.carriesTrackingIds || reference != nil else {
             Self.log(Self.skipMessage(attachment, state: state, reference: reference))
             return false
         }
@@ -52,14 +53,14 @@ final class TrackingIdsChangeDetector {
         return "Skip sending: the setter has not been called in this launch (state: \(state.logDescription))"
     }
 
-    private static func skipMessage(_ attachment: TrackingIdsAttachment, state: TrackingIdsState, reference: String?) -> String {
+    private static func skipMessage(_ attachment: TrackingIdsAttachment, state: TrackingIdsState, reference: TrackingIdsRecord.Reference?) -> String {
         guard attachment.carriesTrackingIds else {
             return "Skip sending: nothing to clear (state: \(state.logDescription), \(lastSent(reference)))"
         }
         return "Skip sending: tracking ids have not changed (state: \(state.logDescription), \(attachment.logHash))"
     }
 
-    private static func sendingMessage(_ attachment: TrackingIdsAttachment, state: TrackingIdsState, reference: String?, isUnanswered: Bool) -> String {
+    private static func sendingMessage(_ attachment: TrackingIdsAttachment, state: TrackingIdsState, reference: TrackingIdsRecord.Reference?, isUnanswered: Bool) -> String {
         var details = ["state: \(state.logDescription)"]
         if attachment.carriesTrackingIds {
             details.append(attachment.logHash)
@@ -72,11 +73,12 @@ final class TrackingIdsChangeDetector {
         return "Sending tracking ids: \(attachment.logDescription) (\(details.joined(separator: ", ")))"
     }
 
-    private static func lastSent(_ reference: String?) -> String {
+    private static func lastSent(_ reference: TrackingIdsRecord.Reference?) -> String {
         switch reference {
         case nil: return "never sent"
-        case TrackingIdsAttachment.cleared.hash: return "last sent: none"
-        case let hash?: return "last sent: sha256 " + hash.prefix(8)
+        case .unconfirmed?: return "the last send got no answer"
+        case .hash(TrackingIdsAttachment.cleared.hash)?: return "last sent: none"
+        case let .hash(hash)?: return "last sent: sha256 " + hash.prefix(8)
         }
     }
 
