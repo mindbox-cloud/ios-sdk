@@ -79,3 +79,78 @@ struct MBContainerKeyTests {
         #expect(container.resolve(First.Service.self) !== container.resolve(First.Service.self))
     }
 }
+
+@Suite("MBContainer registration", .tags(.dependencyInjection))
+struct MBContainerRegistrationTests {
+
+    private protocol Servicing: AnyObject {}
+    private final class Service: Servicing {}
+
+    @Test
+    func registeringAgainKeepsAlreadyCreatedInstance() {
+        let container = MBContainer()
+        let original = Service()
+        var replacementCalls = 0
+        container.register(Service.self) { original }
+        let resolvedBefore = container.resolve(Service.self)
+
+        container.register(Service.self) {
+            replacementCalls += 1
+            return Service()
+        }
+
+        #expect(resolvedBefore === original)
+        #expect(container.resolve(Service.self) === original)
+        #expect(replacementCalls == 0)
+    }
+
+    @Test
+    func registeringAgainBeforeResolveUsesTheNewFactory() {
+        let container = MBContainer()
+        let replacement = Service()
+        var originalCalls = 0
+        container.register(Service.self) {
+            originalCalls += 1
+            return Service()
+        }
+
+        container.register(Service.self) { replacement }
+
+        #expect(container.resolve(Service.self) === replacement)
+        #expect(originalCalls == 0)
+    }
+
+    @Test
+    func protocolTypeResolvesToRegisteredInstance() {
+        let container = MBContainer()
+        let service = Service()
+        container.register(Servicing.self) { service }
+
+        #expect(container.resolve(Servicing.self) === service)
+        #expect(container.resolve(Service.self) == nil)
+    }
+
+    @Test
+    func transientFactoryRunsOnEveryResolve() {
+        let container = MBContainer()
+        var factoryCalls = 0
+        container.register(Servicing.self, scope: .transient) {
+            factoryCalls += 1
+            return Service()
+        }
+
+        let first = container.resolve(Servicing.self)
+        let second = container.resolve(Servicing.self)
+        let third = container.resolve(Servicing.self)
+
+        #expect(factoryCalls == 3)
+        #expect(first !== second && second !== third && first !== third)
+    }
+
+    @Test
+    func unregisteredTypeResolvesToNil() {
+        let container = MBContainer()
+
+        #expect(container.resolve(Servicing.self) == nil)
+    }
+}

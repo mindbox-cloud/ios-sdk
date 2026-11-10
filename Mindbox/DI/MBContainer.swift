@@ -14,15 +14,38 @@ enum ObjectScope {
 }
 
 class MBContainer {
-    private var factories: [ObjectIdentifier: (ObjectScope, () -> Any)] = [:]
-    private var singletons: [ObjectIdentifier: Any] = [:]
+    /// Stores a factory with its static type, so `resolve` casts to a concrete
+    /// generic class instead of casting `Any` to a (possibly protocol) `T`.
+    private final class Registration<T> {
+        let scope: ObjectScope
+        let factory: () -> T
+
+        init(scope: ObjectScope, factory: @escaping () -> T) {
+            self.scope = scope
+            self.factory = factory
+        }
+    }
+
+    /// Keeps a `.container` instance with its static type.
+    /// Lives apart from `Registration`, so registering a type again
+    /// does not drop an instance that was already created.
+    private final class Instance<T> {
+        let value: T
+
+        init(_ value: T) {
+            self.value = value
+        }
+    }
+
+    private var registrations: [ObjectIdentifier: AnyObject] = [:]
+    private var singletons: [ObjectIdentifier: AnyObject] = [:]
     private let lock = NSRecursiveLock()
 
     func register<T>(_ type: T.Type, scope: ObjectScope = .container, factory: @escaping () -> T) {
         let key = ObjectIdentifier(type)
         lock.lock()
         defer { lock.unlock() }
-        factories[key] = (scope, factory)
+        registrations[key] = Registration(scope: scope, factory: factory)
     }
 
     func resolve<T>(_ type: T.Type) -> T? {
@@ -30,20 +53,20 @@ class MBContainer {
 
         lock.lock()
         defer { lock.unlock() }
-        if let (scope, factory) = factories[key] {
-            switch scope {
-            case .container:
-                if let instance = singletons[key] as? T {
-                    return instance
-                }
-                let instance = factory()
-                singletons[key] = instance
-                return instance as? T
-            case .transient:
-                return factory() as? T
-            }
+        guard let registration = registrations[key] as? Registration<T> else {
+            return nil
         }
-        return nil
+        switch registration.scope {
+        case .container:
+            if let instance = singletons[key] as? Instance<T> {
+                return instance.value
+            }
+            let value = registration.factory()
+            singletons[key] = Instance(value)
+            return value
+        case .transient:
+            return registration.factory()
+        }
     }
 
     func resolveOrFail<T>(_ serviceType: T.Type) -> T {
