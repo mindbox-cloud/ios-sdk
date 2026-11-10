@@ -176,6 +176,27 @@ public class Mindbox: NSObject {
         }
     }
 
+    /// Passes the app's advertising identifier (IDFA) to Mindbox.
+    ///
+    /// The SDK neither reads the IDFA nor asks for tracking consent: the app does both and passes the result here.
+    /// Call this method on every activation (`sceneDidBecomeActive`, or `applicationDidBecomeActive` in an app
+    /// without scenes) with `ASIdentifierManager.shared().advertisingIdentifier`, with or without tracking consent.
+    /// Without consent iOS returns zeros, which count as `nil`. An app that checks the tracking status itself passes
+    /// `nil` when tracking is not authorized.
+    ///
+    /// Do not skip the call without consent: it is how the SDK learns that the user withdrew consent, and the SDK
+    /// then clears the IDFA it sent earlier. If the app skips the call, that IDFA stays in Mindbox.
+    ///
+    /// The SDK sends the IDFA only to the tracking host derived from your `domain` (`api.mindbox.ru` →
+    /// `api-tracking.mindbox.ru`, `api-staging.mindbox.ru` → `api-tracking-staging.mindbox.ru`), and only when the
+    /// app's `PrivacyInfo.xcprivacy` sets `NSPrivacyTracking` to `true` and lists that host. While an
+    /// `operationsDomain` is set, the IDFA stays on the device.
+    ///
+    /// - Parameter identifier: The IDFA, or `nil` when tracking is not authorized.
+    public func setAdvertisingIdentifier(_ identifier: UUID?) {
+        coreController?.advertisingIdentifierDidUpdate(identifier)
+    }
+
     /// Deprecated. Use ``Mindbox/Mindbox/refreshNotificationPermissionStatus()`` instead.
     ///
     /// This method is kept for backward compatibility. The `granted` argument is ignored.

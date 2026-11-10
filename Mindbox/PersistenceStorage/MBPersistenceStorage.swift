@@ -258,6 +258,9 @@ class MBPersistenceStorage: PersistenceStorage {
     @UserDefaultsWrapper(key: .applicationInstanceId, defaultValue: nil)
     var applicationInstanceId: String?
 
+    @UserDefaultsWrapper(key: .trackingIdsRecord, defaultValue: nil)
+    var trackingIdsRecord: String?
+
     @UserDefaultsWrapper(key: .webViewLocalStateVersion, defaultValue: nil)
     var webViewLocalStateVersion: Int?
 
@@ -309,6 +312,7 @@ extension MBPersistenceStorage {
             case versionCodeForMigration = "MBPersistenceStorage-versionCodeForMigration"
             case applicationInfoUpdateVersion = "MBPersistenceStorage-applicationInfoUpdatedVersion"
             case applicationInstanceId = "MBPersistenceStorage-applicationInstanceId"
+            case trackingIdsRecord = "MBPersistenceStorage-trackingIdsRecord"
             case webViewLocalStateVersion = "MBPersistenceStorage-webViewLocalStateVersion"
             case webViewLearnedHosts = "MBPersistenceStorage-webViewLearnedHosts"
             case embeddedBlockPlaceRecords = "MBPersistenceStorage-embeddedBlockPlaceRecords"
@@ -380,11 +384,8 @@ struct AppGroupStorageTransitionReporter {
               MBPersistenceStorage.isInstalled(in: sharedDefaults) else { return false }
 
         Logger.common(
-            message: "[Storage] Install state found in BOTH the local fallback store and the "
-                + "App Group suite. The device ran in local-storage fallback (App Group "
-                + "unavailable) and the App Group has since become available, so the install was "
-                + "re-registered on the shared container (deviceUUID stays stable, re-derived from IDFA/IDFV; "
-                + "in-app caps/counters reset).",
+            message: "[Storage] Install state in both the local store and the App Group suite: the App Group became "
+                + "available after a local-only install, so the SDK registered the install again on an empty shared store.",
             level: .info,
             category: .general
         )

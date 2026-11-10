@@ -8,26 +8,33 @@
 
 import Foundation
 
-enum EventRoute: Route {
-    case syncEvent(EventWrapper)
-    case asyncEvent(EventWrapper)
-    case customAsyncEvent(EventWrapper)
-    case trackVisit(EventWrapper)
+struct EventRoute: Route {
+    let wrapper: EventWrapper
 
-    var method: HTTPMethod {
-        switch self {
-        default:
-            return .post
-        }
+    init(_ wrapper: EventWrapper) {
+        self.wrapper = wrapper
     }
 
-    var baseURLKind: RouteBaseURL { .operations }
+    private var request: Event.Operation.Request {
+        wrapper.event.type.request
+    }
+
+    var method: HTTPMethod {
+        .post
+    }
+
+    var baseURLKind: RouteBaseURL {
+        if case .sdkOperation = request, let trackingHost = wrapper.trackingIds?.trackingHost {
+            return .tracking(trackingHost)
+        }
+        return .operations
+    }
 
     var path: String {
-        switch self {
-        case .syncEvent:
+        switch request {
+        case .customSyncOperation:
             return "/v3/operations/sync"
-        case .asyncEvent, .customAsyncEvent:
+        case .sdkOperation, .customAsyncOperation:
             return "/v3/operations/async"
         case .trackVisit:
             return "/v1.1/customer/mobile-track-visit"
@@ -35,29 +42,29 @@ enum EventRoute: Route {
     }
 
     var headers: HTTPHeaders? {
-        switch self {
-        case .syncEvent:
+        switch request {
+        case .customSyncOperation:
             return ["Accept": "application/json"]
-        default:
+        case .sdkOperation, .customAsyncOperation, .trackVisit:
             return nil
         }
     }
 
     var queryParameters: QueryParameters {
-        switch self {
-        case let .asyncEvent(wrapper):
-            return makeBasicQueryParameters(with: wrapper)
-                .appending(["operation": wrapper.event.type.rawValue])
+        switch request {
+        case let .sdkOperation(operation):
+            return makeBasicQueryParameters()
+                .appending(["operation": operation])
                 .appending(["endpointId": wrapper.endpoint])
-        case let .customAsyncEvent(wrapper):
+        case .customAsyncOperation:
             guard let decoded = BodyDecoder<CustomEvent>(decodable: wrapper.event.body) else {
                 return [:]
             }
 
-            return makeBasicQueryParameters(with: wrapper)
+            return makeBasicQueryParameters()
                 .appending(["operation": decoded.body.name])
                 .appending(["endpointId": wrapper.endpoint])
-        case let .syncEvent(wrapper):
+        case .customSyncOperation:
             guard let decoded = BodyDecoder<CustomEvent>(decodable: wrapper.event.body) else {
                 return [:]
             }
@@ -66,43 +73,48 @@ enum EventRoute: Route {
                 .appending(["deviceUUID": wrapper.deviceUUID])
                 .appending(["operation": decoded.body.name])
                 .appending(["endpointId": wrapper.endpoint])
-        case let .trackVisit(wrapper):
-            return makeBasicQueryParameters(with: wrapper)
+        case .trackVisit:
+            return makeBasicQueryParameters()
         }
     }
 
     var body: Data? {
-        switch self {
-        case let .asyncEvent(wrapper):
-            return wrapper.event.body.data(using: .utf8)
-        case let .customAsyncEvent(wrapper), let .syncEvent(wrapper):
+        switch request {
+        case .sdkOperation:
+            guard let ids = wrapper.trackingIds else { return wrapper.event.body.data(using: .utf8) }
+            return jsonBody(wrapper.event.body, merging: ["ids": ids.jsonArray])
+        case .customAsyncOperation, .customSyncOperation:
             guard let decoded = BodyDecoder<CustomEvent>(decodable: wrapper.event.body) else {
                 return nil
             }
 
             return decoded.body.payload.data(using: .utf8)
-        case let .trackVisit(wrapper):
-            guard let data = wrapper.event.body.data(using: .utf8),
-                  var json = try? JSONSerialization.jsonObject(with: data, options: .mutableContainers) as? [String: Any] else {
-                return nil
-            }
-
-            json["endpointId"] = wrapper.endpoint
-
-            return try? JSONSerialization.data(withJSONObject: json)
+        case .trackVisit:
+            return jsonBody(wrapper.event.body, merging: ["endpointId": wrapper.endpoint])
         }
     }
 
-    func makeBasicQueryParameters(with wrapper: EventWrapper) -> QueryParameters {
+    func loggableBody(from body: Data?) -> Data? {
+        guard case .sdkOperation = request, let ids = wrapper.trackingIds else { return body }
+        return ids.masking(body)
+    }
+
+    private func jsonBody(_ rawBody: String, merging fields: [String: Any]) -> Data? {
+        guard let data = rawBody.data(using: .utf8),
+              var json = try? JSONSerialization.jsonObject(with: data, options: .mutableContainers) as? [String: Any] else {
+            return nil
+        }
+
+        json.merge(fields) { _, new in new }
+
+        return try? JSONSerialization.data(withJSONObject: json)
+    }
+
+    private func makeBasicQueryParameters() -> QueryParameters {
         ["transactionId": wrapper.event.transactionId,
          "deviceUUID": wrapper.deviceUUID,
          "dateTimeOffset": wrapper.event.dateTimeOffset]
     }
-}
-
-fileprivate struct TrackVisitBodyProxy: Codable {
-    let ianaTimeZone: String
-    let endpointId: String
 }
 
 fileprivate extension QueryParameters {

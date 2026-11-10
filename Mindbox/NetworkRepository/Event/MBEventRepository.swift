@@ -13,10 +13,17 @@ class MBEventRepository: EventRepository {
     private let fetcher: NetworkFetcher
 
     private let persistenceStorage: PersistenceStorage
+    private let trackingIdsResolver: TrackingIdsResolver
+    private let trackingHostResolver: TrackingHostResolver
 
-    init(fetcher: NetworkFetcher, persistenceStorage: PersistenceStorage) {
+    init(fetcher: NetworkFetcher,
+         persistenceStorage: PersistenceStorage,
+         trackingIdsResolver: TrackingIdsResolver,
+         trackingHostResolver: TrackingHostResolver) {
         self.fetcher = fetcher
         self.persistenceStorage = persistenceStorage
+        self.trackingIdsResolver = trackingIdsResolver
+        self.trackingHostResolver = trackingHostResolver
     }
 
     func send(event: Event, completion: @escaping (Result<Void, MindboxError>) -> Void) {
@@ -36,13 +43,38 @@ class MBEventRepository: EventRepository {
             completion(.failure(error))
             return
         }
-        let wrapper = EventWrapper(
-            event: event,
-            endpoint: configuration.endpoint,
-            deviceUUID: deviceUUID
-        )
-        let route = makeRoute(wrapper: wrapper)
-        fetcher.request(route: route, completion: completion)
+        let route = EventRoute(EventWrapper(event: event, endpoint: configuration.endpoint, deviceUUID: deviceUUID))
+        let firstSend = trackingIdsResolver.takeFirstSend(of: event)
+        guard let attachment = event.isRetry ? nil : trackingIdsResolver.attachment(for: event.type, trackingHost: trackingHostResolver.trackingHost),
+              case let .sdkOperation(operation) = event.type.request else {
+            fetcher.request(route: route, completion: completion)
+            return
+        }
+        let idsRoute = EventRoute(EventWrapper(event: event, endpoint: configuration.endpoint, deviceUUID: deviceUUID, trackingIds: attachment))
+        let instanceId = persistenceStorage.applicationInstanceId
+        fetcher.request(type: BaseResponse.self, route: idsRoute) { [fetcher, persistenceStorage, trackingIdsResolver] result in
+            switch result {
+            case .success:
+                let hash = attachment.hash
+                if let firstSend, trackingIdsResolver.accept(hash, from: firstSend, instanceId: instanceId, in: persistenceStorage) {
+                    Logger.common(
+                        message: "[TrackingIds] " + attachment.sentLogMessage(operation: operation),
+                        level: .debug,
+                        category: .general
+                    )
+                }
+                completion(.success(()))
+            case let .failure(error) where event.type == .keepAlive && attachment.trackingHost != nil:
+                Logger.common(
+                    message: "[TrackingIds] Keepalive did not reach the tracking host (\(error.localizedDescription)), retrying on the main host without ids",
+                    level: .info,
+                    category: .general
+                )
+                fetcher.request(route: route, completion: completion)
+            case let .failure(error):
+                completion(.failure(error))
+            }
+        }
     }
 
     func send<T>(type: T.Type, event: Event, completion: @escaping (Result<T, MindboxError>) -> Void) where T: Decodable {
@@ -72,7 +104,7 @@ class MBEventRepository: EventRepository {
             endpoint: configuration.endpoint,
             deviceUUID: deviceUUID
         )
-        let route = makeRoute(wrapper: wrapper)
+        let route = EventRoute(wrapper)
         fetcher.request(type: type, route: route, completion: deliver)
     }
 
@@ -98,7 +130,7 @@ class MBEventRepository: EventRepository {
             endpoint: configuration.endpoint,
             deviceUUID: deviceUUID
         )
-        let route = makeRoute(wrapper: wrapper)
+        let route = EventRoute(wrapper)
         fetcher.requestRaw(route: route) { result in
             DispatchQueue.main.async {
                 switch result {
@@ -111,28 +143,6 @@ class MBEventRepository: EventRepository {
         }
     }
 
-    private func makeRoute(wrapper: EventWrapper) -> Route {
-        switch wrapper.event.type {
-        case .installed,
-             .infoUpdated,
-             .keepAlive,
-             .trackClick,
-             .installedWithoutCustomer,
-             .inAppViewEvent,
-             .inAppClickEvent,
-             .inAppTargetingEvent,
-             .inAppShowFailureEvent,
-             .sdkLogs:
-            return EventRoute.asyncEvent(wrapper)
-        case .customEvent:
-            return EventRoute.customAsyncEvent(wrapper)
-        case .trackVisit:
-            return EventRoute.trackVisit(wrapper)
-        case .syncEvent:
-            return EventRoute.syncEvent(wrapper)
-        }
-    }
-    
     func cancelAllRequests() {
         fetcher.cancelAllTasks()
     }

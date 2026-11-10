@@ -104,12 +104,16 @@ enum Constants {
         
         case infoUpdated
         
+        case trackingIdsUpdated
+
         case keepAlive
         
         var operation: Event.Operation {
             switch self {
             case .infoUpdated:
                 .infoUpdated
+            case .trackingIdsUpdated:
+                .trackingIdsUpdated
             case .keepAlive:
                 .keepAlive
             }

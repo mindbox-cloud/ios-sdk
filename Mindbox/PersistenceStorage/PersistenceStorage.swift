@@ -55,6 +55,8 @@ protocol PersistenceStorage: AnyObject {
     
     var applicationInstanceId: String? { get set }
 
+    var trackingIdsRecord: String? { get set }
+
     var webViewLocalStateVersion: Int? { get set }
 
     var webViewLearnedHosts: [String: [String]]? { get set }
@@ -110,6 +112,7 @@ extension PersistenceStorage {
         operationsDomainFromConfig = nil
         applicationInstanceId = nil
         applicationInfoUpdateVersion = nil
+        trackingIdsRecord = nil
         webViewLearnedHosts = nil
         embeddedBlockPlaceRecords = nil
     }
