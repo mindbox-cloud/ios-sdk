@@ -46,10 +46,7 @@ let package = Package(
         ),
         .target(
             name: "MindboxLogger",
-            path: "MindboxLogger",
-            resources: [
-                .process("PrivacyInfo.xcprivacy")
-            ]
+            path: "MindboxLogger"
         )
     ]
 )
