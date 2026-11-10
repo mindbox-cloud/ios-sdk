@@ -64,11 +64,12 @@ struct MBContainerKeyTests {
     }
 
     @Test
-    func containerScopeReturnsTheSameInstance() {
+    func containerScopeReturnsTheSameInstance() throws {
         let container = MBContainer()
         container.register(First.Service.self, scope: .container) { First.Service() }
 
-        #expect(container.resolve(First.Service.self) === container.resolve(First.Service.self))
+        let instance = try #require(container.resolve(First.Service.self))
+        #expect(container.resolve(First.Service.self) === instance)
     }
 
     @Test

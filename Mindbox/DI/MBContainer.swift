@@ -14,8 +14,6 @@ enum ObjectScope {
 }
 
 class MBContainer {
-    /// Stores a factory with its static type, so `resolve` casts to a concrete
-    /// generic class instead of casting `Any` to a (possibly protocol) `T`.
     private final class Registration<T> {
         let scope: ObjectScope
         let factory: () -> T
@@ -26,14 +24,11 @@ class MBContainer {
         }
     }
 
-    /// Keeps a `.container` instance with its static type.
-    /// Lives apart from `Registration`, so registering a type again
-    /// does not drop an instance that was already created.
-    private final class Instance<T> {
-        let value: T
+    private final class Singleton<T> {
+        let instance: T
 
-        init(_ value: T) {
-            self.value = value
+        init(_ instance: T) {
+            self.instance = instance
         }
     }
 
@@ -58,12 +53,12 @@ class MBContainer {
         }
         switch registration.scope {
         case .container:
-            if let instance = singletons[key] as? Instance<T> {
-                return instance.value
+            if let singleton = singletons[key] as? Singleton<T> {
+                return singleton.instance
             }
-            let value = registration.factory()
-            singletons[key] = Instance(value)
-            return value
+            let instance = registration.factory()
+            singletons[key] = Singleton(instance)
+            return instance
         case .transient:
             return registration.factory()
         }
