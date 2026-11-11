@@ -10,15 +10,6 @@ import Foundation
 
 enum NotificationsPayloads {
 
-    struct Delivery: Codable, CustomDebugStringConvertible {
-
-        let uniqueKey: String
-
-        var debugDescription: String {
-            "uniqueKey: \(uniqueKey)"
-        }
-    }
-
     struct Click: Codable {
 
         struct Buttons: Codable {

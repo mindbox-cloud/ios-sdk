@@ -8,18 +8,12 @@
 
 import Foundation
 import CoreData
+import SQLite3
 import MindboxLogger
 
 class DatabaseLoader: DatabaseLoaderProtocol {
     
     static var metadataKeysToPreserve: [String] { Constants.StoreMetadataKey.preserved }
-    
-    private let diskSpaceRepairThreshold: Int64 = 300 * 1024 * 1024
-    
-    var freeSize: Int64 {
-        let attrs = try? FileManager.default.attributesOfFileSystem(forPath: NSHomeDirectory())
-        return (attrs?[.systemFreeSize] as? NSNumber)?.int64Value ?? 0
-    }
     
     private let persistentContainer: NSPersistentContainer
     
@@ -132,18 +126,19 @@ class DatabaseLoader: DatabaseLoaderProtocol {
     }
     
     func loadPersistentContainer() throws -> NSPersistentContainer {
+        let loadError: Error
         do {
             return try loadPersistentStores()
         } catch {
             Logger.common(message: "[DBLoader] On-disk load failed: \(error)",
                                       level: .error, category: .database)
+            loadError = error
         }
         
         let preserved = salvageMetadataFromOnDiskStore()
 
-        let freeSize = freeSize
-        if freeSize < diskSpaceRepairThreshold {
-            Logger.common(message: "[DBLoader] Low disk space (\(freeSize)<\(diskSpaceRepairThreshold)); using InMemory without touching store", level: .error, category: .database)
+        guard Self.requiresStoreReset(after: loadError) else {
+            Logger.common(message: "[DBLoader] Store is neither corrupt nor incompatible; using InMemory without touching store", level: .error, category: .database)
             let mem = try makeInMemoryContainer()
             if let preserved { applyMetadata(preserved, to: mem) }
             return mem
@@ -184,5 +179,35 @@ class DatabaseLoader: DatabaseLoaderProtocol {
             Logger.common(message: "[DBLoader] Failed to remove database: \(error.localizedDescription)", level: .error, category: .database)
             throw error
         }
+    }
+
+    static func requiresStoreReset(after error: Error) -> Bool {
+        let error = error as NSError
+        if error.domain == NSCocoaErrorDomain, storeResetCocoaCodes.contains(error.code) {
+            return true
+        }
+        if let sqliteCode = sqliteResultCode(of: error), storeResetSQLiteCodes.contains(sqliteCode & 0xFF) {
+            return true
+        }
+        guard let underlying = error.userInfo[NSUnderlyingErrorKey] as? NSError else {
+            return false
+        }
+        return requiresStoreReset(after: underlying)
+    }
+
+    private static let storeResetCocoaCodes: Set<Int> = [
+        NSFileReadCorruptFileError,
+        NSPersistentStoreIncompatibleVersionHashError,
+        NSMigrationMissingSourceModelError,
+        NSMigrationMissingMappingModelError
+    ]
+
+    private static let storeResetSQLiteCodes: Set<Int> = [Int(SQLITE_CORRUPT), Int(SQLITE_NOTADB)]
+
+    private static func sqliteResultCode(of error: NSError) -> Int? {
+        if error.domain == NSSQLiteErrorDomain {
+            return error.code
+        }
+        return (error.userInfo[NSSQLiteErrorDomain] as? NSNumber)?.intValue
     }
 }
