@@ -25,7 +25,11 @@ jobs:
     - run: swiftlint --config .swiftlint.yml --reporter github-actions-logging --strict
 
   build:
-    runs-on: macos-26
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-26, xcode-27]
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 20
     permissions:
       contents: read
@@ -59,7 +63,7 @@ jobs:
       if: ${{ !cancelled() }}
       with:
         report_paths: test_output/report.junit
-        check_name: Unit tests report
+        check_name: Unit tests report (${{ matrix.runner }})
         detailed_summary: true
         include_passed: false
         include_time_in_summary: true
@@ -81,7 +85,7 @@ jobs:
       uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       if: ${{ !cancelled() }}
       with:
-        name: unit-tests-xcresult
+        name: unit-tests-xcresult-${{ matrix.runner }}
         path: test_output/*.xcresult
 
     # Surface the artifact link in the job summary - GitHub otherwise only lists
