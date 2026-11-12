@@ -33,64 +33,11 @@ jobs:
       pull-requests: write
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-    - uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
+    - uses: ./.github/actions/unit-tests
       with:
-        xcode-version: latest-stable
-
-    - name: Update bundler
-      run: gem install bundler
-    - name: Install bundler dependencies
-      run: bundle install
-    - name: Install yeetd
-      run: |
-          YEETD_SHA256="adb04eb720581a32d94daef3ea61108c74494083a79f00836556a36214f354be"
-          wget -q https://github.com/biscuitehh/yeetd/releases/download/1.0/yeetd-normal.pkg
-          echo "$YEETD_SHA256  yeetd-normal.pkg" | shasum -a 256 -c -
-          sudo installer -pkg yeetd-normal.pkg -target /
-          yeetd &
-    - name: Run unit tests
-      run: bundle exec fastlane unitTestLane
-
-    # trainer builds report.junit from the xcresult, so Swift Testing results
-    # survive regardless of the console formatter. Only failures are listed
-    # (include_passed: false), so the PR comment stays compact even on green runs.
-    - name: Publish unit-test summary
-      uses: mikepenz/action-junit-report@8a133bfa3ecb0ea9024c1e2ae788b4c25f6cdb9d # v6.6.2
-      if: ${{ !cancelled() }}
-      with:
-        report_paths: test_output/report.junit
-        check_name: Unit tests report
-        detailed_summary: true
-        include_passed: false
-        include_time_in_summary: true
-        group_suite: true
-        flaky_summary: true
-        skip_success_summary: false
-        simplified_summary: true
-        include_empty_in_summary: false
-        verbose_summary: false
-        require_tests: true
-        fail_on_failure: true
-        fail_on_parse_error: true
+        check-name: Unit tests report
+        artifact-name: unit-tests-xcresult
         comment: ${{ github.event_name == 'pull_request' }}
-        updateComment: true
-        skip_comment_without_tests: true
-
-    - name: Upload xcresult bundle
-      id: xcresult
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      if: ${{ !cancelled() }}
-      with:
-        name: unit-tests-xcresult
-        path: test_output/*.xcresult
-
-    # Surface the artifact link in the job summary - GitHub otherwise only lists
-    # artifacts at the very bottom of the run page, easy to miss on failed runs.
-    - name: Link xcresult in summary
-      if: ${{ !cancelled() }}
-      env:
-        ART_URL: ${{ steps.xcresult.outputs.artifact-url }}
-      run: echo "⬇️ [Download Mindbox.xcresult]($ART_URL) — open in Xcode for coverage & full logs" >> "$GITHUB_STEP_SUMMARY"
 
     # Coverage site for GitHub Pages. The previously published history.json is
     # carried forward so the trend survives full-site redeploys.
@@ -107,6 +54,19 @@ jobs:
         name: coverage-site
         path: coverage-site
         retention-days: 1
+
+  build-xcode-27:
+    runs-on: xcode-27
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      checks: write
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+    - uses: ./.github/actions/unit-tests
+      with:
+        check-name: Unit tests report (Xcode 27)
+        artifact-name: unit-tests-xcresult-xcode-27
 
   api-reference-version:
     runs-on: ubuntu-latest
