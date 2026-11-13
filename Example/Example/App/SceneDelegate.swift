@@ -47,6 +47,8 @@ final class SceneDelegate: MindboxSceneDelegate {
     // https://developers.mindbox.ru/docs/ios-advertising-identifier
     // Pass the IDFA on every activation, with or without consent: without it iOS returns zeros
     // and Mindbox clears the IDFA it received earlier.
+    // The SDK sends it only because this target's PrivacyInfo.xcprivacy declares the tracking host
+    // api-tracking.mindbox.ru; without that declaration the call sends nothing.
     func sceneDidBecomeActive(_ scene: UIScene) {
         Task {
             if ATTrackingManager.trackingAuthorizationStatus == .notDetermined {
