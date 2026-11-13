@@ -65,6 +65,14 @@ jobs:
               git push origin "$SDK_VERSION"
             fi
 
+  publish-specs-repo:
+    needs: [set-tag]
+    uses: ./.github/workflows/publish-specs.yml
+    with:
+      ref: ${{ inputs.branch }}
+    secrets:
+      MOBILE_CI_APP_PRIVATE_KEY: ${{ secrets.MOBILE_CI_APP_PRIVATE_KEY }}
+
   publish-MindboxLogger:
     needs: [set-tag]
     runs-on: macos-26

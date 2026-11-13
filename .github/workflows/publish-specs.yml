@@ -1,0 +1,69 @@
+name: Publish to the Mindbox spec repo
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        required: true
+        type: string
+    secrets:
+      MOBILE_CI_APP_PRIVATE_KEY:
+        required: true
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Release tag to publish, for example 2.16.0
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: specs-repo-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: macos-26
+    steps:
+      - name: Checkout CI scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.ref || inputs.ref }}
+          path: ci
+          persist-credentials: false
+      - name: Checkout podspecs
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+          path: sdk
+          persist-credentials: false
+      - uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
+        with:
+          xcode-version: latest-stable
+      - name: Install bundler dependencies
+        working-directory: ci
+        run: |
+          gem install bundler
+          bundle install
+      - name: Create App token
+        id: app-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.MOBILE_CI_APP_CLIENT_ID }}
+          private-key: ${{ secrets.MOBILE_CI_APP_PRIVATE_KEY }}
+          owner: mindbox-cloud
+          repositories: Specs
+          permission-contents: write
+      - name: Configure git for the spec repo
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+        run: |
+          app_user_id="$(gh api "/users/${APP_SLUG}%5Bbot%5D" --jq .id)"
+          git config --global user.name "${APP_SLUG}[bot]"
+          git config --global user.email "${app_user_id}+${APP_SLUG}[bot]@users.noreply.github.com"
+          git config --global url."https://x-access-token:${GH_TOKEN}@github.com/mindbox-cloud/Specs".insteadOf "https://github.com/mindbox-cloud/Specs"
+      - name: Publish podspecs
+        run: ./ci/.github/specs-repo-push.sh sdk
