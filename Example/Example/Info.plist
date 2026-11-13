@@ -27,6 +27,8 @@
 			</array>
 		</dict>
 	</dict>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>The identifier is used to attribute advertising campaigns.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>
