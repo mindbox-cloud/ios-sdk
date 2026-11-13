@@ -20,6 +20,7 @@ protocol DatabaseRepositoryProtocol: AnyObject {
     func delete(event: Event) throws
 
     func query(fetchLimit: Int, retryDeadline: TimeInterval) throws -> [Event]
+    func storedTransactionIds(among transactionIds: Set<String>) throws -> Set<String>
     func removeDeprecatedEventsIfNeeded() throws
     func countDeprecatedEvents() throws -> Int
     func erase() throws
@@ -31,5 +32,9 @@ protocol DatabaseRepositoryProtocol: AnyObject {
 extension DatabaseRepositoryProtocol {
     func query(fetchLimit: Int) throws -> [Event] {
         try query(fetchLimit: fetchLimit, retryDeadline: Constants.Database.retryDeadline)
+    }
+
+    func storedTransactionIds(among transactionIds: Set<String>) throws -> Set<String> {
+        try transactionIds.filter { try readEvent(by: $0) != nil }
     }
 }

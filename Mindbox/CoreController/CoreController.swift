@@ -176,6 +176,7 @@ final class CoreController {
         try? databaseRepository.erase()
         
         guaranteedDeliveryManager.cancelAllOperations()
+        guaranteedDeliveryManager.resetDeliveryPausesAndRetryDelay()
         let newVersion = 0
         persistenceStorage.deviceUUID = deviceUUID
         persistenceStorage.installationId = configuration.previousInstallationId

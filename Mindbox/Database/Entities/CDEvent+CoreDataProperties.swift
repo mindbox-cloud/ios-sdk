@@ -38,13 +38,15 @@ extension CDEvent {
                         #keyPath(CDEvent.retryTimestamp)]
                 )
             )
-            if let deadlineDate = Calendar.current.date(byAdding: .second, value: -Int(retryDeadLine), to: Date()) {
+            let now = Date()
+            if let deadlineDate = Calendar.current.date(byAdding: .second, value: -Int(retryDeadLine), to: now) {
                 subpredicates.append(
                     NSPredicate(
-                        format: "%K > %@ AND %K < %@",
+                        format: "%K > %@ AND (%K < %@ OR %K > %@)",
                         argumentArray: [
                             #keyPath(CDEvent.timestamp), monthLimitDateStamp,
-                            #keyPath(CDEvent.retryTimestamp), deadlineDate.timeIntervalSince1970]
+                            #keyPath(CDEvent.retryTimestamp), deadlineDate.timeIntervalSince1970,
+                            #keyPath(CDEvent.retryTimestamp), now.timeIntervalSince1970]
                     )
                 )
             }
