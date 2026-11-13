@@ -76,14 +76,14 @@ jobs:
       MOBILE_CI_APP_PRIVATE_KEY: ${{ secrets.MOBILE_CI_APP_PRIVATE_KEY }}
 
   release-github:
-    needs: [publish-specs-repo]
+    needs: [set-tag, publish-specs-repo]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ inputs.branch }}
+          ref: ${{ needs.set-tag.outputs.version }}
       - name: Release generation
         run: ./.github/git-release.sh
         env:
