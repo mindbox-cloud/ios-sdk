@@ -19,6 +19,7 @@ class MBDatabaseRepository: DatabaseRepositoryProtocol {
         return 10000
     }
     let deprecatedLimit = 500
+    private let storedTransactionIdsBatchSize = 500
 
     var onObjectsDidChange: (() -> Void)?
 
@@ -232,6 +233,20 @@ class MBDatabaseRepository: DatabaseRepositoryProtocol {
                 Logger.common(message: "[MBDBRepo] Event `\(String(describing: event?.type.rawValue ?? "null"))` with transactionId: \(String(describing: event?.transactionId ?? "null"))",
                               level: .info, category: .database)
                 return event
+            }
+        }
+    }
+
+    func storedTransactionIds(among transactionIds: Set<String>) throws -> Set<String> {
+        let key = #keyPath(CDEvent.transactionId)
+        let ids = Array(transactionIds)
+        return try context.executePerformAndWait {
+            try stride(from: 0, to: ids.count, by: storedTransactionIdsBatchSize).reduce(into: Set<String>()) { stored, start in
+                let request = NSFetchRequest<NSDictionary>(entityName: "CDEvent")
+                request.resultType = .dictionaryResultType
+                request.propertiesToFetch = [key]
+                request.predicate = NSPredicate(format: "%K IN %@", argumentArray: [key, Array(ids[start..<min(start + storedTransactionIdsBatchSize, ids.count)])])
+                stored.formUnion(try context.fetch(request).compactMap { $0[key] as? String })
             }
         }
     }

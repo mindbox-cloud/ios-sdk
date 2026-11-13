@@ -512,7 +512,7 @@ final class DeliveryPauseTestCase: XCTestCase {
             ("discarded", { $0.register(.discarded, transactionId: "retried", isRetry: true) }),
             ("throttled", { $0.register(.throttled, transactionId: "retried", isRetry: true) }),
             ("retryLater", { $0.register(.retryLater, transactionId: "retried", isRetry: true) }),
-            ("postponed", { $0.registerPostponed(transactionId: "retried") }),
+            ("postponed", { $0.registerPostponed(transactionId: "retried", isRetry: true) }),
         ]
         answers.forEach { name, answer in
             let manager = DeliveryRetryDelayManager()
@@ -550,7 +550,7 @@ final class DeliveryPauseTestCase: XCTestCase {
             let manager = retryDelayManager(grownBy: ["failed"])
 
             manager.register(result, transactionId: "another", isRetry: true)
-            manager.registerPostponed(transactionId: "postponed")
+            manager.registerPostponed(transactionId: "postponed", isRetry: false)
 
             XCTAssertEqual(manager.current, 480, "\(result)")
             XCTAssertEqual(manager.completeRound(), 480, "\(result)")
@@ -573,9 +573,19 @@ final class DeliveryPauseTestCase: XCTestCase {
     func testServerFailedEventPostponedByPauseNoLongerHoldsTheRetryDelay() {
         let manager = retryDelayManager(grownBy: ["failed"])
 
-        manager.registerPostponed(transactionId: "failed")
+        manager.registerPostponed(transactionId: "failed", isRetry: true)
 
         XCTAssertEqual(manager.current, 60)
+    }
+
+    func testForgettingOneOfTwoServerFailedEventsKeepsTheRetryDelay() {
+        let manager = retryDelayManager(grownBy: ["removed", "stored"])
+
+        manager.forget(transactionIds: ["removed", "unknown"])
+
+        XCTAssertEqual(manager.current, 480)
+        XCTAssertEqual(manager.trackedTransactionIds, ["stored"])
+        XCTAssertEqual(manager.completeRound(), 480)
     }
 
     func testNoResponseKeepsTheServerFailedEventHoldingTheRetryDelay() {
@@ -690,6 +700,36 @@ final class DeliveryPauseTestCase: XCTestCase {
         XCTAssertEqual(retryDelayManager.current, 60)
     }
 
+    func testNewEventPostponedByPauseKeepsTheRetryDelayOnItsFirstServerFailure() throws {
+        let event = customEvent("Paused")
+        try databaseRepository.create(event: event)
+        pauseManager.register(.throttled, for: event.deliveryOperationKey)
+        run(event)
+        run(try storedEvent(event))
+        now += 180
+        eventRepository.results[event.transactionId] = .failure(.serverError(protocolError(503)))
+
+        run(try storedEvent(event))
+        XCTAssertEqual(retryDelayManager.completeRound(), 60)
+
+        run(try storedEvent(event))
+        XCTAssertEqual(eventRepository.sentTransactionIds, [event.transactionId, event.transactionId])
+        XCTAssertEqual(retryDelayManager.completeRound(), 120)
+    }
+
+    func testEventRetriedBeforeItWasPostponedByPauseDoublesTheRetryDelayOnTheNextServerFailure() throws {
+        let event = try retriedEvent("Paused")
+        pauseManager.register(.throttled, for: event.deliveryOperationKey)
+        run(event)
+        now += 180
+        eventRepository.results[event.transactionId] = .failure(.serverError(protocolError(503)))
+
+        run(try storedEvent(event))
+
+        XCTAssertEqual(eventRepository.sentTransactionIds, [event.transactionId])
+        XCTAssertEqual(retryDelayManager.completeRound(), 120)
+    }
+
     func testQueueRetriesServerFailedEventWithGrowingDelayAndKeepsItAfterAnotherEventIsDelivered() throws {
         let failing = customEvent("Down")
         eventRepository.results[failing.transactionId] = .failure(.serverError(protocolError(503)))
@@ -764,6 +804,120 @@ final class DeliveryPauseTestCase: XCTestCase {
         manager.canScheduleOperations = false
     }
 
+    func testRetryDelayReturnsToTheFirstValueWhenTheLastServerFailedEventIsRemovedByTheDatabaseCleanUp() throws {
+        let database = try ScriptedQueryDatabaseRepository()
+        let removed = customEvent("Down")
+        let kept = customEvent("Rejected")
+        eventRepository.results[removed.transactionId] = .failure(.serverError(protocolError(503)))
+        eventRepository.results[kept.transactionId] = .failure(
+            .validationError(ValidationError(status: .validationError, validationMessages: []))
+        )
+        try [removed, kept].forEach {
+            try database.create(event: $0)
+            try database.update(event: $0)
+        }
+        let manager = scriptedManager(database)
+        database.makeDue([removed.transactionId, kept.transactionId])
+
+        runPass(of: manager, on: database) { manager.canScheduleOperations = true }
+        runPass(of: manager, on: database) { manager.performScheduleIfNeeded() }
+        XCTAssertEqual(database.emptyQueryRetryDeadlines.last, 200)
+
+        database.limitOverride = 1
+        runPass(of: manager, on: database) { manager.performScheduleIfNeeded() }
+        XCTAssertEqual(try database.storedTransactionIds(among: [removed.transactionId, kept.transactionId]), [kept.transactionId])
+        runPass(of: manager, on: database) { manager.performScheduleIfNeeded() }
+
+        XCTAssertEqual(database.emptyQueryRetryDeadlines.last, 100)
+        manager.canScheduleOperations = false
+    }
+
+    func testResetOfPausesAndRetryDelayReturnsTheRetryDelayToTheFirstValue() throws {
+        let database = try ScriptedQueryDatabaseRepository()
+        let failed = customEvent("Down")
+        eventRepository.results[failed.transactionId] = .failure(.serverError(protocolError(503)))
+        try database.create(event: failed)
+        try database.update(event: failed)
+        let manager = scriptedManager(database)
+        database.makeDue([failed.transactionId])
+        runPass(of: manager, on: database) { manager.canScheduleOperations = true }
+        runPass(of: manager, on: database) { manager.performScheduleIfNeeded() }
+        XCTAssertEqual(database.emptyQueryRetryDeadlines.last, 200)
+
+        manager.resetDeliveryPausesAndRetryDelay()
+        runPass(of: manager, on: database) { manager.performScheduleIfNeeded() }
+
+        XCTAssertEqual(database.emptyQueryRetryDeadlines.last, 100)
+        manager.canScheduleOperations = false
+    }
+
+    func testEventCreatedWhileAnEmptyPassIsFinishingIsSentWithoutWaitingForTheRetryDelay() throws {
+        let database = try ScriptedQueryDatabaseRepository()
+        let waiting = customEvent("Waiting")
+        try database.create(event: waiting)
+        try database.update(event: waiting)
+        let manager = scriptedManager(database)
+        let new = customEvent("New")
+        let newEventSent = expectation(description: "new event is sent")
+        eventRepository.onSend = { event in
+            if event.transactionId == new.transactionId { newEventSent.fulfill() }
+        }
+        database.onNextEmptyQuery {
+            database.makeDue([new.transactionId])
+            try? database.create(event: new)
+        }
+
+        manager.canScheduleOperations = true
+
+        wait(for: [newEventSent], timeout: 2)
+        manager.canScheduleOperations = false
+    }
+
+    func testInstallLiftsThePauseOfAnOperation() throws {
+        let persistenceStorage = DI.injectOrFail(PersistenceStorage.self)
+        persistenceStorage.reset()
+        let throttled = customEvent("Paused")
+        eventRepository.results[throttled.transactionId] = .failure(.protocolError(protocolError(429)))
+        let manager = GuaranteedDeliveryManager(
+            persistenceStorage: persistenceStorage,
+            databaseRepository: databaseRepository,
+            eventRepository: eventRepository,
+            retryDeadline: 100,
+            maxRetryDeadline: 3200
+        )
+        let controllerQueue = DispatchQueue(label: "test-install-lifts-pause")
+        let coreController = CoreController(
+            persistenceStorage: persistenceStorage,
+            utilitiesFetcher: DI.injectOrFail(UtilitiesFetcher.self),
+            databaseRepository: databaseRepository,
+            guaranteedDeliveryManager: manager,
+            sessionManager: DI.injectOrFail(SessionManager.self),
+            inAppMessagesManager: DI.injectOrFail(InAppCoreManagerProtocol.self),
+            uuidDebugService: DI.injectOrFail(UUIDDebugService.self),
+            trackingIdsResolver: DI.injectOrFail(TrackingIdsResolver.self),
+            trackingHostResolver: DI.injectOrFail(TrackingHostResolver.self),
+            controllerQueue: controllerQueue,
+            userVisitManager: DI.injectOrFail(UserVisitManagerProtocol.self)
+        )
+        manager.canScheduleOperations = true
+        try databaseRepository.create(event: throttled)
+        waitUntil { manager.state.isWaitingForRetry && self.eventRepository.sentTransactionIds == [throttled.transactionId] }
+
+        coreController.initialization(configuration: try MBConfiguration(plistName: "TestConfig1"))
+        let initialized = expectation(description: "controller initialization")
+        controllerQueue.async { initialized.fulfill() }
+        wait(for: [initialized], timeout: 10)
+        let next = customEvent("Paused")
+        let nextSent = expectation(description: "event of the paused operation is sent after install")
+        eventRepository.onSend = { event in
+            if event.transactionId == next.transactionId { nextSent.fulfill() }
+        }
+        try databaseRepository.create(event: next)
+
+        wait(for: [nextSent], timeout: 2)
+        manager.canScheduleOperations = false
+    }
+
     func testTrackVisitAndCustomOperationWithTheSameNameAreDifferentOperations() {
         let visit = Event(type: .trackVisit, body: "{}")
         let custom = customEvent(Event.Operation.trackVisit.rawValue)
@@ -782,6 +936,43 @@ final class DeliveryPauseTestCase: XCTestCase {
             retryDelayManager: retryDelayManager
         ))
         queue.waitUntilAllOperationsAreFinished()
+    }
+
+    private func scriptedManager(_ database: ScriptedQueryDatabaseRepository) -> GuaranteedDeliveryManager {
+        GuaranteedDeliveryManager(
+            persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
+            databaseRepository: database,
+            eventRepository: eventRepository,
+            retryDeadline: 100,
+            maxRetryDeadline: 3200
+        )
+    }
+
+    private func runPass(
+        of manager: GuaranteedDeliveryManager,
+        on database: ScriptedQueryDatabaseRepository,
+        file: StaticString = #filePath,
+        line: UInt = #line,
+        _ trigger: () -> Void
+    ) {
+        let emptyQueries = database.emptyQueryRetryDeadlines.count
+        trigger()
+        waitUntil(file: file, line: line) {
+            manager.state.isWaitingForRetry && database.emptyQueryRetryDeadlines.count > emptyQueries
+        }
+    }
+
+    private func waitUntil(
+        timeout: TimeInterval = 2,
+        file: StaticString = #filePath,
+        line: UInt = #line,
+        _ condition: () -> Bool
+    ) {
+        let deadline = Date().addingTimeInterval(timeout)
+        while !condition() && Date() < deadline {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.01))
+        }
+        XCTAssertTrue(condition(), file: file, line: line)
     }
 
     private func retryDelayManager(grownBy transactionIds: [String]) -> DeliveryRetryDelayManager {
@@ -859,4 +1050,63 @@ private final class ScriptedEventRepository: EventRepository {
     func sendRaw(event: Event, completion: @escaping (Result<Data, MindboxError>) -> Void) {}
 
     func cancelAllRequests() {}
+}
+
+private final class ScriptedQueryDatabaseRepository: MBDatabaseRepository {
+
+    private let lock = NSLock()
+    private var dueTransactionIds: Set<String> = []
+    private var recordedEmptyQueryRetryDeadlines: [TimeInterval] = []
+    private var emptyQueryAction: (() -> Void)?
+    private var scriptedLimit: Int?
+
+    convenience init() throws {
+        try self.init(persistentContainer: DI.injectOrFail(DatabaseLoaderProtocol.self).makeInMemoryContainer())
+    }
+
+    override var limit: Int {
+        locked { scriptedLimit } ?? super.limit
+    }
+
+    var limitOverride: Int? {
+        get { locked { scriptedLimit } }
+        set { locked { scriptedLimit = newValue } }
+    }
+
+    var emptyQueryRetryDeadlines: [TimeInterval] {
+        locked { recordedEmptyQueryRetryDeadlines }
+    }
+
+    func makeDue(_ transactionIds: Set<String>) {
+        locked { dueTransactionIds.formUnion(transactionIds) }
+    }
+
+    func onNextEmptyQuery(_ action: @escaping () -> Void) {
+        locked { emptyQueryAction = action }
+    }
+
+    override func query(fetchLimit: Int, retryDeadline: TimeInterval) throws -> [Event] {
+        let stored = try super.query(fetchLimit: 100, retryDeadline: -60)
+        let events: [Event] = locked {
+            let due = Array(stored.filter { dueTransactionIds.contains($0.transactionId) }.prefix(fetchLimit))
+            dueTransactionIds.subtract(due.map(\.transactionId))
+            if due.isEmpty {
+                recordedEmptyQueryRetryDeadlines.append(retryDeadline)
+            }
+            return due
+        }
+        if events.isEmpty, let action = locked({ () -> (() -> Void)? in
+            defer { emptyQueryAction = nil }
+            return emptyQueryAction
+        }) {
+            action()
+        }
+        return events
+    }
+
+    private func locked<T>(_ body: () -> T) -> T {
+        lock.lock()
+        defer { lock.unlock() }
+        return body()
+    }
 }

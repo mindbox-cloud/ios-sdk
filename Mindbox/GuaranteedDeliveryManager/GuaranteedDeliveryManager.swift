@@ -28,6 +28,7 @@ final class GuaranteedDeliveryManager: NSObject {
     }()
 
     private let semaphore = DispatchSemaphore(value: 1)
+    private var isScheduleRequestedWhileDelivering = false
 
     private let pauseManager = DeliveryPauseManager()
 
@@ -101,20 +102,37 @@ final class GuaranteedDeliveryManager: NSObject {
         semaphore.wait()
         guard !state.isDelivering else {
             Logger.common(message: "[GD] Delivering. Ignore another schedule operation.", level: .info, category: .delivery)
+            isScheduleRequestedWhileDelivering = true
             semaphore.signal()
             return
         }
 
         state = .delivering
+        isScheduleRequestedWhileDelivering = false
         semaphore.signal()
+        deliverEvents(fetchLimit: fetchLimit)
+    }
+
+    private func deliverEvents(fetchLimit: Int) {
         guard let events = try? databaseRepository.query(fetchLimit: fetchLimit, retryDeadline: retryDelayManager.current) else {
             Logger.common(message: "[GD] Database Repository query events is nil", level: .info, category: .delivery)
             state = .idle
             return
         }
         guard !events.isEmpty else {
-            state = .waitingForRetry
-            let retryDelay = retryDelayManager.completeRound()
+            forgetEventsMissingFromDatabase()
+            semaphore.wait()
+            let isScheduleRequested = isScheduleRequestedWhileDelivering
+            isScheduleRequestedWhileDelivering = false
+            let retryDelay = isScheduleRequested ? nil : retryDelayManager.completeRound()
+            if !isScheduleRequested {
+                state = .waitingForRetry
+            }
+            semaphore.signal()
+            guard let retryDelay else {
+                deliverEvents(fetchLimit: self.fetchLimit)
+                return
+            }
             Logger.common(message: "[GD] Schedule next call of performScheduleIfNeeded after TimeInterval: \(retryDelay)", level: .info, category: .delivery)
             backgroundTaskManager.endBackgroundTask(success: false)
             DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + retryDelay, execute: performScheduleIfNeeded)
@@ -151,6 +169,15 @@ final class GuaranteedDeliveryManager: NSObject {
         }
         let operations = delivery + [completion]
         queue.addOperations(operations, waitUntilFinished: false)
+    }
+
+    private func forgetEventsMissingFromDatabase() {
+        let trackedTransactionIds = retryDelayManager.trackedTransactionIds
+        guard !trackedTransactionIds.isEmpty,
+              let storedTransactionIds = try? databaseRepository.storedTransactionIds(among: trackedTransactionIds) else {
+            return
+        }
+        retryDelayManager.forget(transactionIds: trackedTransactionIds.subtracting(storedTransactionIds))
     }
 
     func cancelAllOperations() {

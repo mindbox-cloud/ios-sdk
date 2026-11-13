@@ -47,7 +47,7 @@ class DeliveryOperation: AsyncOperation, @unchecked Sendable {
         if let remaining = pauseManager.remainingPause(for: operationKey) {
             Logger.common(message: "[GD] decision: operation \(operationName) paused, postpone, \(Int(remaining.rounded(.up))) s left", level: .debug, category: .delivery)
             try? databaseRepository.update(event: event)
-            retryDelayManager.registerPostponed(transactionId: event.transactionId)
+            retryDelayManager.registerPostponed(transactionId: event.transactionId, isRetry: event.isRetry)
             finish()
             return
         }
@@ -195,6 +195,7 @@ final class DeliveryRetryDelayManager {
     private var delay: TimeInterval
     private var serverFailedTransactionIds: Set<String> = []
     private var retriedInRoundTransactionIds: Set<String> = []
+    private var postponedBeforeFirstAttemptTransactionIds: Set<String> = []
 
     init(firstDelay: TimeInterval = 60, maxDelay: TimeInterval = 3600) {
         self.firstDelay = firstDelay
@@ -208,13 +209,21 @@ final class DeliveryRetryDelayManager {
         return delay
     }
 
+    var trackedTransactionIds: Set<String> {
+        lock.lock()
+        defer { lock.unlock() }
+        return serverFailedTransactionIds.union(postponedBeforeFirstAttemptTransactionIds)
+    }
+
     func register(_ result: DeliveryResult, transactionId: String, isRetry: Bool) {
         lock.lock()
         defer { lock.unlock() }
+        let wasPostponedBeforeFirstAttempt = postponedBeforeFirstAttemptTransactionIds.remove(transactionId) != nil
+        let isFirstAttempt = !isRetry || wasPostponedBeforeFirstAttempt
         switch result {
         case .serverFailure:
             serverFailedTransactionIds.insert(transactionId)
-            guard isRetry, !retriedInRoundTransactionIds.insert(transactionId).inserted else { return }
+            guard !isFirstAttempt, !retriedInRoundTransactionIds.insert(transactionId).inserted else { return }
             growDelay()
             retriedInRoundTransactionIds = [transactionId]
         case .delivered, .discarded, .throttled, .retryLater:
@@ -224,10 +233,20 @@ final class DeliveryRetryDelayManager {
         }
     }
 
-    func registerPostponed(transactionId: String) {
+    func registerPostponed(transactionId: String, isRetry: Bool) {
         lock.lock()
         defer { lock.unlock() }
+        if !isRetry {
+            postponedBeforeFirstAttemptTransactionIds.insert(transactionId)
+        }
         removeServerFailure(of: transactionId)
+    }
+
+    func forget(transactionIds: Set<String>) {
+        lock.lock()
+        defer { lock.unlock() }
+        postponedBeforeFirstAttemptTransactionIds.subtract(transactionIds)
+        serverFailedTransactionIds.intersection(transactionIds).forEach(removeServerFailure)
     }
 
     func completeRound() -> TimeInterval {
@@ -245,6 +264,7 @@ final class DeliveryRetryDelayManager {
         defer { lock.unlock() }
         serverFailedTransactionIds.removeAll()
         retriedInRoundTransactionIds.removeAll()
+        postponedBeforeFirstAttemptTransactionIds.removeAll()
         delay = firstDelay
     }
 

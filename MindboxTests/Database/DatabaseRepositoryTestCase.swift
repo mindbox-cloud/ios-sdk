@@ -259,4 +259,14 @@ class DatabaseRepositoryTestCase: XCTestCase {
             return try XCTUnwrap(Event(entity))
         }
     }
+
+    func testStoredTransactionIdsReturnOnlyEventsStillInTheDatabase() throws {
+        let events = (0..<510).map { _ in Event(type: .installed, body: "") }
+        try events.forEach { try databaseRepository.create(event: $0) }
+        try databaseRepository.delete(event: events[0])
+
+        let stored = try databaseRepository.storedTransactionIds(among: Set(events.map(\.transactionId)).union(["missing"]))
+
+        XCTAssertEqual(stored, Set(events.dropFirst().map(\.transactionId)))
+    }
 }
