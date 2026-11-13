@@ -6,6 +6,8 @@
 //  Copyright © 2024 Mindbox. All rights reserved.
 //
 
+import AdSupport
+import AppTrackingTransparency
 import UIKit
 import SwiftUI
 import Mindbox
@@ -40,5 +42,17 @@ final class SceneDelegate: MindboxSceneDelegate {
         // Handle Universal Link on a warm start:
         // The app is already running (foreground or background) and receives a new URL.
         // Use `scene(_:continue:)` to parse and route the link.
+    }
+
+    // https://developers.mindbox.ru/docs/ios-advertising-identifier
+    // Pass the IDFA on every activation, with or without consent: without it iOS returns zeros
+    // and Mindbox clears the IDFA it received earlier.
+    func sceneDidBecomeActive(_ scene: UIScene) {
+        Task {
+            if ATTrackingManager.trackingAuthorizationStatus == .notDetermined {
+                await ATTrackingManager.requestTrackingAuthorization()
+            }
+            Mindbox.shared.setAdvertisingIdentifier(ASIdentifierManager.shared().advertisingIdentifier)
+        }
     }
 }
