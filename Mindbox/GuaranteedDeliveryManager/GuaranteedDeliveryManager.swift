@@ -29,6 +29,8 @@ final class GuaranteedDeliveryManager: NSObject {
 
     private let semaphore = DispatchSemaphore(value: 1)
 
+    private let pauseManager = DeliveryPauseManager()
+
     var onCompletedEvent: ((_ event: Event, _ error: MindboxError?) -> Void)?
 
     @objc dynamic var stateObserver: NSString
@@ -54,6 +56,7 @@ final class GuaranteedDeliveryManager: NSObject {
         databaseRepository: DatabaseRepositoryProtocol,
         eventRepository: EventRepository,
         retryDeadline: TimeInterval = 60,
+        maxRetryDeadline: TimeInterval = 3600,
         fetchLimit: Int = 20
     ) {
         self.databaseRepository = databaseRepository
@@ -62,7 +65,7 @@ final class GuaranteedDeliveryManager: NSObject {
             persistenceStorage: persistenceStorage,
             databaseRepository: databaseRepository
         )
-        self.retryDeadline = retryDeadline
+        self.retryDelayManager = DeliveryRetryDelayManager(firstDelay: retryDeadline, maxDelay: maxRetryDeadline)
         self.fetchLimit = fetchLimit
         stateObserver = NSString(string: State.idle.description)
         super.init()
@@ -77,7 +80,7 @@ final class GuaranteedDeliveryManager: NSObject {
         }
     }
 
-    private let retryDeadline: TimeInterval
+    private let retryDelayManager: DeliveryRetryDelayManager
 
     func performScheduleIfNeeded() {
         guard canScheduleOperations else {
@@ -87,6 +90,7 @@ final class GuaranteedDeliveryManager: NSObject {
             return
         }
         guard events != 0 else {
+            retryDelayManager.reset()
             backgroundTaskManager.endBackgroundTask(success: true)
             return
         }
@@ -103,16 +107,17 @@ final class GuaranteedDeliveryManager: NSObject {
 
         state = .delivering
         semaphore.signal()
-        guard let events = try? databaseRepository.query(fetchLimit: fetchLimit, retryDeadline: retryDeadline) else {
+        guard let events = try? databaseRepository.query(fetchLimit: fetchLimit, retryDeadline: retryDelayManager.current) else {
             Logger.common(message: "[GD] Database Repository query events is nil", level: .info, category: .delivery)
             state = .idle
             return
         }
         guard !events.isEmpty else {
             state = .waitingForRetry
-            Logger.common(message: "[GD] Schedule next call of performScheduleIfNeeded after TimeInterval: \(retryDeadline)", level: .info, category: .delivery)
+            let retryDelay = retryDelayManager.completeRound()
+            Logger.common(message: "[GD] Schedule next call of performScheduleIfNeeded after TimeInterval: \(retryDelay)", level: .info, category: .delivery)
             backgroundTaskManager.endBackgroundTask(success: false)
-            DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + retryDeadline, execute: performScheduleIfNeeded)
+            DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + retryDelay, execute: performScheduleIfNeeded)
             return
         }
         
@@ -134,7 +139,9 @@ final class GuaranteedDeliveryManager: NSObject {
             DeliveryOperation(
                 databaseRepository: databaseRepository,
                 eventRepository: eventRepository,
-                event: $0
+                event: $0,
+                pauseManager: pauseManager,
+                retryDelayManager: retryDelayManager
             )
         }
         Logger.common(message: "[GD] Enqueued events count: \(delivery.count)", level: .info, category: .delivery)
@@ -149,6 +156,11 @@ final class GuaranteedDeliveryManager: NSObject {
     func cancelAllOperations() {
         queue.cancelAllOperations()
         eventRepository.cancelAllRequests()
+    }
+
+    func resetDeliveryPausesAndRetryDelay() {
+        pauseManager.reset()
+        retryDelayManager.reset()
     }
 }
 
