@@ -24,12 +24,19 @@ Follow the installation process detailed [here](https://developers.mindbox.ru/do
 
 ### Installation (CocoaPods)
 
-CocoaPods is still supported. Add to your Podfile:
+CocoaPods is still supported. CocoaPods trunk stopped accepting new versions on December 2, 2026, so later Mindbox
+versions are published only to the [Mindbox spec repo](https://github.com/mindbox-cloud/Specs). Add both sources at
+the top of your Podfile, then the pods:
 
 ```ruby
+source 'https://github.com/mindbox-cloud/Specs.git'
+source 'https://cdn.cocoapods.org/'
+
 pod 'Mindbox'
 pod 'MindboxNotifications'
 ```
+
+After you change the Mindbox version, run `pod update Mindbox MindboxNotifications`.
 
 ### Migrating from CocoaPods to SPM
 

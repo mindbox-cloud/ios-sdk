@@ -7,8 +7,6 @@ on:
         required: true
         type: string
     secrets:
-      COCOAPODS_TOKEN:
-        required: true
       MOBILE_CI_APP_PRIVATE_KEY:
         required: true
 
@@ -43,14 +41,18 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.branch }}
       - name: Extract SDK version
+        id: version
         run: |
             SDK_VERSION=$(sed -n 's/^.*sdkVersion = "\(.*\)"/\1/p' SDKVersionProvider/SDKVersionProvider.swift)
             echo "SDK_VERSION=$SDK_VERSION" >> "$GITHUB_ENV"
+            echo "version=$SDK_VERSION" >> "$GITHUB_OUTPUT"
             echo "Extracted SDK version: $SDK_VERSION"
       - name: Create tag
         run: |
@@ -69,112 +71,19 @@ jobs:
     needs: [set-tag]
     uses: ./.github/workflows/publish-specs.yml
     with:
-      ref: ${{ inputs.branch }}
+      ref: ${{ needs.set-tag.outputs.version }}
     secrets:
       MOBILE_CI_APP_PRIVATE_KEY: ${{ secrets.MOBILE_CI_APP_PRIVATE_KEY }}
 
-  publish-MindboxLogger:
-    needs: [set-tag]
-    runs-on: macos-26
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ inputs.branch }}
-      - name: Update bundler
-        run: gem install bundler
-      - name: Install bundler dependencies
-        run: bundle install
-      - name: Deploy to Cocoapods MindboxLogger
-        run: |
-          pod lib lint MindboxLogger.podspec --allow-warnings
-          ./.github/pod-trunk-push.sh MindboxLogger.podspec --allow-warnings --verbose
-        env:
-          COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TOKEN }}
-          
-  delay:
-    needs: [publish-MindboxLogger]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Delay for 20 minutes
-        run: sleep 1200
-      
-  check-podspecs-with-retry:
-    needs: [delay]
-    runs-on: macos-26
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ inputs.branch }}
-      - name: Update bundler
-        run: gem install bundler
-      - name: Install bundler dependencies
-        run: bundle install
-      - uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4.0.0
-        with:
-          timeout_minutes: 10
-          max_attempts: 20
-          command: |
-              pod repo update
-              pod lib lint --allow-warnings
-          retry_on: error
-          retry_wait_seconds: 120
-          
-  publish-MindboxNotifications:
-    needs: [check-podspecs-with-retry]
-    runs-on: macos-26
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ inputs.branch }}
-      - name: Update bundler
-        run: gem install bundler
-      - name: Install bundler dependencies
-        run: bundle install
-      - name: Deploy to Cocoapods MindboxNotifications
-        run: |
-            pod repo update
-            set -eo pipefail
-            pod lib lint MindboxNotifications.podspec --allow-warnings
-            ./.github/pod-trunk-push.sh MindboxNotifications.podspec --allow-warnings --verbose
-        env:
-          COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TOKEN }}
-          
-  second-delay:
-    needs: [publish-MindboxNotifications]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Delay for 2 minutes
-        run: sleep 120
-  
-  publish-Mindbox:
-    needs: [second-delay]
-    runs-on: macos-26
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ inputs.branch }}
-      - name: Update bundler
-        run: gem install bundler
-      - name: Install bundler dependencies
-        run: bundle install
-      - name: Deploy to Cocoapods Mindbox
-        run: |
-            pod repo update
-            set -eo pipefail
-            pod lib lint Mindbox.podspec --allow-warnings
-            ./.github/pod-trunk-push.sh Mindbox.podspec --allow-warnings --verbose
-        env:
-          COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TOKEN }}
-
   release-github:
-    needs: [publish-MindboxLogger, publish-MindboxNotifications, publish-Mindbox]
+    needs: [set-tag, publish-specs-repo]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ inputs.branch }}
+          ref: ${{ needs.set-tag.outputs.version }}
       - name: Release generation
         run: ./.github/git-release.sh
         env:
@@ -182,7 +91,7 @@ jobs:
           RELEASE_BRANCH: ${{ inputs.branch }}
 
   merge:
-    needs: [publish-MindboxLogger, publish-MindboxNotifications, publish-Mindbox]
+    needs: [publish-specs-repo]
     if: startsWith(github.head_ref, 'release/') && github.base_ref == 'master'
     runs-on: ubuntu-latest
     steps:
