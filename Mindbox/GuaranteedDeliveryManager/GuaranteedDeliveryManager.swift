@@ -116,7 +116,9 @@ final class GuaranteedDeliveryManager: NSObject {
     private func deliverEvents(fetchLimit: Int) {
         guard let events = try? databaseRepository.query(fetchLimit: fetchLimit, retryDeadline: retryDelayManager.current) else {
             Logger.common(message: "[GD] Database Repository query events is nil", level: .info, category: .delivery)
-            state = .idle
+            if finishPass() {
+                performScheduleIfNeeded()
+            }
             return
         }
         guard !events.isEmpty else {
@@ -143,10 +145,13 @@ final class GuaranteedDeliveryManager: NSObject {
         completion.completionBlock = { [weak self, weak completion] in
             guard let self = self, let completion = completion else { return }
             
-            self.state = .idle
+            let isScheduleRequested = self.finishPass()
             
             guard !completion.isCancelled else {
                 Logger.common(message: "[GD] Queue was cancelled", level: .info, category: .background)
+                if isScheduleRequested {
+                    self.performScheduleIfNeeded()
+                }
                 return
             }
             
@@ -171,6 +176,15 @@ final class GuaranteedDeliveryManager: NSObject {
         queue.addOperations(operations, waitUntilFinished: false)
     }
 
+    private func finishPass() -> Bool {
+        semaphore.wait()
+        defer { semaphore.signal() }
+        state = .idle
+        let isScheduleRequested = isScheduleRequestedWhileDelivering
+        isScheduleRequestedWhileDelivering = false
+        return isScheduleRequested
+    }
+
     private func forgetEventsMissingFromDatabase() {
         let trackedTransactionIds = retryDelayManager.trackedTransactionIds
         guard !trackedTransactionIds.isEmpty,
@@ -182,6 +196,9 @@ final class GuaranteedDeliveryManager: NSObject {
 
     func cancelAllOperations() {
         queue.cancelAllOperations()
+        semaphore.wait()
+        isScheduleRequestedWhileDelivering = false
+        semaphore.signal()
         eventRepository.cancelAllRequests()
     }
 
