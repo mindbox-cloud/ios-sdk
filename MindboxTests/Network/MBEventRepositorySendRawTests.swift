@@ -101,7 +101,13 @@ struct MBEventRepositorySendRawTests {
 
     private func deliver(_ event: Event, with repository: EventRepository, from database: DatabaseRepositoryProtocol) async {
         await withCheckedContinuation { continuation in
-            let operation = DeliveryOperation(databaseRepository: database, eventRepository: repository, event: event)
+            let operation = DeliveryOperation(
+                databaseRepository: database,
+                eventRepository: repository,
+                event: event,
+                pauseManager: DeliveryPauseManager(),
+                retryDelayManager: DeliveryRetryDelayManager()
+            )
             operation.completionBlock = { continuation.resume() }
             operation.start()
         }
