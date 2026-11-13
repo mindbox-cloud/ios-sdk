@@ -29,7 +29,7 @@ final class TrackingIdsChangeDetector {
         guard persistenceStorage.isInstalled else { return false }
         let state = trackingIdsResolver.state
         guard let attachment = trackingIdsResolver.attachment(for: .trackingIdsUpdated, trackingHost: trackingHostResolver.trackingHost) else {
-            Self.log(notAttachedMessage(state: state))
+            logNotAttached(state: state)
             return false
         }
         let hash = attachment.hash
@@ -46,11 +46,12 @@ final class TrackingIdsChangeDetector {
         return true
     }
 
-    private func notAttachedMessage(state: TrackingIdsState) -> String {
+    private func logNotAttached(state: TrackingIdsState) {
         if case .granted = state, let reason = trackingHostResolver.resolution.unavailableReason {
-            return "Tracking ids are not collected: \(reason)"
+            Self.log("Tracking ids are not collected: \(reason)", level: .error)
+            return
         }
-        return "Skip sending: the setter has not been called in this launch (state: \(state.logDescription))"
+        Self.log("Skip sending: the setter has not been called in this launch (state: \(state.logDescription))")
     }
 
     private static func skipMessage(_ attachment: TrackingIdsAttachment, state: TrackingIdsState, reference: TrackingIdsRecord.Reference?) -> String {
@@ -82,7 +83,7 @@ final class TrackingIdsChangeDetector {
         }
     }
 
-    private static func log(_ message: String) {
-        Logger.common(message: "[TrackingIds] " + message, level: .debug, category: .general)
+    private static func log(_ message: String, level: LogLevel = .debug) {
+        Logger.common(message: "[TrackingIds] " + message, level: level, category: .general)
     }
 }
