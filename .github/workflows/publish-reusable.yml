@@ -41,14 +41,18 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.branch }}
       - name: Extract SDK version
+        id: version
         run: |
             SDK_VERSION=$(sed -n 's/^.*sdkVersion = "\(.*\)"/\1/p' SDKVersionProvider/SDKVersionProvider.swift)
             echo "SDK_VERSION=$SDK_VERSION" >> "$GITHUB_ENV"
+            echo "version=$SDK_VERSION" >> "$GITHUB_OUTPUT"
             echo "Extracted SDK version: $SDK_VERSION"
       - name: Create tag
         run: |
@@ -67,7 +71,7 @@ jobs:
     needs: [set-tag]
     uses: ./.github/workflows/publish-specs.yml
     with:
-      ref: ${{ inputs.branch }}
+      ref: ${{ needs.set-tag.outputs.version }}
     secrets:
       MOBILE_CI_APP_PRIVATE_KEY: ${{ secrets.MOBILE_CI_APP_PRIVATE_KEY }}
 
