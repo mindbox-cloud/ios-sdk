@@ -254,6 +254,7 @@ final class DeliveryRetryDelayManager {
 
     private func removeServerFailure(of transactionId: String) {
         serverFailedTransactionIds.remove(transactionId)
+        retriedInRoundTransactionIds.remove(transactionId)
         guard serverFailedTransactionIds.isEmpty else { return }
         retriedInRoundTransactionIds.removeAll()
         delay = firstDelay

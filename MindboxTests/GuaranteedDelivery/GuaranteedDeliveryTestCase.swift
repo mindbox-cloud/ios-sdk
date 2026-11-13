@@ -506,6 +506,36 @@ final class DeliveryPauseTestCase: XCTestCase {
         XCTAssertEqual(retryDelayManager.completeRound(), 60)
     }
 
+    func testServerFailedRetryThatLeavesServerFailureBeforeTheRoundEndsDoesNotDoubleTheRetryDelayWhileANewEventIsServerFailed() {
+        let answers: [(String, (DeliveryRetryDelayManager) -> Void)] = [
+            ("delivered", { $0.register(.delivered, transactionId: "retried", isRetry: true) }),
+            ("discarded", { $0.register(.discarded, transactionId: "retried", isRetry: true) }),
+            ("throttled", { $0.register(.throttled, transactionId: "retried", isRetry: true) }),
+            ("retryLater", { $0.register(.retryLater, transactionId: "retried", isRetry: true) }),
+            ("postponed", { $0.registerPostponed(transactionId: "retried") }),
+        ]
+        answers.forEach { name, answer in
+            let manager = DeliveryRetryDelayManager()
+            manager.register(.serverFailure, transactionId: "retried", isRetry: true)
+            manager.register(.serverFailure, transactionId: "new", isRetry: false)
+
+            answer(manager)
+
+            XCTAssertEqual(manager.completeRound(), 60, name)
+            manager.register(.serverFailure, transactionId: "new", isRetry: true)
+            XCTAssertEqual(manager.completeRound(), 120, name)
+        }
+    }
+
+    func testServerFailedRetryDoublesTheRetryDelayWhenAnotherServerFailedRetryIsDeliveredInTheSameRound() {
+        retryDelayManager.register(.serverFailure, transactionId: "recovered", isRetry: true)
+        retryDelayManager.register(.serverFailure, transactionId: "failed", isRetry: true)
+
+        retryDelayManager.register(.delivered, transactionId: "recovered", isRetry: true)
+
+        XCTAssertEqual(retryDelayManager.completeRound(), 120)
+    }
+
     func testThrottlingNoResponseAndOtherKeptAnswersDoNotGrowTheRetryDelay() {
         [DeliveryResult.throttled, .noResponse, .retryLater].forEach { result in
             (0..<5).forEach { _ in
