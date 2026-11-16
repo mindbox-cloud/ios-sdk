@@ -43,14 +43,25 @@ class MBEventRepository: EventRepository {
             completion(.failure(error))
             return
         }
-        let route = EventRoute(EventWrapper(event: event, endpoint: configuration.endpoint, deviceUUID: deviceUUID))
+        let route = EventRoute(EventWrapper(
+            event: event,
+            endpoint: configuration.endpoint,
+            deviceUUID: deviceUUID,
+            integrationFramework: configuration.integrationFramework
+        ))
         let firstSend = trackingIdsResolver.takeFirstSend(of: event)
         guard let attachment = event.isRetry ? nil : trackingIdsResolver.attachment(for: event.type, trackingHost: trackingHostResolver.trackingHost),
               case let .sdkOperation(operation) = event.type.request else {
             fetcher.request(route: route, completion: completion)
             return
         }
-        let idsRoute = EventRoute(EventWrapper(event: event, endpoint: configuration.endpoint, deviceUUID: deviceUUID, trackingIds: attachment))
+        let idsRoute = EventRoute(EventWrapper(
+            event: event,
+            endpoint: configuration.endpoint,
+            deviceUUID: deviceUUID,
+            trackingIds: attachment,
+            integrationFramework: configuration.integrationFramework
+        ))
         let instanceId = persistenceStorage.applicationInstanceId
         fetcher.request(type: BaseResponse.self, route: idsRoute) { [fetcher, persistenceStorage, trackingIdsResolver] result in
             switch result {
@@ -102,7 +113,8 @@ class MBEventRepository: EventRepository {
         let wrapper = EventWrapper(
             event: event,
             endpoint: configuration.endpoint,
-            deviceUUID: deviceUUID
+            deviceUUID: deviceUUID,
+            integrationFramework: configuration.integrationFramework
         )
         let route = EventRoute(wrapper)
         fetcher.request(type: type, route: route, completion: deliver)
@@ -128,7 +140,8 @@ class MBEventRepository: EventRepository {
         let wrapper = EventWrapper(
             event: event,
             endpoint: configuration.endpoint,
-            deviceUUID: deviceUUID
+            deviceUUID: deviceUUID,
+            integrationFramework: configuration.integrationFramework
         )
         let route = EventRoute(wrapper)
         fetcher.requestRaw(route: route) { result in

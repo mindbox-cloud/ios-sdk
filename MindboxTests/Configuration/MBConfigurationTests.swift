@@ -8,7 +8,7 @@
 
 import Foundation
 import Testing
-@testable import Mindbox
+@_spi(Internal) @testable import Mindbox
 
 @Suite("MBConfiguration", .tags(.mbConfiguration))
 struct MBConfigurationTests {
@@ -486,5 +486,64 @@ struct MBConfigurationTests {
         var validation = ConfigValidation()
         validation.compare(lhs, rhs)
         #expect(validation.changedState == .none)
+    }
+
+    // MARK: - integrationFramework
+
+    @Test("integrationFramework is nil by default")
+    func integrationFrameworkDefaultsToNil() throws {
+        let config = try MBConfiguration(endpoint: endpoint, domain: domain)
+        #expect(config.integrationFramework == nil)
+    }
+
+    @Test("integrationFramework survives an encode and decode round trip")
+    func integrationFrameworkRoundTrip() throws {
+        var config = try MBConfiguration(endpoint: endpoint, domain: domain)
+        config.integrationFramework = "flutter/3.47.8; mindbox-flutter/2.16.0"
+        let data = try JSONEncoder().encode(config)
+        let decoded = try JSONDecoder().decode(MBConfiguration.self, from: data)
+        #expect(decoded.integrationFramework == "flutter/3.47.8; mindbox-flutter/2.16.0")
+    }
+
+    @Test("JSON without the integrationFramework key decodes to nil")
+    func integrationFrameworkMissingKeyDecodesToNil() throws {
+        let json = Data(#"{"endpoint":"test-endpoint","domain":"api.mindbox.ru"}"#.utf8)
+        let decoded = try JSONDecoder().decode(MBConfiguration.self, from: json)
+        #expect(decoded.integrationFramework == nil)
+    }
+
+    @Test("A non-string integrationFramework does not break decoding")
+    func integrationFrameworkNonStringDecodesToNil() throws {
+        let json = Data(#"{"endpoint":"test-endpoint","domain":"api.mindbox.ru","integrationFramework":42}"#.utf8)
+        let decoded = try JSONDecoder().decode(MBConfiguration.self, from: json)
+        #expect(decoded.endpoint == endpoint)
+        #expect(decoded.integrationFramework == nil)
+    }
+
+    @Test("integrationFramework change → none")
+    func integrationFrameworkChangeReturnsNone() throws {
+        let lhs = try MBConfiguration(endpoint: endpoint, domain: domain)
+        var rhs = try MBConfiguration(endpoint: endpoint, domain: domain)
+        rhs.integrationFramework = "flutter/3.47.8; mindbox-flutter/2.16.0"
+        var validation = ConfigValidation()
+        validation.compare(lhs, rhs)
+        #expect(validation.changedState == .none)
+    }
+
+    @Test("integrationFramework is kept by the real persistence storage")
+    func integrationFrameworkSurvivesPersistenceStorage() throws {
+        let suiteName = "MBConfigurationTests.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let storage = MBPersistenceStorage(defaults: defaults)
+        var config = try MBConfiguration(endpoint: endpoint, domain: domain)
+        storage.configuration = config
+        #expect(MBPersistenceStorage(defaults: defaults).configuration?.integrationFramework == nil)
+
+        config.integrationFramework = "flutter/3.47.8; mindbox-flutter/2.16.0"
+        storage.configuration = config
+        let restored = MBPersistenceStorage(defaults: defaults).configuration
+        #expect(restored?.integrationFramework == "flutter/3.47.8; mindbox-flutter/2.16.0")
     }
 }

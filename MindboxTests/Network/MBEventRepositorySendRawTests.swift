@@ -5,7 +5,7 @@
 
 import Testing
 import Foundation
-@testable import Mindbox
+@_spi(Internal) @testable import Mindbox
 
 @Suite("MBEventRepository")
 struct MBEventRepositorySendRawTests {
@@ -637,5 +637,35 @@ struct MBEventRepositorySendRawTests {
 
         storage.applicationInstanceId = nil
         #expect(TrackingIdsRecord.reference(in: storage) == .unconfirmed)
+    }
+
+    // MARK: - Integration framework header
+
+    @Test("Visit send carries the framework from the stored configuration")
+    func send_trackVisit_carriesIntegrationFramework() async throws {
+        let fetcher = FakeNetworkFetcher()
+        let storage = try makeStorage()
+        storage.configuration?.integrationFramework = "flutter/3.47.8; mindbox-flutter/2.16.0"
+        let repo = makeRepository(fetcher: fetcher, storage: storage)
+
+        _ = await awaitResult { completion in
+            repo.send(event: Event(type: .trackVisit, body: "{}"), completion: completion)
+        }
+
+        let route = try #require(fetcher.capturedRoute)
+        #expect(route.headers == ["Mindbox-Integration-Framework": "flutter/3.47.8; mindbox-flutter/2.16.0"])
+    }
+
+    @Test("Visit send without the field in the configuration sends native")
+    func send_trackVisit_withoutIntegrationFramework_sendsNative() async throws {
+        let fetcher = FakeNetworkFetcher()
+        let repo = makeRepository(fetcher: fetcher, storage: try makeStorage())
+
+        _ = await awaitResult { completion in
+            repo.send(event: Event(type: .trackVisit, body: "{}"), completion: completion)
+        }
+
+        let route = try #require(fetcher.capturedRoute)
+        #expect(route.headers == ["Mindbox-Integration-Framework": "native"])
     }
 }

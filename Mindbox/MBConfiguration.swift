@@ -23,6 +23,10 @@ public struct MBConfiguration: Codable {
     public var imageLoadingMaxTimeInSeconds: Double?
     let uuidDebugEnabled: Bool
 
+    /// Framework and versions of the app, set by Mindbox wrappers (React Native, Flutter). Not for app code.
+    @_spi(Internal)
+    public var integrationFramework: String?
+
     /// Init with params
     ///
     /// - Parameter endpoint: Used for app identification
@@ -159,6 +163,7 @@ public struct MBConfiguration: Codable {
         case subscribeCustomerIfCreated
         case shouldCreateCustomer
         case uuidDebugEnabled
+        case integrationFramework
     }
 
     public init(from decoder: Decoder) throws {
@@ -191,6 +196,7 @@ public struct MBConfiguration: Codable {
             shouldCreateCustomer: shouldCreateCustomer,
             uuidDebugEnabled: uuidDebugEnabled
         )
+        self.integrationFramework = try? values.decodeIfPresent(String.self, forKey: .integrationFramework)
     }
 }
 

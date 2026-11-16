@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		F6430001A0B0C0D0E0F00006 /* EventRouteIntegrationFrameworkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6430001A0B0C0D0E0F00005 /* EventRouteIntegrationFrameworkTests.swift */; };
+		F6430001A0B0C0D0E0F00004 /* IntegrationFrameworkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6430001A0B0C0D0E0F00003 /* IntegrationFrameworkTests.swift */; };
+		F6430001A0B0C0D0E0F00002 /* IntegrationFramework.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6430001A0B0C0D0E0F00001 /* IntegrationFramework.swift */; };
 		0A3D045A2BC6803E00E1FC52 /* ImageFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A3D04592BC6803E00E1FC52 /* ImageFormat.swift */; };
 		0E7A224A082FA2DA35706CC7 /* MotionServiceResolvePositionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C8192B8B7043EF74D05B36B /* MotionServiceResolvePositionTests.swift */; };
 		0E7A224A082FA2DA35706CC8 /* MotionServiceShakeToEditTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C8192B8B7043EF74D05B36C /* MotionServiceShakeToEditTests.swift */; };
@@ -799,6 +802,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		F6430001A0B0C0D0E0F00005 /* EventRouteIntegrationFrameworkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventRouteIntegrationFrameworkTests.swift; sourceTree = "<group>"; };
+		F6430001A0B0C0D0E0F00003 /* IntegrationFrameworkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntegrationFrameworkTests.swift; sourceTree = "<group>"; };
+		F6430001A0B0C0D0E0F00001 /* IntegrationFramework.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntegrationFramework.swift; sourceTree = "<group>"; };
 		045EA348681AB859FB298A57 /* InAppTagsGatingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppTagsGatingTests.swift; sourceTree = "<group>"; };
 		0475E8755F63483597539A50 /* TrackVisitManagerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TrackVisitManagerTests.swift; sourceTree = "<group>"; };
 		0A3D04592BC6803E00E1FC52 /* ImageFormat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageFormat.swift; sourceTree = "<group>"; };
@@ -2414,8 +2420,10 @@
 				4E45E06561604E6185C33366 /* SDKUserAgentTests.swift */,
 				97FEDDEB5F71A67F1C4C675F /* MBNetworkFetcherResponseHandlingTests.swift */,
 				F3BA5E000130A000C0000006 /* OperationsURLRoutingTests.swift */,
+				F6430001A0B0C0D0E0F00005 /* EventRouteIntegrationFrameworkTests.swift */,
 				F3CD202C2F600A800065392A /* HostNormalizerTests.swift */,
 				625109E4A6AD9F2BCB746B3A /* TrackingHostResolverTests.swift */,
+				F6430001A0B0C0D0E0F00003 /* IntegrationFrameworkTests.swift */,
 				BECF3D292B29C1894F80948F /* MBEventRepositorySendRawTests.swift */,
 				10CBD02CEBA456777876ACF8 /* OperationResponseTests.swift */,
 			);
@@ -2503,6 +2511,7 @@
 				847F582825C8AE1D00147A9A /* Validators */,
 				847F582425C8AE0100147A9A /* Types */,
 				847F580E25C88E8C00147A9A /* MBNetworkFetcher.swift */,
+				F6430001A0B0C0D0E0F00001 /* IntegrationFramework.swift */,
 			);
 			path = Network;
 			sourceTree = "<group>";
@@ -4643,6 +4652,7 @@
 				F3A8B9A32A3A6E6900E9C055 /* SdkVersionModel.swift in Sources */,
 				3333C1DE2681E9F300B60D84 /* URLRequestBuilder.swift in Sources */,
 				F3CD20292F600A800065392A /* HostNormalizer.swift in Sources */,
+				F6430001A0B0C0D0E0F00002 /* IntegrationFramework.swift in Sources */,
 				42B6D735E0693DFA688B1A08 /* TrackingHostResolver.swift in Sources */,
 				B0A828423F0C7C4E64ED2565 /* TrackingIdsResolver.swift in Sources */,
 				49BD80256F6C75DED17872E0 /* TrackingIdsChangeDetector.swift in Sources */,
@@ -5026,8 +5036,10 @@
 				302E35788CBDA959283569F4 /* MotionServiceBehaviorTests.swift in Sources */,
 				1E3BD63AB3F1521C253CB818 /* MBNetworkFetcherResponseHandlingTests.swift in Sources */,
 				F3BA5E000130A000C0000005 /* OperationsURLRoutingTests.swift in Sources */,
+				F6430001A0B0C0D0E0F00006 /* EventRouteIntegrationFrameworkTests.swift in Sources */,
 				F3CD202B2F600A800065392A /* HostNormalizerTests.swift in Sources */,
 				1DA8736FAECF5651322EBD71 /* TrackingHostResolverTests.swift in Sources */,
+				F6430001A0B0C0D0E0F00004 /* IntegrationFrameworkTests.swift in Sources */,
 				AF174B2121221D323FB95EF0 /* MBEventRepositorySendRawTests.swift in Sources */,
 				9B8670F8E39535C1264CC855 /* OperationResponseTests.swift in Sources */,
 				EA395B77BB16CEFE6DC91D1D /* TransparentViewSyncOperationResponseTests.swift in Sources */,
