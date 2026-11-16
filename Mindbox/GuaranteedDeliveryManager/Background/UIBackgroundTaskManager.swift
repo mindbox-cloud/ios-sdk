@@ -133,7 +133,7 @@ class UIBackgroundTaskManager: BackgroundTaskManagerType {
                 
                 self?.observationToken?.invalidate()
                 self?.observationToken = nil
-                completionHandler(.newData)
+                DispatchQueue.main.async { completionHandler(.newData) }
             }
         }
     }

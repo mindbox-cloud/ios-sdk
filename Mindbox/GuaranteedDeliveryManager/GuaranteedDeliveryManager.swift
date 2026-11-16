@@ -29,6 +29,7 @@ final class GuaranteedDeliveryManager: NSObject {
 
     private let semaphore = DispatchSemaphore(value: 1)
     private var isScheduleRequestedWhileDelivering = false
+    private var isRestartAfterCancelAllowed = true
 
     private let pauseManager = DeliveryPauseManager()
 
@@ -109,6 +110,7 @@ final class GuaranteedDeliveryManager: NSObject {
 
         state = .delivering
         isScheduleRequestedWhileDelivering = false
+        isRestartAfterCancelAllowed = true
         semaphore.signal()
         deliverEvents(fetchLimit: fetchLimit)
     }
@@ -124,7 +126,7 @@ final class GuaranteedDeliveryManager: NSObject {
         guard !events.isEmpty else {
             forgetEventsMissingFromDatabase()
             semaphore.wait()
-            let isScheduleRequested = isScheduleRequestedWhileDelivering
+            let isScheduleRequested = isScheduleRequestedWhileDelivering && isRestartAfterCancelAllowed
             isScheduleRequestedWhileDelivering = false
             let retryDelay = isScheduleRequested ? nil : retryDelayManager.completeRound()
             if !isScheduleRequested {
@@ -180,8 +182,9 @@ final class GuaranteedDeliveryManager: NSObject {
         semaphore.wait()
         defer { semaphore.signal() }
         state = .idle
-        let isScheduleRequested = isScheduleRequestedWhileDelivering
+        let isScheduleRequested = isScheduleRequestedWhileDelivering && isRestartAfterCancelAllowed
         isScheduleRequestedWhileDelivering = false
+        isRestartAfterCancelAllowed = true
         return isScheduleRequested
     }
 
@@ -194,10 +197,11 @@ final class GuaranteedDeliveryManager: NSObject {
         retryDelayManager.forget(transactionIds: trackedTransactionIds.subtracting(storedTransactionIds))
     }
 
-    func cancelAllOperations() {
+    func cancelAllOperations(restartsRequestedPass: Bool) {
         queue.cancelAllOperations()
         semaphore.wait()
         isScheduleRequestedWhileDelivering = false
+        isRestartAfterCancelAllowed = restartsRequestedPass
         semaphore.signal()
         eventRepository.cancelAllRequests()
     }

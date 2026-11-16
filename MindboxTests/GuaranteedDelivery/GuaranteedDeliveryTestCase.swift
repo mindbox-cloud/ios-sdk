@@ -843,6 +843,29 @@ final class DeliveryPauseTestCase: XCTestCase {
         manager.canScheduleOperations = false
     }
 
+    func testEventCreatedWhileAnEmptyPassCancelledOnBackgroundTaskExpirationIsFinishingWaitsForTheRetryDelay() throws {
+        let database = try ScriptedQueryDatabaseRepository()
+        let waiting = customEvent("Waiting")
+        try database.create(event: waiting)
+        try database.update(event: waiting)
+        let manager = scriptedManager(database)
+        let new = customEvent("New")
+        database.onNextEmptyQuery {
+            manager.cancelAllOperations(restartsRequestedPass: false)
+            database.makeDue([new.transactionId])
+            try? database.create(event: new)
+        }
+
+        manager.canScheduleOperations = true
+        waitUntil { manager.state.isWaitingForRetry }
+        RunLoop.current.run(until: Date().addingTimeInterval(0.3))
+
+        XCTAssertTrue(manager.state.isWaitingForRetry)
+        XCTAssertEqual(eventRepository.sentTransactionIds, [])
+        XCTAssertEqual(database.emptyQueryRetryDeadlines.count, 1)
+        manager.canScheduleOperations = false
+    }
+
     func testEventCreatedWhileACancelledPassIsFinishingIsSentWithoutWaitingForTheRetryDelay() throws {
         let database = try ScriptedQueryDatabaseRepository()
         let inFlight = customEvent("InFlight")
@@ -852,7 +875,7 @@ final class DeliveryPauseTestCase: XCTestCase {
         let newEventSent = expectation(description: "new event is sent")
         eventRepository.onSend = { event in
             if event.transactionId == inFlight.transactionId {
-                manager.cancelAllOperations()
+                manager.cancelAllOperations(restartsRequestedPass: true)
                 database.makeDue([new.transactionId])
                 try? database.create(event: new)
             } else if event.transactionId == new.transactionId {
@@ -867,6 +890,30 @@ final class DeliveryPauseTestCase: XCTestCase {
         manager.canScheduleOperations = false
     }
 
+    func testEventCreatedWhileAPassCancelledOnBackgroundTaskExpirationIsFinishingIsNotSent() throws {
+        let database = try ScriptedQueryDatabaseRepository()
+        let inFlight = customEvent("InFlight")
+        let new = customEvent("New")
+        try database.create(event: inFlight)
+        let manager = scriptedManager(database)
+        eventRepository.onSend = { event in
+            if event.transactionId == inFlight.transactionId {
+                manager.cancelAllOperations(restartsRequestedPass: false)
+                database.makeDue([new.transactionId])
+                try? database.create(event: new)
+            }
+        }
+        database.makeDue([inFlight.transactionId])
+
+        manager.canScheduleOperations = true
+        waitUntil { self.eventRepository.sentTransactionIds.count == 1 && manager.state.isIdle }
+        RunLoop.current.run(until: Date().addingTimeInterval(0.3))
+
+        XCTAssertTrue(manager.state.isIdle)
+        XCTAssertEqual(eventRepository.sentTransactionIds, [inFlight.transactionId])
+        manager.canScheduleOperations = false
+    }
+
     func testCancelledPassWithoutNewEventsIsNotRestartedByItsOwnDeliveries() throws {
         let database = try ScriptedQueryDatabaseRepository()
         let delivered = customEvent("Delivered")
@@ -875,7 +922,7 @@ final class DeliveryPauseTestCase: XCTestCase {
         try database.create(event: inFlight)
         let manager = scriptedManager(database)
         eventRepository.onSend = { event in
-            if event.transactionId == inFlight.transactionId { manager.cancelAllOperations() }
+            if event.transactionId == inFlight.transactionId { manager.cancelAllOperations(restartsRequestedPass: true) }
         }
         database.makeDue([delivered.transactionId, inFlight.transactionId])
 
