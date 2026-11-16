@@ -35,7 +35,7 @@ The SDK sends the IDFA only when the app's privacy manifest declares the trackin
 - [Example/PrivacyInfo.xcprivacy](Example/PrivacyInfo.xcprivacy), used by the app, is for an app that passes the IDFA. It sets `NSPrivacyTracking` to true, lists the tracking host `api-tracking.mindbox.ru` and declares the Device ID as linked to the user, used for tracking, for developer advertising.
 - [Samples/PrivacyInfo_Standard.xcprivacy](Samples/PrivacyInfo_Standard.xcprivacy), in no target, is for an app that does not pass the IDFA. Tracking is off and no data is declared: the SDK declares its own data in its manifest.
 
-The tracking host is your domain with the leading `api` replaced by `api-tracking`, for example `api-tracking.maestra.io` for `api.maestra.io`. Never list the main API host: iOS blocks requests to the listed hosts until the user allows tracking. Without the tracking host the SDK sends nothing, and once the user allows tracking it logs the error `[TrackingIds] Tracking ids are not collected: …`.
+The tracking host is your domain with the leading `api` replaced by `api-tracking`, for example `api-tracking.mindbox.ru` for `api.mindbox.ru`. Never list the main API host: iOS blocks requests to the listed hosts until the user allows tracking. Without the tracking host the SDK sends nothing, and once the user allows tracking it logs the error `[TrackingIds] Tracking ids are not collected: …`.
 
 ### SDK functionality testing
 
