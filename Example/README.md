@@ -24,7 +24,18 @@ To run the application on a real device and try push notifications, follow the i
    - MindboxNotificationServiceExtension
    - MindboxNotificationContentExtension
 2. [Configure your endpoints](https://developers.mindbox.ru/docs/add-ios-integration).
-3. Change domain and endpoints in the `AppDelegate.swift` to yours.
+3. Change domain and endpoints in the `AppDelegate.swift` to yours. With another domain, change the tracking host in the privacy manifest too (see [Advertising identifier (IDFA)](#advertising-identifier-idfa)).
+
+### Advertising identifier (IDFA)
+
+The app passes the IDFA to the SDK: `sceneDidBecomeActive` in `SceneDelegate.swift` asks for tracking permission while the user has not answered, then passes the IDFA on every activation, with or without consent. Other ways to call it are in [Samples/SceneDelegate_IDFA.swift](Samples/SceneDelegate_IDFA.swift). [Read more](https://developers.mindbox.ru/docs/ios-advertising-identifier).
+
+The SDK sends the IDFA only when the app's privacy manifest declares the tracking host. The folder has two manifests:
+
+- [Example/PrivacyInfo.xcprivacy](Example/PrivacyInfo.xcprivacy), used by the app, is for an app that passes the IDFA. It sets `NSPrivacyTracking` to true, lists the tracking host `api-tracking.mindbox.ru` and declares the Device ID as linked to the user, used for tracking, for developer advertising.
+- [Samples/PrivacyInfo_Standard.xcprivacy](Samples/PrivacyInfo_Standard.xcprivacy), in no target, is for an app that does not pass the IDFA. Tracking is off and no data is declared: the SDK declares its own data in its manifest.
+
+The tracking host is your domain with the leading `api` replaced by `api-tracking`, for example `api-tracking.maestra.io` for `api.maestra.io`. Never list the main API host: iOS blocks requests to the listed hosts until the user allows tracking. Without the tracking host the SDK sends nothing, and once the user allows tracking it logs the error `[TrackingIds] Tracking ids are not collected: …`.
 
 ### SDK functionality testing
 
