@@ -17,4 +17,6 @@ struct EventWrapper {
     let deviceUUID: String
 
     var trackingIds: TrackingIdsAttachment?
+
+    var integrationFramework: String?
 }

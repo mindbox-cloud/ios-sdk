@@ -45,7 +45,11 @@ struct EventRoute: Route {
         switch request {
         case .customSyncOperation:
             return ["Accept": "application/json"]
-        case .sdkOperation, .customAsyncOperation, .trackVisit:
+        case .trackVisit:
+            return [
+                IntegrationFrameworkHeader.name: IntegrationFrameworkHeader.value(wrapperValue: wrapper.integrationFramework)
+            ]
+        case .sdkOperation, .customAsyncOperation:
             return nil
         }
     }

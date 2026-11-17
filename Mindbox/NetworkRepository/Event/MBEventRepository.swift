@@ -26,6 +26,21 @@ class MBEventRepository: EventRepository {
         self.trackingHostResolver = trackingHostResolver
     }
 
+    private func wrapper(
+        _ event: Event,
+        configuration: MBConfiguration,
+        deviceUUID: String,
+        trackingIds: TrackingIdsAttachment? = nil
+    ) -> EventWrapper {
+        EventWrapper(
+            event: event,
+            endpoint: configuration.endpoint,
+            deviceUUID: deviceUUID,
+            trackingIds: trackingIds,
+            integrationFramework: configuration.integrationFramework
+        )
+    }
+
     func send(event: Event, completion: @escaping (Result<Void, MindboxError>) -> Void) {
         guard let configuration = persistenceStorage.configuration else {
             let error = MindboxError(.init(
@@ -43,14 +58,14 @@ class MBEventRepository: EventRepository {
             completion(.failure(error))
             return
         }
-        let route = EventRoute(EventWrapper(event: event, endpoint: configuration.endpoint, deviceUUID: deviceUUID))
+        let route = EventRoute(wrapper(event, configuration: configuration, deviceUUID: deviceUUID))
         let firstSend = trackingIdsResolver.takeFirstSend(of: event)
         guard let attachment = event.isRetry ? nil : trackingIdsResolver.attachment(for: event.type, trackingHost: trackingHostResolver.trackingHost),
               case let .sdkOperation(operation) = event.type.request else {
             fetcher.request(route: route, completion: completion)
             return
         }
-        let idsRoute = EventRoute(EventWrapper(event: event, endpoint: configuration.endpoint, deviceUUID: deviceUUID, trackingIds: attachment))
+        let idsRoute = EventRoute(wrapper(event, configuration: configuration, deviceUUID: deviceUUID, trackingIds: attachment))
         let instanceId = persistenceStorage.applicationInstanceId
         fetcher.request(type: BaseResponse.self, route: idsRoute) { [fetcher, persistenceStorage, trackingIdsResolver] result in
             switch result {
@@ -99,12 +114,7 @@ class MBEventRepository: EventRepository {
             deliver(.failure(error))
             return
         }
-        let wrapper = EventWrapper(
-            event: event,
-            endpoint: configuration.endpoint,
-            deviceUUID: deviceUUID
-        )
-        let route = EventRoute(wrapper)
+        let route = EventRoute(wrapper(event, configuration: configuration, deviceUUID: deviceUUID))
         fetcher.request(type: type, route: route, completion: deliver)
     }
 
@@ -125,12 +135,7 @@ class MBEventRepository: EventRepository {
             completion(.failure(error))
             return
         }
-        let wrapper = EventWrapper(
-            event: event,
-            endpoint: configuration.endpoint,
-            deviceUUID: deviceUUID
-        )
-        let route = EventRoute(wrapper)
+        let route = EventRoute(wrapper(event, configuration: configuration, deviceUUID: deviceUUID))
         fetcher.requestRaw(route: route) { result in
             DispatchQueue.main.async {
                 switch result {
