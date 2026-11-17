@@ -21,7 +21,8 @@ public struct MBConfiguration: Codable {
     public var subscribeCustomerIfCreated: Bool
     public var shouldCreateCustomer: Bool
     public var imageLoadingMaxTimeInSeconds: Double?
-    @_spi(Internal) public var integrationFramework: String?
+    @_spi(Internal)
+    public var integrationFramework: String?
     let uuidDebugEnabled: Bool
 
     /// Init with params
