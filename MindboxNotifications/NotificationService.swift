@@ -98,7 +98,7 @@ private extension MindboxNotificationService {
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true, attributes: nil)
             let fileURL = directory.appendingPathComponent(name, isDirectory: true).appendingPathExtension(format.extension)
             try data.write(to: fileURL, options: .atomic)
-            return try UNNotificationAttachment(identifier: name, url: fileURL, options: nil)
+            return try UNNotificationAttachment(identifier: name, url: fileURL, options: format.attachmentOptions)
         } catch {
             return nil
         }

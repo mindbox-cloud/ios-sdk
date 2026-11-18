@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import ImageIO
 import UIKit
 import UserNotifications
 import UserNotificationsUI
@@ -100,5 +101,19 @@ private extension MindboxNotificationService {
             imageView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             imageView.heightAnchor.constraint(lessThanOrEqualToConstant: imageViewHeight)
         ])
+
+        if ImageFormat.get(from: data) == .gif {
+            animateFrames(of: data, in: imageView)
+        }
+    }
+
+    func animateFrames(of gifData: Data, in imageView: UIImageView) {
+        CGAnimateImageDataWithBlock(gifData as CFData, nil) { [weak imageView] _, frame, stop in
+            guard let imageView else {
+                stop.pointee = true
+                return
+            }
+            imageView.image = UIImage(cgImage: frame)
+        }
     }
 }

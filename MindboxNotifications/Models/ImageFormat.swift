@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import UserNotifications
 
 enum ImageFormat: String {
     case png, jpg, gif
@@ -21,6 +22,15 @@ enum ImageFormat: String {
 
     var `extension`: String {
         return rawValue
+    }
+
+    var attachmentOptions: [AnyHashable: Any]? {
+        switch self {
+        case .gif:
+            return [UNNotificationAttachmentOptionsThumbnailTimeKey: 0]
+        case .png, .jpg:
+            return nil
+        }
     }
 }
 
