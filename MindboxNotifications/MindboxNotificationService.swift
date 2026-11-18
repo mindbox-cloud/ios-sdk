@@ -21,7 +21,7 @@ public class MindboxNotificationService: NSObject {
     // MARK: Internal properties
 
     var context: NSExtensionContext?
-    var viewController: UIViewController?
+    weak var viewController: UIViewController?
 
     var pushValidator: PushValidator?
 
