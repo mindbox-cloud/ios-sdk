@@ -84,7 +84,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         XCTAssertEqual(event.body, mockEvent.body, "Bodies should be equal")
         XCTAssertEqual(event.type, mockEvent.type, "Types should be equal")
         XCTAssertEqual(event.isRetry, mockEvent.isRetry, "Flags `isRetry` should be equal")
-        XCTAssertEqual(event.dateTimeOffset, mockEvent.dateTimeOffset, "Date time offsets should be equal")
+        XCTAssertEqual(Double(event.dateTimeOffset), Double(mockEvent.dateTimeOffset), accuracy: 1_000, "Date time offsets should be equal")
         XCTAssertEqual(event.retryTimestamp, mockEvent.retryTimestamp, "Retry timestamps should be equal")
     }
     
@@ -99,10 +99,40 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         XCTAssertTrue(mockEvent.isRetry, "if `retryTimestamp` is NOT zero, `isRetry` must be true")
     }
     
-    func testDateTimeOffset_WhenNotRetry_isZero() {
+    func testDateTimeOffset_OfNewEvent_isCloseToZero() {
         let event = Event(type: .installed, body: "foo")
         XCTAssertFalse(event.isRetry)
-        XCTAssertEqual(event.dateTimeOffset, 0, "If `isRetry = false`, offset must be 0.")
+        XCTAssertTrue((0...1_000).contains(event.dateTimeOffset), "Offset of a new event must be its age, got \(event.dateTimeOffset) ms.")
+    }
+
+    func test_dateTimeOffset_WhenNotRetry_usingMockClock() {
+        let threeDays: TimeInterval = 3 * 24 * 60 * 60
+        let enqueue: Double = 1_000
+        let clock = MockClock(now: Date(timeIntervalSince1970: enqueue + threeDays))
+
+        let event = MockEvent(
+            type: .inAppViewEvent,
+            body: "bar",
+            enqueueTimeStamp: enqueue,
+            retryTimestamp: 0,
+            clock: clock
+        )
+
+        XCTAssertFalse(event.isRetry)
+        XCTAssertEqual(event.dateTimeOffset, Int64(threeDays * 1000),
+                       "An event that was never tried must be sent with its age, not with 0.")
+    }
+
+    func test_dateTimeOffset_WhenClockWasSetBack_isZero() {
+        let event = MockEvent(
+            type: .inAppViewEvent,
+            body: "bar",
+            enqueueTimeStamp: 2_000,
+            retryTimestamp: 0,
+            clock: MockClock(now: Date(timeIntervalSince1970: 1_000))
+        )
+
+        XCTAssertEqual(event.dateTimeOffset, 0)
     }
     
     func test_dateTimeOffset_WhenRetry_usingMockClock() {

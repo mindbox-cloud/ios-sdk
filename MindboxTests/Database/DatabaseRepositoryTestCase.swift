@@ -248,6 +248,36 @@ class DatabaseRepositoryTestCase: XCTestCase {
         XCTAssertEqual(Double(stored.dateTimeOffset), 120_000, accuracy: 5_000)
     }
 
+    func testEventNeverTriedToSendIsFetchedWithItsAgeAsOffset() throws {
+        let threeDays: TimeInterval = 3 * 24 * 60 * 60
+        let event = Event(type: .inAppViewEvent, body: "")
+        try databaseRepository.create(event: event)
+
+        let stored = try setTimestamps(
+            of: event,
+            enqueue: Date().addingTimeInterval(-threeDays),
+            retry: Date(timeIntervalSince1970: 0)
+        )
+
+        XCTAssertFalse(stored.isRetry)
+        XCTAssertEqual(try databaseRepository.query(fetchLimit: 10).map(\.transactionId), [event.transactionId])
+        XCTAssertEqual(Double(stored.dateTimeOffset), threeDays * 1000, accuracy: 5_000)
+    }
+
+    func testEventNeverTriedToSendAndCreatedBeforeTheClockWasSetBackHasZeroOffset() throws {
+        let event = Event(type: .inAppViewEvent, body: "")
+        try databaseRepository.create(event: event)
+
+        let stored = try setTimestamps(
+            of: event,
+            enqueue: Date().addingTimeInterval(3600),
+            retry: Date(timeIntervalSince1970: 0)
+        )
+
+        XCTAssertFalse(stored.isRetry)
+        XCTAssertEqual(stored.dateTimeOffset, 0)
+    }
+
     private func setTimestamps(of event: Event, enqueue: Date, retry: Date) throws -> Event {
         let repository = try XCTUnwrap(databaseRepository as? MBDatabaseRepository)
         let context = repository.persistentContainer.newBackgroundContext()
