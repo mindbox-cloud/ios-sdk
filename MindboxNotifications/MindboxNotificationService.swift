@@ -25,6 +25,8 @@ public class MindboxNotificationService: NSObject {
 
     var pushValidator: PushValidator?
 
+    var deliveryConfirmer = PushDeliveryConfirmer.shared
+
     // MARK: Public initializer
 
     /// Mindbox proxy for `NotificationsService` and `NotificationViewController`

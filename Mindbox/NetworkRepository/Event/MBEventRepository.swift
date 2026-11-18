@@ -8,6 +8,10 @@
 
 import Foundation
 import MindboxLogger
+#if SWIFT_PACKAGE
+@_spi(Internal)
+import MindboxShared
+#endif
 
 class MBEventRepository: EventRepository {
     private let fetcher: NetworkFetcher
@@ -15,18 +19,25 @@ class MBEventRepository: EventRepository {
     private let persistenceStorage: PersistenceStorage
     private let trackingIdsResolver: TrackingIdsResolver
     private let trackingHostResolver: TrackingHostResolver
+    private let pushDeliveryConfirmationSender: PushDeliveryConfirmationSender
 
     init(fetcher: NetworkFetcher,
          persistenceStorage: PersistenceStorage,
          trackingIdsResolver: TrackingIdsResolver,
-         trackingHostResolver: TrackingHostResolver) {
+         trackingHostResolver: TrackingHostResolver,
+         pushDeliveryConfirmationSender: PushDeliveryConfirmationSender = PushDeliveryConfirmationSender()) {
         self.fetcher = fetcher
         self.persistenceStorage = persistenceStorage
         self.trackingIdsResolver = trackingIdsResolver
         self.trackingHostResolver = trackingHostResolver
+        self.pushDeliveryConfirmationSender = pushDeliveryConfirmationSender
     }
 
     func send(event: Event, completion: @escaping (Result<Void, MindboxError>) -> Void) {
+        if event.type == .pushDeliveryConfirmation {
+            sendPushDeliveryConfirmation(event, completion: completion)
+            return
+        }
         guard let configuration = persistenceStorage.configuration else {
             let error = MindboxError(.init(
                 errorKey: .invalidConfiguration,
@@ -145,5 +156,45 @@ class MBEventRepository: EventRepository {
 
     func cancelAllRequests() {
         fetcher.cancelAllTasks()
+    }
+}
+
+// MARK: - Push delivery confirmation
+
+private extension MBEventRepository {
+
+    /// Goes to the URL from the push and needs neither the configuration nor the device UUID.
+    /// The answer becomes the error guaranteed delivery already knows: it keeps 5xx and lost connections for a retry
+    /// and drops other 4xx.
+    func sendPushDeliveryConfirmation(_ event: Event, completion: @escaping (Result<Void, MindboxError>) -> Void) {
+        guard let confirmation = try? PushDeliveryConfirmation(encoded: Data(event.body.utf8)) else {
+            completion(.failure(Self.confirmationError(statusCode: 400, message: "Unreadable push delivery confirmation")))
+            return
+        }
+        Task { [pushDeliveryConfirmationSender] in
+            switch await pushDeliveryConfirmationSender.send(confirmation) {
+            case .delivered:
+                completion(.success(()))
+            case let .rejected(statusCode):
+                completion(.failure(Self.confirmationError(statusCode: statusCode, message: "Push delivery confirmation was refused")))
+            case .throttled:
+                completion(.failure(Self.confirmationError(
+                    statusCode: PushDeliveryConfirmationOutcome.tooManyRequests,
+                    message: "Push delivery confirmation was throttled"
+                )))
+            case let .failed(statusCode?):
+                completion(.failure(.serverError(.init(
+                    status: .internalServerError,
+                    errorMessage: "Push delivery confirmation failed",
+                    httpStatusCode: statusCode
+                ))))
+            case .failed(nil):
+                completion(.failure(.connectionError))
+            }
+        }
+    }
+
+    static func confirmationError(statusCode: Int, message: String) -> MindboxError {
+        .protocolError(.init(status: .protocolError, errorMessage: message, httpStatusCode: statusCode))
     }
 }

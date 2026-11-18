@@ -47,6 +47,7 @@ final class CoreController {
             AppGroupStorageTransitionReporter().reportIfNeeded()
 
             self.guaranteedDeliveryManager.canScheduleOperations = true
+            self.importPushDeliveryConfirmations()
 
             let appStateMessage = "[App State]: \(UIApplication.shared.appStateDescription)"
             Logger.common(message: appStateMessage, level: .info, category: .general)
@@ -295,6 +296,7 @@ final class CoreController {
                     self?.sessionManager.trackDirect()
                     self?.userVisitManager.saveUserVisit()
                     self?.inAppMessagesManager.start()
+                    self?.importPushDeliveryConfirmations()
                 }
             }
         }
@@ -306,6 +308,17 @@ final class CoreController {
         }
 
         timer.setupTimer()
+    }
+}
+
+// MARK: - Push delivery confirmation
+
+private extension CoreController {
+
+    /// Confirmations the notification service extension could not get through go to guaranteed delivery
+    /// on every start and every return to the foreground.
+    func importPushDeliveryConfirmations() {
+        DI.inject(PushDeliveryConfirmationImporter.self)?.importPending()
     }
 }
 

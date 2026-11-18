@@ -6,6 +6,7 @@ included: # paths to include during linting. `--path` is ignored if present.
 excluded: # paths to ignore during linting. Takes precedence over `included`.
 
 only_rules: # default rules
+  - custom_rules
   - blanket_disable_command
   - closing_brace
   - closure_parameter_position
@@ -146,3 +147,13 @@ line_length:
 closure_body_length:
   warning: 30
   error: 50
+
+# Custom Rules
+
+custom_rules:
+  shared_code_imports:
+    name: "Shared code imports"
+    included: ".*/Mindbox/Shared/.*\\.swift$"
+    regex: "^\\s*(@[\\w()]+\\s+)*import\\s+(UIKit|UserNotifications|CoreData|MindboxLogger|Mindbox|MindboxNotifications)\\b"
+    message: "Mindbox/Shared also runs in the notification service extension: Foundation only, no UIKit, Core Data, guaranteed delivery or logger."
+    severity: error

@@ -38,6 +38,9 @@ struct EventRoute: Route {
             return "/v3/operations/async"
         case .trackVisit:
             return "/v1.1/customer/mobile-track-visit"
+        case .pushDeliveryConfirmation:
+            // Never built: MBEventRepository sends it to the URL from the push.
+            return ""
         }
     }
 
@@ -45,7 +48,7 @@ struct EventRoute: Route {
         switch request {
         case .customSyncOperation:
             return ["Accept": "application/json"]
-        case .sdkOperation, .customAsyncOperation, .trackVisit:
+        case .sdkOperation, .customAsyncOperation, .trackVisit, .pushDeliveryConfirmation:
             return nil
         }
     }
@@ -75,6 +78,8 @@ struct EventRoute: Route {
                 .appending(["endpointId": wrapper.endpoint])
         case .trackVisit:
             return makeBasicQueryParameters()
+        case .pushDeliveryConfirmation:
+            return [:]
         }
     }
 
@@ -91,6 +96,8 @@ struct EventRoute: Route {
             return decoded.body.payload.data(using: .utf8)
         case .trackVisit:
             return jsonBody(wrapper.event.body, merging: ["endpointId": wrapper.endpoint])
+        case .pushDeliveryConfirmation:
+            return nil
         }
     }
 

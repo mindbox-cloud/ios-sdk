@@ -31,12 +31,15 @@ struct Event: EventProtocol {
         case customEvent = "MobilePush.CustomEvent"
         case syncEvent = "MobilePush.SyncEvent"
         case trackVisit = "MobilePush.TrackVisit"
+        case pushDeliveryConfirmation = "MobilePush.PushDeliveryConfirmation"
 
         enum Request {
             case sdkOperation(String)
             case customAsyncOperation
             case customSyncOperation
             case trackVisit
+            /// Goes to the URL from the push, not to the Mindbox API.
+            case pushDeliveryConfirmation
         }
 
         var request: Request {
@@ -60,6 +63,8 @@ struct Event: EventProtocol {
                 .customSyncOperation
             case .trackVisit:
                 .trackVisit
+            case .pushDeliveryConfirmation:
+                .pushDeliveryConfirmation
             }
         }
     }

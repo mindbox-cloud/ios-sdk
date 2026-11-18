@@ -23,17 +23,18 @@ let package = Package(
             name: "Mindbox",
             dependencies: [
                 "SDKVersionProvider",
-                "MindboxLogger"
+                "MindboxLogger",
+                "MindboxShared"
             ],
             path: "Mindbox",
-            exclude: ["Info.plist"],
+            exclude: ["Info.plist", "Shared"],
             resources: [
                 .process("PrivacyInfo.xcprivacy")
             ]
         ),
         .target(
             name: "MindboxNotifications",
-            dependencies: ["SDKVersionProvider"],
+            dependencies: ["SDKVersionProvider", "MindboxShared"],
             path: "MindboxNotifications",
             exclude:  ["Info.plist"],
             resources: [
@@ -47,6 +48,11 @@ let package = Package(
         .target(
             name: "MindboxLogger",
             path: "MindboxLogger"
+        ),
+        // Compiled straight into each module by CocoaPods and the Xcode project; SwiftPM needs it as a target.
+        .target(
+            name: "MindboxShared",
+            path: "Mindbox/Shared"
         )
     ]
 )
