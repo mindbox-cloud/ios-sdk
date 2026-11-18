@@ -50,6 +50,26 @@ struct MindboxNotificationServiceTests {
         #expect(service.bestAttemptContent?.attachments.count == 1)
     }
 
+    @Test("didReceive attaches a downloaded GIF")
+    func didReceiveAttachesGIF() async throws {
+        StubURLProtocol.reset()
+        StubURLProtocol.stubResponseData = try NotificationTestFixtures.gifData(colors: [.red, .blue])
+        URLProtocol.registerClass(StubURLProtocol.self)
+        defer {
+            URLProtocol.unregisterClass(StubURLProtocol.self)
+            StubURLProtocol.reset()
+        }
+
+        let request = NotificationTestFixtures.makeRequest(userInfo: NotificationTestFixtures.currentFormatUserInfo())
+
+        let received: UNNotificationContent = await withCheckedContinuation { continuation in
+            service.didReceive(request) { continuation.resume(returning: $0) }
+        }
+
+        #expect(StubURLProtocol.handledRequestCount > 0)
+        #expect(received.attachments.count == 1)
+    }
+
     @Test("didReceive still delivers (no attachment) when the image download fails")
     func didReceiveDeliversWhenDownloadFails() async {
         StubURLProtocol.reset()

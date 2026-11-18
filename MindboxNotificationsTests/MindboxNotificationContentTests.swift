@@ -47,6 +47,24 @@ struct MindboxNotificationContentTests {
         #expect(imageView != nil, "The UIImageView should be added to the view controller")
     }
 
+    @Test("A GIF attachment shows its first frame at once and then plays the next frames")
+    func gifAttachmentStartsOnFirstFrameThenAnimates() async throws {
+        let content = NotificationTestFixtures.makeContent(userInfo: NotificationTestFixtures.currentFormatUserInfo())
+        content.attachments = [try NotificationTestFixtures.makeGIFAttachment(colors: [.red, .blue])]
+        let request = UNNotificationRequest(identifier: "test", content: content, trigger: nil)
+
+        service.didReceive(
+            notification: MockUNNotification(request: request),
+            viewController: viewController,
+            extensionContext: MockExtensionContext()
+        )
+
+        let imageView = try #require(viewController.view.subviews.compactMap { $0 as? UIImageView }.first)
+        #expect(centrePixel(of: imageView.image) == .red)
+        let reachedSecondFrame = await waitUntil { centrePixel(of: imageView.image) == .blue }
+        #expect(reachedSecondFrame)
+    }
+
     @Test("didReceive creates actions but no image view when there is no attachment")
     func didReceiveButtonsNoAttachment() {
         let request = NotificationTestFixtures.makeRequest(userInfo: NotificationTestFixtures.currentFormatUserInfo())
@@ -82,5 +100,42 @@ struct MindboxNotificationContentTests {
 
         #expect(service.context == nil)
         #expect(service.viewController === viewController)
+    }
+
+    private enum PixelColour {
+        case red, blue, other
+    }
+
+    private func centrePixel(of image: UIImage?) -> PixelColour? {
+        guard let cgImage = image?.cgImage else { return nil }
+        var pixel = [UInt8](repeating: 0, count: 4)
+        let drawn = pixel.withUnsafeMutableBytes { buffer -> Bool in
+            guard let context = CGContext(
+                data: buffer.baseAddress,
+                width: 1,
+                height: 1,
+                bitsPerComponent: 8,
+                bytesPerRow: 4,
+                space: CGColorSpaceCreateDeviceRGB(),
+                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+            ) else { return false }
+            context.draw(cgImage, in: CGRect(x: 0, y: 0, width: 1, height: 1))
+            return true
+        }
+        guard drawn else { return nil }
+        switch (pixel[0], pixel[2]) {
+        case (200..., ..<60): return .red
+        case (..<60, 200...): return .blue
+        default: return .other
+        }
+    }
+
+    private func waitUntil(timeout: TimeInterval = 2, _ condition: () -> Bool) async -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        while !condition() {
+            guard Date() < deadline else { return false }
+            try? await Task.sleep(nanoseconds: 20_000_000)
+        }
+        return true
     }
 }

@@ -7,7 +7,10 @@
 //
 
 import Foundation
+import ImageIO
+import Testing
 import UIKit
+import UniformTypeIdentifiers
 import UserNotifications
 @testable import MindboxNotifications
 
@@ -112,6 +115,35 @@ enum NotificationTestFixtures {
         let fileURL = FileManager.default.temporaryDirectory
             .appendingPathComponent("testImage_\(UUID().uuidString).png")
         try tinyPNGData().write(to: fileURL)
+        return try UNNotificationAttachment(identifier: "identifier", url: fileURL, options: nil)
+    }
+
+    static func gifData(colors: [UIColor]) throws -> Data {
+        let data = NSMutableData()
+        let destination = try #require(
+            CGImageDestinationCreateWithData(data, UTType.gif.identifier as CFString, colors.count, nil)
+        )
+        let frameProperties = [
+            kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFDelayTime: 0.1]
+        ] as CFDictionary
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        for color in colors {
+            let frame = UIGraphicsImageRenderer(size: CGSize(width: 2, height: 2), format: format).image { context in
+                color.setFill()
+                context.fill(CGRect(x: 0, y: 0, width: 2, height: 2))
+            }
+            let cgImage = try #require(frame.cgImage)
+            CGImageDestinationAddImage(destination, cgImage, frameProperties)
+        }
+        #expect(CGImageDestinationFinalize(destination))
+        return data as Data
+    }
+
+    static func makeGIFAttachment(colors: [UIColor]) throws -> UNNotificationAttachment {
+        let fileURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("testImage_\(UUID().uuidString).gif")
+        try gifData(colors: colors).write(to: fileURL)
         return try UNNotificationAttachment(identifier: "identifier", url: fileURL, options: nil)
     }
 }

@@ -8,6 +8,7 @@
 
 import Testing
 import Foundation
+import UserNotifications
 @testable import MindboxNotifications
 
 @Suite("ImageFormat", .tags(.notifications, .imageFormat))
@@ -42,6 +43,17 @@ struct ImageFormatTests {
     @Test("Only the first byte determines the format")
     func onlyFirstByteMatters() {
         #expect(ImageFormat(Data([0x89, 0xFF, 0x47, 0x00])) == .png)
+    }
+
+    @Test("A GIF attachment asks for frame 0 as its thumbnail, so the collapsed push shows the first frame")
+    func gifThumbnailIsFirstFrame() {
+        let options = ImageFormat.gif.attachmentOptions
+        #expect(options?[UNNotificationAttachmentOptionsThumbnailTimeKey] as? Int == 0)
+    }
+
+    @Test("PNG and JPG attachments keep the system default thumbnail", arguments: [ImageFormat.png, .jpg])
+    func staticFormatsCarryNoAttachmentOptions(format: ImageFormat) {
+        #expect(format.attachmentOptions == nil)
     }
 
     @Test("extension equals the raw value", arguments: [
