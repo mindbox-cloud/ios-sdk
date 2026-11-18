@@ -248,13 +248,51 @@ class DatabaseRepositoryTestCase: XCTestCase {
         XCTAssertEqual(Double(stored.dateTimeOffset), 120_000, accuracy: 5_000)
     }
 
-    private func setTimestamps(of event: Event, enqueue: Date, retry: Date) throws -> Event {
+    func testEventNeverTriedToSendIsFetchedWithItsAgeAsOffset() throws {
+        let threeDays: TimeInterval = 3 * 24 * 60 * 60
+        let event = Event(type: .inAppViewEvent, body: "")
+        try databaseRepository.create(event: event)
+        try setTimestamps(of: event, enqueue: Date().addingTimeInterval(-threeDays))
+
+        let fetched = try databaseRepository.query(fetchLimit: 10)
+
+        XCTAssertEqual(fetched.map(\.transactionId), [event.transactionId])
+        let stored = try XCTUnwrap(fetched.first)
+        XCTAssertFalse(stored.isRetry)
+        XCTAssertEqual(try requestDateTimeOffset(of: stored), threeDays * 1000, accuracy: 5_000)
+    }
+
+    func testEventNeverTriedToSendAndCreatedBeforeTheClockWasSetBackHasZeroOffset() throws {
+        let event = Event(type: .inAppViewEvent, body: "")
+        try databaseRepository.create(event: event)
+        try setTimestamps(of: event, enqueue: Date().addingTimeInterval(3600))
+
+        let fetched = try databaseRepository.query(fetchLimit: 10)
+
+        XCTAssertEqual(fetched.map(\.transactionId), [event.transactionId])
+        let stored = try XCTUnwrap(fetched.first)
+        XCTAssertFalse(stored.isRetry)
+        XCTAssertEqual(try requestDateTimeOffset(of: stored), 0)
+    }
+
+    private func requestDateTimeOffset(of event: Event) throws -> Double {
+        let route = EventRoute(EventWrapper(event: event, endpoint: "endpoint", deviceUUID: "uuid"))
+        let url = try XCTUnwrap(URLRequestBuilder(domain: "api.mindbox.ru").asURLRequest(route: route).url)
+        let offset = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?
+            .first { $0.name == "dateTimeOffset" }?.value
+        return try XCTUnwrap(offset.flatMap(Double.init))
+    }
+
+    @discardableResult
+    private func setTimestamps(of event: Event, enqueue: Date, retry: Date? = nil) throws -> Event {
         let repository = try XCTUnwrap(databaseRepository as? MBDatabaseRepository)
         let context = repository.persistentContainer.newBackgroundContext()
         return try context.mindboxPerformAndWait {
             let entity = try XCTUnwrap(context.fetch(CDEvent.fetchRequest(by: event.transactionId)).first)
             entity.timestamp = enqueue.timeIntervalSince1970
-            entity.retryTimestamp = retry.timeIntervalSince1970
+            if let retry {
+                entity.retryTimestamp = retry.timeIntervalSince1970
+            }
             try context.save()
             return try XCTUnwrap(Event(entity))
         }

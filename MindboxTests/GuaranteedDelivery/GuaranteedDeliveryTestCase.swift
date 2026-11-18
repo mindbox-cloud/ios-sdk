@@ -84,7 +84,7 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         XCTAssertEqual(event.body, mockEvent.body, "Bodies should be equal")
         XCTAssertEqual(event.type, mockEvent.type, "Types should be equal")
         XCTAssertEqual(event.isRetry, mockEvent.isRetry, "Flags `isRetry` should be equal")
-        XCTAssertEqual(event.dateTimeOffset, mockEvent.dateTimeOffset, "Date time offsets should be equal")
+        XCTAssertEqual(Double(event.dateTimeOffset), Double(mockEvent.dateTimeOffset), accuracy: 1_000, "Date time offsets should be equal")
         XCTAssertEqual(event.retryTimestamp, mockEvent.retryTimestamp, "Retry timestamps should be equal")
     }
     
@@ -99,12 +99,12 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         XCTAssertTrue(mockEvent.isRetry, "if `retryTimestamp` is NOT zero, `isRetry` must be true")
     }
     
-    func testDateTimeOffset_WhenNotRetry_isZero() {
+    func testDateTimeOffset_OfNewEvent_isCloseToZero() {
         let event = Event(type: .installed, body: "foo")
         XCTAssertFalse(event.isRetry)
-        XCTAssertEqual(event.dateTimeOffset, 0, "If `isRetry = false`, offset must be 0.")
+        XCTAssertTrue((0...1_000).contains(event.dateTimeOffset), "Offset of a new event must be its age, got \(event.dateTimeOffset) ms.")
     }
-    
+
     func test_dateTimeOffset_WhenRetry_usingMockClock() {
         let fixedEnqueue: Double = 1_000
         

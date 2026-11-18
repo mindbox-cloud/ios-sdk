@@ -63,7 +63,7 @@ class VersioningTestCase: XCTestCase {
             }
 
             events
-                .sorted { $0.dateTimeOffset > $1.dateTimeOffset }
+                .sorted { $0.enqueueTimeStamp < $1.enqueueTimeStamp }
                 .compactMap { BodyDecoder<MobileApplicationInfoUpdated>(decodable: $0.body)?.body }
                 .enumerated()
                 .makeIterator()
@@ -240,7 +240,7 @@ private extension VersioningTestCase {
                 XCTAssertTrue($0.type == .infoUpdated, file: file, line: line)
             })
             events
-                .sorted { $0.dateTimeOffset > $1.dateTimeOffset }
+                .sorted { $0.enqueueTimeStamp < $1.enqueueTimeStamp }
                 .compactMap { BodyDecoder<MobileApplicationInfoUpdated>(decodable: $0.body)?.body }
                 .enumerated()
                 .makeIterator()

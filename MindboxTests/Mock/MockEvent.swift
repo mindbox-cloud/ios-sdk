@@ -16,9 +16,6 @@ struct MockEvent: EventProtocol {
     let transactionId: String
 
     var dateTimeOffset: Int64 {
-        guard isRetry else {
-            return 0
-        }
         let enqueueDate = Date(timeIntervalSince1970: enqueueTimeStamp)
         let ms = (clock.now.timeIntervalSince(enqueueDate) * 1000).rounded()
         return max(0, Int64(ms))
