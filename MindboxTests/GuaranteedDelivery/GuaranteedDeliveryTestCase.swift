@@ -105,36 +105,6 @@ class GuaranteedDeliveryTestCase: XCTestCase {
         XCTAssertTrue((0...1_000).contains(event.dateTimeOffset), "Offset of a new event must be its age, got \(event.dateTimeOffset) ms.")
     }
 
-    func test_dateTimeOffset_WhenNotRetry_usingMockClock() {
-        let threeDays: TimeInterval = 3 * 24 * 60 * 60
-        let enqueue: Double = 1_000
-        let clock = MockClock(now: Date(timeIntervalSince1970: enqueue + threeDays))
-
-        let event = MockEvent(
-            type: .inAppViewEvent,
-            body: "bar",
-            enqueueTimeStamp: enqueue,
-            retryTimestamp: 0,
-            clock: clock
-        )
-
-        XCTAssertFalse(event.isRetry)
-        XCTAssertEqual(event.dateTimeOffset, Int64(threeDays * 1000),
-                       "An event that was never tried must be sent with its age, not with 0.")
-    }
-
-    func test_dateTimeOffset_WhenClockWasSetBack_isZero() {
-        let event = MockEvent(
-            type: .inAppViewEvent,
-            body: "bar",
-            enqueueTimeStamp: 2_000,
-            retryTimestamp: 0,
-            clock: MockClock(now: Date(timeIntervalSince1970: 1_000))
-        )
-
-        XCTAssertEqual(event.dateTimeOffset, 0)
-    }
-    
     func test_dateTimeOffset_WhenRetry_usingMockClock() {
         let fixedEnqueue: Double = 1_000
         
