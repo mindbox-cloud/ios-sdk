@@ -65,6 +65,28 @@ struct MindboxNotificationContentTests {
         #expect(reachedSecondFrame)
     }
 
+    @Test("The service does not keep the host view controller alive, so a dismissed GIF push stops animating")
+    func serviceReleasesViewControllerAndGIFImageView() throws {
+        weak var releasedController: UIViewController?
+        weak var releasedImageView: UIImageView?
+
+        try autoreleasepool {
+            let controller = UIViewController()
+            let content = NotificationTestFixtures.makeContent(userInfo: NotificationTestFixtures.currentFormatUserInfo())
+            content.attachments = [try NotificationTestFixtures.makeGIFAttachment(colors: [.red, .blue])]
+            service.didReceive(
+                notification: MockUNNotification(request: UNNotificationRequest(identifier: "test", content: content, trigger: nil)),
+                viewController: controller,
+                extensionContext: MockExtensionContext()
+            )
+            releasedController = controller
+            releasedImageView = controller.view.subviews.compactMap { $0 as? UIImageView }.first
+        }
+
+        #expect(releasedController == nil)
+        #expect(releasedImageView == nil)
+    }
+
     @Test("didReceive creates actions but no image view when there is no attachment")
     func didReceiveButtonsNoAttachment() {
         let request = NotificationTestFixtures.makeRequest(userInfo: NotificationTestFixtures.currentFormatUserInfo())
