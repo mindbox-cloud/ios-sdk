@@ -50,13 +50,16 @@ extension MindboxNotificationService: MindboxNotificationServiceProtocol {
         // The image loads while the confirmation waits for its answer; the push is shown after both.
         let confirming = startConfirmation(of: request)
         let finish: () -> Void = { [weak self] in
+            guard let self else { return }
             guard let confirming else {
-                self?.proceedFinalStage(bestAttemptContent)
+                self.proceedFinalStage(bestAttemptContent)
                 return
             }
-            Task { [weak self] in
+            // Holds the service until the push is shown: the app may keep no reference to it,
+            // and the wait ends in 5 seconds at most.
+            Task {
                 await confirming.value
-                self?.proceedFinalStage(bestAttemptContent)
+                self.proceedFinalStage(bestAttemptContent)
             }
         }
 

@@ -148,6 +148,23 @@ struct PushDeliveryConfirmerTests {
         #expect(store.pending().count == 1)
     }
 
+    @Test("didReceive shows the push without an image even when the app keeps no reference to the service, then lets it go")
+    func didReceiveShowsPushWithoutReferenceToService() async {
+        let request = request(host: PushDeliveryConfirmationStub.makeHost(answer: .status(200)))
+        weak var released: MindboxNotificationService?
+
+        await confirmation("The push is shown") { shown in
+            do {
+                let service = service()
+                released = service
+                service.didReceive(request) { _ in shown() }
+            }
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+        }
+
+        #expect(released == nil)
+    }
+
     // MARK: - App Group
 
     @Test("The extension writes to the App Group of the host app")
