@@ -9,6 +9,8 @@
 import Foundation
 #if SWIFT_PACKAGE
 import SDKVersionProvider
+@_spi(Internal)
+import MindboxShared
 #endif
 import MindboxLogger
 
@@ -31,7 +33,7 @@ class MBUtilitiesFetcher: UtilitiesFetcher {
             Logger.common(message: "[MBUtilitiesFetcher] Host application bundle identifier is unavailable", level: .fault, category: .general)
             return ""
         }
-        let identifier = "group.cloud.Mindbox.\(hostApplicationName)"
+        let identifier = MindboxAppGroup.identifier(hostAppBundleIdentifier: hostApplicationName)
         guard FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: identifier) != nil else {
             let message = "App Group '\(identifier)' container is unavailable. "
                 + "Enable the App Group capability with this exact value on every target (app + extensions). "

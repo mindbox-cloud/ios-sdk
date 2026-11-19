@@ -59,6 +59,6 @@ extension PushDeliveryConfirmationStore {
            let app = Bundle(url: bundle.bundleURL.deletingLastPathComponent().deletingLastPathComponent()) {
             hostBundle = app
         }
-        return hostBundle.bundleIdentifier.map { "group.cloud.Mindbox.\($0)" }
+        return hostBundle.bundleIdentifier.map(MindboxAppGroup.identifier(hostAppBundleIdentifier:))
     }
 }
