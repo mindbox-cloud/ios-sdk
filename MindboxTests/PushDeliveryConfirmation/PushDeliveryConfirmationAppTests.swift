@@ -138,9 +138,10 @@ struct PushDeliveryConfirmationAppTests {
         #expect(error.httpStatusCode == 400)
     }
 
-    @Test("Guaranteed delivery keeps the confirmation after 5xx or no connection and drops it after 2xx or 4xx", arguments: [
+    @Test("Guaranteed delivery keeps the confirmation after 429, 5xx or no connection and drops it after 2xx or other 4xx", arguments: [
         (PushDeliveryConfirmationAppStub.Answer.status(200), false),
         (.status(404), false),
+        (.status(429), true),
         (.status(500), true),
         (.failure(URLError(.timedOut)), true)
     ])
@@ -150,7 +151,13 @@ struct PushDeliveryConfirmationAppTests {
         try database.create(event: event)
 
         // The operation holds itself weakly while the request runs.
-        let operation = DeliveryOperation(databaseRepository: database, eventRepository: repository(), event: event)
+        let operation = DeliveryOperation(
+            databaseRepository: database,
+            eventRepository: repository(),
+            event: event,
+            pauseManager: DeliveryPauseManager(),
+            retryDelayManager: DeliveryRetryDelayManager()
+        )
         await withCheckedContinuation { continuation in
             operation.completionBlock = { continuation.resume() }
             operation.start()

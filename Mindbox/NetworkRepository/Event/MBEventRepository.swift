@@ -164,8 +164,8 @@ class MBEventRepository: EventRepository {
 private extension MBEventRepository {
 
     /// Goes to the URL from the push and needs neither the configuration nor the device UUID.
-    /// The answer becomes the error guaranteed delivery already knows: it keeps 5xx and lost connections for a retry
-    /// and drops other 4xx.
+    /// The answer becomes the error guaranteed delivery already knows: it pauses on 429, keeps 5xx and lost connections
+    /// for a retry and drops other 4xx.
     func sendPushDeliveryConfirmation(_ event: Event, completion: @escaping (Result<Void, MindboxError>) -> Void) {
         guard let confirmation = try? PushDeliveryConfirmation(encoded: Data(event.body.utf8)) else {
             completion(.failure(Self.confirmationError(statusCode: 400, message: "Unreadable push delivery confirmation")))
