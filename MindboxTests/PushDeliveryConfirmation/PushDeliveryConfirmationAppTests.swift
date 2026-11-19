@@ -72,6 +72,34 @@ struct PushDeliveryConfirmationAppTests {
         #expect(store.pending().count == 1)
     }
 
+    @Test("A file the extension may still be sending waits, and the importer says when to come back")
+    func waitsForFilesInFlight() throws {
+        let database = try MockDatabaseRepository(inMemory: true)
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        let fresh = Self.confirmation(host: "a.confirm.mindbox.ru", receivedAt: now.timeIntervalSince1970 - 2)
+        try store.save(fresh)
+        try store.save(Self.confirmation(host: "b.confirm.mindbox.ru", receivedAt: now.timeIntervalSince1970 - 60))
+
+        let delay = PushDeliveryConfirmationImporter(store: store, databaseRepository: database).importPending(now: now)
+
+        let expected = PushDeliveryConfirmationImporter.inFlightWindow - 2
+        #expect(abs((delay ?? 0) - expected) < 0.001)
+        #expect(try database.countEvents() == 1)
+        #expect(store.pending() == [fresh])
+    }
+
+    @Test("A file dated after now goes to the queue at once: the clock went back")
+    func importsFileDatedInTheFuture() throws {
+        let database = try MockDatabaseRepository(inMemory: true)
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        try store.save(Self.confirmation(host: "a.confirm.mindbox.ru", receivedAt: now.timeIntervalSince1970 + 3600))
+
+        let delay = PushDeliveryConfirmationImporter(store: store, databaseRepository: database).importPending(now: now)
+
+        #expect(delay == nil)
+        #expect(store.pending().isEmpty)
+    }
+
     @Test("Without an App Group there is nothing to import")
     func noStoreNoImport() throws {
         let database = try MockDatabaseRepository(inMemory: true)

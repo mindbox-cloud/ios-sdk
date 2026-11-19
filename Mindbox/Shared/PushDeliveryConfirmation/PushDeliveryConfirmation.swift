@@ -80,6 +80,10 @@ public struct PushDeliveryConfirmation: Equatable, Sendable {
 
     static let dateTimeOffsetName = "dateTimeOffset"
 
+    /// How long the notification service extension waits for the answer before the push is shown.
+    /// Until then the app leaves the file of the confirmation alone: the extension may still be sending it.
+    public static let extensionWaitLimit: TimeInterval = 5
+
     enum PayloadKey {
         static let callbacks = "callbacks"
         static let deliveryUrl = "deliveredUrl"

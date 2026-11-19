@@ -15,7 +15,7 @@ import MindboxShared
 final class PushDeliveryConfirmer: Sendable {
 
     /// How long the push waits for the answer before it is shown.
-    static let waitLimit: TimeInterval = 5
+    static let waitLimit = PushDeliveryConfirmation.extensionWaitLimit
 
     /// One per extension process, so pushes that come one after another reuse the connection.
     static let shared = PushDeliveryConfirmer()

@@ -316,9 +316,12 @@ final class CoreController {
 private extension CoreController {
 
     /// Confirmations the notification service extension could not get through go to guaranteed delivery
-    /// on every start and every return to the foreground.
+    /// on every start and every return to the foreground. The ones it may still be sending are taken once it is done.
     func importPushDeliveryConfirmations() {
-        DI.inject(PushDeliveryConfirmationImporter.self)?.importPending()
+        guard let delay = DI.inject(PushDeliveryConfirmationImporter.self)?.importPending() else { return }
+        controllerQueue.asyncAfter(deadline: .now() + delay) { [weak self] in
+            self?.importPushDeliveryConfirmations()
+        }
     }
 }
 
