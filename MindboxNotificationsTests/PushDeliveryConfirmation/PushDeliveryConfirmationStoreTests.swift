@@ -69,6 +69,18 @@ struct PushDeliveryConfirmationStoreTests {
         #expect(FileManager.default.fileExists(atPath: foreign.path))
     }
 
+    @Test("A file that cannot be read stays for a later call")
+    func keepsUnreadableFiles() throws {
+        let kept = confirmation("a", receivedAt: 100)
+        try store.save(kept)
+        // Reading a directory fails, as reading a protected file does before the first unlock.
+        let unreadable = store.directory.appendingPathComponent("locked.json", isDirectory: true)
+        try FileManager.default.createDirectory(at: unreadable, withIntermediateDirectories: true)
+
+        #expect(store.pending() == [kept])
+        #expect(FileManager.default.fileExists(atPath: unreadable.path))
+    }
+
     @Test("No App Group means no store")
     func noStoreWithoutAppGroup() {
         #expect(PushDeliveryConfirmationStore(appGroupIdentifier: "") == nil)

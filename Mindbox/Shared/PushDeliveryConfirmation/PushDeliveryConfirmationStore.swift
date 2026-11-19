@@ -44,7 +44,10 @@ public struct PushDeliveryConfirmationStore: Sendable {
         try? FileManager.default.removeItem(at: fileURL(of: confirmation))
     }
 
-    /// The waiting confirmations, oldest first. A file that cannot be read is removed.
+    /// The waiting confirmations, oldest first.
+    ///
+    /// A file that cannot be decoded is removed. A file that cannot be read stays for a later call:
+    /// before the first unlock after a restart the system keeps it closed.
     public func pending() -> [PushDeliveryConfirmation] {
         let files = (try? FileManager.default.contentsOfDirectory(
             at: directory,
@@ -55,8 +58,10 @@ public struct PushDeliveryConfirmationStore: Sendable {
         return files
             .filter { $0.pathExtension == Self.fileExtension }
             .compactMap { file in
-                guard let data = try? Data(contentsOf: file),
-                      let confirmation = try? PushDeliveryConfirmation(encoded: data) else {
+                guard let data = try? Data(contentsOf: file) else {
+                    return nil
+                }
+                guard let confirmation = try? PushDeliveryConfirmation(encoded: data) else {
                     try? FileManager.default.removeItem(at: file)
                     return nil
                 }
