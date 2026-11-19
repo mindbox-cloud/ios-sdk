@@ -154,6 +154,6 @@ custom_rules:
   shared_code_imports:
     name: "Shared code imports"
     included: ".*/Mindbox/Shared/.*\\.swift$"
-    regex: "^\\s*(@[\\w()]+\\s+)*import\\s+(UIKit|UserNotifications|CoreData|MindboxLogger|Mindbox|MindboxNotifications)\\b"
-    message: "Mindbox/Shared also runs in the notification service extension: Foundation only, no UIKit, Core Data, guaranteed delivery or logger."
+    regex: "^\\s*(@[\\w()]+\\s+)*import\\s+((typealias|struct|class|enum|protocol|let|var|func)\\s+)?(UIKit|UserNotifications|CoreData|MindboxLogger|Mindbox|MindboxNotifications)\\b"
+    message: "Mindbox/Shared also runs in the notification service extension: system frameworks only, no UIKit, UserNotifications, Core Data, logger or SDK modules."
     severity: error

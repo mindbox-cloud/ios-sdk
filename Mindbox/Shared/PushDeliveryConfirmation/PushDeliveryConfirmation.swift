@@ -4,10 +4,6 @@
 //
 //  Copyright © 2026 Mindbox. All rights reserved.
 //
-//  `Mindbox/Shared` is compiled into both Mindbox and MindboxNotifications, so it runs inside
-//  the notification service extension too. Keep it Foundation only: no UIKit, Core Data,
-//  guaranteed delivery or logger, no locks held across awaits and no shared mutable state.
-//
 
 import CryptoKit
 import Foundation
@@ -34,7 +30,7 @@ public struct PushDeliveryConfirmation: Equatable, Sendable {
     public init?(userInfo: [AnyHashable: Any], receivedAt: Date = Date()) {
         let nested = userInfo["aps"] as? [AnyHashable: Any]
         let callbacks = (userInfo[PayloadKey.callbacks] ?? nested?[PayloadKey.callbacks]) as? [AnyHashable: Any]
-        guard let string = callbacks?[PayloadKey.deliveryUrl] as? String,
+        guard let string = callbacks?[PayloadKey.deliveredUrl] as? String,
               let url = Self.strictURL(string.trimmingCharacters(in: .whitespacesAndNewlines)),
               url.scheme?.lowercased() == "https",
               url.host?.isEmpty == false else {
@@ -52,8 +48,7 @@ public struct PushDeliveryConfirmation: Equatable, Sendable {
         return URL(string: string)
     }
 
-    /// One push gives one id: it names the file of the confirmation.
-    public var id: String {
+    public var fileName: String {
         // The Mindbox module has its own `SHA256`.
         CryptoKit.SHA256.hash(data: Data(url.absoluteString.utf8))
             .map { String(format: "%02x", $0) }
@@ -95,7 +90,7 @@ public struct PushDeliveryConfirmation: Equatable, Sendable {
 
     enum PayloadKey {
         static let callbacks = "callbacks"
-        static let deliveryUrl = "deliveredUrl"
+        static let deliveredUrl = "deliveredUrl"
     }
 }
 

@@ -116,17 +116,17 @@ struct PushDeliveryConfirmationTests {
         #expect(confirmation.dateTimeOffset(sentAt: Self.receivedAt.addingTimeInterval(-60)) == 0)
     }
 
-    // MARK: - Id
+    // MARK: - File name
 
-    @Test("One URL gives one id, another URL another id")
-    func idFollowsURL() throws {
+    @Test("One URL gives one file name, another URL another")
+    func fileNameFollowsURL() throws {
         let first = PushDeliveryConfirmation(url: try #require(URL(string: Self.url)), receivedAt: Self.receivedAt)
         let sameLater = PushDeliveryConfirmation(url: try #require(URL(string: Self.url)), receivedAt: Date())
         let other = PushDeliveryConfirmation(url: try #require(URL(string: Self.url + "x")), receivedAt: Self.receivedAt)
 
-        #expect(first.id == sameLater.id)
-        #expect(first.id != other.id)
-        #expect(first.id.count == 64)
+        #expect(first.fileName == sameLater.fileName)
+        #expect(first.fileName != other.fileName)
+        #expect(first.fileName.count == 64)
     }
 
     // MARK: - Stored form

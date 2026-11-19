@@ -4,8 +4,6 @@
 //
 //  Copyright © 2026 Mindbox. All rights reserved.
 //
-//  Shared with MindboxNotifications: see the note in PushDeliveryConfirmation.swift.
-//
 
 import Foundation
 
@@ -71,7 +69,7 @@ public struct PushDeliveryConfirmationStore: Sendable {
     }
 
     private func fileURL(of confirmation: PushDeliveryConfirmation) -> URL {
-        directory.appendingPathComponent(confirmation.id).appendingPathExtension(Self.fileExtension)
+        directory.appendingPathComponent(confirmation.fileName).appendingPathExtension(Self.fileExtension)
     }
 
     static let directoryName = "MindboxPushDeliveryConfirmations"

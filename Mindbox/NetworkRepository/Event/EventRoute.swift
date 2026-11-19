@@ -39,7 +39,7 @@ struct EventRoute: Route {
         case .trackVisit:
             return "/v1.1/customer/mobile-track-visit"
         case .pushDeliveryConfirmation:
-            // Never built: MBEventRepository sends it to the URL from the push.
+            assertionFailure("MBEventRepository sends a push delivery confirmation to the URL from the push")
             return ""
         }
     }

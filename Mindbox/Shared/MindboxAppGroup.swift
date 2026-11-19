@@ -4,8 +4,6 @@
 //
 //  Copyright © 2026 Mindbox. All rights reserved.
 //
-//  Shared with MindboxNotifications: see the note in PushDeliveryConfirmation.swift.
-//
 
 import Foundation
 
