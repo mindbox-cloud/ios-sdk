@@ -8,9 +8,10 @@
 
 import Foundation
 
-enum RouteBaseURL {
+enum RouteBaseURL: Equatable {
     case domain
     case operations
+    case tracking(String)
 }
 
 protocol Route {
@@ -25,9 +26,13 @@ protocol Route {
 
     var body: Data? { get }
 
+    func loggableBody(from body: Data?) -> Data?
+
     var baseURLKind: RouteBaseURL { get }
 }
 
 extension Route {
     var baseURLKind: RouteBaseURL { .domain }
+
+    func loggableBody(from body: Data?) -> Data? { body }
 }

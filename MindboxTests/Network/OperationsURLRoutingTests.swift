@@ -15,6 +15,7 @@ struct OperationsURLRoutingTests {
 
     private let domain = "api.mindbox.ru"
     private let opsHost = "anonymizer-api-regular.client.ru"
+    private let trackingHost = "api-tracking.mindbox.ru"
 
     // MARK: - URLRequestBuilder host resolution
 
@@ -22,16 +23,18 @@ struct OperationsURLRoutingTests {
     func eventRoutesUseOperationsDomain() throws {
         let builder = URLRequestBuilder(domain: domain, operationsDomain: opsHost)
         let wrapper = Self.makeEventWrapper(.installed)
+        let customWrapper = Self.makeEventWrapper(.customEvent, bodyJSON: #"{"name":"X","payload":"{}"}"#)
+        let trackVisitWrapper = Self.makeEventWrapper(.trackVisit)
 
-        #expect(try builder.asURLRequest(route: EventRoute.asyncEvent(wrapper)).url?.host == opsHost)
-        #expect(try builder.asURLRequest(route: EventRoute.customAsyncEvent(wrapper)).url?.host == opsHost)
-        #expect(try builder.asURLRequest(route: EventRoute.trackVisit(wrapper)).url?.host == opsHost)
+        #expect(try builder.asURLRequest(route: EventRoute(wrapper)).url?.host == opsHost)
+        #expect(try builder.asURLRequest(route: EventRoute(customWrapper)).url?.host == opsHost)
+        #expect(try builder.asURLRequest(route: EventRoute(trackVisitWrapper)).url?.host == opsHost)
 
         let syncWrapper = Self.makeEventWrapper(.syncEvent, bodyJSON: #"{"name":"X","payload":"{}"}"#)
-        #expect(try builder.asURLRequest(route: EventRoute.syncEvent(syncWrapper)).url?.host == opsHost)
+        #expect(try builder.asURLRequest(route: EventRoute(syncWrapper)).url?.host == opsHost)
 
         let logsWrapper = Self.makeEventWrapper(.sdkLogs)
-        #expect(try builder.asURLRequest(route: EventRoute.asyncEvent(logsWrapper)).url?.host == opsHost)
+        #expect(try builder.asURLRequest(route: EventRoute(logsWrapper)).url?.host == opsHost)
     }
 
     @Test("Config and geo routes always use domain")
@@ -47,11 +50,12 @@ struct OperationsURLRoutingTests {
     func noOperationsDomainFallsBackToDomain() throws {
         let builder = URLRequestBuilder(domain: domain)
         let wrapper = Self.makeEventWrapper(.installed)
+        let trackVisitWrapper = Self.makeEventWrapper(.trackVisit)
         let logsWrapper = Self.makeEventWrapper(.sdkLogs)
 
-        #expect(try builder.asURLRequest(route: EventRoute.asyncEvent(wrapper)).url?.host == domain)
-        #expect(try builder.asURLRequest(route: EventRoute.trackVisit(wrapper)).url?.host == domain)
-        #expect(try builder.asURLRequest(route: EventRoute.asyncEvent(logsWrapper)).url?.host == domain)
+        #expect(try builder.asURLRequest(route: EventRoute(wrapper)).url?.host == domain)
+        #expect(try builder.asURLRequest(route: EventRoute(trackVisitWrapper)).url?.host == domain)
+        #expect(try builder.asURLRequest(route: EventRoute(logsWrapper)).url?.host == domain)
         #expect(try builder.asURLRequest(route: FetchInAppGeoRoute()).url?.host == domain)
     }
 
@@ -60,7 +64,7 @@ struct OperationsURLRoutingTests {
         let builder = URLRequestBuilder(domain: domain, operationsDomain: opsHost)
         let wrapper = Self.makeEventWrapper(.installed)
 
-        let url = try builder.asURLRequest(route: EventRoute.asyncEvent(wrapper)).url
+        let url = try builder.asURLRequest(route: EventRoute(wrapper)).url
         #expect(url?.path == "/v3/operations/async")
         #expect(url?.query?.contains("operation=MobilePush.ApplicationInstalled") == true)
         #expect(url?.query?.contains("endpointId=test-endpoint") == true)
@@ -73,7 +77,7 @@ struct OperationsURLRoutingTests {
         let builder = URLRequestBuilder(domain: "api.mindbox.ru")
         let wrapper = Self.makeEventWrapper(.installed)
 
-        let url = try builder.asURLRequest(route: EventRoute.asyncEvent(wrapper)).url
+        let url = try builder.asURLRequest(route: EventRoute(wrapper)).url
         #expect(url?.scheme == "https")
         #expect(url?.host == "api.mindbox.ru")
     }
@@ -83,7 +87,7 @@ struct OperationsURLRoutingTests {
         let builder = URLRequestBuilder(domain: "https://api.mindbox.ru")
         let wrapper = Self.makeEventWrapper(.installed)
 
-        let url = try builder.asURLRequest(route: EventRoute.asyncEvent(wrapper)).url
+        let url = try builder.asURLRequest(route: EventRoute(wrapper)).url
         #expect(url?.scheme == "https")
         #expect(url?.host == "api.mindbox.ru")
     }
@@ -93,7 +97,7 @@ struct OperationsURLRoutingTests {
         let builder = URLRequestBuilder(domain: "http://proxy.example.com")
         let wrapper = Self.makeEventWrapper(.installed)
 
-        let url = try builder.asURLRequest(route: EventRoute.asyncEvent(wrapper)).url
+        let url = try builder.asURLRequest(route: EventRoute(wrapper)).url
         #expect(url?.scheme == "http")
         #expect(url?.host == "proxy.example.com")
     }
@@ -103,7 +107,7 @@ struct OperationsURLRoutingTests {
         let builder = URLRequestBuilder(domain: domain, operationsDomain: "anonymizer.client.ru")
         let wrapper = Self.makeEventWrapper(.installed)
 
-        let url = try builder.asURLRequest(route: EventRoute.asyncEvent(wrapper)).url
+        let url = try builder.asURLRequest(route: EventRoute(wrapper)).url
         #expect(url?.scheme == "https")
         #expect(url?.host == "anonymizer.client.ru")
     }
@@ -113,7 +117,7 @@ struct OperationsURLRoutingTests {
         let builder = URLRequestBuilder(domain: domain, operationsDomain: "https://anonymizer.client.ru")
         let wrapper = Self.makeEventWrapper(.installed)
 
-        let url = try builder.asURLRequest(route: EventRoute.asyncEvent(wrapper)).url
+        let url = try builder.asURLRequest(route: EventRoute(wrapper)).url
         #expect(url?.scheme == "https")
         #expect(url?.host == "anonymizer.client.ru")
     }
@@ -123,7 +127,7 @@ struct OperationsURLRoutingTests {
         let builder = URLRequestBuilder(domain: domain, operationsDomain: "http://anonymizer-staging.client.ru")
         let wrapper = Self.makeEventWrapper(.installed)
 
-        let url = try builder.asURLRequest(route: EventRoute.asyncEvent(wrapper)).url
+        let url = try builder.asURLRequest(route: EventRoute(wrapper)).url
         #expect(url?.scheme == "http")
         #expect(url?.host == "anonymizer-staging.client.ru")
     }
@@ -133,7 +137,7 @@ struct OperationsURLRoutingTests {
         let builder = URLRequestBuilder(domain: "api.mindbox.ru/")
         let wrapper = Self.makeEventWrapper(.installed)
 
-        let url = try builder.asURLRequest(route: EventRoute.asyncEvent(wrapper)).url
+        let url = try builder.asURLRequest(route: EventRoute(wrapper)).url
         #expect(url?.path == "/v3/operations/async")
         #expect(url?.host == "api.mindbox.ru")
     }
@@ -143,7 +147,7 @@ struct OperationsURLRoutingTests {
         let builder = URLRequestBuilder(domain: domain, operationsDomain: "https://anonymizer.client.ru/")
         let wrapper = Self.makeEventWrapper(.installed)
 
-        let url = try builder.asURLRequest(route: EventRoute.asyncEvent(wrapper)).url
+        let url = try builder.asURLRequest(route: EventRoute(wrapper)).url
         #expect(url?.scheme == "https")
         #expect(url?.host == "anonymizer.client.ru")
         #expect(url?.path == "/v3/operations/async")
@@ -155,7 +159,7 @@ struct OperationsURLRoutingTests {
         let builder = URLRequestBuilder(domain: domain, operationsDomain: canonical)
         let wrapper = Self.makeEventWrapper(.installed)
 
-        let url = try builder.asURLRequest(route: EventRoute.asyncEvent(wrapper)).url
+        let url = try builder.asURLRequest(route: EventRoute(wrapper)).url
         #expect(url?.scheme == "https")
         #expect(url?.host == "anonymizer-api-regular.client.ru")
         #expect(url?.path == "/v3/operations/async")
@@ -168,7 +172,7 @@ struct OperationsURLRoutingTests {
         let builder = URLRequestBuilder(domain: domain, operationsDomain: "https://api-v2.letu.ru/api/mindbox-regular")
         let wrapper = Self.makeEventWrapper(.installed)
 
-        let url = try builder.asURLRequest(route: EventRoute.asyncEvent(wrapper)).url
+        let url = try builder.asURLRequest(route: EventRoute(wrapper)).url
         #expect(url?.scheme == "https")
         #expect(url?.host == "api-v2.letu.ru")
         #expect(url?.path == "/api/mindbox-regular/v3/operations/async")
@@ -179,7 +183,7 @@ struct OperationsURLRoutingTests {
         let builder = URLRequestBuilder(domain: domain, operationsDomain: "https://api-v2.letu.ru/api/mindbox-regular")
         let syncWrapper = Self.makeEventWrapper(.syncEvent, bodyJSON: #"{"name":"X","payload":"{}"}"#)
 
-        let url = try builder.asURLRequest(route: EventRoute.syncEvent(syncWrapper)).url
+        let url = try builder.asURLRequest(route: EventRoute(syncWrapper)).url
         #expect(url?.path == "/api/mindbox-regular/v3/operations/sync")
     }
 
@@ -188,7 +192,7 @@ struct OperationsURLRoutingTests {
         let builder = URLRequestBuilder(domain: domain, operationsDomain: "domain.com/api/v2")
         let wrapper = Self.makeEventWrapper(.installed)
 
-        let url = try builder.asURLRequest(route: EventRoute.asyncEvent(wrapper)).url
+        let url = try builder.asURLRequest(route: EventRoute(wrapper)).url
         #expect(url?.scheme == "https")
         #expect(url?.host == "domain.com")
         #expect(url?.path == "/api/v2/v3/operations/async")
@@ -199,7 +203,7 @@ struct OperationsURLRoutingTests {
         let builder = URLRequestBuilder(domain: domain, operationsDomain: "domain.com/api/v2/")
         let wrapper = Self.makeEventWrapper(.installed)
 
-        let url = try builder.asURLRequest(route: EventRoute.asyncEvent(wrapper)).url
+        let url = try builder.asURLRequest(route: EventRoute(wrapper)).url
         #expect(url?.path == "/api/v2/v3/operations/async")
     }
 
@@ -218,7 +222,7 @@ struct OperationsURLRoutingTests {
         let wrapper = Self.makeEventWrapper(.installed)
 
         #expect(throws: URLError.self) {
-            _ = try builder.asURLRequest(route: EventRoute.asyncEvent(wrapper))
+            _ = try builder.asURLRequest(route: EventRoute(wrapper))
         }
     }
 
@@ -490,13 +494,102 @@ struct OperationsURLRoutingTests {
         #expect(storage.operationsDomainFromConfig == nil)
     }
 
+    // MARK: - trackVisit body
+
+    @Test("A trackVisit body gains the endpointId and keeps its fields", .tags(.trackVisit))
+    func trackVisitBodyGainsTheEndpointId() throws {
+        let wrapper = Self.makeEventWrapper(.trackVisit, bodyJSON: #"{"source":"link"}"#)
+
+        let json = try Self.json(EventRoute(wrapper).body)
+
+        #expect(json["endpointId"] as? String == "test-endpoint")
+        #expect(json["source"] as? String == "link")
+    }
+
+    // MARK: - Tracking ids
+
+    @Test("An async event carrying tracking ids goes to the tracking host; an empty list and no attachment stay on the operations host", .tags(.trackingIds))
+    func idsCarryingEventGoesToTrackingHost() throws {
+        let builder = URLRequestBuilder(domain: domain, operationsDomain: opsHost)
+        let granted = Self.makeEventWrapper(.trackingIdsUpdated, trackingIds: Self.makeAttachment())
+        let revoked = Self.makeEventWrapper(.trackingIdsUpdated, trackingIds: .cleared)
+        let withoutAttachment = Self.makeEventWrapper(.trackingIdsUpdated)
+
+        #expect(EventRoute(granted).baseURLKind == .tracking(trackingHost))
+        #expect(try builder.asURLRequest(route: EventRoute(granted)).url?.host == trackingHost)
+        #expect(try builder.asURLRequest(route: EventRoute(revoked)).url?.host == opsHost)
+        #expect(try builder.asURLRequest(route: EventRoute(withoutAttachment)).url?.host == opsHost)
+
+        let withoutOperationsDomain = URLRequestBuilder(domain: domain)
+        #expect(try withoutOperationsDomain.asURLRequest(route: EventRoute(revoked)).url?.host == domain)
+    }
+
+    @Test("The tracking ids queue type is sent as MobilePush.ApplicationInfoUpdated", .tags(.trackingIds))
+    func trackingIdsQueueTypeIsSentAsInfoUpdated() throws {
+        let builder = URLRequestBuilder(domain: domain)
+        let granted = Self.makeEventWrapper(.trackingIdsUpdated, trackingIds: Self.makeAttachment())
+
+        let url = try #require(builder.asURLRequest(route: EventRoute(granted)).url)
+        let items = try #require(URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems)
+        #expect(items.first { $0.name == "operation" }?.value == "MobilePush.ApplicationInfoUpdated")
+    }
+
+    @Test("Body gains the ids array and keeps the InfoUpdated fields; no attachment leaves the body untouched", .tags(.trackingIds))
+    func bodyGainsTheIdsArray() throws {
+        let bodyJSON = #"{"token":"t","isNotificationsEnabled":true,"version":3,"instanceId":"i"}"#
+        let id = UUID().uuidString
+        let granted = Self.makeEventWrapper(.trackingIdsUpdated, bodyJSON: bodyJSON, trackingIds: Self.makeAttachment(id))
+        let revoked = Self.makeEventWrapper(.trackingIdsUpdated, bodyJSON: bodyJSON, trackingIds: .cleared)
+        let withoutAttachment = Self.makeEventWrapper(.trackingIdsUpdated, bodyJSON: bodyJSON)
+
+        let grantedJSON = try Self.json(EventRoute(granted).body)
+        #expect(grantedJSON["ids"] as? [[String: String]] == [["type": "apple", "value": id]])
+        #expect(grantedJSON["version"] as? Int == 3)
+        #expect(grantedJSON["token"] as? String == "t")
+        #expect(grantedJSON["isNotificationsEnabled"] as? Bool == true)
+        #expect(grantedJSON["instanceId"] as? String == "i")
+
+        #expect(try Self.json(EventRoute(revoked).body)["ids"] as? [[String: String]] == [])
+        #expect(EventRoute(withoutAttachment).body == Data(bodyJSON.utf8))
+    }
+
+    @Test("The log body carries the masked value, the request body the real one", .tags(.trackingIds))
+    func logBodyCarriesTheMaskedValue() throws {
+        let id = UUID().uuidString
+        let attachment = Self.makeAttachment(id)
+        let masked = try #require(attachment.ids.first?.maskedValue)
+        let route = EventRoute(Self.makeEventWrapper(.trackingIdsUpdated, trackingIds: attachment))
+
+        let bodyData = try #require(route.body)
+        let logBodyData = try #require(route.loggableBody(from: bodyData))
+        let body = try #require(String(data: bodyData, encoding: .utf8))
+        let logBody = try #require(String(data: logBodyData, encoding: .utf8))
+        #expect(body.contains(id))
+        #expect(!body.contains(masked))
+        #expect(logBody.contains(masked))
+        #expect(!logBody.contains(id))
+
+        let plain = EventRoute(Self.makeEventWrapper(.infoUpdated, bodyJSON: #"{"token":"t"}"#))
+        #expect(plain.loggableBody(from: plain.body) == plain.body)
+    }
+
     // MARK: - Helpers
 
     private static func makeEventWrapper(
         _ type: Event.Operation,
-        bodyJSON: String = "{}"
+        bodyJSON: String = "{}",
+        trackingIds: TrackingIdsAttachment? = nil
     ) -> EventWrapper {
         let event = Event(type: type, body: bodyJSON)
-        return EventWrapper(event: event, endpoint: "test-endpoint", deviceUUID: "F47AC10B-58CC-4372-A567-0E02B2C3D479")
+        return EventWrapper(event: event, endpoint: "test-endpoint", deviceUUID: "F47AC10B-58CC-4372-A567-0E02B2C3D479", trackingIds: trackingIds)
+    }
+
+    private static func makeAttachment(_ id: String = UUID().uuidString) -> TrackingIdsAttachment {
+        .identifiers([TrackingId(type: TrackingId.appleType, value: id)], trackingHost: "api-tracking.mindbox.ru")
+    }
+
+    private static func json(_ body: Data?) throws -> [String: Any] {
+        let data = try #require(body)
+        return try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
     }
 }

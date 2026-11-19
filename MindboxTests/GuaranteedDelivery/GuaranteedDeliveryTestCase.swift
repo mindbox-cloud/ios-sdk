@@ -170,12 +170,15 @@ class GuaranteedDeliveryTestCase: XCTestCase {
     func testFailureAndRetryScheduleByTimer() throws {
         let fetcher = MockFailureNetworkFetcher()
         let fakeDB  = RetryByTimerScriptedDatabaseRepository()
+        let storage = DI.injectOrFail(PersistenceStorage.self)
         let eventRepo = MBEventRepository(
             fetcher: fetcher,
-            persistenceStorage: DI.injectOrFail(PersistenceStorage.self)
+            persistenceStorage: storage,
+            trackingIdsResolver: TrackingIdsResolver(),
+            trackingHostResolver: TrackingHostResolver(persistenceStorage: storage, declaredTrackingDomains: [])
         )
         let manager = GuaranteedDeliveryManager(
-            persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
+            persistenceStorage: storage,
             databaseRepository: fakeDB,
             eventRepository: eventRepo,
             retryDeadline: 2

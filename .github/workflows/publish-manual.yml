@@ -29,4 +29,4 @@ jobs:
       branch: ${{ github.ref_name }}
     secrets:
       COCOAPODS_TOKEN: ${{ secrets.COCOAPODS_TOKEN }}
-      PAT_FOR_TRIGGERING_BRANCH_PROTECTION: ${{ secrets.PAT_FOR_TRIGGERING_BRANCH_PROTECTION }}
+      MOBILE_CI_APP_PRIVATE_KEY: ${{ secrets.MOBILE_CI_APP_PRIVATE_KEY }}

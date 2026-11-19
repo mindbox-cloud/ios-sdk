@@ -4,7 +4,7 @@ import PackageDescription
 
 let package = Package(
     name: "Mindbox",
-    platforms: [.iOS(.v12)],
+    platforms: [.iOS(.v15)],
     products: [
         .library(
             name: "Mindbox",
@@ -46,10 +46,7 @@ let package = Package(
         ),
         .target(
             name: "MindboxLogger",
-            path: "MindboxLogger",
-            resources: [
-                .process("PrivacyInfo.xcprivacy")
-            ]
+            path: "MindboxLogger"
         )
     ]
 )

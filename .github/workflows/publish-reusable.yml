@@ -9,37 +9,14 @@ on:
     secrets:
       COCOAPODS_TOKEN:
         required: true
-      PAT_FOR_TRIGGERING_BRANCH_PROTECTION:
+      MOBILE_CI_APP_PRIVATE_KEY:
         required: true
 
 permissions:
   contents: read
 
 jobs:
-  unit-tests:
-    runs-on: macos-26
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ inputs.branch }}
-      - uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
-        with:
-          xcode-version: latest-stable
-      - name: Update bundler
-        run: gem install bundler
-      - name: Install bundler dependencies
-        run: bundle install
-      - name: Run unit tests
-        run: bundle exec fastlane unitTestLane
-      - name: Upload xcresult bundle
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        if: ${{ !cancelled() }}
-        with:
-          name: unit-tests-xcresult
-          path: test_output/*.xcresult
-
   set-tag:
-    needs: [unit-tests]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -64,6 +41,14 @@ jobs:
             else
               git push origin "$SDK_VERSION"
             fi
+
+  publish-specs-repo:
+    needs: [set-tag]
+    uses: ./.github/workflows/publish-specs.yml
+    with:
+      ref: ${{ inputs.branch }}
+    secrets:
+      MOBILE_CI_APP_PRIVATE_KEY: ${{ secrets.MOBILE_CI_APP_PRIVATE_KEY }}
 
   publish-MindboxLogger:
     needs: [set-tag]
@@ -177,16 +162,26 @@ jobs:
     needs: [publish-MindboxLogger, publish-MindboxNotifications, publish-Mindbox]
     if: startsWith(github.head_ref, 'release/') && github.base_ref == 'master'
     runs-on: ubuntu-latest
-    env:
-      GITHUB_TOKEN: ${{ secrets.PAT_FOR_TRIGGERING_BRANCH_PROTECTION }}
     steps:
+      - name: Create App token
+        id: app-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.MOBILE_CI_APP_CLIENT_ID }}
+          private-key: ${{ secrets.MOBILE_CI_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
       - name: Checkout develop branch
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: develop
       - name: Create Pull Request
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: gh pr create --base develop --head master --title "Merge 'master' into 'develop' after release" --body "Automated Pull Request to merge 'master' into 'develop' after release"
       - name: Merge Pull Request
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           pr_number=$(gh pr list --base develop --head master --json number --jq '.[0].number')
           gh pr merge "$pr_number" --merge --auto
