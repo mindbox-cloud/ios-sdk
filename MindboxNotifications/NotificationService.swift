@@ -28,8 +28,8 @@ public protocol MindboxNotificationServiceProtocol: MindboxPushNotificationProto
     func serviceExtensionTimeWillExpire()
 
     /// Call this method in `didReceive(_ request, withContentHandler)` of your `NotificationService` if you have implemented a custom version of `NotificationService`.
-    /// It tells Mindbox that the push reached the device, without waiting for the answer.
-    /// To have the answer before the push is shown, use `confirmDelivery(_:)` of `MindboxNotificationService` instead.
+    /// This is necessary as an indicator that the push notification has been delivered to Mindbox services.
+    /// At the moment, this method only writes a push delivery log.
     func pushDelivered(_ request: UNNotificationRequest)
 }
 
@@ -44,6 +44,8 @@ extension MindboxNotificationService: MindboxNotificationServiceProtocol {
         guard let bestAttemptContent = bestAttemptContent else {
             return
         }
+
+        logPushDelivered(request)
 
         // The image loads while the confirmation waits for its answer; the push is shown after both.
         let confirming = startConfirmation(of: request)
@@ -75,12 +77,10 @@ extension MindboxNotificationService: MindboxNotificationServiceProtocol {
     }
 
     /// Call this method in `didReceive(_ request, withContentHandler)` of your `NotificationService` if you have implemented a custom version of NotificationService.
-    /// It tells Mindbox that the push reached the device, without waiting for the answer.
-    /// To have the answer before the push is shown, use `confirmDelivery(_:)` instead.
+    /// This is necessary as an indicator that the push notification has been delivered to Mindbox services.
+    /// At the moment, this method only writes a push delivery log.
     public func pushDelivered(_ request: UNNotificationRequest) {
-        let message = "[NotificationService] \(#function), request id: \(request.identifier)"
-        print(message)
-        startConfirmation(of: request)
+        logPushDelivered(request)
     }
 
     /// Tells Mindbox that the push reached the device and returns when Mindbox answers, in 5 seconds at most.
@@ -109,8 +109,14 @@ extension MindboxNotificationService: MindboxNotificationServiceProtocol {
 
 private extension MindboxNotificationService {
 
+    /// The line support looks for to see that the extension got the push.
+    func logPushDelivered(_ request: UNNotificationRequest) {
+        print("[NotificationService] pushDelivered(_:), request id: \(request.identifier)")
+    }
+
+    /// Only `didReceive` and `confirmDelivery` send the confirmation, so a push gets one request
+    /// even when the app also calls `pushDelivered`.
     /// - Returns: The running confirmation, or `nil` when the push does not ask for one.
-    @discardableResult
     func startConfirmation(of request: UNNotificationRequest) -> Task<Void, Never>? {
         guard let confirmation = PushDeliveryConfirmation(userInfo: request.content.userInfo) else {
             return nil

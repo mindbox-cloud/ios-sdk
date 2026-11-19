@@ -76,27 +76,44 @@ struct PushDeliveryConfirmerTests {
         #expect(store.pending().isEmpty)
     }
 
-    // MARK: - pushDelivered(_:)
+    // MARK: - start(_:)
 
-    @Test("pushDelivered returns at once and the confirmation still goes")
-    func pushDeliveredDoesNotWait() async throws {
+    @Test("The confirmation is on disk before start returns: the system may stop the extension right after")
+    func startWritesFileBeforeReturning() throws {
         let host = PushDeliveryConfirmationStub.makeHost(answer: .silence)
-        let service = service(timeout: 1)
+        let url = try #require(URL(string: "https://\(host)/delivered"))
+        let confirmer = PushDeliveryConfirmer(sender: PushDeliveryConfirmationStub.sender(timeout: 1), store: store)
 
-        let started = Date()
-        service.pushDelivered(request(host: host))
-        #expect(Date().timeIntervalSince(started) < 0.5)
+        _ = confirmer.start(PushDeliveryConfirmation(url: url, receivedAt: Date()))
 
-        try await waitUntil { !PushDeliveryConfirmationStub.requests(to: host).isEmpty }
+        #expect(store.pending().map(\.url) == [url])
     }
 
-    @Test("pushDelivered puts the confirmation on disk before it returns")
-    func pushDeliveredWritesFileBeforeReturning() {
-        let host = PushDeliveryConfirmationStub.makeHost(answer: .silence)
+    // MARK: - pushDelivered(_:)
 
-        service(timeout: 1).pushDelivered(request(host: host))
+    @Test("pushDelivered only writes the log: it sends nothing and leaves no file")
+    func pushDeliveredSendsNothing() async throws {
+        let host = PushDeliveryConfirmationStub.makeHost(answer: .status(200))
 
-        #expect(store.pending().map(\.url.absoluteString) == ["https://\(host)/delivered"])
+        service().pushDelivered(request(host: host))
+        try await Task.sleep(nanoseconds: 300_000_000)
+
+        #expect(PushDeliveryConfirmationStub.requests(to: host).isEmpty)
+        #expect(store.pending().isEmpty)
+    }
+
+    @Test("An app that calls pushDelivered and then didReceive sends one confirmation")
+    func pushDeliveredAndDidReceiveSendOnce() async {
+        let host = PushDeliveryConfirmationStub.makeHost(answer: .status(200))
+        let service = service()
+        let request = request(host: host)
+
+        service.pushDelivered(request)
+        await withCheckedContinuation { continuation in
+            service.didReceive(request) { _ in continuation.resume() }
+        }
+
+        #expect(PushDeliveryConfirmationStub.requests(to: host).count == 1)
     }
 
     // MARK: - didReceive(_:withContentHandler:)
@@ -146,15 +163,6 @@ struct PushDeliveryConfirmerTests {
     }
 
     // MARK: - Helpers
-
-    private func waitUntil(timeout: TimeInterval = 3, _ condition: () -> Bool) async throws {
-        let deadline = Date().addingTimeInterval(timeout)
-        while !condition() {
-            #expect(Date() < deadline, "The condition did not come true in \(timeout) s")
-            guard Date() < deadline else { return }
-            try await Task.sleep(nanoseconds: 20_000_000)
-        }
-    }
 
     private func writeBundle(at url: URL, identifier: String) throws {
         let contents = url.appendingPathComponent("Info.plist")
