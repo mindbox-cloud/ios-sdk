@@ -68,6 +68,15 @@ struct PushDeliveryConfirmationTests {
         #expect(PushDeliveryConfirmation(userInfo: Self.userInfo(callbacks: ["deliveredUrl": value])) == nil)
     }
 
+    @Test("A URL with characters it may not contain asks for no confirmation on every iOS, as on Android", arguments: [
+        "https://confirm.mindbox.ru/delivered?sign=a|b",
+        "https://confirm.mindbox.ru/deli vered",
+        "https://confirm.mindbox.ru/delivered?token={abc}"
+    ])
+    func noConfirmationForURLThatNeedsEncoding(value: String) {
+        #expect(PushDeliveryConfirmation(userInfo: Self.userInfo(callbacks: ["deliveredUrl": value])) == nil)
+    }
+
     // MARK: - Request
 
     @Test("The request is a POST with the JSON body {} and keeps the query of the URL")

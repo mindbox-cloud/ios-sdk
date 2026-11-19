@@ -35,12 +35,21 @@ public struct PushDeliveryConfirmation: Equatable, Sendable {
         let nested = userInfo["aps"] as? [AnyHashable: Any]
         let callbacks = (userInfo[PayloadKey.callbacks] ?? nested?[PayloadKey.callbacks]) as? [AnyHashable: Any]
         guard let string = callbacks?[PayloadKey.deliveryUrl] as? String,
-              let url = URL(string: string.trimmingCharacters(in: .whitespacesAndNewlines)),
+              let url = Self.strictURL(string.trimmingCharacters(in: .whitespacesAndNewlines)),
               url.scheme?.lowercased() == "https",
               url.host?.isEmpty == false else {
             return nil
         }
         self.init(url: url, receivedAt: receivedAt)
+    }
+
+    /// The URL exactly as the push gave it. iOS 17 and later would percent-encode characters a URL may not contain,
+    /// which can break its signature, while iOS 15 and 16 refuse such a string, as Android does: it asks for no confirmation.
+    private static func strictURL(_ string: String) -> URL? {
+        if #available(iOS 17.0, macOS 14.0, *) {
+            return URL(string: string, encodingInvalidCharacters: false)
+        }
+        return URL(string: string)
     }
 
     /// One push gives one id: it names the file of the confirmation.
