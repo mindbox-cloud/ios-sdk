@@ -31,14 +31,17 @@ final class PushDeliveryConfirmer: Sendable {
         self.store = store
     }
 
-    /// Sends the confirmation once and returns when the answer comes, no later than `waitLimit`.
+    /// Puts the confirmation on disk and starts sending it once.
     ///
-    /// The confirmation is on disk before the request starts: the system may stop the extension at any moment,
-    /// and the app hands whatever is left to guaranteed delivery.
-    func confirm(_ confirmation: PushDeliveryConfirmation) async {
+    /// The file is written before this returns: the system may stop the extension at any moment,
+    /// even right after the push is shown, and the app hands whatever is left to guaranteed delivery.
+    /// - Returns: The send, which ends when the answer comes, no later than `waitLimit`.
+    func start(_ confirmation: PushDeliveryConfirmation) -> Task<Void, Never> {
         try? store?.save(confirmation)
-        guard await sender.send(confirmation).isFinal else { return }
-        store?.remove(confirmation)
+        return Task { [sender, store] in
+            guard await sender.send(confirmation).isFinal else { return }
+            store?.remove(confirmation)
+        }
     }
 }
 

@@ -115,10 +115,7 @@ private extension MindboxNotificationService {
         guard let confirmation = PushDeliveryConfirmation(userInfo: request.content.userInfo) else {
             return nil
         }
-        let confirmer = deliveryConfirmer
-        return Task {
-            await confirmer.confirm(confirmation)
-        }
+        return deliveryConfirmer.start(confirmation)
     }
 
     func downloadImage(with url: URL, completion: @escaping () -> Void) {

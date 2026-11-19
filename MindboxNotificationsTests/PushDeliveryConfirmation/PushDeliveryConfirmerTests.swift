@@ -90,6 +90,15 @@ struct PushDeliveryConfirmerTests {
         try await waitUntil { !PushDeliveryConfirmationStub.requests(to: host).isEmpty }
     }
 
+    @Test("pushDelivered puts the confirmation on disk before it returns")
+    func pushDeliveredWritesFileBeforeReturning() {
+        let host = PushDeliveryConfirmationStub.makeHost(answer: .silence)
+
+        service(timeout: 1).pushDelivered(request(host: host))
+
+        #expect(store.pending().map(\.url.absoluteString) == ["https://\(host)/delivered"])
+    }
+
     // MARK: - didReceive(_:withContentHandler:)
 
     @Test("didReceive shows the push only after the answer comes")
