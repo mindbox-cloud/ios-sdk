@@ -9,8 +9,6 @@ import Foundation
 
 final class PushDeliveryConfirmer: Sendable {
 
-    static let shared = PushDeliveryConfirmer()
-
     private let sender: PushDeliveryConfirmationSender
     private let store: PushDeliveryConfirmationStore?
 

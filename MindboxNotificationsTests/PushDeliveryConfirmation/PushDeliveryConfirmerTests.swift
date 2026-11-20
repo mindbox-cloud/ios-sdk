@@ -196,6 +196,20 @@ struct PushDeliveryConfirmerTests {
         #expect(PushDeliveryConfirmationStub.requests(to: host).count == 1)
     }
 
+    @Test("The request is finished and the file is removed after the confirmer is released")
+    func requestOutlivesConfirmer() async throws {
+        let host = PushDeliveryConfirmationStub.makeHost(answering: .status(200))
+        let store = PushDeliveryConfirmationStore.temporary()
+        var confirmer: PushDeliveryConfirmer? = PushDeliveryConfirmer(sender: .stubbed(), store: store)
+
+        let sending = confirmer?.start(try confirmation(host: host))
+        confirmer = nil
+        await sending?.value
+
+        #expect(PushDeliveryConfirmationStub.requests(to: host).count == 1)
+        #expect(store.fileNames.isEmpty)
+    }
+
     // MARK: - didReceive
 
     private func show(userInfo: [AnyHashable: Any], confirmer: PushDeliveryConfirmer) async -> UNNotificationContent {
