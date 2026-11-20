@@ -21,4 +21,6 @@ extension Tag {
     @Tag static var notificationService: Self
 
     @Tag static var notificationContent: Self
+
+    @Tag static var pushDeliveryConfirmation: Self
 }
