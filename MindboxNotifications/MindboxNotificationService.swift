@@ -24,6 +24,7 @@ public class MindboxNotificationService: NSObject {
     var viewController: UIViewController?
 
     var pushValidator: PushValidator?
+    lazy var deliveryConfirmer = PushDeliveryConfirmer()
 
     // MARK: Public initializer
 
