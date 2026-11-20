@@ -217,4 +217,94 @@ class DatabaseRepositoryTestCase: XCTestCase {
         }
         waitForExpectations(timeout: expectDeadline + 2.0)
     }
+
+    func testEventRetriedBeforeTheClockWasSetBackIsFetchedAtOnceWithZeroOffset() throws {
+        let event = eventGenerator.generateEvent()
+        try databaseRepository.create(event: event)
+        try databaseRepository.update(event: event)
+        XCTAssertTrue(try databaseRepository.query(fetchLimit: 10).isEmpty)
+
+        let stored = try setTimestamps(
+            of: event,
+            enqueue: Date().addingTimeInterval(3540),
+            retry: Date().addingTimeInterval(3600)
+        )
+
+        XCTAssertEqual(try databaseRepository.query(fetchLimit: 10).map(\.transactionId), [event.transactionId])
+        XCTAssertEqual(stored.dateTimeOffset, 0)
+    }
+
+    func testRetriedEventIsFetchedWithItsAgeAsOffset() throws {
+        let event = eventGenerator.generateEvent()
+        try databaseRepository.create(event: event)
+
+        let stored = try setTimestamps(
+            of: event,
+            enqueue: Date().addingTimeInterval(-120),
+            retry: Date().addingTimeInterval(-61)
+        )
+
+        XCTAssertEqual(try databaseRepository.query(fetchLimit: 10).map(\.transactionId), [event.transactionId])
+        XCTAssertEqual(Double(stored.dateTimeOffset), 120_000, accuracy: 5_000)
+    }
+
+    func testEventNeverTriedToSendIsFetchedWithItsAgeAsOffset() throws {
+        let threeDays: TimeInterval = 3 * 24 * 60 * 60
+        let event = Event(type: .inAppViewEvent, body: "")
+        try databaseRepository.create(event: event)
+        try setTimestamps(of: event, enqueue: Date().addingTimeInterval(-threeDays))
+
+        let fetched = try databaseRepository.query(fetchLimit: 10)
+
+        XCTAssertEqual(fetched.map(\.transactionId), [event.transactionId])
+        let stored = try XCTUnwrap(fetched.first)
+        XCTAssertFalse(stored.isRetry)
+        XCTAssertEqual(try requestDateTimeOffset(of: stored), threeDays * 1000, accuracy: 5_000)
+    }
+
+    func testEventNeverTriedToSendAndCreatedBeforeTheClockWasSetBackHasZeroOffset() throws {
+        let event = Event(type: .inAppViewEvent, body: "")
+        try databaseRepository.create(event: event)
+        try setTimestamps(of: event, enqueue: Date().addingTimeInterval(3600))
+
+        let fetched = try databaseRepository.query(fetchLimit: 10)
+
+        XCTAssertEqual(fetched.map(\.transactionId), [event.transactionId])
+        let stored = try XCTUnwrap(fetched.first)
+        XCTAssertFalse(stored.isRetry)
+        XCTAssertEqual(try requestDateTimeOffset(of: stored), 0)
+    }
+
+    private func requestDateTimeOffset(of event: Event) throws -> Double {
+        let route = EventRoute(EventWrapper(event: event, endpoint: "endpoint", deviceUUID: "uuid"))
+        let url = try XCTUnwrap(URLRequestBuilder(domain: "api.mindbox.ru").asURLRequest(route: route).url)
+        let offset = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?
+            .first { $0.name == "dateTimeOffset" }?.value
+        return try XCTUnwrap(offset.flatMap(Double.init))
+    }
+
+    @discardableResult
+    private func setTimestamps(of event: Event, enqueue: Date, retry: Date? = nil) throws -> Event {
+        let repository = try XCTUnwrap(databaseRepository as? MBDatabaseRepository)
+        let context = repository.persistentContainer.newBackgroundContext()
+        return try context.mindboxPerformAndWait {
+            let entity = try XCTUnwrap(context.fetch(CDEvent.fetchRequest(by: event.transactionId)).first)
+            entity.timestamp = enqueue.timeIntervalSince1970
+            if let retry {
+                entity.retryTimestamp = retry.timeIntervalSince1970
+            }
+            try context.save()
+            return try XCTUnwrap(Event(entity))
+        }
+    }
+
+    func testStoredTransactionIdsReturnOnlyEventsStillInTheDatabase() throws {
+        let events = (0..<510).map { _ in Event(type: .installed, body: "") }
+        try events.forEach { try databaseRepository.create(event: $0) }
+        try databaseRepository.delete(event: events[0])
+
+        let stored = try databaseRepository.storedTransactionIds(among: Set(events.map(\.transactionId)).union(["missing"]))
+
+        XCTAssertEqual(stored, Set(events.dropFirst().map(\.transactionId)))
+    }
 }

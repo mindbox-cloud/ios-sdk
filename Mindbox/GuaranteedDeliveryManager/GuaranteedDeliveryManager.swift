@@ -28,6 +28,10 @@ final class GuaranteedDeliveryManager: NSObject {
     }()
 
     private let semaphore = DispatchSemaphore(value: 1)
+    private var isScheduleRequestedWhileDelivering = false
+    private var isRestartAfterCancelAllowed = true
+
+    private let pauseManager = DeliveryPauseManager()
 
     var onCompletedEvent: ((_ event: Event, _ error: MindboxError?) -> Void)?
 
@@ -54,6 +58,7 @@ final class GuaranteedDeliveryManager: NSObject {
         databaseRepository: DatabaseRepositoryProtocol,
         eventRepository: EventRepository,
         retryDeadline: TimeInterval = 60,
+        maxRetryDeadline: TimeInterval = 3600,
         fetchLimit: Int = 20
     ) {
         self.databaseRepository = databaseRepository
@@ -62,7 +67,7 @@ final class GuaranteedDeliveryManager: NSObject {
             persistenceStorage: persistenceStorage,
             databaseRepository: databaseRepository
         )
-        self.retryDeadline = retryDeadline
+        self.retryDelayManager = DeliveryRetryDelayManager(firstDelay: retryDeadline, maxDelay: maxRetryDeadline)
         self.fetchLimit = fetchLimit
         stateObserver = NSString(string: State.idle.description)
         super.init()
@@ -77,7 +82,7 @@ final class GuaranteedDeliveryManager: NSObject {
         }
     }
 
-    private let retryDeadline: TimeInterval
+    private let retryDelayManager: DeliveryRetryDelayManager
 
     func performScheduleIfNeeded() {
         guard canScheduleOperations else {
@@ -87,6 +92,7 @@ final class GuaranteedDeliveryManager: NSObject {
             return
         }
         guard events != 0 else {
+            retryDelayManager.reset()
             backgroundTaskManager.endBackgroundTask(success: true)
             return
         }
@@ -97,22 +103,43 @@ final class GuaranteedDeliveryManager: NSObject {
         semaphore.wait()
         guard !state.isDelivering else {
             Logger.common(message: "[GD] Delivering. Ignore another schedule operation.", level: .info, category: .delivery)
+            isScheduleRequestedWhileDelivering = true
             semaphore.signal()
             return
         }
 
         state = .delivering
+        isScheduleRequestedWhileDelivering = false
+        isRestartAfterCancelAllowed = true
         semaphore.signal()
-        guard let events = try? databaseRepository.query(fetchLimit: fetchLimit, retryDeadline: retryDeadline) else {
+        deliverEvents(fetchLimit: fetchLimit)
+    }
+
+    private func deliverEvents(fetchLimit: Int) {
+        guard let events = try? databaseRepository.query(fetchLimit: fetchLimit, retryDeadline: retryDelayManager.current) else {
             Logger.common(message: "[GD] Database Repository query events is nil", level: .info, category: .delivery)
-            state = .idle
+            if finishPass() {
+                performScheduleIfNeeded()
+            }
             return
         }
         guard !events.isEmpty else {
-            state = .waitingForRetry
-            Logger.common(message: "[GD] Schedule next call of performScheduleIfNeeded after TimeInterval: \(retryDeadline)", level: .info, category: .delivery)
+            forgetEventsMissingFromDatabase()
+            semaphore.wait()
+            let isScheduleRequested = isScheduleRequestedWhileDelivering && isRestartAfterCancelAllowed
+            isScheduleRequestedWhileDelivering = false
+            let retryDelay = isScheduleRequested ? nil : retryDelayManager.completeRound()
+            if !isScheduleRequested {
+                state = .waitingForRetry
+            }
+            semaphore.signal()
+            guard let retryDelay else {
+                deliverEvents(fetchLimit: self.fetchLimit)
+                return
+            }
+            Logger.common(message: "[GD] Schedule next call of performScheduleIfNeeded after TimeInterval: \(retryDelay)", level: .info, category: .delivery)
             backgroundTaskManager.endBackgroundTask(success: false)
-            DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + retryDeadline, execute: performScheduleIfNeeded)
+            DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + retryDelay, execute: performScheduleIfNeeded)
             return
         }
         
@@ -120,10 +147,13 @@ final class GuaranteedDeliveryManager: NSObject {
         completion.completionBlock = { [weak self, weak completion] in
             guard let self = self, let completion = completion else { return }
             
-            self.state = .idle
+            let isScheduleRequested = self.finishPass()
             
             guard !completion.isCancelled else {
                 Logger.common(message: "[GD] Queue was cancelled", level: .info, category: .background)
+                if isScheduleRequested {
+                    self.performScheduleIfNeeded()
+                }
                 return
             }
             
@@ -134,7 +164,9 @@ final class GuaranteedDeliveryManager: NSObject {
             DeliveryOperation(
                 databaseRepository: databaseRepository,
                 eventRepository: eventRepository,
-                event: $0
+                event: $0,
+                pauseManager: pauseManager,
+                retryDelayManager: retryDelayManager
             )
         }
         Logger.common(message: "[GD] Enqueued events count: \(delivery.count)", level: .info, category: .delivery)
@@ -146,9 +178,37 @@ final class GuaranteedDeliveryManager: NSObject {
         queue.addOperations(operations, waitUntilFinished: false)
     }
 
-    func cancelAllOperations() {
+    private func finishPass() -> Bool {
+        semaphore.wait()
+        defer { semaphore.signal() }
+        state = .idle
+        let isScheduleRequested = isScheduleRequestedWhileDelivering && isRestartAfterCancelAllowed
+        isScheduleRequestedWhileDelivering = false
+        isRestartAfterCancelAllowed = true
+        return isScheduleRequested
+    }
+
+    private func forgetEventsMissingFromDatabase() {
+        let trackedTransactionIds = retryDelayManager.trackedTransactionIds
+        guard !trackedTransactionIds.isEmpty,
+              let storedTransactionIds = try? databaseRepository.storedTransactionIds(among: trackedTransactionIds) else {
+            return
+        }
+        retryDelayManager.forget(transactionIds: trackedTransactionIds.subtracting(storedTransactionIds))
+    }
+
+    func cancelAllOperations(restartsRequestedPass: Bool) {
         queue.cancelAllOperations()
+        semaphore.wait()
+        isScheduleRequestedWhileDelivering = false
+        isRestartAfterCancelAllowed = restartsRequestedPass
+        semaphore.signal()
         eventRepository.cancelAllRequests()
+    }
+
+    func resetDeliveryPausesAndRetryDelay() {
+        pauseManager.reset()
+        retryDelayManager.reset()
     }
 }
 

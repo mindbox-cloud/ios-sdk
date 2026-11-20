@@ -213,7 +213,7 @@ extension BGTaskManager {
         task.expirationHandler = { [weak self] in
             guard let self = self else { return }
             
-            gdManager?.cancelAllOperations()
+            gdManager?.cancelAllOperations(restartsRequestedPass: false)
             
             self.lock.withLock {
                 self.appGDRefreshTask?.setTaskCompleted(success: false)
@@ -243,7 +243,7 @@ extension BGTaskManager {
         task.expirationHandler = { [weak self] in
             guard let self = self else { return }
 
-            self.gdManager?.cancelAllOperations()
+            self.gdManager?.cancelAllOperations(restartsRequestedPass: false)
             
             self.lock.withLock {
                 self.appGDProcessingTask?.setTaskCompleted(success: false)

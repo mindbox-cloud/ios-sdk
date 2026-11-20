@@ -175,7 +175,8 @@ final class CoreController {
         trackingIdsChangeDetector.reset()
         try? databaseRepository.erase()
         
-        guaranteedDeliveryManager.cancelAllOperations()
+        guaranteedDeliveryManager.cancelAllOperations(restartsRequestedPass: true)
+        guaranteedDeliveryManager.resetDeliveryPausesAndRetryDelay()
         let newVersion = 0
         persistenceStorage.deviceUUID = deviceUUID
         persistenceStorage.installationId = configuration.previousInstallationId

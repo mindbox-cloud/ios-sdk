@@ -67,12 +67,9 @@ struct Event: EventProtocol {
     let transactionId: String
 
     var dateTimeOffset: Int64 {
-        guard isRetry else {
-            return 0
-        }
         let enqueueDate = Date(timeIntervalSince1970: enqueueTimeStamp)
         let ms = (Date().timeIntervalSince(enqueueDate) * 1000).rounded()
-        return Int64(ms)
+        return max(0, Int64(ms))
     }
 
     let enqueueTimeStamp: Double
