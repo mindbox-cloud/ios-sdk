@@ -20,12 +20,15 @@ final class PushDeliveryConfirmer: Sendable {
         self.store = store
     }
 
-    func start(_ confirmation: PushDeliveryConfirmation) -> Task<Void, Never> {
+    @discardableResult
+    func start(_ confirmation: PushDeliveryConfirmation, completion: (@Sendable () -> Void)? = nil) -> Task<Void, Never> {
         try? store?.save(confirmation)
         return Task { [sender, store] in
             let statusCode = await sender.send(confirmation)
-            guard Self.closesConfirmation(statusCode) else { return }
-            store?.remove(confirmation)
+            if Self.closesConfirmation(statusCode) {
+                store?.remove(confirmation)
+            }
+            completion?()
         }
     }
 

@@ -12,6 +12,7 @@ final class PushDeliveryConfirmationStub: URLProtocol {
 
     enum Answer {
         case status(Int)
+        case delayedStatus(Int, after: TimeInterval)
         case redirect(to: String)
         case failure(URLError.Code)
         case silence
@@ -65,6 +66,10 @@ final class PushDeliveryConfirmationStub: URLProtocol {
         switch answer {
         case .status(let code):
             respond(url: url, code: code, headers: nil)
+        case .delayedStatus(let code, let delay):
+            DispatchQueue.global().asyncAfter(deadline: .now() + delay) { [weak self] in
+                self?.respond(url: url, code: code, headers: nil)
+            }
         case .redirect(let location):
             guard let target = URL(string: location),
                   let response = HTTPURLResponse(url: url, statusCode: 302, httpVersion: nil, headerFields: ["Location": location]) else {

@@ -143,6 +143,34 @@ struct MindboxNotificationServiceTests {
         #expect(received.categoryIdentifier == Constants.categoryIdentifier)
     }
 
+    @Test("didReceive waits for a slow confirmation after the image is loaded and removes the file before the handler")
+    func didReceiveFinishesConfirmationAfterImage() async {
+        StubURLProtocol.reset()
+        StubURLProtocol.stubResponseData = NotificationTestFixtures.tinyPNGData()
+        URLProtocol.registerClass(StubURLProtocol.self)
+        defer {
+            URLProtocol.unregisterClass(StubURLProtocol.self)
+            StubURLProtocol.reset()
+        }
+
+        let host = PushDeliveryConfirmationStub.makeHost(answering: .delayedStatus(200, after: 0.5))
+        let store = PushDeliveryConfirmationStore.temporary()
+        service.deliveryConfirmer = PushDeliveryConfirmer(sender: .stubbed(), store: store)
+        var userInfo = NotificationTestFixtures.currentFormatUserInfo()
+        userInfo["callbacks"] = ["deliveredUrl": "https://\(host)/delivered"]
+        let request = NotificationTestFixtures.makeRequest(userInfo: userInfo, title: "Test title", body: "Test description")
+        let started = Date()
+
+        let filesAtHandler: [String] = await withCheckedContinuation { continuation in
+            service.didReceive(request) { _ in continuation.resume(returning: store.fileNames) }
+        }
+
+        #expect(Date().timeIntervalSince(started) >= 0.5)
+        #expect(filesAtHandler.isEmpty)
+        #expect(service.bestAttemptContent?.attachments.count == 1)
+        #expect(PushDeliveryConfirmationStub.requests(to: host).count == 1)
+    }
+
     // MARK: - serviceExtensionTimeWillExpire()
 
     @Test("serviceExtensionTimeWillExpire delivers the stored best-attempt content")

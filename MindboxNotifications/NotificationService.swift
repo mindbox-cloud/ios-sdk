@@ -57,9 +57,7 @@ extension MindboxNotificationService: MindboxNotificationServiceProtocol {
 
         if let confirmation {
             pending.enter()
-            let sending = deliveryConfirmer.start(confirmation)
-            Task {
-                await sending.value
+            deliveryConfirmer.start(confirmation) {
                 pending.leave()
             }
         }

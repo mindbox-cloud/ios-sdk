@@ -58,6 +58,18 @@ struct PushDeliveryConfirmationTests {
         #expect(PushDeliveryConfirmation(deliveredUrl: nil) == nil)
     }
 
+    @Test("callbacks or deliveredUrl sent as null give no confirmation and keep the image")
+    func nullGivesNoConfirmation() {
+        for callbacks in [NSNull(), ["deliveredUrl": NSNull()]] as [Any] {
+            var userInfo = NotificationTestFixtures.currentFormatUserInfo()
+            userInfo["callbacks"] = callbacks
+            let payload = MindboxNotificationService().parse(request: NotificationTestFixtures.makeRequest(userInfo: userInfo))
+
+            #expect(parsed(userInfo) == nil)
+            #expect(payload?.withImageURL?.imageUrl == NotificationTestFixtures.imageUrl)
+        }
+    }
+
     @Test(
         "A URL that is not a valid https address gives no confirmation",
         arguments: ["http://api.mindbox.ru/delivered", "ftp://api.mindbox.ru/delivered", "api.mindbox.ru/delivered", "https://", "", "https://exa mple.com/x"]
