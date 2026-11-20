@@ -24,6 +24,7 @@ public class MindboxNotificationService: NSObject {
     var viewController: UIViewController?
 
     var pushValidator: PushValidator?
+    var deliveryConfirmer: PushDeliveryConfirmer = .shared
 
     // MARK: Public initializer
 

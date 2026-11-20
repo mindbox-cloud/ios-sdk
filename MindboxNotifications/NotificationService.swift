@@ -43,14 +43,29 @@ extension MindboxNotificationService: MindboxNotificationServiceProtocol {
 
         pushDelivered(request)
 
+        let pending = DispatchGroup()
+
+        if let userInfo = getUserInfo(from: request),
+           let confirmation = PushDeliveryConfirmation(userInfo: userInfo) {
+            pending.enter()
+            let sending = deliveryConfirmer.start(confirmation)
+            Task {
+                await sending.value
+                pending.leave()
+            }
+        }
+
         if let imageUrl = parse(request: request)?.withImageURL?.imageUrl,
            let allowedUrl = imageUrl.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
            let url = URL(string: allowedUrl) {
-            downloadImage(with: url) { [weak self] in
-                self?.proceedFinalStage(bestAttemptContent)
+            pending.enter()
+            downloadImage(with: url) {
+                pending.leave()
             }
-        } else {
-            proceedFinalStage(bestAttemptContent)
+        }
+
+        pending.notify(queue: .global(qos: .userInitiated)) {
+            self.proceedFinalStage(bestAttemptContent)
         }
     }
 
