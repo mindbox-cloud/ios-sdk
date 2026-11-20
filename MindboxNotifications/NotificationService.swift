@@ -43,8 +43,9 @@ extension MindboxNotificationService: MindboxNotificationServiceProtocol {
 
         pushDelivered(request)
 
-        let confirmation = getUserInfo(from: request).flatMap { PushDeliveryConfirmation(userInfo: $0) }
-        let encodedImageURL = parse(request: request)?.withImageURL?.imageUrl?.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)
+        let payload = parse(request: request)
+        let confirmation = PushDeliveryConfirmation(deliveredUrl: payload?.withCallbacks?.callbacks?.deliveredUrl)
+        let encodedImageURL = payload?.withImageURL?.imageUrl?.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)
         let imageURL = encodedImageURL.flatMap { URL(string: $0) }
 
         guard confirmation != nil || imageURL != nil else {

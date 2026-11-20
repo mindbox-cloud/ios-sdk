@@ -23,22 +23,39 @@ struct PushDeliveryConfirmationTests {
         return userInfo
     }
 
+    private func parsed(_ userInfo: [AnyHashable: Any]) -> PushDeliveryConfirmation? {
+        let request = NotificationTestFixtures.makeRequest(userInfo: userInfo)
+        let payload = MindboxNotificationService().parse(request: request)
+        return PushDeliveryConfirmation(deliveredUrl: payload?.withCallbacks?.callbacks?.deliveredUrl, receivedAt: receivedAt)
+    }
+
     // MARK: - Parsing
 
     @Test("The delivered URL is taken from callbacks.deliveredUrl as the push gave it")
     func takesDeliveredUrl() throws {
         let string = "https://api.mindbox.ru/push/delivered?id=42&hash=a%2Bb%3D"
-        let confirmation = try #require(PushDeliveryConfirmation(userInfo: userInfo(deliveredUrl: string), receivedAt: receivedAt))
+        let confirmation = try #require(parsed(userInfo(deliveredUrl: string)))
 
         #expect(confirmation.url.absoluteString == string)
         #expect(confirmation.receivedAt == receivedAt)
     }
 
+    @Test("The delivered URL of a push in the legacy format is taken from aps.callbacks.deliveredUrl")
+    func takesDeliveredUrlFromLegacyFormat() throws {
+        var userInfo = NotificationTestFixtures.legacyFormatUserInfo()
+        var aps = userInfo["aps"] as? [String: Any] ?? [:]
+        aps["callbacks"] = ["deliveredUrl": "https://api.mindbox.ru/push/delivered"]
+        userInfo["aps"] = aps
+
+        #expect(parsed(userInfo)?.url.absoluteString == "https://api.mindbox.ru/push/delivered")
+    }
+
     @Test("A push without the delivered URL gives no confirmation")
     func noUrlNoConfirmation() {
-        #expect(PushDeliveryConfirmation(userInfo: userInfo(deliveredUrl: nil)) == nil)
-        #expect(PushDeliveryConfirmation(userInfo: ["callbacks": [String: Any]()]) == nil)
-        #expect(PushDeliveryConfirmation(userInfo: ["callbacks": "https://api.mindbox.ru"]) == nil)
+        #expect(parsed(userInfo(deliveredUrl: nil)) == nil)
+        #expect(parsed(["callbacks": [String: Any]()]) == nil)
+        #expect(parsed(["callbacks": "https://api.mindbox.ru"]) == nil)
+        #expect(PushDeliveryConfirmation(deliveredUrl: nil) == nil)
     }
 
     @Test(
@@ -46,12 +63,22 @@ struct PushDeliveryConfirmationTests {
         arguments: ["http://api.mindbox.ru/delivered", "ftp://api.mindbox.ru/delivered", "api.mindbox.ru/delivered", "https://", "", "https://exa mple.com/x"]
     )
     func invalidUrlNoConfirmation(string: String) {
-        #expect(PushDeliveryConfirmation(userInfo: userInfo(deliveredUrl: string)) == nil)
+        #expect(parsed(userInfo(deliveredUrl: string)) == nil)
     }
 
     @Test("A delivered URL that is not a string gives no confirmation")
     func nonStringUrlNoConfirmation() {
-        #expect(PushDeliveryConfirmation(userInfo: userInfo(deliveredUrl: 42)) == nil)
+        #expect(parsed(userInfo(deliveredUrl: 42)) == nil)
+    }
+
+    @Test("A push with broken callbacks still gives its image")
+    func brokenCallbacksKeepImage() {
+        var userInfo = userInfo(deliveredUrl: 42)
+        userInfo["imageUrl"] = NotificationTestFixtures.imageUrl
+        let payload = MindboxNotificationService().parse(request: NotificationTestFixtures.makeRequest(userInfo: userInfo))
+
+        #expect(payload?.withCallbacks == nil)
+        #expect(payload?.withImageURL?.imageUrl == NotificationTestFixtures.imageUrl)
     }
 
     // MARK: - Request

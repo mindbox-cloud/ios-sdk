@@ -22,6 +22,7 @@ extension MindboxNotificationService {
         var payload = Payload()
         payload.withButton = try? JSONDecoder().decode(Payload.Button.self, from: data)
         payload.withImageURL = try? JSONDecoder().decode(Payload.ImageURL.self, from: data)
+        payload.withCallbacks = try? JSONDecoder().decode(Payload.Callbacks.self, from: data)
 
         return payload
     }

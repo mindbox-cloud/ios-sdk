@@ -9,8 +9,6 @@ import Foundation
 
 struct PushDeliveryConfirmation: Equatable, Sendable {
 
-    static let callbacksKey = "callbacks"
-    static let deliveredUrlKey = "deliveredUrl"
     static let dateTimeOffsetName = "dateTimeOffset"
 
     let url: URL
@@ -21,10 +19,9 @@ struct PushDeliveryConfirmation: Equatable, Sendable {
         self.receivedAt = receivedAt
     }
 
-    init?(userInfo: [AnyHashable: Any], receivedAt: Date = Date()) {
-        guard let callbacks = userInfo[Self.callbacksKey] as? [AnyHashable: Any],
-              let string = callbacks[Self.deliveredUrlKey] as? String,
-              let url = URL(string: string),
+    init?(deliveredUrl: String?, receivedAt: Date = Date()) {
+        guard let deliveredUrl,
+              let url = URL(string: deliveredUrl),
               url.scheme?.lowercased() == "https",
               url.host?.isEmpty == false,
               URLComponents(url: url, resolvingAgainstBaseURL: false) != nil else {
