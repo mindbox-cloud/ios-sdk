@@ -43,10 +43,18 @@ extension MindboxNotificationService: MindboxNotificationServiceProtocol {
 
         pushDelivered(request)
 
+        let confirmation = getUserInfo(from: request).flatMap { PushDeliveryConfirmation(userInfo: $0) }
+        let encodedImageURL = parse(request: request)?.withImageURL?.imageUrl?.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)
+        let imageURL = encodedImageURL.flatMap { URL(string: $0) }
+
+        guard confirmation != nil || imageURL != nil else {
+            proceedFinalStage(bestAttemptContent)
+            return
+        }
+
         let pending = DispatchGroup()
 
-        if let userInfo = getUserInfo(from: request),
-           let confirmation = PushDeliveryConfirmation(userInfo: userInfo) {
+        if let confirmation {
             pending.enter()
             let sending = deliveryConfirmer.start(confirmation)
             Task {
@@ -55,11 +63,9 @@ extension MindboxNotificationService: MindboxNotificationServiceProtocol {
             }
         }
 
-        if let imageUrl = parse(request: request)?.withImageURL?.imageUrl,
-           let allowedUrl = imageUrl.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-           let url = URL(string: allowedUrl) {
+        if let imageURL {
             pending.enter()
-            downloadImage(with: url) {
+            downloadImage(with: imageURL) {
                 pending.leave()
             }
         }

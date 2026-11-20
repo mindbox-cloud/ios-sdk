@@ -99,22 +99,19 @@ struct MindboxNotificationServiceTests {
         #expect(received.attachments.isEmpty)
     }
 
-    @Test("didReceive without an image URL delivers immediately and without an attachment")
-    func didReceiveWithoutImageProceedsImmediately() async {
+    @Test("didReceive without an image URL and a delivered URL invokes the handler before it returns")
+    func didReceiveWithoutImageProceedsImmediately() {
         let request = NotificationTestFixtures.makeRequest(
             userInfo: NotificationTestFixtures.currentFormatUserInfo(includeImageUrl: false),
             title: "No image",
             body: "Body"
         )
+        var received: UNNotificationContent?
 
-        let received: UNNotificationContent = await withCheckedContinuation { continuation in
-            service.didReceive(request) { content in
-                continuation.resume(returning: content)
-            }
-        }
+        service.didReceive(request) { received = $0 }
 
-        #expect(received.categoryIdentifier == Constants.categoryIdentifier)
-        #expect(received.attachments.isEmpty)
+        #expect(received?.categoryIdentifier == Constants.categoryIdentifier)
+        #expect(received?.attachments.isEmpty == true)
         #expect(service.bestAttemptContent?.title == "No image")
     }
 
