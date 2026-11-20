@@ -118,6 +118,34 @@ struct MindboxNotificationServiceTests {
         #expect(service.bestAttemptContent?.title == "No image")
     }
 
+    @Test("didReceive with an image and a delivered URL confirms, attaches the image and invokes the handler once", arguments: [200, 500])
+    func didReceiveDownloadsImageAndConfirms(code: Int) async {
+        StubURLProtocol.reset()
+        StubURLProtocol.stubResponseData = NotificationTestFixtures.tinyPNGData()
+        URLProtocol.registerClass(StubURLProtocol.self)
+        defer {
+            URLProtocol.unregisterClass(StubURLProtocol.self)
+            StubURLProtocol.reset()
+        }
+
+        let host = PushDeliveryConfirmationStub.makeHost(answering: .status(code))
+        let store = PushDeliveryConfirmationStore.temporary()
+        service.deliveryConfirmer = PushDeliveryConfirmer(sender: .stubbed(), store: store)
+        var userInfo = NotificationTestFixtures.currentFormatUserInfo()
+        userInfo["callbacks"] = ["deliveredUrl": "https://\(host)/delivered"]
+        let request = NotificationTestFixtures.makeRequest(userInfo: userInfo, title: "Test title", body: "Test description")
+
+        let received: UNNotificationContent = await withCheckedContinuation { continuation in
+            service.didReceive(request) { continuation.resume(returning: $0) }
+        }
+
+        #expect(StubURLProtocol.handledRequestCount == 1)
+        #expect(PushDeliveryConfirmationStub.requests(to: host).count == 1)
+        #expect(store.fileNames.count == (code == 200 ? 0 : 1))
+        #expect(received.attachments.count == 1)
+        #expect(received.categoryIdentifier == Constants.categoryIdentifier)
+    }
+
     // MARK: - serviceExtensionTimeWillExpire()
 
     @Test("serviceExtensionTimeWillExpire delivers the stored best-attempt content")
