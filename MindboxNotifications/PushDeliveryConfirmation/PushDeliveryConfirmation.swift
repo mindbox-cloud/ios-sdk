@@ -44,7 +44,8 @@ struct PushDeliveryConfirmation: Equatable, Sendable {
         }
         let milliseconds = max(0, Int64((sentAt.timeIntervalSince(receivedAt) * 1000).rounded()))
         let offset = URLQueryItem(name: Self.dateTimeOffsetName, value: String(milliseconds))
-        components.percentEncodedQueryItems = (components.percentEncodedQueryItems ?? []) + [offset]
+        let otherItems = (components.percentEncodedQueryItems ?? []).filter { $0.name != Self.dateTimeOffsetName }
+        components.percentEncodedQueryItems = otherItems + [offset]
         return components.url ?? url
     }
 }

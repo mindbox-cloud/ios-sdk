@@ -129,6 +129,19 @@ struct PushDeliveryConfirmationTests {
         #expect(request.url?.absoluteString == "https://api.mindbox.ru/push/delivered?id=42&hash=a%2Bb%3D&name=%D1%8F&dateTimeOffset=500")
     }
 
+    @Test("dateTimeOffset already in the URL is replaced and the other parameters stay as they came", arguments: [
+        ("https://mbx.ru/d?dateTimeOffset=5&sig=1", "https://mbx.ru/d?sig=1&dateTimeOffset=500"),
+        ("https://mbx.ru/d?dateTimeOffset&sig=1", "https://mbx.ru/d?sig=1&dateTimeOffset=500"),
+        ("https://mbx.ru/d?dateTimeOffset=1&sig=1&dateTimeOffset=2", "https://mbx.ru/d?sig=1&dateTimeOffset=500"),
+        ("https://mbx.ru/d?dateTimeOffset=5&sig=1#frag", "https://mbx.ru/d?sig=1&dateTimeOffset=500#frag"),
+        ("https://mbx.ru/d?dateTimeOffsetX=1&sig=1", "https://mbx.ru/d?dateTimeOffsetX=1&sig=1&dateTimeOffset=500")
+    ])
+    func existingOffsetIsReplaced(url: String, expected: String) throws {
+        let request = try confirmation(url).request(sentAt: receivedAt.addingTimeInterval(0.5))
+
+        #expect(request.url?.absoluteString == expected)
+    }
+
     // MARK: - Headers
 
     @Test("The request carries the same four headers as the requests of the main module")
