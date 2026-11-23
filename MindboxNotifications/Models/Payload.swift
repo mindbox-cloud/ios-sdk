@@ -30,6 +30,15 @@ struct Payload {
         }
     }
 
+    struct Callbacks: Codable {
+        struct URLs: Codable {
+            let deliveredUrl: String?
+        }
+
+        let callbacks: URLs?
+    }
+
     var withImageURL: ImageURL?
     var withButton: Button?
+    var withCallbacks: Callbacks?
 }

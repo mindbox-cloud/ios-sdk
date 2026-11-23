@@ -1576,6 +1576,7 @@
 		F385631E2DB6729000D91208 /* InappConfigurationDataFacade */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = InappConfigurationDataFacade; sourceTree = "<group>"; };
 		F397DE1C2CFF568800B72DA9 /* JSONs */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = JSONs; sourceTree = "<group>"; };
 		F3DEB38C2D47CBA200D0EFA4 /* InappSessionManagerTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = InappSessionManagerTests; sourceTree = "<group>"; };
+		57A1B3230000000000000502 /* PushDeliveryConfirmation */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = PushDeliveryConfirmation; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1832,6 +1833,7 @@
 			isa = PBXGroup;
 			children = (
 				472F549F2C6E27770008C465 /* PushNotifications */,
+				57A1B3230000000000000502 /* PushDeliveryConfirmation */,
 				474770892C6B813700C36FC8 /* Utilities */,
 				3333C1BE2681DE6C00B60D84 /* Models */,
 				337EDF332636DA3F0089559F /* MindboxNotificationService.swift */,
@@ -4102,6 +4104,9 @@
 			buildRules = (
 			);
 			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				57A1B3230000000000000502 /* PushDeliveryConfirmation */,
 			);
 			name = MindboxNotifications;
 			productName = MindboxNotifications;

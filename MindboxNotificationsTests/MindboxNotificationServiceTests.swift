@@ -99,23 +99,76 @@ struct MindboxNotificationServiceTests {
         #expect(received.attachments.isEmpty)
     }
 
-    @Test("didReceive without an image URL delivers immediately and without an attachment")
-    func didReceiveWithoutImageProceedsImmediately() async {
+    @Test("didReceive without an image URL and a delivered URL invokes the handler before it returns")
+    func didReceiveWithoutImageProceedsImmediately() {
         let request = NotificationTestFixtures.makeRequest(
             userInfo: NotificationTestFixtures.currentFormatUserInfo(includeImageUrl: false),
             title: "No image",
             body: "Body"
         )
+        var received: UNNotificationContent?
 
-        let received: UNNotificationContent = await withCheckedContinuation { continuation in
-            service.didReceive(request) { content in
-                continuation.resume(returning: content)
-            }
+        service.didReceive(request) { received = $0 }
+
+        #expect(received?.categoryIdentifier == Constants.categoryIdentifier)
+        #expect(received?.attachments.isEmpty == true)
+        #expect(service.bestAttemptContent?.title == "No image")
+    }
+
+    @Test("didReceive with an image and a delivered URL confirms, attaches the image and invokes the handler once", arguments: [200, 500])
+    func didReceiveDownloadsImageAndConfirms(code: Int) async {
+        StubURLProtocol.reset()
+        StubURLProtocol.stubResponseData = NotificationTestFixtures.tinyPNGData()
+        URLProtocol.registerClass(StubURLProtocol.self)
+        defer {
+            URLProtocol.unregisterClass(StubURLProtocol.self)
+            StubURLProtocol.reset()
         }
 
+        let host = PushDeliveryConfirmationStub.makeHost(answering: .status(code))
+        let store = PushDeliveryConfirmationStore.temporary()
+        service.deliveryConfirmer = PushDeliveryConfirmer(sender: .stubbed(), store: store)
+        var userInfo = NotificationTestFixtures.currentFormatUserInfo()
+        userInfo["callbacks"] = ["deliveredUrl": "https://\(host)/delivered"]
+        let request = NotificationTestFixtures.makeRequest(userInfo: userInfo, title: "Test title", body: "Test description")
+
+        let received: UNNotificationContent = await withCheckedContinuation { continuation in
+            service.didReceive(request) { continuation.resume(returning: $0) }
+        }
+
+        #expect(StubURLProtocol.handledRequestCount == 1)
+        #expect(PushDeliveryConfirmationStub.requests(to: host).count == 1)
+        #expect(store.fileNames.count == (code == 200 ? 0 : 1))
+        #expect(received.attachments.count == 1)
         #expect(received.categoryIdentifier == Constants.categoryIdentifier)
-        #expect(received.attachments.isEmpty)
-        #expect(service.bestAttemptContent?.title == "No image")
+    }
+
+    @Test("didReceive waits for a slow confirmation after the image is loaded and removes the file before the handler")
+    func didReceiveFinishesConfirmationAfterImage() async {
+        StubURLProtocol.reset()
+        StubURLProtocol.stubResponseData = NotificationTestFixtures.tinyPNGData()
+        URLProtocol.registerClass(StubURLProtocol.self)
+        defer {
+            URLProtocol.unregisterClass(StubURLProtocol.self)
+            StubURLProtocol.reset()
+        }
+
+        let host = PushDeliveryConfirmationStub.makeHost(answering: .delayedStatus(200, after: 0.5))
+        let store = PushDeliveryConfirmationStore.temporary()
+        service.deliveryConfirmer = PushDeliveryConfirmer(sender: .stubbed(), store: store)
+        var userInfo = NotificationTestFixtures.currentFormatUserInfo()
+        userInfo["callbacks"] = ["deliveredUrl": "https://\(host)/delivered"]
+        let request = NotificationTestFixtures.makeRequest(userInfo: userInfo, title: "Test title", body: "Test description")
+        let started = Date()
+
+        let filesAtHandler: [String] = await withCheckedContinuation { continuation in
+            service.didReceive(request) { _ in continuation.resume(returning: store.fileNames) }
+        }
+
+        #expect(Date().timeIntervalSince(started) >= 0.5)
+        #expect(filesAtHandler.isEmpty)
+        #expect(service.bestAttemptContent?.attachments.count == 1)
+        #expect(PushDeliveryConfirmationStub.requests(to: host).count == 1)
     }
 
     // MARK: - serviceExtensionTimeWillExpire()
