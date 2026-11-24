@@ -10,12 +10,13 @@ import Foundation
 
 final class PushDeliveryConfirmationStub: URLProtocol {
 
-    enum Answer {
+    indirect enum Answer {
         case status(Int)
         case delayedStatus(Int, after: TimeInterval)
         case redirect(to: String)
         case failure(URLError.Code)
         case silence
+        case sequence([Answer])
     }
 
     private static let lock = NSLock()
@@ -60,8 +61,9 @@ final class PushDeliveryConfirmationStub: URLProtocol {
     override func startLoading() {
         guard let url = request.url, let host = url.host else { return }
         let answer = Self.lock.withLock {
+            let index = Self.received[host, default: []].count
             Self.received[host, default: []].append(request)
-            return Self.answers[host]
+            return Self.answers[host].map { Self.resolve($0, at: index) }
         }
         switch answer {
         case .status(let code):
@@ -80,12 +82,19 @@ final class PushDeliveryConfirmationStub: URLProtocol {
             client?.urlProtocolDidFinishLoading(self)
         case .failure(let code):
             client?.urlProtocol(self, didFailWithError: URLError(code))
-        case .silence, .none:
+        case .silence, .sequence, .none:
             break
         }
     }
 
     override func stopLoading() {}
+
+    private static func resolve(_ answer: Answer, at index: Int) -> Answer {
+        guard case .sequence(let answers) = answer, !answers.isEmpty else {
+            return answer
+        }
+        return resolve(answers[min(index, answers.count - 1)], at: index)
+    }
 
     private func respond(url: URL, code: Int, headers: [String: String]?) {
         guard let response = HTTPURLResponse(url: url, statusCode: code, httpVersion: nil, headerFields: headers) else {

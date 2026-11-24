@@ -127,7 +127,7 @@ struct MindboxNotificationServiceTests {
 
         let host = PushDeliveryConfirmationStub.makeHost(answering: .status(code))
         let store = PushDeliveryConfirmationStore.temporary()
-        service.deliveryConfirmer = PushDeliveryConfirmer(sender: .stubbed(), store: store)
+        service.deliveryConfirmer = PushDeliveryConfirmer(sender: .stubbed(), store: store, signal: {})
         var userInfo = NotificationTestFixtures.currentFormatUserInfo()
         userInfo["callbacks"] = ["deliveredUrl": "https://\(host)/delivered"]
         let request = NotificationTestFixtures.makeRequest(userInfo: userInfo, title: "Test title", body: "Test description")
@@ -137,13 +137,13 @@ struct MindboxNotificationServiceTests {
         }
 
         #expect(StubURLProtocol.handledRequestCount == 1)
-        #expect(PushDeliveryConfirmationStub.requests(to: host).count == 1)
-        #expect(store.fileNames.count == (code == 200 ? 0 : 1))
+        #expect(PushDeliveryConfirmationStub.requests(to: host).count == (code == 200 ? 1 : 3))
+        #expect(store.fileNames.count == 1)
         #expect(received.attachments.count == 1)
         #expect(received.categoryIdentifier == Constants.categoryIdentifier)
     }
 
-    @Test("didReceive waits for a slow confirmation after the image is loaded and removes the file before the handler")
+    @Test("didReceive waits for a slow confirmation after the image is loaded and marks the success before the handler")
     func didReceiveFinishesConfirmationAfterImage() async {
         StubURLProtocol.reset()
         StubURLProtocol.stubResponseData = NotificationTestFixtures.tinyPNGData()
@@ -155,7 +155,7 @@ struct MindboxNotificationServiceTests {
 
         let host = PushDeliveryConfirmationStub.makeHost(answering: .delayedStatus(200, after: 0.5))
         let store = PushDeliveryConfirmationStore.temporary()
-        service.deliveryConfirmer = PushDeliveryConfirmer(sender: .stubbed(), store: store)
+        service.deliveryConfirmer = PushDeliveryConfirmer(sender: .stubbed(), store: store, signal: {})
         var userInfo = NotificationTestFixtures.currentFormatUserInfo()
         userInfo["callbacks"] = ["deliveredUrl": "https://\(host)/delivered"]
         let request = NotificationTestFixtures.makeRequest(userInfo: userInfo, title: "Test title", body: "Test description")
@@ -166,9 +166,30 @@ struct MindboxNotificationServiceTests {
         }
 
         #expect(Date().timeIntervalSince(started) >= 0.5)
-        #expect(filesAtHandler.isEmpty)
+        #expect(filesAtHandler == ["last-success"])
         #expect(service.bestAttemptContent?.attachments.count == 1)
         #expect(PushDeliveryConfirmationStub.requests(to: host).count == 1)
+    }
+
+    @Test("The push is shown only after the third attempt")
+    func pushWaitsForAllAttempts() async {
+        let host = PushDeliveryConfirmationStub.makeHost(answering: .status(500))
+        service.deliveryConfirmer = PushDeliveryConfirmer(
+            sender: .stubbed(),
+            store: PushDeliveryConfirmationStore.temporary(),
+            signal: {}
+        )
+        var userInfo = NotificationTestFixtures.currentFormatUserInfo(includeImageUrl: false)
+        userInfo["callbacks"] = ["deliveredUrl": "https://\(host)/delivered"]
+        let request = NotificationTestFixtures.makeRequest(userInfo: userInfo, title: "Test title", body: "Test description")
+
+        let requestsAtHandler: Int = await withCheckedContinuation { continuation in
+            service.didReceive(request) { _ in
+                continuation.resume(returning: PushDeliveryConfirmationStub.requests(to: host).count)
+            }
+        }
+
+        #expect(requestsAtHandler == 3)
     }
 
     // MARK: - serviceExtensionTimeWillExpire()
