@@ -26,9 +26,9 @@ final class DateFormatMigration: MigrationProtocol {
     }()
 
     private lazy var legacyFormatters: [DateFormatter] = {
-        func make(_ identifier: String) -> DateFormatter {
+        func make(_ locale: Locale) -> DateFormatter {
             let formatter = DateFormatter()
-            formatter.locale = Locale(identifier: identifier)
+            formatter.locale = locale
             formatter.dateStyle = .full
             formatter.timeStyle = .full
             return formatter
@@ -53,10 +53,12 @@ final class DateFormatMigration: MigrationProtocol {
             return languageAndRegion + "@" + keywordString
         }
 
+        // Locale.current goes first as it is: only it carries the system 12/24-hour switch the value was written with.
         return [
-            make(base),
-            make(identifier(forcingHourCycle: "h23")),
-            make(identifier(forcingHourCycle: "h12"))
+            make(.current),
+            make(Locale(identifier: base)),
+            make(Locale(identifier: identifier(forcingHourCycle: "h23"))),
+            make(Locale(identifier: identifier(forcingHourCycle: "h12")))
         ]
     }()
 
