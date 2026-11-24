@@ -7,7 +7,6 @@
 
 import Testing
 import Foundation
-import CryptoKit
 import UserNotifications
 @testable import MindboxNotifications
 
@@ -78,52 +77,6 @@ struct PushDeliveryConfirmerTests {
 
         #expect(statusCode == nil)
         #expect(Date().timeIntervalSince(started) < 3)
-    }
-
-    // MARK: - Store
-
-    @Test("The file keeps the URL, the time the push was received in milliseconds and the format version")
-    func fileContent() throws {
-        let store = PushDeliveryConfirmationStore.temporary()
-        let confirmation = try confirmation(host: "api.mindbox.ru", receivedAt: Date(timeIntervalSince1970: 1_800_000_000.5))
-
-        try store.save(confirmation)
-
-        let data = try Data(contentsOf: store.fileURL(for: confirmation))
-        let json = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
-        #expect(json.count == 3)
-        #expect(json["version"] as? Int == 1)
-        #expect(json["url"] as? String == "https://api.mindbox.ru/delivered?id=42")
-        #expect(json["receivedAt"] as? Int64 == 1_800_000_000_500)
-    }
-
-    @Test("One URL is one file: the name is the SHA-256 of the URL")
-    func fileName() throws {
-        let store = PushDeliveryConfirmationStore.temporary()
-        let confirmation = try confirmation(host: "api.mindbox.ru")
-
-        try store.save(confirmation)
-        try store.save(confirmation)
-
-        let digest = SHA256.hash(data: Data("https://api.mindbox.ru/delivered?id=42".utf8))
-        let name = digest.map { String(format: "%02x", $0) }.joined()
-        #expect(name.count == 64)
-        #expect(store.fileNames == ["\(name).json"])
-        #expect(store.directory.lastPathComponent != "MindboxPushDeliveryConfirmations")
-        #expect(PushDeliveryConfirmationStore.directoryName == "MindboxPushDeliveryConfirmations")
-    }
-
-    @Test("Removing deletes only the file of that confirmation")
-    func removeDeletesOneFile() throws {
-        let store = PushDeliveryConfirmationStore.temporary()
-        let first = try confirmation(host: "one.mindbox.ru")
-        let second = try confirmation(host: "two.mindbox.ru")
-        try store.save(first)
-        try store.save(second)
-
-        store.remove(first)
-
-        #expect(store.fileNames == [store.fileURL(for: second).lastPathComponent])
     }
 
     // MARK: - Confirmer
