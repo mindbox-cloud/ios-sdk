@@ -138,7 +138,11 @@ struct MindboxNotificationServiceTests {
 
         #expect(StubURLProtocol.handledRequestCount == 1)
         #expect(PushDeliveryConfirmationStub.requests(to: host).count == (code == 200 ? 1 : 3))
-        #expect(store.fileNames.count == 1)
+        if code == 200 {
+            #expect(store.fileNames == ["last-success"])
+        } else {
+            #expect(store.fileExtensions == ["json"])
+        }
         #expect(received.attachments.count == 1)
         #expect(received.categoryIdentifier == Constants.categoryIdentifier)
     }

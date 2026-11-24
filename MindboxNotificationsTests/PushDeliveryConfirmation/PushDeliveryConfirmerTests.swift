@@ -101,8 +101,9 @@ struct PushDeliveryConfirmerTests {
     }
 
     @Test("The status code decides the outcome", arguments: [
-        (200, PushDeliveryConfirmer.Outcome.delivered), (204, .delivered),
-        (301, .rejected), (302, .rejected), (400, .rejected), (404, .rejected), (410, .rejected),
+        (200, PushDeliveryConfirmer.Outcome.delivered), (204, .delivered), (299, .delivered),
+        (300, .rejected), (301, .rejected), (302, .rejected), (399, .rejected),
+        (400, .rejected), (404, .rejected), (410, .rejected), (428, .rejected), (430, .rejected), (499, .rejected),
         (429, .retry), (500, .retry), (503, .retry), (199, .retry), (600, .retry)
     ])
     func outcome(code: Int, expected: PushDeliveryConfirmer.Outcome) {
@@ -190,6 +191,7 @@ struct PushDeliveryConfirmerTests {
         await confirmer.start(confirmation).value
 
         #expect(PushDeliveryConfirmationStub.requests(to: host).count == 3)
+        #expect(store.fileNames == [store.fileURL(for: confirmation, state: .released).lastPathComponent])
         let json = try jsonObject(at: store.fileURL(for: confirmation, state: .released))
         #expect(json["lastStatusCode"] == nil)
         #expect(json["lastAttemptAt"] != nil)
@@ -293,7 +295,14 @@ struct PushDeliveryConfirmerTests {
 
         let outcome = PushDeliveryConfirmer.outcome(of: code)
         #expect(PushDeliveryConfirmationStub.requests(to: host).count == (outcome == .retry ? 3 : 1))
-        #expect(store.fileNames.count == (outcome == .rejected ? 0 : 1))
+        switch outcome {
+        case .delivered:
+            #expect(store.fileNames == ["last-success"])
+        case .rejected:
+            #expect(store.fileNames.isEmpty)
+        case .retry:
+            #expect(store.fileExtensions == ["json"])
+        }
         #expect(content.title == "Test title")
         #expect(content.categoryIdentifier == Constants.categoryIdentifier)
     }
@@ -305,7 +314,7 @@ struct PushDeliveryConfirmerTests {
 
         let content = await show(userInfo: userInfo(host: host), confirmer: PushDeliveryConfirmer(sender: .stubbed(timeout: 0.3), store: store))
 
-        #expect(store.fileNames.count == 1)
+        #expect(store.fileExtensions == ["json"])
         #expect(content.categoryIdentifier == Constants.categoryIdentifier)
     }
 

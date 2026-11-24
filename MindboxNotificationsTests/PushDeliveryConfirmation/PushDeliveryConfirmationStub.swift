@@ -122,4 +122,8 @@ extension PushDeliveryConfirmationStore {
     var fileNames: [String] {
         (try? FileManager.default.contentsOfDirectory(atPath: directory.path)) ?? []
     }
+
+    var fileExtensions: [String] {
+        fileNames.map { ($0 as NSString).pathExtension }
+    }
 }
