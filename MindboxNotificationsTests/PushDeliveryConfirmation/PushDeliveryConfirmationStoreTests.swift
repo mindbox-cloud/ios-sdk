@@ -155,10 +155,4 @@ struct PushDeliveryConfirmationStoreTests {
         #expect(PushDeliveryConfirmationStore.pendingExtension == "pending")
         #expect(PushDeliveryConfirmationStore.releasedExtension == "json")
     }
-
-    @Test("The signal name carries the host bundle identifier")
-    func signalName() {
-        #expect(PushDeliveryConfirmationSignal.name(hostBundleIdentifier: "cloud.mindbox.app")
-                == "cloud.Mindbox.pushDeliveryConfirmation.cloud.mindbox.app")
-    }
 }

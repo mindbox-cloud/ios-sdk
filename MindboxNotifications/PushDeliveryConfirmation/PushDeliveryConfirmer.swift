@@ -20,24 +20,21 @@ final class PushDeliveryConfirmer: Sendable {
     private let sender: PushDeliveryConfirmationSender
     private let store: PushDeliveryConfirmationStore?
     private let now: @Sendable () -> Date
-    private let signal: @Sendable () -> Void
 
     init(
         sender: PushDeliveryConfirmationSender = PushDeliveryConfirmationSender(),
         store: PushDeliveryConfirmationStore? = PushDeliveryConfirmationStore(),
-        now: @escaping @Sendable () -> Date = { Date() },
-        signal: @escaping @Sendable () -> Void = { PushDeliveryConfirmationSignal.post() }
+        now: @escaping @Sendable () -> Date = { Date() }
     ) {
         self.sender = sender
         self.store = store
         self.now = now
-        self.signal = signal
     }
 
     @discardableResult
     func start(_ confirmation: PushDeliveryConfirmation, completion: (@Sendable () -> Void)? = nil) -> Task<Void, Never> {
         try? store?.save(confirmation)
-        return Task { [sender, store, now, signal] in
+        return Task { [sender, store, now] in
             var lastStatusCode: Int?
             for _ in 0..<Self.maxAttempts {
                 lastStatusCode = await sender.send(confirmation, sentAt: now())
@@ -45,7 +42,6 @@ final class PushDeliveryConfirmer: Sendable {
                 case .delivered:
                     store?.remove(confirmation)
                     try? store?.markSuccess(at: now())
-                    signal()
                     completion?()
                     return
                 case .rejected:
@@ -57,7 +53,6 @@ final class PushDeliveryConfirmer: Sendable {
                 }
             }
             try? store?.release(confirmation, lastStatusCode: lastStatusCode, lastAttemptAt: now())
-            signal()
             completion?()
         }
     }
