@@ -8,7 +8,7 @@
 import Testing
 import Foundation
 import CryptoKit
-@testable import MindboxNotifications
+@_spi(Internal) @testable import MindboxNotifications
 
 @Suite("Push delivery confirmation: the record on disk", .tags(.notifications, .pushDeliveryConfirmation))
 struct PushDeliveryConfirmationStoreTests {
@@ -58,7 +58,7 @@ struct PushDeliveryConfirmationStoreTests {
 
         #expect(store.fileNames == ["\(hash).pending"])
         #expect(store.directory.lastPathComponent != "MindboxPushDeliveryConfirmations")
-        #expect(PushDeliveryConfirmationStore.directoryName == "MindboxPushDeliveryConfirmations")
+        #expect(PushDeliveryConfirmationRecord.directoryName == "MindboxPushDeliveryConfirmations")
     }
 
     @Test("Releasing writes .json with the last answer and removes .pending")
@@ -133,7 +133,7 @@ struct PushDeliveryConfirmationStoreTests {
 
         try store.markSuccess(at: Date(timeIntervalSince1970: 1_800_000_000.5))
 
-        #expect(PushDeliveryConfirmationStore.successMarkerName == "last-success")
+        #expect(PushDeliveryConfirmationRecord.successMarkerName == "last-success")
         let text = try String(contentsOf: store.directory.appendingPathComponent("last-success"), encoding: .utf8)
         #expect(text == "1800000000500")
     }
@@ -152,7 +152,7 @@ struct PushDeliveryConfirmationStoreTests {
 
     @Test("The file extensions of the two states are fixed")
     func stateExtensions() {
-        #expect(PushDeliveryConfirmationStore.pendingExtension == "pending")
-        #expect(PushDeliveryConfirmationStore.releasedExtension == "json")
+        #expect(PushDeliveryConfirmationRecord.pendingExtension == "pending")
+        #expect(PushDeliveryConfirmationRecord.releasedExtension == "json")
     }
 }

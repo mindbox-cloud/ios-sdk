@@ -7,6 +7,10 @@
 
 import Foundation
 import CryptoKit
+#if SWIFT_PACKAGE
+@_spi(Internal)
+import MindboxShared
+#endif
 
 struct PushDeliveryConfirmationStore: Sendable {
 
@@ -14,12 +18,6 @@ struct PushDeliveryConfirmationStore: Sendable {
         case pending
         case released
     }
-
-    static let directoryName = "MindboxPushDeliveryConfirmations"
-    static let formatVersion = 1
-    static let pendingExtension = "pending"
-    static let releasedExtension = "json"
-    static let successMarkerName = "last-success"
 
     let directory: URL
 
@@ -31,7 +29,7 @@ struct PushDeliveryConfirmationStore: Sendable {
         guard let container = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupIdentifier) else {
             return nil
         }
-        self.init(directory: container.appendingPathComponent(Self.directoryName, isDirectory: true))
+        self.init(directory: container.appendingPathComponent(PushDeliveryConfirmationRecord.directoryName, isDirectory: true))
     }
 
     init?(hostBundle: Bundle = PushDeliveryConfirmationHeaders.hostApplicationBundle()) {
@@ -42,11 +40,11 @@ struct PushDeliveryConfirmationStore: Sendable {
     }
 
     func save(_ confirmation: PushDeliveryConfirmation) throws {
-        try write(Record(confirmation), to: fileURL(for: confirmation, state: .pending))
+        try write(record(of: confirmation), to: fileURL(for: confirmation, state: .pending))
     }
 
     func release(_ confirmation: PushDeliveryConfirmation, lastStatusCode: Int?, lastAttemptAt: Date) throws {
-        let record = Record(confirmation, lastStatusCode: lastStatusCode, lastAttemptAt: Self.milliseconds(lastAttemptAt))
+        let record = record(of: confirmation, lastStatusCode: lastStatusCode, lastAttemptAt: Self.milliseconds(lastAttemptAt))
         try write(record, to: fileURL(for: confirmation, state: .released))
         try? FileManager.default.removeItem(at: fileURL(for: confirmation, state: .pending))
     }
@@ -58,18 +56,18 @@ struct PushDeliveryConfirmationStore: Sendable {
 
     func markSuccess(at date: Date) throws {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        let marker = directory.appendingPathComponent(Self.successMarkerName)
+        let marker = directory.appendingPathComponent(PushDeliveryConfirmationRecord.successMarkerName)
         try Data(String(Self.milliseconds(date)).utf8).write(to: marker, options: [.atomic, .noFileProtection])
     }
 
     func fileURL(for confirmation: PushDeliveryConfirmation, state: State) -> URL {
         let digest = SHA256.hash(data: Data(confirmation.url.absoluteString.utf8))
         let name = digest.map { String(format: "%02x", $0) }.joined()
-        let pathExtension = state == .pending ? Self.pendingExtension : Self.releasedExtension
+        let pathExtension = state == .pending ? PushDeliveryConfirmationRecord.pendingExtension : PushDeliveryConfirmationRecord.releasedExtension
         return directory.appendingPathComponent(name).appendingPathExtension(pathExtension)
     }
 
-    private func write(_ record: Record, to url: URL) throws {
+    private func write(_ record: PushDeliveryConfirmationRecord, to url: URL) throws {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         try JSONEncoder().encode(record).write(to: url, options: [.atomic, .noFileProtection])
     }
@@ -78,19 +76,16 @@ struct PushDeliveryConfirmationStore: Sendable {
         Int64((date.timeIntervalSince1970 * 1000).rounded())
     }
 
-    struct Record: Codable, Equatable {
-        let version: Int
-        let url: String
-        let receivedAt: Int64
-        let lastStatusCode: Int?
-        let lastAttemptAt: Int64?
-
-        init(_ confirmation: PushDeliveryConfirmation, lastStatusCode: Int? = nil, lastAttemptAt: Int64? = nil) {
-            self.version = PushDeliveryConfirmationStore.formatVersion
-            self.url = confirmation.url.absoluteString
-            self.receivedAt = PushDeliveryConfirmationStore.milliseconds(confirmation.receivedAt)
-            self.lastStatusCode = lastStatusCode
-            self.lastAttemptAt = lastAttemptAt
-        }
+    private func record(
+        of confirmation: PushDeliveryConfirmation,
+        lastStatusCode: Int? = nil,
+        lastAttemptAt: Int64? = nil
+    ) -> PushDeliveryConfirmationRecord {
+        PushDeliveryConfirmationRecord(
+            url: confirmation.url.absoluteString,
+            receivedAt: Self.milliseconds(confirmation.receivedAt),
+            lastStatusCode: lastStatusCode,
+            lastAttemptAt: lastAttemptAt
+        )
     }
 }

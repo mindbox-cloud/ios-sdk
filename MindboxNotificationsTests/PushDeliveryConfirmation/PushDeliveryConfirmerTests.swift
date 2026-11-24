@@ -8,7 +8,7 @@
 import Testing
 import Foundation
 import UserNotifications
-@testable import MindboxNotifications
+@_spi(Internal) @testable import MindboxNotifications
 
 @Suite("Push delivery confirmation: sending, file and the push itself", .tags(.notifications, .pushDeliveryConfirmation))
 struct PushDeliveryConfirmerTests {
@@ -248,7 +248,7 @@ struct PushDeliveryConfirmerTests {
 
         #expect(store.fileNames == [store.fileURL(for: confirmation, state: .released).lastPathComponent])
         let data = try Data(contentsOf: store.fileURL(for: confirmation, state: .released))
-        let record = try JSONDecoder().decode(PushDeliveryConfirmationStore.Record.self, from: data)
+        let record = try JSONDecoder().decode(PushDeliveryConfirmationRecord.self, from: data)
         #expect(record.url == confirmation.url.absoluteString)
         #expect(record.lastStatusCode == 500)
     }
