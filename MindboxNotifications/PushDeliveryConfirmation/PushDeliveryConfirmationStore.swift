@@ -59,7 +59,7 @@ struct PushDeliveryConfirmationStore: Sendable {
     func markSuccess(at date: Date) throws {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         let marker = directory.appendingPathComponent(Self.successMarkerName)
-        try Data(String(Self.milliseconds(date)).utf8).write(to: marker, options: .atomic)
+        try Data(String(Self.milliseconds(date)).utf8).write(to: marker, options: [.atomic, .noFileProtection])
     }
 
     func fileURL(for confirmation: PushDeliveryConfirmation, state: State) -> URL {
@@ -71,7 +71,7 @@ struct PushDeliveryConfirmationStore: Sendable {
 
     private func write(_ record: Record, to url: URL) throws {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        try JSONEncoder().encode(record).write(to: url, options: .atomic)
+        try JSONEncoder().encode(record).write(to: url, options: [.atomic, .noFileProtection])
     }
 
     private static func milliseconds(_ date: Date) -> Int64 {
