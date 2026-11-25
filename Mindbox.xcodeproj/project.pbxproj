@@ -383,6 +383,8 @@
 		986B2479A2C7969324CA1015 /* TrackingIdsResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E1E9D502F1866744D395EEA /* TrackingIdsResolverTests.swift */; };
 		9B9C953A292111A700BB29DA /* MockNotificationCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B9C9536292111A700BB29DA /* MockNotificationCenter.swift */; };
 		9B9C953B292111A700BB29DA /* MockDateProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B9C9537292111A700BB29DA /* MockDateProvider.swift */; };
+		57A1B3A10000000000000003 /* PushDeliveryConfirmationRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57A1B3A10000000000000002 /* PushDeliveryConfirmationRecord.swift */; };
+		57A1B3A10000000000000004 /* PushDeliveryConfirmationRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57A1B3A10000000000000002 /* PushDeliveryConfirmationRecord.swift */; };
 		9BC24E6F28F694EA00C2619C /* SDKVersionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BC24E6E28F694CA00C2619C /* SDKVersionProvider.swift */; };
 		9BC24E7028F694EB00C2619C /* SDKVersionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BC24E6E28F694CA00C2619C /* SDKVersionProvider.swift */; };
 		9BC24E7428F6953D00C2619C /* InAppConfigurationAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BC24E7228F6953D00C2619C /* InAppConfigurationAPI.swift */; };
@@ -1181,6 +1183,7 @@
 		9B9C9536292111A700BB29DA /* MockNotificationCenter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MockNotificationCenter.swift; sourceTree = "<group>"; };
 		9B9C9537292111A700BB29DA /* MockDateProvider.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MockDateProvider.swift; sourceTree = "<group>"; };
 		9BC24E6D28F694CA00C2619C /* SDKVersionConfig.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = SDKVersionConfig.xcconfig; sourceTree = "<group>"; };
+		57A1B3A10000000000000002 /* PushDeliveryConfirmationRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushDeliveryConfirmationRecord.swift; sourceTree = "<group>"; };
 		9BC24E6E28F694CA00C2619C /* SDKVersionProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SDKVersionProvider.swift; sourceTree = "<group>"; };
 		9BC24E7228F6953D00C2619C /* InAppConfigurationAPI.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InAppConfigurationAPI.swift; sourceTree = "<group>"; };
 		9BC24E7328F6953D00C2619C /* ConfigResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ConfigResponse.swift; sourceTree = "<group>"; };
@@ -1683,6 +1686,7 @@
 				3333C1992681D3CF00B60D84 /* MindboxNotifications */,
 				471D4C2D2FEECF8800856EA5 /* MindboxNotificationsTests */,
 				9BC24E6C28F694CA00C2619C /* SDKVersionProvider */,
+				57A1B3A10000000000000001 /* MindboxShared */,
 				A17853BF29AF7E940072578F /* MindboxLogger */,
 				47D395612E72186600C44CFE /* Frameworks */,
 				313B233125ADEA0F00A1CB72 /* Products */,
@@ -2907,6 +2911,14 @@
 			);
 			name = UUIDDebugService;
 			path = Utilities/UUIDDebugService;
+			sourceTree = "<group>";
+		};
+		57A1B3A10000000000000001 /* MindboxShared */ = {
+			isa = PBXGroup;
+			children = (
+				57A1B3A10000000000000002 /* PushDeliveryConfirmationRecord.swift */,
+			);
+			path = MindboxShared;
 			sourceTree = "<group>";
 		};
 		9BC24E6C28F694CA00C2619C /* SDKVersionProvider */ = {
@@ -4695,6 +4707,7 @@
 				337A47362654F995000DC613 /* OperationBodyRequest.swift in Sources */,
 				F34A45AE2B7628B700634C8B /* MBPushNotification.swift in Sources */,
 				9BC24E6F28F694EA00C2619C /* SDKVersionProvider.swift in Sources */,
+				57A1B3A10000000000000003 /* PushDeliveryConfirmationRecord.swift in Sources */,
 				47B1B6AB2F6174FB000A4B67 /* WebViewLocalStateStorage.swift in Sources */,
 				6FDD144D266F7C6600A50C35 /* AmountTypeResponse.swift in Sources */,
 				F39117012AA9B68B00852298 /* ElementsFilter.swift in Sources */,
@@ -5056,6 +5069,7 @@
 				474851C52C6A62AE0026C38E /* NotificationContent.swift in Sources */,
 				472F54A72C6E28030008C465 /* NotificationFormatter.swift in Sources */,
 				9BC24E7028F694EB00C2619C /* SDKVersionProvider.swift in Sources */,
+				57A1B3A10000000000000004 /* PushDeliveryConfirmationRecord.swift in Sources */,
 				474851C32C6A627F0026C38E /* Constants.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

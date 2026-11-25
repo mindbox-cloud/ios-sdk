@@ -9,31 +9,75 @@ import Foundation
 
 final class PushDeliveryConfirmer: Sendable {
 
+    static let maxAttempts = 3
+    static let attemptInterval: TimeInterval = 3
+
+    enum Outcome: Equatable {
+        case delivered
+        case rejected
+        case retry
+    }
+
     private let sender: PushDeliveryConfirmationSender
     private let store: PushDeliveryConfirmationStore?
+    private let attemptInterval: TimeInterval
+    private let now: @Sendable () -> Date
 
     init(
         sender: PushDeliveryConfirmationSender = PushDeliveryConfirmationSender(),
-        store: PushDeliveryConfirmationStore? = PushDeliveryConfirmationStore()
+        store: PushDeliveryConfirmationStore? = PushDeliveryConfirmationStore(),
+        attemptInterval: TimeInterval = PushDeliveryConfirmer.attemptInterval,
+        now: @escaping @Sendable () -> Date = { Date() }
     ) {
         self.sender = sender
         self.store = store
+        self.attemptInterval = attemptInterval
+        self.now = now
     }
 
     @discardableResult
     func start(_ confirmation: PushDeliveryConfirmation, completion: (@Sendable () -> Void)? = nil) -> Task<Void, Never> {
         try? store?.save(confirmation)
-        return Task { [sender, store] in
-            let statusCode = await sender.send(confirmation)
-            if Self.closesConfirmation(statusCode) {
-                store?.remove(confirmation)
+        let startedAt = ProcessInfo.processInfo.systemUptime
+        return Task { [sender, store, attemptInterval, now] in
+            var lastStatusCode: Int?
+            for attempt in 0..<Self.maxAttempts {
+                await Self.wait(untilUptime: startedAt + Double(attempt) * attemptInterval)
+                lastStatusCode = await sender.send(confirmation, sentAt: now())
+                switch Self.outcome(of: lastStatusCode) {
+                case .delivered:
+                    store?.remove(confirmation)
+                    try? store?.markSuccess(at: now())
+                    completion?()
+                    return
+                case .rejected:
+                    store?.remove(confirmation)
+                    completion?()
+                    return
+                case .retry:
+                    continue
+                }
             }
+            try? store?.release(confirmation, lastStatusCode: lastStatusCode, lastAttemptAt: now())
             completion?()
         }
     }
 
-    static func closesConfirmation(_ statusCode: Int?) -> Bool {
-        guard let statusCode else { return false }
-        return (200..<300).contains(statusCode) || ((400..<500).contains(statusCode) && statusCode != 429)
+    private static func wait(untilUptime uptime: TimeInterval) async {
+        let remaining = uptime - ProcessInfo.processInfo.systemUptime
+        guard remaining > 0 else { return }
+        try? await Task.sleep(nanoseconds: UInt64(remaining * 1_000_000_000))
+    }
+
+    static func outcome(of statusCode: Int?) -> Outcome {
+        guard let statusCode else { return .retry }
+        switch statusCode {
+        case 200..<300:
+            return .delivered
+        case 300..<500 where statusCode != 429:
+            return .rejected
+        default:
+            return .retry
+        }
     }
 }
