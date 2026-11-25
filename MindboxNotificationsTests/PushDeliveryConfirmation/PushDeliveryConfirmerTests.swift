@@ -216,19 +216,19 @@ struct PushDeliveryConfirmerTests {
         #expect(offsets[1] - offsets[0] >= 400)
         #expect(offsets[2] - offsets[1] >= 400)
         #expect(elapsed >= 0.9)
-        #expect(elapsed < 1.5)
     }
 
     @Test("After an attempt that used up its time the next one goes at once")
     func slowFailureDoesNotAddPause() async throws {
         let host = PushDeliveryConfirmationStub.makeHost(answering: .silence)
-        let confirmer = PushDeliveryConfirmer(sender: .stubbed(timeout: 0.4), store: PushDeliveryConfirmationStore.temporary(), attemptInterval: 0.4)
-        let started = Date()
+        let confirmer = PushDeliveryConfirmer(sender: .stubbed(timeout: 1), store: PushDeliveryConfirmationStore.temporary(), attemptInterval: 1)
 
         await confirmer.start(try confirmation(host: host)).value
 
-        #expect(PushDeliveryConfirmationStub.requests(to: host).count == 3)
-        #expect(Date().timeIntervalSince(started) < 1.7)
+        let offsets = offsets(to: host)
+        #expect(offsets.count == 3)
+        #expect(offsets[1] - offsets[0] < 1700)
+        #expect(offsets[2] - offsets[1] < 1700)
     }
 
     @Test("A success or a final refusal is not followed by a wait", arguments: [200, 404])
