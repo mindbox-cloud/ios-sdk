@@ -119,7 +119,7 @@ struct PushDeliveryConfirmerTests {
     func fileIsWrittenBeforeRequest() async throws {
         let host = PushDeliveryConfirmationStub.makeHost(answering: .silence)
         let store = PushDeliveryConfirmationStore.temporary()
-        let confirmer = PushDeliveryConfirmer(sender: .stubbed(timeout: 0.2), store: store)
+        let confirmer = PushDeliveryConfirmer(sender: .stubbed(timeout: 0.2), store: store, attemptInterval: 0)
         let confirmation = try confirmation(host: host)
 
         let sending = confirmer.start(confirmation)
@@ -132,7 +132,7 @@ struct PushDeliveryConfirmerTests {
     func succeedsAtOnce() async throws {
         let host = PushDeliveryConfirmationStub.makeHost(answering: .status(200))
         let store = PushDeliveryConfirmationStore.temporary()
-        let confirmer = PushDeliveryConfirmer(sender: .stubbed(), store: store)
+        let confirmer = PushDeliveryConfirmer(sender: .stubbed(), store: store, attemptInterval: 0)
 
         await confirmer.start(try confirmation(host: host)).value
 
@@ -144,7 +144,7 @@ struct PushDeliveryConfirmerTests {
     func succeedsOnThirdAttempt() async throws {
         let host = PushDeliveryConfirmationStub.makeHost(answering: .sequence([.status(500), .status(500), .status(200)]))
         let store = PushDeliveryConfirmationStore.temporary()
-        let confirmer = PushDeliveryConfirmer(sender: .stubbed(), store: store)
+        let confirmer = PushDeliveryConfirmer(sender: .stubbed(), store: store, attemptInterval: 0)
 
         await confirmer.start(try confirmation(host: host)).value
 
@@ -157,7 +157,7 @@ struct PushDeliveryConfirmerTests {
         let host = PushDeliveryConfirmationStub.makeHost(answering: .status(code))
         let store = PushDeliveryConfirmationStore.temporary()
         let now = Date(timeIntervalSince1970: 1_800_000_010)
-        let confirmer = PushDeliveryConfirmer(sender: .stubbed(), store: store, now: { now })
+        let confirmer = PushDeliveryConfirmer(sender: .stubbed(), store: store, attemptInterval: 0, now: { now })
         let confirmation = try confirmation(host: host)
 
         await confirmer.start(confirmation).value
@@ -173,7 +173,7 @@ struct PushDeliveryConfirmerTests {
     func refusalStops(code: Int) async throws {
         let host = PushDeliveryConfirmationStub.makeHost(answering: .status(code))
         let store = PushDeliveryConfirmationStore.temporary()
-        let confirmer = PushDeliveryConfirmer(sender: .stubbed(), store: store)
+        let confirmer = PushDeliveryConfirmer(sender: .stubbed(), store: store, attemptInterval: 0)
 
         await confirmer.start(try confirmation(host: host)).value
 
@@ -185,7 +185,7 @@ struct PushDeliveryConfirmerTests {
     func silenceHandsOver() async throws {
         let host = PushDeliveryConfirmationStub.makeHost(answering: .silence)
         let store = PushDeliveryConfirmationStore.temporary()
-        let confirmer = PushDeliveryConfirmer(sender: .stubbed(timeout: 0.2), store: store)
+        let confirmer = PushDeliveryConfirmer(sender: .stubbed(timeout: 0.2), store: store, attemptInterval: 0)
         let confirmation = try confirmation(host: host)
 
         await confirmer.start(confirmation).value
@@ -197,22 +197,55 @@ struct PushDeliveryConfirmerTests {
         #expect(json["lastAttemptAt"] != nil)
     }
 
-    @Test("The next attempt goes at once, without a pause")
-    func noPauseBetweenAttempts() async throws {
-        let host = PushDeliveryConfirmationStub.makeHost(answering: .status(500))
-        let confirmer = PushDeliveryConfirmer(sender: .stubbed(), store: PushDeliveryConfirmationStore.temporary())
+    @Test("The attempts start 3 seconds apart by default")
+    func defaultAttemptIntervalIsThreeSeconds() {
+        #expect(PushDeliveryConfirmer.attemptInterval == 3)
+    }
+
+    @Test("After a fast failure the next attempt waits for its time", arguments: [429, 500])
+    func fastFailureWaitsForNextAttempt(code: Int) async throws {
+        let host = PushDeliveryConfirmationStub.makeHost(answering: .status(code))
+        let confirmer = PushDeliveryConfirmer(sender: .stubbed(), store: PushDeliveryConfirmationStore.temporary(), attemptInterval: 0.5)
+        let started = Date()
+
+        await confirmer.start(try confirmation(host: host)).value
+
+        let elapsed = Date().timeIntervalSince(started)
+        let offsets = offsets(to: host)
+        #expect(offsets.count == 3)
+        #expect(offsets[1] - offsets[0] >= 400)
+        #expect(offsets[2] - offsets[1] >= 400)
+        #expect(elapsed >= 0.9)
+        #expect(elapsed < 1.5)
+    }
+
+    @Test("After an attempt that used up its time the next one goes at once")
+    func slowFailureDoesNotAddPause() async throws {
+        let host = PushDeliveryConfirmationStub.makeHost(answering: .silence)
+        let confirmer = PushDeliveryConfirmer(sender: .stubbed(timeout: 0.4), store: PushDeliveryConfirmationStore.temporary(), attemptInterval: 0.4)
         let started = Date()
 
         await confirmer.start(try confirmation(host: host)).value
 
         #expect(PushDeliveryConfirmationStub.requests(to: host).count == 3)
+        #expect(Date().timeIntervalSince(started) < 1.7)
+    }
+
+    @Test("A success or a final refusal is not followed by a wait", arguments: [200, 404])
+    func closedConfirmationDoesNotWait(code: Int) async throws {
+        let host = PushDeliveryConfirmationStub.makeHost(answering: .status(code))
+        let confirmer = PushDeliveryConfirmer(sender: .stubbed(), store: PushDeliveryConfirmationStore.temporary(), attemptInterval: 2)
+        let started = Date()
+
+        await confirmer.start(try confirmation(host: host)).value
+
         #expect(Date().timeIntervalSince(started) < 1)
     }
 
     @Test("Every attempt recomputes dateTimeOffset from the receive time")
     func offsetGrows() async throws {
         let host = PushDeliveryConfirmationStub.makeHost(answering: .delayedStatus(500, after: 0.2))
-        let confirmer = PushDeliveryConfirmer(sender: .stubbed(), store: PushDeliveryConfirmationStore.temporary())
+        let confirmer = PushDeliveryConfirmer(sender: .stubbed(), store: PushDeliveryConfirmationStore.temporary(), attemptInterval: 0)
 
         await confirmer.start(try confirmation(host: host, receivedAt: Date().addingTimeInterval(-5))).value
 
@@ -226,7 +259,7 @@ struct PushDeliveryConfirmerTests {
     func withoutStoreStillTriesThreeTimes() async throws {
         let host = PushDeliveryConfirmationStub.makeHost(answering: .status(500))
         let completions = Counter()
-        let confirmer = PushDeliveryConfirmer(sender: .stubbed(), store: nil)
+        let confirmer = PushDeliveryConfirmer(sender: .stubbed(), store: nil, attemptInterval: 0)
 
         await confirmer.start(try confirmation(host: host)) { completions.increment() }.value
 
@@ -238,7 +271,7 @@ struct PushDeliveryConfirmerTests {
     func sameUrlTwiceLeavesOneConsistentRecord() async throws {
         let host = PushDeliveryConfirmationStub.makeHost(answering: .status(500))
         let store = PushDeliveryConfirmationStore.temporary()
-        let confirmer = PushDeliveryConfirmer(sender: .stubbed(), store: store)
+        let confirmer = PushDeliveryConfirmer(sender: .stubbed(), store: store, attemptInterval: 0)
         let confirmation = try confirmation(host: host)
 
         let first = confirmer.start(confirmation)
@@ -257,7 +290,7 @@ struct PushDeliveryConfirmerTests {
     func requestOutlivesConfirmer() async throws {
         let host = PushDeliveryConfirmationStub.makeHost(answering: .status(200))
         let store = PushDeliveryConfirmationStore.temporary()
-        var confirmer: PushDeliveryConfirmer? = PushDeliveryConfirmer(sender: .stubbed(), store: store)
+        var confirmer: PushDeliveryConfirmer? = PushDeliveryConfirmer(sender: .stubbed(), store: store, attemptInterval: 0)
 
         let sending = confirmer?.start(try confirmation(host: host))
         confirmer = nil
@@ -291,7 +324,7 @@ struct PushDeliveryConfirmerTests {
         let host = PushDeliveryConfirmationStub.makeHost(answering: .status(code))
         let store = PushDeliveryConfirmationStore.temporary()
 
-        let content = await show(userInfo: userInfo(host: host), confirmer: PushDeliveryConfirmer(sender: .stubbed(), store: store))
+        let content = await show(userInfo: userInfo(host: host), confirmer: PushDeliveryConfirmer(sender: .stubbed(), store: store, attemptInterval: 0))
 
         let outcome = PushDeliveryConfirmer.outcome(of: code)
         #expect(PushDeliveryConfirmationStub.requests(to: host).count == (outcome == .retry ? 3 : 1))
@@ -312,7 +345,7 @@ struct PushDeliveryConfirmerTests {
         let host = PushDeliveryConfirmationStub.makeHost(answering: .silence)
         let store = PushDeliveryConfirmationStore.temporary()
 
-        let content = await show(userInfo: userInfo(host: host), confirmer: PushDeliveryConfirmer(sender: .stubbed(timeout: 0.3), store: store))
+        let content = await show(userInfo: userInfo(host: host), confirmer: PushDeliveryConfirmer(sender: .stubbed(timeout: 0.3), store: store, attemptInterval: 0))
 
         #expect(store.fileExtensions == ["json"])
         #expect(content.categoryIdentifier == Constants.categoryIdentifier)
@@ -322,7 +355,7 @@ struct PushDeliveryConfirmerTests {
     func didReceiveWithoutUrl() async {
         let store = PushDeliveryConfirmationStore.temporary()
 
-        let content = await show(userInfo: userInfo(host: nil), confirmer: PushDeliveryConfirmer(sender: .stubbed(), store: store))
+        let content = await show(userInfo: userInfo(host: nil), confirmer: PushDeliveryConfirmer(sender: .stubbed(), store: store, attemptInterval: 0))
 
         #expect(store.fileNames.isEmpty)
         #expect(content.categoryIdentifier == Constants.categoryIdentifier)
@@ -337,7 +370,7 @@ struct PushDeliveryConfirmerTests {
         aps["imageUrl"] = nil
         userInfo["aps"] = aps
 
-        _ = await show(userInfo: userInfo, confirmer: PushDeliveryConfirmer(sender: .stubbed(), store: nil))
+        _ = await show(userInfo: userInfo, confirmer: PushDeliveryConfirmer(sender: .stubbed(), store: nil, attemptInterval: 0))
 
         #expect(PushDeliveryConfirmationStub.requests(to: host).count == 1)
     }

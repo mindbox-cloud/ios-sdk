@@ -127,7 +127,7 @@ struct MindboxNotificationServiceTests {
 
         let host = PushDeliveryConfirmationStub.makeHost(answering: .status(code))
         let store = PushDeliveryConfirmationStore.temporary()
-        service.deliveryConfirmer = PushDeliveryConfirmer(sender: .stubbed(), store: store)
+        service.deliveryConfirmer = PushDeliveryConfirmer(sender: .stubbed(), store: store, attemptInterval: 0)
         var userInfo = NotificationTestFixtures.currentFormatUserInfo()
         userInfo["callbacks"] = ["deliveredUrl": "https://\(host)/delivered"]
         let request = NotificationTestFixtures.makeRequest(userInfo: userInfo, title: "Test title", body: "Test description")
@@ -159,7 +159,7 @@ struct MindboxNotificationServiceTests {
 
         let host = PushDeliveryConfirmationStub.makeHost(answering: .delayedStatus(200, after: 0.5))
         let store = PushDeliveryConfirmationStore.temporary()
-        service.deliveryConfirmer = PushDeliveryConfirmer(sender: .stubbed(), store: store)
+        service.deliveryConfirmer = PushDeliveryConfirmer(sender: .stubbed(), store: store, attemptInterval: 0)
         var userInfo = NotificationTestFixtures.currentFormatUserInfo()
         userInfo["callbacks"] = ["deliveredUrl": "https://\(host)/delivered"]
         let request = NotificationTestFixtures.makeRequest(userInfo: userInfo, title: "Test title", body: "Test description")
@@ -180,7 +180,8 @@ struct MindboxNotificationServiceTests {
         let host = PushDeliveryConfirmationStub.makeHost(answering: .status(500))
         service.deliveryConfirmer = PushDeliveryConfirmer(
             sender: .stubbed(),
-            store: PushDeliveryConfirmationStore.temporary()
+            store: PushDeliveryConfirmationStore.temporary(),
+            attemptInterval: 0
         )
         var userInfo = NotificationTestFixtures.currentFormatUserInfo(includeImageUrl: false)
         userInfo["callbacks"] = ["deliveredUrl": "https://\(host)/delivered"]
