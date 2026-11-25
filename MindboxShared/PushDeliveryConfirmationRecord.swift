@@ -7,10 +7,6 @@
 
 import Foundation
 
-/// The record the notification extension leaves in the App Group for the application.
-///
-/// The file is compiled into both `Mindbox` and `MindboxNotifications`, which can be linked into one binary:
-/// keep it to value types with no Objective-C runtime names.
 @_spi(Internal)
 public struct PushDeliveryConfirmationRecord: Codable, Equatable, Sendable {
 
