@@ -108,6 +108,20 @@ jobs:
         path: coverage-site
         retention-days: 1
 
+  spm-build:
+    name: SPM build
+    runs-on: macos-latest
+    timeout-minutes: 15
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+    - uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
+      with:
+        xcode-version: latest-stable
+    - name: Build the Swift package
+      run: |
+        rm -rf Mindbox.xcodeproj
+        xcodebuild build -quiet -scheme Mindbox-Package -destination 'generic/platform=iOS Simulator'
+
   api-reference-version:
     runs-on: ubuntu-latest
     if: ${{ github.ref == 'refs/heads/develop' }}
