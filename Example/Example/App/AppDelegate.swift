@@ -10,14 +10,15 @@ import Mindbox
 import UIKit
 
 @main
-final class AppDelegate: MindboxAppDelegate {
+final class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     
     // https://developers.mindbox.ru/docs/ios-sdk-initialization
-    override func application(
+    func application(
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
-        super.application(application, didFinishLaunchingWithOptions: launchOptions)
+        Mindbox.shared.registerBGTasks()
+        Mindbox.shared.track(.launch(launchOptions))
 
         do {
             // To run the application on a physical device you need to change the endpoint
@@ -40,6 +41,28 @@ final class AppDelegate: MindboxAppDelegate {
         return true
     }
     
+    func application(
+        _ application: UIApplication,
+        didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
+    ) {
+        Mindbox.shared.apnsTokenUpdate(deviceToken: deviceToken)
+    }
+
+    func application(
+        _ application: UIApplication,
+        didFailToRegisterForRemoteNotificationsWithError error: Error
+    ) {
+        print("Failed to register for remote notifications: \(error.localizedDescription)")
+    }
+
+    func application(
+        _ application: UIApplication,
+        didReceiveRemoteNotification userInfo: [AnyHashable: Any],
+        fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void
+    ) {
+        Mindbox.shared.application(application, performFetchWithCompletionHandler: completionHandler)
+    }
+
     // https://developers.mindbox.ru/docs/ios-quick-setup-push-notifications
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
@@ -50,20 +73,16 @@ final class AppDelegate: MindboxAppDelegate {
     }
     
     // https://developers.mindbox.ru/docs/ios-push-notification-deep-linking
-    override func userNotificationCenter(
+    func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse,
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
-        // https://developers.mindbox.ru/docs/ios-sdk-methods
-        print("Is mindbox notification: \(Mindbox.shared.isMindboxPush(userInfo: response.notification.request.content.userInfo))")
-        if Mindbox.shared.isMindboxPush(userInfo: response.notification.request.content.userInfo),
-           let mindboxPushNotification = Mindbox.shared.getMindboxPushData(userInfo: response.notification.request.content.userInfo),
-           let uniqueKey = mindboxPushNotification.uniqueKey {
-            Mindbox.shared.pushClicked(uniqueKey: uniqueKey)
+        if let click = ClientGateClick(response: response) {
+            ClientGateClickReporter.shared.report(click)
         }
-        
-        super.userNotificationCenter(center, didReceive: response, withCompletionHandler: completionHandler)
+        Mindbox.shared.track(.push(response))
+        completionHandler()
     }
     
     // https://developers.mindbox.ru/docs/ios-quick-setup-push-notifications
@@ -81,4 +100,3 @@ final class AppDelegate: MindboxAppDelegate {
         }
     }
 }
-
