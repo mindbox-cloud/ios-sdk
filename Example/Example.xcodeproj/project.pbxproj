@@ -12,8 +12,6 @@
 		0AD271D22BB9D81E00750279 /* UserNotificationsUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0AD271D12BB9D81E00750279 /* UserNotificationsUI.framework */; };
 		0AD271DC2BB9D81E00750279 /* MindboxNotificationContentExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 47F7FFDC2F87C02A0058A954 /* MindboxNotificationContentExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		47F703BE2F87C5BA0058A954 /* Mindbox in Frameworks */ = {isa = PBXBuildFile; productRef = 47F703BD2F87C5BA0058A954 /* Mindbox */; };
-		47F703C02F87C5BA0058A954 /* MindboxNotificationsContent in Frameworks */ = {isa = PBXBuildFile; productRef = 47F703BF2F87C5BA0058A954 /* MindboxNotificationsContent */; };
-		47F703C22F87C5BA0058A954 /* MindboxNotificationsService in Frameworks */ = {isa = PBXBuildFile; productRef = 47F703C12F87C5BA0058A954 /* MindboxNotificationsService */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -126,7 +124,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				47F703C22F87C5BA0058A954 /* MindboxNotificationsService in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -135,7 +132,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				0AD271D22BB9D81E00750279 /* UserNotificationsUI.framework in Frameworks */,
-				47F703C02F87C5BA0058A954 /* MindboxNotificationsContent in Frameworks */,
 				0AD271D02BB9D81E00750279 /* UserNotifications.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -202,7 +198,6 @@
 			);
 			name = MindboxNotificationServiceExtension;
 			packageProductDependencies = (
-				47F703C12F87C5BA0058A954 /* MindboxNotificationsService */,
 			);
 			productName = MindboxNotificationServiceExtension;
 			productReference = 47F7FFDB2F87C02A0058A954 /* MindboxNotificationServiceExtension.appex */;
@@ -225,7 +220,6 @@
 			);
 			name = MindboxNotificationContentExtension;
 			packageProductDependencies = (
-				47F703BF2F87C5BA0058A954 /* MindboxNotificationsContent */,
 			);
 			productName = MindboxNotificationContentExtension;
 			productReference = 47F7FFDC2F87C02A0058A954 /* MindboxNotificationContentExtension.appex */;
@@ -711,16 +705,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 47F703BC2F87C5BA0058A954 /* XCRemoteSwiftPackageReference "ios-sdk" */;
 			productName = Mindbox;
-		};
-		47F703BF2F87C5BA0058A954 /* MindboxNotificationsContent */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 47F703BC2F87C5BA0058A954 /* XCRemoteSwiftPackageReference "ios-sdk" */;
-			productName = MindboxNotificationsContent;
-		};
-		47F703C12F87C5BA0058A954 /* MindboxNotificationsService */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 47F703BC2F87C5BA0058A954 /* XCRemoteSwiftPackageReference "ios-sdk" */;
-			productName = MindboxNotificationsService;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
