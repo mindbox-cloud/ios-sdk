@@ -12,21 +12,56 @@ import MindboxLogger
 struct Event: EventProtocol {
 
     enum Operation: String {
+        // MARK: - Queue key is also the operation name
+
         case installed = "MobilePush.ApplicationInstalled"
         case installedWithoutCustomer = "MobilePush.ApplicationInstalledWithoutCustomer"
         case infoUpdated = "MobilePush.ApplicationInfoUpdated"
         case keepAlive = "MobilePush.ApplicationKeepalive"
         case trackClick = "MobilePush.TrackClick"
-        case trackVisit = "MobilePush.TrackVisit"
-        case customEvent = "MobilePush.CustomEvent"
-        case syncEvent = "MobilePush.SyncEvent"
-
         case inAppViewEvent = "Inapp.Show"
         case inAppClickEvent = "Inapp.Click"
         case inAppTargetingEvent = "Inapp.Targeting"
         case inAppShowFailureEvent = "Inapp.ShowFailure"
-
         case sdkLogs = "MobileSdk.Logs"
+
+        // MARK: - Queue key only: sent under another name or endpoint
+
+        case trackingIdsUpdated = "TrackingIdsUpdated"
+        case customEvent = "MobilePush.CustomEvent"
+        case syncEvent = "MobilePush.SyncEvent"
+        case trackVisit = "MobilePush.TrackVisit"
+
+        enum Request {
+            case sdkOperation(String)
+            case customAsyncOperation
+            case customSyncOperation
+            case trackVisit
+        }
+
+        var request: Request {
+            switch self {
+            case .installed,
+                 .installedWithoutCustomer,
+                 .infoUpdated,
+                 .keepAlive,
+                 .trackClick,
+                 .inAppViewEvent,
+                 .inAppClickEvent,
+                 .inAppTargetingEvent,
+                 .inAppShowFailureEvent,
+                 .sdkLogs:
+                .sdkOperation(rawValue)
+            case .trackingIdsUpdated:
+                .sdkOperation(Operation.infoUpdated.rawValue)
+            case .customEvent:
+                .customAsyncOperation
+            case .syncEvent:
+                .customSyncOperation
+            case .trackVisit:
+                .trackVisit
+            }
+        }
     }
 
     let transactionId: String

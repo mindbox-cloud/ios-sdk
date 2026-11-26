@@ -115,6 +115,16 @@ struct DeviceUUIDInitializationTests {
         cleanup()
     }
 
+    @Test("Every generated deviceUUID is a new random UUID")
+    func everyGeneratedDeviceUUIDIsANewRandomUUID() {
+        let fetcher = MBUtilitiesFetcher()
+        let first = fetcher.generateDeviceUUID()
+        let second = fetcher.generateDeviceUUID()
+
+        #expect(UUID(uuidString: first) != nil)
+        #expect(first != second)
+    }
+
     // MARK: - Helpers
 
     private func waitForInitializationFinished() async {

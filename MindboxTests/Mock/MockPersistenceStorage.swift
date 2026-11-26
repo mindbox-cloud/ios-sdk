@@ -116,6 +116,8 @@ class MockPersistenceStorage: PersistenceStorage {
 
     @Locked var applicationInstanceId: String?
 
+    @Locked var trackingIdsRecord: String?
+
     @Locked var webViewLocalStateVersion: Int?
 
     @Locked var webViewLearnedHostsWriteCount = 0

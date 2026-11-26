@@ -50,22 +50,46 @@ extension InAppDTO {
         }
         
         self.sdkVersion = try container.decode(SdkVersion.self, forKey: .sdkVersion)
-        self.frequency = try container.decodeIfPresent(InappFrequency.self, forKey: .frequency)
-
-        if frequency == .unknown {
-            throw CustomDecodingError.unknownType("Frequency has unknown type. Inapp will be ignored.")
+        do {
+            self.frequency = try container.decodeIfPresent(InappFrequency.self, forKey: .frequency)
+            if frequency == .unknown {
+                throw CustomDecodingError.unknownType("frequency has unknown $type")
+            }
+        } catch {
+            Logger.common(message: "[Frequency] In-app with ID '\(self.id)' dropped: \(Self.dropReason(error))",
+                          level: .error, category: .inAppMessages)
+            throw error
         }
 
         if frequency == nil {
             frequency = .once(OnceFrequency(kind: .lifetime))
         }
 
-        self.displayConditions = (try? container.decode(DisplayConditions.self, forKey: .displayConditions)) ?? .unrestricted
+        do {
+            self.displayConditions = try container.decodeIfPresent(DisplayConditions.self, forKey: .displayConditions) ?? .unrestricted
+        } catch {
+            Logger.common(message: "[DisplayConditions] In-app with ID '\(self.id)' dropped: \(Self.dropReason(error))",
+                          level: .error, category: .inAppMessages)
+            throw error
+        }
 
         self.targeting = try container.decode(Targeting.self, forKey: .targeting)
         self.form = try container.decode(InAppFormDTO.self, forKey: .form)
 
         self.tags = try? container.decodeIfPresent([String: String].self, forKey: .tags)
+    }
+
+    /// Short reason for a log line: the SDK's own message, or the decoder's description of the bad value.
+    private static func dropReason(_ error: Error) -> String {
+        switch error {
+        case CustomDecodingError.decodingError(let message), CustomDecodingError.unknownType(let message):
+            return message
+        case DecodingError.typeMismatch(_, let context), DecodingError.keyNotFound(_, let context),
+             DecodingError.valueNotFound(_, let context), DecodingError.dataCorrupted(let context):
+            return context.debugDescription
+        default:
+            return String(describing: error)
+        }
     }
 }
 

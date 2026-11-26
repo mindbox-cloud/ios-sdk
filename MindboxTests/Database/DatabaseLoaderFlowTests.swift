@@ -40,10 +40,8 @@ final class DatabaseLoaderFlowTests: XCTestCase {
     final class SpyDatabaseLoader: DatabaseLoader {
         enum LoadMode { case succeed, failAlways, failThenSucceed }
 
-        var stubFreeSize: Int64 = .max
-        override var freeSize: Int64 { stubFreeSize }
-
         var loadMode: LoadMode = .succeed
+        var loadError: Error = NSError(domain: NSCocoaErrorDomain, code: NSFileReadUnknownError)
         private var loadAttempts = 0
 
         var destroyCallCount = 0
@@ -60,10 +58,10 @@ final class DatabaseLoaderFlowTests: XCTestCase {
             case .succeed:
                 return try super.loadPersistentStores()
             case .failAlways:
-                throw NSError(domain: NSCocoaErrorDomain, code: 256)
+                throw loadError
             case .failThenSucceed:
                 if loadAttempts == 1 {
-                    throw NSError(domain: NSCocoaErrorDomain, code: 256)
+                    throw loadError
                 } else {
                     return try super.loadPersistentStores()
                 }
@@ -116,22 +114,21 @@ final class DatabaseLoaderFlowTests: XCTestCase {
         XCTAssertNil(loader.applyCaptured, "applyMetadata must not be called on straight success")
     }
 
-    func test_Flow_LowDiskSpace_UsesInMemory_AndAppliesMetadata() throws {
-        let (loader, _) = try makeSpyLoader(dbName: "LowDisk")
+    func test_Flow_UnknownLoadError_UsesInMemory_AndAppliesMetadata() throws {
+        let (loader, _) = try makeSpyLoader(dbName: "UnknownError")
         loader.loadMode = .failAlways
-        loader.stubFreeSize = 1
 
         let preserved: [String: Any] = [
             MDKey.infoUpdate.rawValue: 7,
-            MDKey.instanceId.rawValue: "im-low-disk"
+            MDKey.instanceId.rawValue: "im-unknown-error"
         ]
         loader.stubPreserved = preserved
 
         let container = try loader.loadPersistentContainer()
         let psc = container.persistentStoreCoordinator
         let store = try XCTUnwrap(psc.persistentStores.first)
-        XCTAssertEqual(store.type, NSInMemoryStoreType, "Should fall back to in-memory when disk is low")
-        XCTAssertEqual(loader.destroyCallCount, 0, "destroy must not be called on low-disk fallback")
+        XCTAssertEqual(store.type, NSInMemoryStoreType, "Should fall back to in-memory when the store is not corrupt")
+        XCTAssertEqual(loader.destroyCallCount, 0, "destroy must not be called when the store is not corrupt")
         XCTAssertTrue(loader.salvageCalled, "salvage must be called before fallback")
         XCTAssertEqual(loader.applyCaptured?.count, preserved.count, "All preserved keys must be applied")
 
@@ -144,7 +141,7 @@ final class DatabaseLoaderFlowTests: XCTestCase {
     func test_Flow_DestroyAndRetry_Succeeds_AppliesMetadata() throws {
         let (loader, _) = try makeSpyLoader(dbName: "RepairSuccess")
         loader.loadMode = .failThenSucceed
-        loader.stubFreeSize = .max
+        loader.loadError = NSError(domain: NSCocoaErrorDomain, code: NSFileReadCorruptFileError)
 
         let preserved: [String: Any] = [
             MDKey.infoUpdate.rawValue: 3,
@@ -169,7 +166,7 @@ final class DatabaseLoaderFlowTests: XCTestCase {
     func test_Flow_DestroyAndRetry_Fails_FallsBackToInMemory() throws {
         let (loader, _) = try makeSpyLoader(dbName: "RepairFails")
         loader.loadMode = .failAlways
-        loader.stubFreeSize = .max
+        loader.loadError = NSError(domain: NSCocoaErrorDomain, code: NSFileReadCorruptFileError)
         loader.stubPreserved = [
             MDKey.instanceId.rawValue: "will-fallback"
         ]

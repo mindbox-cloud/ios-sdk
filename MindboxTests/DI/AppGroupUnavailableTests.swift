@@ -19,7 +19,7 @@ struct AppGroupUnavailableTests {
         var sdkVersion: String? { "test" }
         var hostApplicationName: String? { "cloud.Mindbox.MindboxTests" }
         var applicationGroupIdentifier: String { "" }
-        func getDeviceUUID(completion: @escaping (String) -> Void) { completion(UUID().uuidString) }
+        func generateDeviceUUID() -> String { UUID().uuidString }
     }
 
     @Test
