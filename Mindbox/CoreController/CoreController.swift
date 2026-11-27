@@ -23,6 +23,7 @@ final class CoreController {
     private let userVisitManager: UserVisitManagerProtocol
     private let sessionManager: SessionManager
     private let inAppMessagesManager: InAppCoreManagerProtocol
+    private let pushDeliveryConfirmationQueue: PushDeliveryConfirmationQueue
 
     var controllerQueue: DispatchQueue
 
@@ -47,6 +48,7 @@ final class CoreController {
             AppGroupStorageTransitionReporter().reportIfNeeded()
 
             self.guaranteedDeliveryManager.canScheduleOperations = true
+            self.pushDeliveryConfirmationQueue.enable()
 
             let appStateMessage = "[App State]: \(UIApplication.shared.appStateDescription)"
             Logger.common(message: appStateMessage, level: .info, category: .general)
@@ -267,6 +269,7 @@ final class CoreController {
         uuidDebugService: UUIDDebugService,
         trackingIdsResolver: TrackingIdsResolver,
         trackingHostResolver: TrackingHostResolver,
+        pushDeliveryConfirmationQueue: PushDeliveryConfirmationQueue,
         controllerQueue: DispatchQueue = DispatchQueue(label: "com.Mindbox.controllerQueue"),
         userVisitManager: UserVisitManagerProtocol
     ) {
@@ -285,8 +288,10 @@ final class CoreController {
         self.inAppMessagesManager = inAppMessagesManager
         self.sessionManager = sessionManager
         self.userVisitManager = userVisitManager
+        self.pushDeliveryConfirmationQueue = pushDeliveryConfirmationQueue
         
         registerPushTokenKeepaliveObserver()
+        registerDidBecomeActiveObserver()
 
         sessionManager.sessionHandler = { [weak self] isActive in
             if isActive && SessionTemporaryStorage.shared.isInitializationCalled {
@@ -306,6 +311,25 @@ final class CoreController {
         }
 
         timer.setupTimer()
+    }
+}
+
+// MARK: - Delivery confirmation queue
+
+private extension CoreController {
+
+    func registerDidBecomeActiveObserver() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleDidBecomeActive),
+            name: UIApplication.didBecomeActiveNotification,
+            object: nil
+        )
+    }
+
+    @objc
+    func handleDidBecomeActive(_ notification: Notification) {
+        pushDeliveryConfirmationQueue.wake()
     }
 }
 

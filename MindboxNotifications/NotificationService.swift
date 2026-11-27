@@ -8,6 +8,10 @@
 
 import Foundation
 import UserNotifications
+#if SWIFT_PACKAGE
+@_spi(Internal)
+import MindboxShared
+#endif
 
 public protocol MindboxNotificationServiceProtocol: MindboxPushNotificationProtocol {
 

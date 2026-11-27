@@ -45,15 +45,31 @@ struct PushDeliveryConfirmerTests {
         #expect(await PushDeliveryConfirmationSender.stubbed().send(try confirmation(host: host)) == code)
     }
 
-    @Test("The sender does not follow a redirect and returns its status code")
-    func senderDoesNotFollowRedirect() async throws {
-        let target = PushDeliveryConfirmationStub.makeHost(answering: .status(200))
+    @Test("The sender follows a redirect and returns the status code of the final answer")
+    func senderFollowsRedirect() async throws {
+        let target = PushDeliveryConfirmationStub.makeHost(answering: .status(204))
         let host = PushDeliveryConfirmationStub.makeHost(answering: .redirect(to: "https://\(target)/elsewhere"))
 
         let statusCode = await PushDeliveryConfirmationSender.stubbed().send(try confirmation(host: host))
 
-        #expect(statusCode == 302)
-        #expect(PushDeliveryConfirmationStub.requests(to: target).isEmpty)
+        #expect(statusCode == 204)
+        #expect(PushDeliveryConfirmationStub.requests(to: target).count == 1)
+    }
+
+    @Test("The time limit covers the whole redirect chain, the redirect hop gets no fresh time")
+    func timeoutCoversRedirectChain() async throws {
+        let target = PushDeliveryConfirmationStub.makeHost(answering: .silence)
+        let host = PushDeliveryConfirmationStub.makeHost(
+            answering: .redirect(to: "https://\(target)/elsewhere", status: 307, after: 0.6)
+        )
+        let started = Date()
+
+        let statusCode = await PushDeliveryConfirmationSender.stubbed(timeout: 0.8).send(try confirmation(host: host))
+
+        let elapsed = Date().timeIntervalSince(started)
+        #expect(statusCode == nil)
+        #expect(PushDeliveryConfirmationStub.requests(to: target).count == 1)
+        #expect(elapsed < 1.1)
     }
 
     @Test("Without an answer the sender returns nil")
@@ -169,9 +185,71 @@ struct PushDeliveryConfirmerTests {
         #expect(json["lastAttemptAt"] as? Int64 == 1_800_000_010_000)
     }
 
-    @Test("A final refusal stops the attempts and removes the record", arguments: [302, 400, 404])
+    @Test("A final refusal stops the attempts and removes the record", arguments: [400, 404])
     func refusalStops(code: Int) async throws {
         let host = PushDeliveryConfirmationStub.makeHost(answering: .status(code))
+        let store = PushDeliveryConfirmationStore.temporary()
+        let confirmer = PushDeliveryConfirmer(sender: .stubbed(), store: store, attemptInterval: 0)
+
+        await confirmer.start(try confirmation(host: host)).value
+
+        #expect(PushDeliveryConfirmationStub.requests(to: host).count == 1)
+        #expect(store.fileNames.isEmpty)
+    }
+
+    @Test("K57: a 307 redirect repeats the POST with the body {} on the second host and the confirmation counts as delivered")
+    func redirect307RepeatsPost() async throws {
+        let target = PushDeliveryConfirmationStub.makeHost(answering: .status(200))
+        let host = PushDeliveryConfirmationStub.makeHost(answering: .redirect(to: "https://\(target)/delivered?id=42", status: 307))
+        let store = PushDeliveryConfirmationStore.temporary()
+        let confirmer = PushDeliveryConfirmer(sender: .stubbed(), store: store, attemptInterval: 0)
+
+        await confirmer.start(try confirmation(host: host)).value
+
+        #expect(PushDeliveryConfirmationStub.requests(to: host).count == 1)
+        let requests = PushDeliveryConfirmationStub.requests(to: target)
+        #expect(requests.count == 1)
+        let request = try #require(requests.first)
+        #expect(request.httpMethod == "POST")
+        #expect(PushDeliveryConfirmationStub.body(of: request) == Data("{}".utf8))
+        #expect(store.fileNames == ["last-success"])
+    }
+
+    @Test("K58: a 302 redirect goes to the second host with a GET and the confirmation counts as delivered")
+    func redirect302ChangesToGet() async throws {
+        let target = PushDeliveryConfirmationStub.makeHost(answering: .status(200))
+        let host = PushDeliveryConfirmationStub.makeHost(answering: .redirect(to: "https://\(target)/delivered?id=42"))
+        let store = PushDeliveryConfirmationStore.temporary()
+        let confirmer = PushDeliveryConfirmer(sender: .stubbed(), store: store, attemptInterval: 0)
+
+        await confirmer.start(try confirmation(host: host)).value
+
+        let requests = PushDeliveryConfirmationStub.requests(to: target)
+        #expect(requests.count == 1)
+        #expect(requests.first?.httpMethod == "GET")
+        #expect(store.fileNames == ["last-success"])
+    }
+
+    @Test("K58: a 302 redirect to a host that answers 500 is a failure and the attempts go on")
+    func redirectToFailingHostRetries() async throws {
+        let target = PushDeliveryConfirmationStub.makeHost(answering: .status(500))
+        let host = PushDeliveryConfirmationStub.makeHost(answering: .redirect(to: "https://\(target)/delivered?id=42"))
+        let store = PushDeliveryConfirmationStore.temporary()
+        let confirmer = PushDeliveryConfirmer(sender: .stubbed(), store: store, attemptInterval: 0)
+        let confirmation = try confirmation(host: host)
+
+        await confirmer.start(confirmation).value
+
+        #expect(PushDeliveryConfirmationStub.requests(to: host).count == 3)
+        #expect(PushDeliveryConfirmationStub.requests(to: target).count == 3)
+        #expect(store.fileNames == [store.fileURL(for: confirmation, state: .released).lastPathComponent])
+        let json = try jsonObject(at: store.fileURL(for: confirmation, state: .released))
+        #expect(json["lastStatusCode"] as? Int == 500)
+    }
+
+    @Test("K59: a 302 without a new address makes one request, removes the record and does not repeat")
+    func redirectWithoutLocationIsRefusal() async throws {
+        let host = PushDeliveryConfirmationStub.makeHost(answering: .status(302))
         let store = PushDeliveryConfirmationStore.temporary()
         let confirmer = PushDeliveryConfirmer(sender: .stubbed(), store: store, attemptInterval: 0)
 

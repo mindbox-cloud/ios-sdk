@@ -6,6 +6,10 @@
 //
 
 import Foundation
+#if SWIFT_PACKAGE
+@_spi(Internal)
+import MindboxShared
+#endif
 
 final class PushDeliveryConfirmer: Sendable {
 
@@ -24,7 +28,9 @@ final class PushDeliveryConfirmer: Sendable {
     private let now: @Sendable () -> Date
 
     init(
-        sender: PushDeliveryConfirmationSender = PushDeliveryConfirmationSender(),
+        sender: PushDeliveryConfirmationSender = PushDeliveryConfirmationSender(
+            headers: PushDeliveryConfirmationHeaders.make()
+        ),
         store: PushDeliveryConfirmationStore? = PushDeliveryConfirmationStore(),
         attemptInterval: TimeInterval = PushDeliveryConfirmer.attemptInterval,
         now: @escaping @Sendable () -> Date = { Date() }
@@ -70,13 +76,12 @@ final class PushDeliveryConfirmer: Sendable {
     }
 
     static func outcome(of statusCode: Int?) -> Outcome {
-        guard let statusCode else { return .retry }
-        switch statusCode {
-        case 200..<300:
+        switch PushDeliveryConfirmationAnswer(statusCode: statusCode) {
+        case .delivered:
             return .delivered
-        case 300..<500 where statusCode != 429:
+        case .rejected:
             return .rejected
-        default:
+        case .throttled, .failed:
             return .retry
         }
     }

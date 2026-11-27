@@ -15,6 +15,7 @@ public struct PushDeliveryConfirmationRecord: Codable, Equatable, Sendable {
     public static let pendingExtension = "pending"
     public static let releasedExtension = "json"
     public static let successMarkerName = "last-success"
+    public static let abandonedPendingAge: TimeInterval = 40
 
     public let version: Int
     public let url: String

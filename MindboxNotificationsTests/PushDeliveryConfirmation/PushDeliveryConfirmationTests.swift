@@ -8,7 +8,13 @@
 import Testing
 import Foundation
 import UIKit
-@testable import MindboxNotifications
+@_spi(Internal) @testable import MindboxNotifications
+
+private extension PushDeliveryConfirmation {
+    func request(sentAt: Date) -> URLRequest {
+        request(sentAt: sentAt, headers: PushDeliveryConfirmationHeaders.make())
+    }
+}
 
 @Suite("Push delivery confirmation: push parsing and request", .tags(.notifications, .pushDeliveryConfirmation))
 struct PushDeliveryConfirmationTests {

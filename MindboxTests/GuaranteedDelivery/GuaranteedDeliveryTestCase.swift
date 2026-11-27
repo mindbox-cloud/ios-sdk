@@ -12,6 +12,8 @@ import XCTest
 
 // swiftlint:disable force_try
 
+private let middleOfRange: (ClosedRange<Double>) -> Double = { ($0.lowerBound + $0.upperBound) / 2 }
+
 class GuaranteedDeliveryTestCase: XCTestCase {
 
     var databaseRepository: DatabaseRepositoryProtocol!
@@ -52,7 +54,8 @@ class GuaranteedDeliveryTestCase: XCTestCase {
             persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
             databaseRepository: DI.injectOrFail(DatabaseRepositoryProtocol.self),
             eventRepository: DI.injectOrFail(EventRepository.self),
-            retryDeadline: retryDeadline
+            retryDeadline: retryDeadline,
+            random: middleOfRange
         )
         let events = eventGenerator.generateEvents(count: 10)
         events.forEach {
@@ -131,7 +134,8 @@ class GuaranteedDeliveryTestCase: XCTestCase {
             persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
             databaseRepository: DI.injectOrFail(DatabaseRepositoryProtocol.self),
             eventRepository: DI.injectOrFail(EventRepository.self),
-            retryDeadline: retryDeadline
+            retryDeadline: retryDeadline,
+            random: middleOfRange
         )
         
         try databaseRepository.erase()
@@ -181,7 +185,8 @@ class GuaranteedDeliveryTestCase: XCTestCase {
             persistenceStorage: storage,
             databaseRepository: fakeDB,
             eventRepository: eventRepo,
-            retryDeadline: 2
+            retryDeadline: 2,
+            random: middleOfRange
         )
 
         try fakeDB.erase()
@@ -260,8 +265,8 @@ final class DeliveryPauseTestCase: XCTestCase {
         databaseRepository = try! MockDatabaseRepository(inMemory: true)
         try! databaseRepository.erase()
         eventRepository = ScriptedEventRepository()
-        pauseManager = DeliveryPauseManager(now: { [unowned self] in self.now })
-        retryDelayManager = DeliveryRetryDelayManager()
+        pauseManager = DeliveryPauseManager(now: { [unowned self] in self.now }, random: middleOfRange)
+        retryDelayManager = DeliveryRetryDelayManager(random: middleOfRange)
     }
 
     override func tearDown() {
@@ -293,7 +298,7 @@ final class DeliveryPauseTestCase: XCTestCase {
         let key = "operation"
         let first = pauseManager.register(.throttled, for: key)!
 
-        XCTAssertEqual(first, 180)
+        XCTAssertEqual(first, 200)
         XCTAssertEqual(try XCTUnwrap(pauseManager.remainingPause(for: key)), first, accuracy: 0.001)
         XCTAssertEqual(pauseManager.register(.throttled, for: key), first * 2)
         let pauses = (0..<10).compactMap { _ in pauseManager.register(.throttled, for: key) }
@@ -310,7 +315,7 @@ final class DeliveryPauseTestCase: XCTestCase {
 
         pauseManager.register(.delivered, for: key)
         let afterDelivery = pauseManager.register(.throttled, for: key)!
-        XCTAssertEqual(afterDelivery, 180)
+        XCTAssertEqual(afterDelivery, 200)
     }
 
     func testServerErrorsKeepTheEventWithoutPausingTheOperation() throws {
@@ -355,7 +360,7 @@ final class DeliveryPauseTestCase: XCTestCase {
         pauseManager.register(.discarded, for: key)
 
         XCTAssertNil(pauseManager.remainingPause(for: key))
-        XCTAssertEqual(pauseManager.register(.throttled, for: key), 180)
+        XCTAssertEqual(pauseManager.register(.throttled, for: key), 200)
     }
 
     func testResetClearsEveryPause() throws {
@@ -366,7 +371,7 @@ final class DeliveryPauseTestCase: XCTestCase {
 
         XCTAssertNil(pauseManager.remainingPause(for: "first"))
         XCTAssertNil(pauseManager.remainingPause(for: "second"))
-        XCTAssertEqual(pauseManager.register(.throttled, for: "first"), 180)
+        XCTAssertEqual(pauseManager.register(.throttled, for: "first"), 200)
     }
 
     func testTooManyRequestsKeepsTheEventAndPausesOnlyItsOperation() throws {
@@ -401,13 +406,13 @@ final class DeliveryPauseTestCase: XCTestCase {
         try databaseRepository.create(event: event)
         eventRepository.results[event.transactionId] = .failure(.protocolError(protocolError(429)))
         run(event)
-        now += 181
+        now += 201
         eventRepository.results[event.transactionId] = .success(())
 
         run(try storedEvent(event))
 
         XCTAssertEqual(try databaseRepository.countEvents(), 0)
-        XCTAssertEqual(pauseManager.register(.throttled, for: event.deliveryOperationKey), 180)
+        XCTAssertEqual(pauseManager.register(.throttled, for: event.deliveryOperationKey), 200)
     }
 
     func testThrottledInstallEventStaysInTheQueueAndIsDeliveredAfterThePause() throws {
@@ -419,7 +424,7 @@ final class DeliveryPauseTestCase: XCTestCase {
         XCTAssertEqual(try databaseRepository.countEvents(), 1)
         XCTAssertNotNil(pauseManager.remainingPause(for: install.deliveryOperationKey))
 
-        now += 181
+        now += 201
         eventRepository.results[install.transactionId] = .success(())
         run(try storedEvent(install))
 
@@ -515,7 +520,7 @@ final class DeliveryPauseTestCase: XCTestCase {
             ("postponed", { $0.registerPostponed(transactionId: "retried", isRetry: true) }),
         ]
         answers.forEach { name, answer in
-            let manager = DeliveryRetryDelayManager()
+            let manager = DeliveryRetryDelayManager(random: middleOfRange)
             manager.register(.serverFailure, transactionId: "retried", isRetry: true)
             manager.register(.serverFailure, transactionId: "new", isRetry: false)
 
@@ -706,7 +711,7 @@ final class DeliveryPauseTestCase: XCTestCase {
         pauseManager.register(.throttled, for: event.deliveryOperationKey)
         run(event)
         run(try storedEvent(event))
-        now += 180
+        now += 200
         eventRepository.results[event.transactionId] = .failure(.serverError(protocolError(503)))
 
         run(try storedEvent(event))
@@ -721,13 +726,32 @@ final class DeliveryPauseTestCase: XCTestCase {
         let event = try retriedEvent("Paused")
         pauseManager.register(.throttled, for: event.deliveryOperationKey)
         run(event)
-        now += 180
+        now += 200
         eventRepository.results[event.transactionId] = .failure(.serverError(protocolError(503)))
 
         run(try storedEvent(event))
 
         XCTAssertEqual(eventRepository.sentTransactionIds, [event.transactionId])
         XCTAssertEqual(retryDelayManager.completeRound(), 120)
+    }
+
+    func testQueryAndTimerOfAStepUseTheSpreadValueAndItStaysWhileTheStepIsUnchanged() throws {
+        let database = try ScriptedQueryDatabaseRepository()
+        try database.create(event: customEvent("Waiting"))
+        let manager = GuaranteedDeliveryManager(
+            persistenceStorage: DI.injectOrFail(PersistenceStorage.self),
+            databaseRepository: database,
+            eventRepository: eventRepository,
+            retryDeadline: 60,
+            maxRetryDeadline: 3200,
+            random: { $0.lowerBound < 1 ? 0.8 : ($0.lowerBound + $0.upperBound) / 2 }
+        )
+
+        runPass(of: manager, on: database) { manager.canScheduleOperations = true }
+        runPass(of: manager, on: database) { manager.performScheduleIfNeeded() }
+
+        XCTAssertEqual(database.emptyQueryRetryDeadlines, [48, 48])
+        manager.canScheduleOperations = false
     }
 
     func testRetriesOfAServerFailedEventGrowTheRetryDelayAndDeliveryOfAnotherEventKeepsIt() throws {
@@ -973,7 +997,8 @@ final class DeliveryPauseTestCase: XCTestCase {
             databaseRepository: databaseRepository,
             eventRepository: eventRepository,
             retryDeadline: 100,
-            maxRetryDeadline: 3200
+            maxRetryDeadline: 3200,
+            random: middleOfRange
         )
         let controllerQueue = DispatchQueue(label: "test-install-lifts-pause")
         let coreController = CoreController(
@@ -986,6 +1011,7 @@ final class DeliveryPauseTestCase: XCTestCase {
             uuidDebugService: DI.injectOrFail(UUIDDebugService.self),
             trackingIdsResolver: DI.injectOrFail(TrackingIdsResolver.self),
             trackingHostResolver: DI.injectOrFail(TrackingHostResolver.self),
+            pushDeliveryConfirmationQueue: DI.injectOrFail(PushDeliveryConfirmationQueue.self),
             controllerQueue: controllerQueue,
             userVisitManager: DI.injectOrFail(UserVisitManagerProtocol.self)
         )
@@ -1034,7 +1060,8 @@ final class DeliveryPauseTestCase: XCTestCase {
             databaseRepository: database,
             eventRepository: eventRepository,
             retryDeadline: 100,
-            maxRetryDeadline: 3200
+            maxRetryDeadline: 3200,
+            random: middleOfRange
         )
     }
 
@@ -1066,7 +1093,7 @@ final class DeliveryPauseTestCase: XCTestCase {
     }
 
     private func retryDelayManager(grownBy transactionIds: [String]) -> DeliveryRetryDelayManager {
-        let manager = DeliveryRetryDelayManager()
+        let manager = DeliveryRetryDelayManager(random: middleOfRange)
         (0..<3).forEach { _ in
             transactionIds.forEach { manager.register(.serverFailure, transactionId: $0, isRetry: true) }
             _ = manager.completeRound()
