@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>endpoint</key>
+	<string>app-with-hub-IOS</string>
+	<key>domain</key>
+	<string>api.mindbox.ru</string>
+	<key>integrationFramework</key>
+	<string>flutter/3.47.8; mindbox-flutter/2.16.0</string>
+</dict>
+</plist>

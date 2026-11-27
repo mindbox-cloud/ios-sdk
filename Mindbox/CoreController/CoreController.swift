@@ -28,6 +28,8 @@ final class CoreController {
 
     func initialization(configuration: MBConfiguration) {
         controllerQueue.async {
+            var configuration = configuration
+            configuration.integrationFramework = configuration.integrationFramework.map { IntegrationFrameworkHeader.normalize($0) }
             SessionTemporaryStorage.shared.isInitializationCalled = true
 
             DI.injectOrFail(MigrationManagerProtocol.self).migrate()

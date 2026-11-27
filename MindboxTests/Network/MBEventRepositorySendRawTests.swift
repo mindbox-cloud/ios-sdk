@@ -5,7 +5,7 @@
 
 import Testing
 import Foundation
-@testable import Mindbox
+@_spi(Internal) @testable import Mindbox
 
 @Suite("MBEventRepository")
 struct MBEventRepositorySendRawTests {
@@ -474,6 +474,20 @@ struct MBEventRepositorySendRawTests {
             #expect(wrapper.trackingIds == nil)
             #expect((fetcher.capturedRoute as? EventRoute)?.baseURLKind == .operations)
         }
+    }
+
+    @Test("A track visit carries the integration framework of the stored configuration")
+    func send_trackVisitCarriesStoredIntegrationFramework() async throws {
+        let fetcher = FakeNetworkFetcher()
+        let storage = try makeStorage()
+        storage.configuration?.integrationFramework = "react-native/0.85.0; mindbox-react-native/2.16.0"
+        let repo = makeRepository(fetcher: fetcher, storage: storage)
+
+        _ = await awaitResult { completion in
+            repo.send(event: Event(type: .trackVisit, body: "{}"), completion: completion)
+        }
+
+        #expect(fetcher.capturedRoute?.headers?["Mindbox-Integration-Framework"] == "react-native/0.85.0; mindbox-react-native/2.16.0")
     }
 
     @Test("No tracking host at send: operations host, body without ids, hash untouched", .tags(.trackingIds))

@@ -8,7 +8,7 @@
 
 import Foundation
 import Testing
-@testable import Mindbox
+@_spi(Internal) @testable import Mindbox
 
 @Suite("MBConfiguration", .tags(.mbConfiguration))
 struct MBConfigurationTests {
@@ -486,5 +486,53 @@ struct MBConfigurationTests {
         var validation = ConfigValidation()
         validation.compare(lhs, rhs)
         #expect(validation.changedState == .none)
+    }
+
+    @Test("integrationFramework change → none")
+    func integrationFrameworkChangeReturnsNone() throws {
+        let lhs = try MBConfiguration(endpoint: endpoint, domain: domain)
+        var rhs = try MBConfiguration(endpoint: endpoint, domain: domain)
+        rhs.integrationFramework = "flutter/3.47.8; mindbox-flutter/2.16.0"
+        var validation = ConfigValidation()
+        validation.compare(lhs, rhs)
+        #expect(validation.changedState == .none)
+    }
+
+    // MARK: - Integration framework
+
+    @Test("Configuration stored by an earlier SDK version decodes without the integration framework", .tags(.decoding))
+    func storedConfigurationWithoutIntegrationFrameworkDecodes() throws {
+        let stored = Data(#"{"endpoint":"test-endpoint","domain":"api.mindbox.ru","subscribeCustomerIfCreated":false,"shouldCreateCustomer":true,"uuidDebugEnabled":true}"#.utf8)
+
+        let config = try JSONDecoder().decode(MBConfiguration.self, from: stored)
+
+        #expect(config.integrationFramework == nil)
+    }
+
+    @Test("Integration framework survives storing and reading the configuration", .tags(.decoding))
+    func integrationFrameworkSurvivesStoring() throws {
+        var config = try MBConfiguration(endpoint: endpoint, domain: domain)
+        config.integrationFramework = "react-native/0.85.0; expo/55.0.0; mindbox-react-native/2.16.0"
+
+        let restored = try JSONDecoder().decode(MBConfiguration.self, from: JSONEncoder().encode(config))
+
+        #expect(restored.integrationFramework == "react-native/0.85.0; expo/55.0.0; mindbox-react-native/2.16.0")
+    }
+
+    @Test("A stored integration framework of a wrong type does not break decoding", .tags(.decoding))
+    func malformedStoredIntegrationFrameworkIsIgnored() throws {
+        let stored = Data(#"{"endpoint":"test-endpoint","domain":"api.mindbox.ru","integrationFramework":5}"#.utf8)
+
+        let config = try JSONDecoder().decode(MBConfiguration.self, from: stored)
+
+        #expect(config.integrationFramework == nil)
+    }
+
+    @Test("Plist key does not set the integration framework", .tags(.decoding))
+    func plistKeyDoesNotSetIntegrationFramework() throws {
+        let config = try MBConfiguration(plistName: "TestConfig_IntegrationFramework")
+
+        #expect(config.endpoint == "app-with-hub-IOS")
+        #expect(config.integrationFramework == nil)
     }
 }

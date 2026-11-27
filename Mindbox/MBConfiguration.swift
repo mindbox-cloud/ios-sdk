@@ -21,6 +21,8 @@ public struct MBConfiguration: Codable {
     public var subscribeCustomerIfCreated: Bool
     public var shouldCreateCustomer: Bool
     public var imageLoadingMaxTimeInSeconds: Double?
+    @_spi(Internal)
+    public var integrationFramework: String?
     let uuidDebugEnabled: Bool
 
     /// Init with params
@@ -148,6 +150,7 @@ public struct MBConfiguration: Codable {
             throw error
         }
         self = configuration
+        integrationFramework = nil
     }
 
     enum CodingKeys: String, CodingKey {
@@ -159,6 +162,7 @@ public struct MBConfiguration: Codable {
         case subscribeCustomerIfCreated
         case shouldCreateCustomer
         case uuidDebugEnabled
+        case integrationFramework
     }
 
     public init(from decoder: Decoder) throws {
@@ -191,6 +195,7 @@ public struct MBConfiguration: Codable {
             shouldCreateCustomer: shouldCreateCustomer,
             uuidDebugEnabled: uuidDebugEnabled
         )
+        integrationFramework = try? values.decodeIfPresent(String.self, forKey: .integrationFramework)
     }
 }
 
