@@ -132,20 +132,23 @@ final class DeliveryPauseManager {
         var nextPause: TimeInterval
     }
 
-    private let firstPause: TimeInterval
+    private let firstPause: ClosedRange<TimeInterval>
     private let maxPause: TimeInterval
     private let now: () -> TimeInterval
+    private let random: (ClosedRange<Double>) -> Double
     private let lock = NSLock()
     private var states: [String: OperationState] = [:]
 
     init(
-        firstPause: TimeInterval = 180,
+        firstPause: ClosedRange<TimeInterval> = 150...250,
         maxPause: TimeInterval = 3600,
-        now: @escaping () -> TimeInterval = DeliveryPauseManager.monotonicTime
+        now: @escaping () -> TimeInterval = DeliveryPauseManager.monotonicTime,
+        random: @escaping (ClosedRange<Double>) -> Double = { Double.random(in: $0) }
     ) {
         self.firstPause = firstPause
         self.maxPause = maxPause
         self.now = now
+        self.random = random
     }
 
     static func monotonicTime() -> TimeInterval {
@@ -169,7 +172,7 @@ final class DeliveryPauseManager {
             states[key] = nil
             return nil
         case .throttled:
-            let pause = states[key]?.nextPause ?? firstPause
+            let pause = states[key]?.nextPause ?? random(firstPause)
             states[key] = OperationState(
                 pausedUntil: now() + pause,
                 nextPause: min(pause * 2, maxPause)
@@ -191,22 +194,32 @@ final class DeliveryRetryDelayManager {
 
     private let firstDelay: TimeInterval
     private let maxDelay: TimeInterval
+    private let random: (ClosedRange<Double>) -> Double
     private let lock = NSLock()
     private var delay: TimeInterval
+    private var factor: Double
     private var serverFailedTransactionIds: Set<String> = []
     private var retriedInRoundTransactionIds: Set<String> = []
     private var postponedBeforeFirstAttemptTransactionIds: Set<String> = []
 
-    init(firstDelay: TimeInterval = 60, maxDelay: TimeInterval = 3600) {
+    init(
+        firstDelay: TimeInterval = 60,
+        maxDelay: TimeInterval = 3600,
+        random: @escaping (ClosedRange<Double>) -> Double = { Double.random(in: $0) }
+    ) {
         self.firstDelay = firstDelay
         self.maxDelay = max(firstDelay, maxDelay)
+        self.random = random
         self.delay = firstDelay
+        self.factor = random(Self.spread)
     }
+
+    private static let spread: ClosedRange<Double> = 0.75...1.25
 
     var current: TimeInterval {
         lock.lock()
         defer { lock.unlock() }
-        return delay
+        return delay * factor
     }
 
     var trackedTransactionIds: Set<String> {
@@ -256,7 +269,7 @@ final class DeliveryRetryDelayManager {
             growDelay()
             retriedInRoundTransactionIds.removeAll()
         }
-        return delay
+        return delay * factor
     }
 
     func reset() {
@@ -265,11 +278,17 @@ final class DeliveryRetryDelayManager {
         serverFailedTransactionIds.removeAll()
         retriedInRoundTransactionIds.removeAll()
         postponedBeforeFirstAttemptTransactionIds.removeAll()
-        delay = firstDelay
+        moveToStep(firstDelay)
     }
 
     private func growDelay() {
-        delay = min(delay * 2, maxDelay)
+        moveToStep(min(delay * 2, maxDelay))
+    }
+
+    private func moveToStep(_ newDelay: TimeInterval) {
+        guard newDelay != delay else { return }
+        delay = newDelay
+        factor = random(Self.spread)
     }
 
     private func removeServerFailure(of transactionId: String) {
@@ -277,7 +296,7 @@ final class DeliveryRetryDelayManager {
         retriedInRoundTransactionIds.remove(transactionId)
         guard serverFailedTransactionIds.isEmpty else { return }
         retriedInRoundTransactionIds.removeAll()
-        delay = firstDelay
+        moveToStep(firstDelay)
     }
 }
 

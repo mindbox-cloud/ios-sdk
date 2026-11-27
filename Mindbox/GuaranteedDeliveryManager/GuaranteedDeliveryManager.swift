@@ -31,7 +31,7 @@ final class GuaranteedDeliveryManager: NSObject {
     private var isScheduleRequestedWhileDelivering = false
     private var isRestartAfterCancelAllowed = true
 
-    private let pauseManager = DeliveryPauseManager()
+    private let pauseManager: DeliveryPauseManager
 
     var onCompletedEvent: ((_ event: Event, _ error: MindboxError?) -> Void)?
 
@@ -59,7 +59,8 @@ final class GuaranteedDeliveryManager: NSObject {
         eventRepository: EventRepository,
         retryDeadline: TimeInterval = 60,
         maxRetryDeadline: TimeInterval = 3600,
-        fetchLimit: Int = 20
+        fetchLimit: Int = 20,
+        random: @escaping (ClosedRange<Double>) -> Double = { Double.random(in: $0) }
     ) {
         self.databaseRepository = databaseRepository
         self.eventRepository = eventRepository
@@ -67,7 +68,8 @@ final class GuaranteedDeliveryManager: NSObject {
             persistenceStorage: persistenceStorage,
             databaseRepository: databaseRepository
         )
-        self.retryDelayManager = DeliveryRetryDelayManager(firstDelay: retryDeadline, maxDelay: maxRetryDeadline)
+        self.retryDelayManager = DeliveryRetryDelayManager(firstDelay: retryDeadline, maxDelay: maxRetryDeadline, random: random)
+        self.pauseManager = DeliveryPauseManager(random: random)
         self.fetchLimit = fetchLimit
         stateObserver = NSString(string: State.idle.description)
         super.init()
