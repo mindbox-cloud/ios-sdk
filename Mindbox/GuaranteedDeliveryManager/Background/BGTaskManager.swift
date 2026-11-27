@@ -22,6 +22,7 @@ final class BGTaskManager: BackgroundTaskManagerType {
 
     private var appGDRefreshTask: BGAppRefreshTask?
     private var appGDProcessingTask: BGProcessingTask?
+    private var backgroundGate: BackgroundDeliveryGate?
 
     private let persistenceStorage: PersistenceStorage
     private let databaseRepository: DatabaseRepositoryProtocol
@@ -82,7 +83,11 @@ final class BGTaskManager: BackgroundTaskManagerType {
     }
 
     func endBackgroundTask(success: Bool) {
-        
+        if let gate = currentGate {
+            gate.eventsFinished(success: success)
+            return
+        }
+
         clearBGSessionFlag()
         
         var refresh: BGAppRefreshTask?
@@ -110,7 +115,56 @@ final class BGTaskManager: BackgroundTaskManagerType {
     }
 
     func applicationDidBecomeActive() {
+        if let gate = currentGate {
+            gate.finishNow(success: false)
+            return
+        }
         self.endBackgroundTask(success: false)
+    }
+}
+
+// MARK: - Delivery confirmations
+
+@available(iOS 13.0, *)
+extension BGTaskManager {
+
+    private var confirmationQueue: PushDeliveryConfirmationQueue? {
+        DI.inject(PushDeliveryConfirmationQueue.self)
+    }
+
+    private var currentGate: BackgroundDeliveryGate? {
+        lock.withLock { backgroundGate }
+    }
+
+    private func makeBackgroundGate() -> BackgroundDeliveryGate {
+        BackgroundDeliveryGate { [weak self] success in
+            self?.finishBackgroundSession(success: success)
+        }
+    }
+
+    private func finishBackgroundSession(success: Bool) {
+        let tasks: (refresh: BGAppRefreshTask?, processing: BGProcessingTask?) = lock.withLock {
+            defer {
+                appGDRefreshTask = nil
+                appGDProcessingTask = nil
+                backgroundGate = nil
+            }
+            return (appGDRefreshTask, appGDProcessingTask)
+        }
+
+        clearBGSessionFlag()
+
+        tasks.refresh?.setTaskCompleted(success: success)
+        tasks.processing?.setTaskCompleted(success: success)
+    }
+
+    private func startBackgroundDelivery(gate: BackgroundDeliveryGate, queue: PushDeliveryConfirmationQueue?) {
+        if let queue {
+            queue.wake { gate.confirmationsFinished() }
+        } else {
+            gate.confirmationsFinished()
+        }
+        gdManager?.enqueueCheckNotificationsIfNeeded()
     }
 }
 
@@ -143,7 +197,8 @@ extension BGTaskManager {
             return
         }
         
-        guard let eventsCount = try? databaseRepository.countEvents(), eventsCount > 0 else { return }
+        let hasEvents = (try? databaseRepository.countEvents()).map { $0 > 0 } ?? false
+        guard hasEvents || confirmationQueue?.hasRecords == true else { return }
         
         let request = BGProcessingTaskRequest(identifier: identifier)
         request.earliestBeginDate = Date(timeIntervalSinceNow: Constants.Background.processingTaskInterval)
@@ -206,25 +261,21 @@ extension BGTaskManager {
             return
         }
 
+        let gate = makeBackgroundGate()
         lock.withLock {
             self.appGDRefreshTask = task
+            self.backgroundGate = gate
         }
-        
+
+        let queue = confirmationQueue
         task.expirationHandler = { [weak self] in
-            guard let self = self else { return }
-            
-            gdManager?.cancelAllOperations(restartsRequestedPass: false)
-            
-            self.lock.withLock {
-                self.appGDRefreshTask?.setTaskCompleted(success: false)
-                self.appGDRefreshTask = nil
-            }
-            
-            self.clearBGSessionFlag()
+            self?.gdManager?.cancelAllOperations(restartsRequestedPass: false)
+            queue?.suspendPass()
+            gate.finishNow(success: false)
         }
         
         Logger.common(message: "\(task.debugDescription) started. BackgroundTimeRemaining: \(UIApplication.shared.backgroundTimeRemaining)", level: .info, category: .background)
-        gdManager?.enqueueCheckNotificationsIfNeeded()
+        startBackgroundDelivery(gate: gate, queue: queue)
     }
 
     private func appGDProcessingHandler(task: BGTask) {
@@ -236,25 +287,21 @@ extension BGTaskManager {
             return
         }
         
+        let gate = makeBackgroundGate()
         lock.withLock {
             self.appGDProcessingTask = task
+            self.backgroundGate = gate
         }
 
+        let queue = confirmationQueue
         task.expirationHandler = { [weak self] in
-            guard let self = self else { return }
-
-            self.gdManager?.cancelAllOperations(restartsRequestedPass: false)
-            
-            self.lock.withLock {
-                self.appGDProcessingTask?.setTaskCompleted(success: false)
-                self.appGDProcessingTask = nil
-            }
-            
-            self.clearBGSessionFlag()
+            self?.gdManager?.cancelAllOperations(restartsRequestedPass: false)
+            queue?.suspendPass()
+            gate.finishNow(success: false)
         }
 
         Logger.common(message: "\(task.debugDescription) started. BackgroundTimeRemaining: \(UIApplication.shared.backgroundTimeRemaining)", level: .info, category: .background)
-        gdManager?.enqueueCheckNotificationsIfNeeded()
+        startBackgroundDelivery(gate: gate, queue: queue)
     }
 
     private func appDBCleanProcessingHandler(task: BGTask) {

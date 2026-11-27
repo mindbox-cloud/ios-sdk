@@ -160,4 +160,75 @@ struct PushDeliveryConfirmationQueueTests {
 
         #expect(sender.urls == [QueueTestFolder.url("a")])
     }
+
+    @Test("Acceptance 2.6: by the time the wake() completion is called the request is sent and the file deleted")
+    func wakeCompletionAfterDelivery() async throws {
+        let queue = makeQueue()
+        await queue.enableAndWait()
+        let file = try folder.write("a", receivedAt: base - 1000)
+        let sender = sender
+        let folder = folder
+
+        let state: (calls: Int, exists: Bool) = await withCheckedContinuation { continuation in
+            queue.wake { continuation.resume(returning: (sender.calls.count, folder.exists(file))) }
+        }
+
+        #expect(state.calls == 1)
+        #expect(!state.exists)
+    }
+
+    @Test("K21, K37: wake() during a pause completes at once without requests, after the pause the request goes out")
+    func wakeDuringPauseCompletesAtOnce() async throws {
+        let file = try folder.write("a", receivedAt: base - 1000)
+        sender.enqueue(500, 200)
+        let queue = makeQueue()
+        await queue.enableAndWait()
+        let nextAttemptAt = try #require(await queue.nextAttemptAt)
+
+        await queue.wakeAndWait()
+
+        #expect(sender.calls.count == 1)
+        #expect(folder.exists(file))
+
+        clock.set(milliseconds: nextAttemptAt)
+        await queue.wakeAndWait()
+
+        #expect(sender.urls == ["a", "a"].map(QueueTestFolder.url))
+        #expect(!folder.exists(file))
+    }
+
+    @Test("K46: suspendPass() during a request started by wake() calls the completion and does not grow the pause")
+    func suspendDuringWakeRequest() async throws {
+        let held = QueueTestSender(.hold)
+        let queue = makeTestQueue(folder: folder, sender: held, clock: clock)
+        await queue.enableAndWait()
+        let file = try folder.write("a", receivedAt: base - 1000)
+        let woken = Task { await queue.wakeAndWait() }
+        await held.waitForCalls(1)
+
+        queue.suspendPass()
+        await woken.value
+
+        #expect(folder.exists(file))
+        #expect(held.calls.count == 1)
+        #expect(await queue.pause == nil)
+        #expect(await queue.nextAttemptAt == nil)
+        #expect(clock.sleeps.isEmpty)
+    }
+
+    @Test("K23: hasRecords follows the folder")
+    func hasRecordsFollowsFolder() async throws {
+        let queue = makeQueue()
+        await queue.enableAndWait()
+
+        #expect(!queue.hasRecords)
+
+        try folder.write("a", receivedAt: base - 1000)
+
+        #expect(queue.hasRecords)
+
+        await queue.wakeAndWait()
+
+        #expect(!queue.hasRecords)
+    }
 }
