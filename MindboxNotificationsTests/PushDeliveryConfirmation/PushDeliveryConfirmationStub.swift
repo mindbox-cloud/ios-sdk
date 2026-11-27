@@ -6,14 +6,14 @@
 //
 
 import Foundation
-@testable import MindboxNotifications
+@_spi(Internal) @testable import MindboxNotifications
 
 final class PushDeliveryConfirmationStub: URLProtocol {
 
     indirect enum Answer {
         case status(Int)
         case delayedStatus(Int, after: TimeInterval)
-        case redirect(to: String)
+        case redirect(to: String, status: Int = 302, after: TimeInterval = 0)
         case failure(URLError.Code)
         case silence
         case sequence([Answer])
@@ -72,14 +72,11 @@ final class PushDeliveryConfirmationStub: URLProtocol {
             DispatchQueue.global().asyncAfter(deadline: .now() + delay) { [weak self] in
                 self?.respond(url: url, code: code, headers: nil)
             }
-        case .redirect(let location):
-            guard let target = URL(string: location),
-                  let response = HTTPURLResponse(url: url, statusCode: 302, httpVersion: nil, headerFields: ["Location": location]) else {
-                return
+        case .redirect(let location, let status, let delay):
+            let original = request
+            DispatchQueue.global().asyncAfter(deadline: .now() + delay) { [weak self] in
+                self?.redirect(original, to: location, status: status)
             }
-            client?.urlProtocol(self, wasRedirectedTo: URLRequest(url: target), redirectResponse: response)
-            client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
-            client?.urlProtocolDidFinishLoading(self)
         case .failure(let code):
             client?.urlProtocol(self, didFailWithError: URLError(code))
         case .silence, .sequence, .none:
@@ -96,6 +93,22 @@ final class PushDeliveryConfirmationStub: URLProtocol {
         return resolve(answers[min(index, answers.count - 1)], at: index)
     }
 
+    private func redirect(_ original: URLRequest, to location: String, status: Int) {
+        guard let url = original.url,
+              let target = URL(string: location),
+              let response = HTTPURLResponse(url: url, statusCode: status, httpVersion: nil, headerFields: ["Location": location]) else {
+            return
+        }
+        var redirected = URLRequest(url: target)
+        if status == 307 || status == 308 {
+            redirected.httpMethod = original.httpMethod
+            redirected.httpBody = Self.body(of: original)
+        }
+        client?.urlProtocol(self, wasRedirectedTo: redirected, redirectResponse: response)
+        client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+        client?.urlProtocolDidFinishLoading(self)
+    }
+
     private func respond(url: URL, code: Int, headers: [String: String]?) {
         guard let response = HTTPURLResponse(url: url, statusCode: code, httpVersion: nil, headerFields: headers) else {
             return
@@ -107,7 +120,11 @@ final class PushDeliveryConfirmationStub: URLProtocol {
 
 extension PushDeliveryConfirmationSender {
     static func stubbed(timeout: TimeInterval = PushDeliveryConfirmationSender.responseTimeout) -> PushDeliveryConfirmationSender {
-        PushDeliveryConfirmationSender(timeout: timeout, protocolClasses: [PushDeliveryConfirmationStub.self])
+        PushDeliveryConfirmationSender(
+            headers: PushDeliveryConfirmationHeaders.make(),
+            timeout: timeout,
+            protocolClasses: [PushDeliveryConfirmationStub.self]
+        )
     }
 }
 

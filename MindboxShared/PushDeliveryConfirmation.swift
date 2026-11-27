@@ -1,25 +1,26 @@
 //
 //  PushDeliveryConfirmation.swift
-//  MindboxNotifications
+//  MindboxShared
 //
 //  Copyright © 2026 Mindbox. All rights reserved.
 //
 
 import Foundation
 
-struct PushDeliveryConfirmation: Equatable, Sendable {
+@_spi(Internal)
+public struct PushDeliveryConfirmation: Equatable, Sendable {
 
     static let dateTimeOffsetName = "dateTimeOffset"
 
-    let url: URL
-    let receivedAt: Date
+    public let url: URL
+    public let receivedAt: Date
 
-    init(url: URL, receivedAt: Date) {
+    public init(url: URL, receivedAt: Date) {
         self.url = url
         self.receivedAt = receivedAt
     }
 
-    init?(deliveredUrl: String?, receivedAt: Date = Date()) {
+    public init?(deliveredUrl: String?, receivedAt: Date = Date()) {
         guard let deliveredUrl,
               let url = URL(string: deliveredUrl),
               url.scheme?.lowercased() == "https",
@@ -30,7 +31,7 @@ struct PushDeliveryConfirmation: Equatable, Sendable {
         self.init(url: url, receivedAt: receivedAt)
     }
 
-    func request(sentAt: Date = Date(), headers: [String: String] = PushDeliveryConfirmationHeaders.make()) -> URLRequest {
+    public func request(sentAt: Date = Date(), headers: [String: String]) -> URLRequest {
         var request = URLRequest(url: requestURL(sentAt: sentAt))
         request.httpMethod = "POST"
         request.httpBody = Data("{}".utf8)

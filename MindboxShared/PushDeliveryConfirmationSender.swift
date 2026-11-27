@@ -1,19 +1,26 @@
 //
 //  PushDeliveryConfirmationSender.swift
-//  MindboxNotifications
+//  MindboxShared
 //
 //  Copyright © 2026 Mindbox. All rights reserved.
 //
 
 import Foundation
 
-final class PushDeliveryConfirmationSender: Sendable {
+@_spi(Internal)
+public final class PushDeliveryConfirmationSender: Sendable {
 
-    static let responseTimeout: TimeInterval = 3
+    public static let responseTimeout: TimeInterval = 3
 
     private let session: URLSession
+    private let headers: [String: String]
 
-    init(timeout: TimeInterval = PushDeliveryConfirmationSender.responseTimeout, protocolClasses: [AnyClass] = []) {
+    public init(
+        headers: [String: String],
+        timeout: TimeInterval = PushDeliveryConfirmationSender.responseTimeout,
+        protocolClasses: [AnyClass] = []
+    ) {
+        self.headers = headers
         let configuration = URLSessionConfiguration.ephemeral
         configuration.timeoutIntervalForRequest = timeout
         configuration.timeoutIntervalForResource = timeout
@@ -28,19 +35,8 @@ final class PushDeliveryConfirmationSender: Sendable {
         session.finishTasksAndInvalidate()
     }
 
-    func send(_ confirmation: PushDeliveryConfirmation, sentAt: Date = Date()) async -> Int? {
-        let answer = try? await session.data(for: confirmation.request(sentAt: sentAt), delegate: RedirectRefusal())
+    public func send(_ confirmation: PushDeliveryConfirmation, sentAt: Date = Date()) async -> Int? {
+        let answer = try? await session.data(for: confirmation.request(sentAt: sentAt, headers: headers))
         return (answer?.1 as? HTTPURLResponse)?.statusCode
-    }
-}
-
-private final class RedirectRefusal: NSObject, URLSessionTaskDelegate {
-    func urlSession(
-        _ session: URLSession,
-        task: URLSessionTask,
-        willPerformHTTPRedirection response: HTTPURLResponse,
-        newRequest request: URLRequest
-    ) async -> URLRequest? {
-        nil
     }
 }
