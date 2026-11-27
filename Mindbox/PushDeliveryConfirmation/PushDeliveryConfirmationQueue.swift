@@ -176,7 +176,7 @@ actor PushDeliveryConfirmationQueue {
 
         for item in items {
             let (answer, statusCode) = await send(item)
-            guard !isPassSuspended else { return }
+            guard !isPassSuspended || statusCode != nil else { return }
             let answeredAt = Self.milliseconds(now())
             switch answer {
             case .delivered, .rejected:
@@ -186,6 +186,7 @@ actor PushDeliveryConfirmationQueue {
                 inbox.remove(item)
                 clearPause()
                 updatedAt = answeredAt
+                guard !isPassSuspended else { return }
             case .throttled, .failed:
                 let next = schedule.nextPause(after: answer, previous: pause)
                 let wait = next.map(schedule.wait) ?? 0

@@ -178,4 +178,41 @@ struct PushDeliveryConfirmationQueueRestartTests {
         #expect(await !queue.repeatRequested)
         #expect(clock.sleeps.isEmpty)
     }
+
+    @Test("suspendPass() before the answer is handled: a 200 deletes the record and the pass stops before the next one")
+    func suspendBeforeDeliveredAnswerIsHandled() async throws {
+        let first = try folder.write("a", receivedAt: base - 2000)
+        let second = try folder.write("b", receivedAt: base - 1000)
+        let held = QueueTestSender(.holdIgnoringCancellation)
+        let queue = makeTestQueue(folder: folder, sender: held, clock: clock)
+        let enabled = Task { await queue.enableAndWait() }
+        await held.waitForCalls(1)
+
+        await queue.suspend(call: queue.takeCall())
+        held.release(200)
+        await enabled.value
+
+        #expect(!folder.exists(first))
+        #expect(folder.exists(second))
+        #expect(held.urls == [QueueTestFolder.url("a")])
+    }
+
+    @Test("suspendPass() before the answer is handled: a 429 sets the pause")
+    func suspendBeforeThrottledAnswerIsHandled() async throws {
+        let file = try folder.write("a", receivedAt: base - 1000)
+        let held = QueueTestSender(.holdIgnoringCancellation)
+        let queue = makeTestQueue(folder: folder, sender: held, clock: clock)
+        let enabled = Task { await queue.enableAndWait() }
+        await held.waitForCalls(1)
+
+        await queue.suspend(call: queue.takeCall())
+        held.release(429)
+        await enabled.value
+
+        #expect(folder.exists(file))
+        #expect(await queue.pause != nil)
+        #expect(await queue.nextAttemptAt != nil)
+        #expect(held.calls.count == 1)
+        queue.suspendPass()
+    }
 }

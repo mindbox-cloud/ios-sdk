@@ -27,6 +27,7 @@ final class PushDeliveryConfirmationWiringTests {
     private var coreController: CoreController?
 
     init() throws {
+        TestConfiguration.configure()
         folder = try QueueTestFolder()
         databaseRepository = try MockDatabaseRepository(inMemory: true)
         manager = GuaranteedDeliveryManager(

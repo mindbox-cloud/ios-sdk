@@ -111,6 +111,7 @@ final class QueueTestSender: PushDeliveryConfirmationSending, @unchecked Sendabl
     enum Reply {
         case status(Int?)
         case hold
+        case holdIgnoringCancellation
     }
 
     struct Call {
@@ -149,10 +150,16 @@ final class QueueTestSender: PushDeliveryConfirmationSending, @unchecked Sendabl
             return (reply, ready)
         }
         result.ready.forEach { $0.resume() }
-        guard case let .status(code) = result.reply else {
+        switch result.reply {
+        case let .status(code):
+            return code
+        case .hold:
             return await hold()
+        case .holdIgnoringCancellation:
+            return await withCheckedContinuation { (continuation: CheckedContinuation<Int?, Never>) in
+                lock.withLock { held = continuation }
+            }
         }
-        return code
     }
 
     func release(_ code: Int?) {

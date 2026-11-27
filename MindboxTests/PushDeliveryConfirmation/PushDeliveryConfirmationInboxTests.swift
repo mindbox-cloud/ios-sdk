@@ -57,6 +57,18 @@ struct PushDeliveryConfirmationInboxTests {
         PushDeliveryConfirmationInbox(directory: directory)
     }
 
+    @Test("A file that cannot be read is neither returned, nor deleted, nor counted")
+    func unreadableFileIsSkipped() throws {
+        let directoryNamedLikeRecord = directory.appendingPathComponent("a").appendingPathExtension("json")
+        try FileManager.default.createDirectory(at: directoryNamedLikeRecord, withIntermediateDirectories: true)
+
+        let result = inbox.items(now: now)
+
+        #expect(result.items.isEmpty)
+        #expect(result.dropped.isEmpty)
+        #expect(exists(directoryNamedLikeRecord))
+    }
+
     @Test("K5: records are returned in ascending receivedAt order")
     func ordersByReceivedAt() throws {
         try write("a", receivedAt: milliseconds(now) - 300)

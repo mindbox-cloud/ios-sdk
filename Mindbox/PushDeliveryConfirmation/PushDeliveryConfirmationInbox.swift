@@ -54,7 +54,10 @@ struct PushDeliveryConfirmationInbox: Sendable {
         let expirationMilliseconds = expirationDate.map(Self.milliseconds)
 
         for file in recordFiles() {
-            guard let record = readRecord(at: file) else {
+            guard let data = try? Data(contentsOf: file) else {
+                continue
+            }
+            guard let record = decodeRecord(from: data) else {
                 discard(file, reason: .unreadable, dropped: &dropped)
                 continue
             }
@@ -99,9 +102,8 @@ struct PushDeliveryConfirmationInbox: Sendable {
         }
     }
 
-    private func readRecord(at file: URL) -> PushDeliveryConfirmationRecord? {
-        guard let data = try? Data(contentsOf: file),
-              let record = try? JSONDecoder().decode(PushDeliveryConfirmationRecord.self, from: data),
+    private func decodeRecord(from data: Data) -> PushDeliveryConfirmationRecord? {
+        guard let record = try? JSONDecoder().decode(PushDeliveryConfirmationRecord.self, from: data),
               PushDeliveryConfirmation(deliveredUrl: record.url, receivedAt: Date(timeIntervalSince1970: TimeInterval(record.receivedAt) / 1000)) != nil else {
             return nil
         }

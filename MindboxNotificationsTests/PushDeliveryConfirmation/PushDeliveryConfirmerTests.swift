@@ -60,16 +60,16 @@ struct PushDeliveryConfirmerTests {
     func timeoutCoversRedirectChain() async throws {
         let target = PushDeliveryConfirmationStub.makeHost(answering: .silence)
         let host = PushDeliveryConfirmationStub.makeHost(
-            answering: .redirect(to: "https://\(target)/elsewhere", status: 307, after: 0.25)
+            answering: .redirect(to: "https://\(target)/elsewhere", status: 307, after: 0.6)
         )
         let started = Date()
 
-        let statusCode = await PushDeliveryConfirmationSender.stubbed(timeout: 0.4).send(try confirmation(host: host))
+        let statusCode = await PushDeliveryConfirmationSender.stubbed(timeout: 0.8).send(try confirmation(host: host))
 
         let elapsed = Date().timeIntervalSince(started)
         #expect(statusCode == nil)
         #expect(PushDeliveryConfirmationStub.requests(to: target).count == 1)
-        #expect(elapsed < 0.55)
+        #expect(elapsed < 1.1)
     }
 
     @Test("Without an answer the sender returns nil")
