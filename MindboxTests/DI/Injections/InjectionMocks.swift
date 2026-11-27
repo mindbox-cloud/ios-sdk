@@ -7,7 +7,11 @@
 //
 
 import Foundation
-@testable import Mindbox
+@_spi(Internal) @testable import Mindbox
+#if SWIFT_PACKAGE
+@_spi(Internal)
+import MindboxShared
+#endif
 
 // swiftlint:disable force_try
 
@@ -31,6 +35,10 @@ extension MBContainer {
 
         register(DatabaseRepositoryProtocol.self) {
             return try! MockDatabaseRepository(inMemory: true)
+        }
+
+        register(PushDeliveryConfirmationQueue.self) {
+            PushDeliveryConfirmationQueue(inbox: nil, sender: NoopPushDeliveryConfirmationSender())
         }
 
         register(GuaranteedDeliveryManager.self) {
@@ -80,4 +88,8 @@ extension MBContainer {
 
         return self
     }
+}
+
+private struct NoopPushDeliveryConfirmationSender: PushDeliveryConfirmationSending {
+    func send(_ confirmation: PushDeliveryConfirmation, sentAt: Date) async -> Int? { nil }
 }

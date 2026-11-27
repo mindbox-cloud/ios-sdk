@@ -986,6 +986,7 @@ final class DeliveryPauseTestCase: XCTestCase {
             uuidDebugService: DI.injectOrFail(UUIDDebugService.self),
             trackingIdsResolver: DI.injectOrFail(TrackingIdsResolver.self),
             trackingHostResolver: DI.injectOrFail(TrackingHostResolver.self),
+            pushDeliveryConfirmationQueue: DI.injectOrFail(PushDeliveryConfirmationQueue.self),
             controllerQueue: controllerQueue,
             userVisitManager: DI.injectOrFail(UserVisitManagerProtocol.self)
         )

@@ -7,6 +7,10 @@
 //
 
 import Foundation
+#if SWIFT_PACKAGE
+@_spi(Internal)
+import MindboxShared
+#endif
 
 extension MBContainer {
     func registerCore() -> Self {
@@ -20,7 +24,16 @@ extension MBContainer {
                            uuidDebugService: DI.injectOrFail(UUIDDebugService.self),
                            trackingIdsResolver: DI.injectOrFail(TrackingIdsResolver.self),
                            trackingHostResolver: DI.injectOrFail(TrackingHostResolver.self),
+                           pushDeliveryConfirmationQueue: DI.injectOrFail(PushDeliveryConfirmationQueue.self),
                            userVisitManager: DI.injectOrFail(UserVisitManagerProtocol.self))
+        }
+
+        register(PushDeliveryConfirmationQueue.self) {
+            let utilitiesFetcher = DI.injectOrFail(UtilitiesFetcher.self)
+            return PushDeliveryConfirmationQueue(
+                inbox: PushDeliveryConfirmationInbox(appGroupIdentifier: utilitiesFetcher.applicationGroupIdentifier),
+                sender: PushDeliveryConfirmationSender(headers: PushDeliveryConfirmationHeaders.make(utilitiesFetcher: utilitiesFetcher))
+            )
         }
 
         register(GuaranteedDeliveryManager.self) {
