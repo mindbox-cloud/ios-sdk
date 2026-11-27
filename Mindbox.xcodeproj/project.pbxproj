@@ -1589,6 +1589,8 @@
 		F397DE1C2CFF568800B72DA9 /* JSONs */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = JSONs; sourceTree = "<group>"; };
 		F3DEB38C2D47CBA200D0EFA4 /* InappSessionManagerTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = InappSessionManagerTests; sourceTree = "<group>"; };
 		57A1B3230000000000000502 /* PushDeliveryConfirmation */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = PushDeliveryConfirmation; sourceTree = "<group>"; };
+		57A1B3230000000000000600 /* PushDeliveryConfirmation */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = PushDeliveryConfirmation; sourceTree = "<group>"; };
+		57A1B3230000000000000601 /* PushDeliveryConfirmation */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = PushDeliveryConfirmation; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1746,6 +1748,7 @@
 				A179589C2979708B00609E91 /* Resources */,
 				33EBF0AE264E6269002A35D5 /* SessionManager */,
 				57A1B3230000000000000300 /* EmbeddedBlocks */,
+				57A1B3230000000000000600 /* PushDeliveryConfirmation */,
 				84F5655C2628433900269FD6 /* TrackVisitManager */,
 				D2F7E2402BADB89900B24BB8 /* UserVisitManager */,
 				31A20D4A25B6E09900AAA0A3 /* Utilities */,
@@ -1778,6 +1781,7 @@
 				84B625EE25C98A8000AB6228 /* Validators */,
 				F3CD20282F600A800065392A /* Configuration */,
 				57A1B3230000000000000203 /* EmbeddedBlocks */,
+				57A1B3230000000000000601 /* PushDeliveryConfirmation */,
 				313B233E25ADEA0F00A1CB72 /* MindboxTests.swift */,
 				A1B2C3D4E5F60718293A4B02 /* MindboxOperationsTests.swift */,
 				84DC49D525D185A600D5D758 /* Supporting Files */,
@@ -4084,6 +4088,7 @@
 			fileSystemSynchronizedGroups = (
 				57A1B3230000000000000300 /* EmbeddedBlocks */,
 				57A1B3230000000000000400 /* Handlers */,
+				57A1B3230000000000000600 /* PushDeliveryConfirmation */,
 			);
 			name = Mindbox;
 			productName = MindBox;
@@ -4105,6 +4110,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				57A1B3230000000000000203 /* EmbeddedBlocks */,
+				57A1B3230000000000000601 /* PushDeliveryConfirmation */,
 				57A1B3230000000000000401 /* BridgeHandlers */,
 				A8C878878353491FA01AC096 /* WebViewPrewarmTests */,
 				F385631E2DB6729000D91208 /* InappConfigurationDataFacade */,
