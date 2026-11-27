@@ -278,3 +278,16 @@ extension PushDeliveryConfirmationQueue {
         }
     }
 }
+
+final class QueueTestLog: @unchecked Sendable {
+    private let lock = NSLock()
+    private var storage: [String] = []
+
+    var lines: [String] {
+        lock.withLock { storage }
+    }
+
+    func append(_ line: String) {
+        lock.withLock { storage.append(line) }
+    }
+}
